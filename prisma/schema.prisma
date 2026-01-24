@@ -11,5 +11,38 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+}
+
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  category    String?
+  website     String?  @unique
+  phone       String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  leads       Lead[]
+}
+
+model Lead {
+  id               String   @id @default(cuid())
+  businessId       String
+  business         Business @relation(fields: [businessId], references: [id])
+  industry         String
+  painPoint        String
+  suggestedMessage String
+  dispatchedAt     DateTime?
+  createdAt        DateTime @default(now())
+}
+
+model QueryHistory {
+  id        String   @id @default(cuid())
+  location  String
+  industry  String
+  query     String
+  createdAt DateTime @default(now())
+
+  @@unique([location, industry])
 }
