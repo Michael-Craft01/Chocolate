@@ -1,4 +1,4 @@
-import { logger } from '../lib/logger';
+import { logger } from '../lib/logger.js';
 
 export class MessageGenerator {
     generate(businessName: string, industry: string, painPoint: string): string {
@@ -8,6 +8,7 @@ export class MessageGenerator {
         ];
 
         const message = templates[Math.floor(Math.random() * templates.length)];
+        if (!message) return templates[0]!; // Fallback to first template
         logger.debug(`Generated message for ${businessName}`);
         return message;
     }

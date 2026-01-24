@@ -1,12 +1,9 @@
-import { PrismaClient } from '../generated/prisma';
-import { config } from '../config';
+import { PrismaClient } from '../../generated/prisma/index.js';
+import { config } from '../config.js';
 
-const prisma = new PrismaClient({
-    datasources: {
-        db: {
-            url: config.DATABASE_URL,
-        },
-    },
-});
+// Ensure the environment variable is set for the client
+process.env.DATABASE_URL = config.DATABASE_URL;
+
+const prisma = new PrismaClient();
 
 export default prisma;

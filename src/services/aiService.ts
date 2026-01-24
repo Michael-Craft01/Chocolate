@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { config } from '../config';
-import { logger } from '../lib/logger';
+import { config } from '../config.js';
+import { logger } from '../lib/logger.js';
 
 export interface AIEnrichment {
     industry: string;
@@ -41,7 +41,7 @@ export class AIService {
                 painPoint: parsed.painPoint || 'Low online visibility',
             };
         } catch (error) {
-            logger.error('AI Enrichment error:', error);
+            logger.error({ err: error }, 'AI Enrichment error:');
             return {
                 industry: 'General Business',
                 painPoint: 'Low online visibility',

@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { config } from '../config';
-import { logger } from '../lib/logger';
+import { config } from '../config.js';
+import { logger } from '../lib/logger.js';
 
 export interface LeadPayload {
     name: string;
@@ -33,7 +33,7 @@ export class DiscordDispatcher {
                 embeds: [embed],
             });
         } catch (error) {
-            logger.error('Discord Dispatch error:', error);
+            logger.error({ err: error }, 'Discord Dispatch error:');
         }
     }
 }

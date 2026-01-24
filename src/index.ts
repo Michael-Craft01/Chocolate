@@ -1,12 +1,12 @@
 import cron from 'node-cron';
-import { queryGenerator } from './services/queryGenerator';
-import { scraper } from './services/scraper';
-import { aiService } from './services/aiService';
-import { messageGenerator } from './services/messageGenerator';
-import { discordDispatcher } from './services/discordDispatcher';
-import prisma from './lib/prisma';
-import { logger } from './lib/logger';
-import { config } from './config';
+import { queryGenerator } from './services/queryGenerator.js';
+import { scraper } from './services/scraper.js';
+import { aiService } from './services/aiService.js';
+import { messageGenerator } from './services/messageGenerator.js';
+import { discordDispatcher } from './services/discordDispatcher.js';
+import prisma from './lib/prisma.js';
+import { logger } from './lib/logger.js';
+import { config } from './config.js';
 
 async function runEngine() {
     logger.info('--- Starting Lead Engine Cycle ---');
@@ -44,7 +44,7 @@ async function runEngine() {
             }
 
             // AI Enrichment
-            const enrichment = await aiService.enrichLead(business.name, business.category);
+            const enrichment = await aiService.enrichLead(business.name, business.category ?? undefined);
 
             // Generate Message
             const message = messageGenerator.generate(business.name, enrichment.industry, enrichment.painPoint);
@@ -78,7 +78,7 @@ async function runEngine() {
 
         logger.info('--- Lead Engine Cycle Complete ---');
     } catch (error) {
-        logger.error('Error in Lead Engine cycle:', error);
+        logger.error({ err: error }, 'Error in Lead Engine cycle:');
     }
 }
 

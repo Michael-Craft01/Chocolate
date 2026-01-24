@@ -1,13 +1,13 @@
 import { chromium, Browser, Page } from 'playwright';
-import { logger } from '../lib/logger';
+import { logger } from '../lib/logger.js';
 
 export interface ScrapedBusiness {
     name: string;
-    address?: string;
-    category?: string;
-    website?: string;
-    phone?: string;
-    description?: string;
+    address?: string | null;
+    category?: string | null;
+    website?: string | null;
+    phone?: string | null;
+    description?: string | null;
 }
 
 export class Scraper {
@@ -57,7 +57,7 @@ export class Scraper {
             return results;
 
         } catch (error) {
-            logger.error('Scraping error:', error);
+            logger.error({ err: error }, 'Scraping error:');
             return [];
         } finally {
             await context.close();

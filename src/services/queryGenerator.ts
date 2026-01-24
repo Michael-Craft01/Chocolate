@@ -1,7 +1,7 @@
-import prisma from '../lib/prisma';
-import { LOCATIONS, INDUSTRIES, QUERY_TEMPLATES } from '../constants';
-import { logger } from '../lib/logger';
-import { config } from '../config';
+import prisma from '../lib/prisma.js';
+import { LOCATIONS, INDUSTRIES, QUERY_TEMPLATES } from '../constants.js';
+import { logger } from '../lib/logger.js';
+import { config } from '../config.js';
 
 export class QueryGenerator {
     async generateNextQuery() {
@@ -59,7 +59,9 @@ export class QueryGenerator {
     }
 
     private getRandomItem<T>(array: T[]): T {
-        return array[Math.floor(Math.random() * array.length)];
+        const item = array[Math.floor(Math.random() * array.length)];
+        if (!item) throw new Error('Random item selection failed: array might be empty');
+        return item;
     }
 }
 
