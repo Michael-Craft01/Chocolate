@@ -1,23 +1,14 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { config } from '../config.js';
 import { logger } from '../lib/logger.js';
-
-export interface AIEnrichment {
-    industry: string;
-    painPoint: string;
-    recommendedSolution: string;
-}
-
 export class AIService {
-    private genAI: GoogleGenerativeAI;
-    private model: any;
-
+    genAI;
+    model;
     constructor() {
         this.genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
         this.model = this.genAI.getGenerativeModel({ model: 'gemma-3-27b-it' });
     }
-
-    async enrichLead(businessName: string, category?: string, description?: string): Promise<AIEnrichment> {
+    async enrichLead(businessName, category, description) {
         const prompt = `
       You are an expert Software Engineer, AI Engineer, and Market Strategist.
       Analyze the following business and identify a High-Value Operational or Strategic Pain Point (beyond just "visibility").
@@ -38,28 +29,25 @@ export class AIService {
       Category: ${category || 'Unknown'}
       Description: ${description || 'N/A'}
 `;
-
         try {
             logger.info(`Requesting AI enrichment for: ${businessName} `);
             const result = await this.model.generateContent(prompt);
             const response = await result.response;
             const text = response.text();
-
             // Robust JSON extraction: Find the first '{' and the last '}'
             const jsonMatch = text.match(/\{[\s\S]*\}/);
             if (!jsonMatch) {
                 throw new Error('No JSON object found in AI response');
             }
-
             const cleanedText = jsonMatch[0];
             const parsed = JSON.parse(cleanedText);
-
             return {
                 industry: parsed.industry || 'General Business',
                 painPoint: parsed.painPoint || 'Inefficient manual processes limiting growth',
                 recommendedSolution: parsed.recommendedSolution || parsed.suggestedSolution || 'Custom Digital Strategy',
             };
-        } catch (error) {
+        }
+        catch (error) {
             logger.error({ err: error }, 'AI Enrichment error:');
             return {
                 industry: 'General Business',
@@ -69,5 +57,5 @@ export class AIService {
         }
     }
 }
-
 export const aiService = new AIService();
+//# sourceMappingURL=aiService.js.map

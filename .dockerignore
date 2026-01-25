@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Debug output (screenshots)
+debug/
+
+# Documentation
+*.md
+
+# Development files
+.env
+*.log
+*.ts.map
+
+# Generated JS (not needed, we run via ts-node)
+src/**/*.js
+
+# Data folder (mounted as volume)
+data/

@@ -1,15 +1,24 @@
-# Use the official Playwright image (it has all the browser dependencies)
-FROM mcr.microsoft.com/playwright:v1.40.0-jammy
+# Use the official Playwright image with matching version
+FROM mcr.microsoft.com/playwright:v1.50.0-noble
 
 # Create app directory
 WORKDIR /usr/src/app
 
-# Install dependencies
+# Install dependencies first (for better caching)
 COPY package*.json ./
-RUN npm install
+RUN npm ci --only=production
 
-# Copy your source code
-COPY . .
+# Copy Prisma schema and generate client
+COPY prisma ./prisma/
+COPY prisma.config.ts ./
+RUN npx prisma generate
 
-# Run the cron job
-CMD [ "npx", "ts-node", "src/index.ts" ]
+# Copy source code
+COPY src ./src/
+COPY tsconfig.json ./
+
+# Create data directory for SQLite
+RUN mkdir -p data
+
+# Run the lead engine
+CMD ["npx", "ts-node", "--esm", "src/index.ts"]

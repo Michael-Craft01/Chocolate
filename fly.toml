@@ -1,0 +1,19 @@
+# fly.toml - Fly.io configuration for Chocolate Lead Engine
+
+app = "chocolate-lead-engine"
+primary_region = "jnb"  # Johannesburg - closest to ZW/SA
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  DEBUG_SCREENSHOTS = "false"
+
+# No HTTP service needed - this is a background worker
+# [http_service] is intentionally omitted
+
+# Persistent storage for SQLite database
+[mounts]
+  source = "chocolate_data"
+  destination = "/usr/src/app/data"
