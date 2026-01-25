@@ -18,7 +18,7 @@ export class AIService {
 
     async enrichLead(businessName: string, category?: string, description?: string): Promise<AIEnrichment> {
         const prompt = `
-      Classify the following business and suggest a major pain point it likely faces regarding digital presence or operations.
+      Classify the following business into a SPECIFIC industry (e.g., "Plumbing", "Digital Marketing", "Dentistry", not "General Business") and suggest a major pain point it likely faces regarding digital presence or operations.
       Respond ONLY with a JSON object in this format: {"industry": "string", "painPoint": "string"}
 
       Business Name: ${businessName}

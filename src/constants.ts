@@ -1,4 +1,5 @@
 export const LOCATIONS = [
+    // Zimbabwe
     'Harare',
     'Bulawayo',
     'Chitungwiza',
@@ -9,24 +10,82 @@ export const LOCATIONS = [
     'Kadoma',
     'Masvingo',
     'Chinhoyi',
+    'Marondera',
+    'Norton',
+    'Chegutu',
+
+    // South Africa
+    'Johannesburg',
+    'Cape Town',
+    'Durban',
+    'Pretoria',
+    'Port Elizabeth',
+    'Bloemfontein',
+    'Centurion',
+    'Sandton',
+    'Midrand',
+    'Roodepoort',
+    'Soweto',
+    'Randburg',
+    'Kempton Park'
 ];
 
 export const INDUSTRIES = [
+    // Trades
     'Plumbing',
     'Electrician',
     'Roofing',
     'HVAC',
     'Landscaping',
     'Cleaning Services',
+    'Pest Control',
+    'Locksmith',
+    'Painting Contractors',
+    'Fencing Contractors',
+    'Solar Installation',
+    'Pool Maintenance',
+
+    // Professional Services
     'Real Estate',
     'Digital Marketing',
     'Accounting',
     'Legal Services',
+    'Architecture',
+    'Interior Design',
+    'IT Support',
+    'Web Design',
+    'Cybersecurity',
+    'HR Consulting',
+    'Business Coaching',
+
+    // Health & Wellness
+    'Dentist',
+    'Chiropractor',
+    'Physiotherapy',
+    'Gym',
+    'Yoga Studio',
+    'Spa and Wellness',
+
+    // Automotive
+    'Auto Repair',
+    'Car Detailing',
+    'Tyre Services',
+
+    // Retail/Hospitality
+    'Restaurant',
+    'Hotel',
+    'Event Planning',
+    'Catering',
+    'Florist'
 ];
 
 export const QUERY_TEMPLATES = [
     '{industry} in {location}',
-    'top {industry} companies {location}',
-    '{industry} near {location}',
-    'best {industry} {location}',
+    'top rated {industry} {location}',
+    '{industry} services near {location}',
+    'best {industry} companies in {location}',
+    'affordable {industry} {location}',
+    '{industry} experts {location}',
+    'commercial {industry} {location}',
+    'residential {industry} {location}'
 ];

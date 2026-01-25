@@ -8,8 +8,12 @@ export class QueryGenerator {
         const now = new Date();
         const rangeLimit = new Date(now.getTime() - config.ROTATION_PERIOD_DAYS * 24 * 60 * 60 * 1000);
 
-        for (const location of this.shuffle(LOCATIONS)) {
-            for (const industry of this.shuffle(INDUSTRIES)) {
+        // Strictly randomize the order every time to ensure we don't get stuck in a pattern
+        const shuffledLocations = this.shuffle([...LOCATIONS]);
+        const shuffledIndustries = this.shuffle([...INDUSTRIES]);
+
+        for (const location of shuffledLocations) {
+            for (const industry of shuffledIndustries) {
                 // Check if this combo was searched recently
                 const recentHistory = await prisma.queryHistory.findUnique({
                     where: {
