@@ -34,7 +34,7 @@ export class DiscordDispatcher {
 
         if (lead.phone) {
             const cleanPhone = lead.phone.replace(/[^0-9+]/g, '');
-            actions.push(`[📞 Call](tel:${cleanPhone})`);
+            actions.push(`[**📞 Call**](tel:${cleanPhone})`);
 
             // Format for WhatsApp: remove '+' and ensure it doesn't start with '0' if possible
             // Note: If it starts with '0', wa.me usually fails without country code.
@@ -48,20 +48,25 @@ export class DiscordDispatcher {
             // If the scraped number came with a country code (e.g. +263...), we are good.
             // If it came as 07..., we are stuck.
             // BUT, we can include the pre-filled message which is very helpful.
-            const encodedMessage = encodeURIComponent(lead.message);
-            actions.push(`[💬 WhatsApp](https://api.whatsapp.com/send?phone=${waPhone}&text=${encodedMessage})`);
+            // Truncate message to avoid Discord URL limits (2048 chars for URL, but field value limit is 1024)
+            const shortMessage = lead.message.length > 500 ? lead.message.substring(0, 500) + '...' : lead.message;
+            const encodedMessage = encodeURIComponent(shortMessage);
+            actions.push(`[**💬 WhatsApp**](https://api.whatsapp.com/send?phone=${waPhone}&text=${encodedMessage})`);
         }
 
         if (lead.email) {
             const subject = encodeURIComponent(`Growth Opportunity for ${lead.name}`);
-            const body = encodeURIComponent(lead.message);
-            actions.push(`[✉️ Email](mailto:${lead.email}?subject=${subject}&body=${body})`);
+            const shortBody = lead.message.length > 500 ? lead.message.substring(0, 500) + '...' : lead.message;
+            const body = encodeURIComponent(shortBody);
+            actions.push(`[**✉️ Email**](mailto:${lead.email}?subject=${subject}&body=${body})`);
         }
 
         if (actions.length > 0) {
-            embed.fields.push({
-                name: '⚡ Quick Actions',
-                value: actions.join(' • '),
+            // Make it prominent by putting it at the top of fields or description
+            // We'll put it as the first field
+            embed.fields.unshift({
+                name: '⚡ **QUICK ACTIONS**',
+                value: actions.join('\n\n'), // Use newlines for better visibility/button-like feel
                 inline: false
             });
         }
