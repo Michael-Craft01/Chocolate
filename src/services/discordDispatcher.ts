@@ -25,24 +25,32 @@ export class DiscordDispatcher {
     }
 
     async dispatch(lead: LeadPayload) {
-        const truncate = (str: string, max: number) => str.length > max ? str.substring(0, max - 3) + '...' : str;
-
-        const validWebsite = this.isValidWebsiteUrl(lead.website) ? lead.website : null;
+        const funQuotes = [
+            "Don't let this one slip! 🍌",
+            "Time to make some money! 💸",
+            "Lead secured. Mission accomplished. 🕵️‍♂️",
+            "Another one bites the dust... in a good way! 🎶",
+            "Go get 'em, tiger! 🐯",
+            "Cha-ching! 💰",
+        ];
+        const randomQuote = funQuotes[Math.floor(Math.random() * funQuotes.length)];
 
         const embed = {
-            title: '🚀 Michael, New Lead Found!',
-            color: 0x5865f2,
-            description: truncate(lead.message, 4000),
+            title: '🔥 HOT LEAD INCOMING! DO NOT DROP! 🚀',
+            description: `**${lead.name}** just landed on our radar. Here's the intel:`,
+            color: 0xFF4500, // OrangeRed
             fields: [
-                { name: 'Business', value: lead.name, inline: true },
-                { name: '📍 Location', value: lead.location, inline: true },
-                { name: 'Industry', value: lead.industry, inline: true },
-                { name: 'Pain Point', value: truncate(lead.painPoint, 500) },
-                { name: 'Recommended Solution', value: truncate(lead.recommendedSolution || 'Digital marketing strategy', 500) },
-                { name: 'Website', value: validWebsite || 'N/A', inline: true },
-                { name: 'Phone', value: lead.phone || 'N/A', inline: true },
-                { name: 'Email', value: lead.email || 'N/A', inline: true },
+                { name: '🏢 Business', value: `**${lead.name}**`, inline: true },
+                { name: '🏭 Industry', value: lead.industry, inline: true },
+                { name: '🤕 Pain Point', value: lead.painPoint },
+                { name: '🌐 Website', value: lead.website || '_Ghost Town_', inline: true },
+                { name: '📱 Phone', value: lead.phone || '_No Signal_', inline: true },
+                { name: '📧 Email', value: lead.email || '_Snail Mail?_', inline: true },
+                { name: '💡 Suggested Attack Plan', value: `\`\`\`${lead.message}\`\`\`` },
             ],
+            footer: {
+                text: `LogicHQ Bot says: "${randomQuote}"`,
+            },
             timestamp: new Date().toISOString(),
         };
 
