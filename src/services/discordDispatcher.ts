@@ -14,7 +14,7 @@ export interface LeadPayload {
 export class DiscordDispatcher {
     async dispatch(lead: LeadPayload) {
         const embed = {
-            title: '🚀 New Lead Found!',
+            title: '🚀Michael WatchOut Bro, New Lead Found! Keep Your Headup Nigga',
             color: 0x5865f2,
             fields: [
                 { name: 'Business', value: lead.name, inline: true },
