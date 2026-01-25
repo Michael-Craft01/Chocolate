@@ -6,7 +6,7 @@ export class MessageGenerator {
         const greeting = `Hello ${businessName} team,`;
 
         // Expert Introduction
-        const intro = `I'm a Digital Growth Expert specializing in helping ${industry} businesses scale their operations and increase revenue.`;
+        const intro = `I'm a Digital Growth Expert from LogicHQ in Belvedere, Harare (www.logichq.tech), specializing in helping ${industry} businesses scale their operations and increase revenue.`;
 
         // Interest
         const interest = `I've been following the ${industry} space in your area and noticed your business standing out, but I also see an opportunity for growth that isn't being fully tapped.`;
