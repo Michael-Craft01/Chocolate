@@ -7,6 +7,7 @@ export interface ScrapedBusiness {
     category?: string | null;
     website?: string | null;
     phone?: string | null;
+    email?: string | null;
     description?: string | null;
 }
 
@@ -126,12 +127,34 @@ export class Scraper {
                         }
                     }
 
+                    // Email Extraction
+                    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+                    const fullText = el.textContent || '';
+                    const emailMatch = fullText.match(emailRegex);
+                    const email = emailMatch ? emailMatch[0] : undefined;
+
                     return {
                         name: name.trim(),
                         website,
                         phone: phone?.trim(),
+                        email,
                     };
-                }).filter(r => r.name !== 'Unknown');
+                }).filter(r => {
+                     // Filter out unknown names
+                     if (r.name === 'Unknown') return false;
+
+                     // Filter out phones starting with +263 or 07
+                     if (r.phone) {
+                         const cleanPhone = r.phone.replace(/\D/g, ''); // Remove non-digits for checking?
+                         // Actually, let's keep it simple based on the string format provided
+                         if (r.phone.startsWith('+263') || r.phone.startsWith('07')) {
+                             return false;
+                         }
+                         // Also check if it starts with 263 (without plus) just in case
+                         if (r.phone.startsWith('263')) return false;
+                     }
+                     return true;
+                });
             });
 
             logger.info(`Found ${results.length} potential leads.`);

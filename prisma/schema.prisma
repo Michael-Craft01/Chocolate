@@ -19,6 +19,7 @@ model Business {
   category    String?
   website     String?  @unique
   phone       String?
+  email       String?
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

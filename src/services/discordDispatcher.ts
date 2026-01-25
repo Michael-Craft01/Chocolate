@@ -9,6 +9,7 @@ export interface LeadPayload {
     message: string;
     website?: string | null;
     phone?: string | null;
+    email?: string | null;
 }
 
 export class DiscordDispatcher {
@@ -22,6 +23,7 @@ export class DiscordDispatcher {
                 { name: 'Pain Point', value: lead.painPoint },
                 { name: 'Website', value: lead.website || 'N/A', inline: true },
                 { name: 'Phone', value: lead.phone || 'N/A', inline: true },
+                { name: 'Email', value: lead.email || 'N/A', inline: true },
                 { name: 'Suggested Message', value: `\`\`\`${lead.message}\`\`\`` },
             ],
             timestamp: new Date().toISOString(),
