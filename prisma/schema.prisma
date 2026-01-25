@@ -17,7 +17,7 @@ model Business {
   name        String
   address     String?
   category    String?
-  website     String?  @unique
+  website     String?
   phone       String?
   email       String?
   description String?

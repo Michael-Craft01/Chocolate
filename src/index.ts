@@ -47,10 +47,24 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
                 continue;
             }
 
-            // Check if business already exists
+            // Smarter Business Lookup: Check by Name AND (Phone OR Website) to match specific branches
+            // If we only have name, we fall back to name check.
             let dbBusiness = await prisma.business.findFirst({
-                where: { name: business.name },
+                where: {
+                    name: business.name,
+                    OR: [
+                        { phone: validPhone || undefined },
+                        { website: business.website || undefined }
+                    ]
+                },
             });
+
+            // Fallback: If no match with extra details, try just name (legacy behavior, but safer for partial data)
+            if (!dbBusiness) {
+                dbBusiness = await prisma.business.findFirst({
+                    where: { name: business.name }
+                });
+            }
 
             if (!dbBusiness) {
                 dbBusiness = await prisma.business.create({
@@ -62,31 +76,41 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
                 });
             }
 
-            // Check if we already processed this business as a lead
+            // Check if we already processed this business as a lead RECENTLY
             const existingLead = await prisma.lead.findFirst({
                 where: { businessId: dbBusiness.id },
+                orderBy: { createdAt: 'desc' } // Get most recent one
             });
 
             if (existingLead) {
-                logger.debug(`Skipping already processed lead: ${business.name}`);
-                continue;
+                // COOLDOWN LOGIC:
+                // If lead exists, check if we should re-engage.
+                // Rule: If dispatched > 30 days ago, OR never dispatched (failed?), we treat as new.
+
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+                const recentlyDispatched = existingLead.dispatchedAt && existingLead.dispatchedAt > thirtyDaysAgo;
+
+                if (recentlyDispatched) {
+                    logger.debug(`Skipping recent lead: ${business.name} (Dispatched: ${existingLead.dispatchedAt?.toISOString()})`);
+                    continue;
+                }
+
+                logger.info(`Re-engaging lead: ${business.name} (Last dispatched: ${existingLead.dispatchedAt?.toISOString() ?? 'Never'})`);
+                // Proceed to create a NEW lead entry for this cycle to track the re-engagement
             }
 
             // AI Enrichment
             const enrichment = await aiService.enrichLead(business.name, business.category ?? undefined);
 
-<<<<<<< HEAD
-            // Generate Message with recommended solution
+            // Generate Message
             const message = messageGenerator.generate(
                 business.name,
                 enrichment.industry,
                 enrichment.painPoint,
                 enrichment.recommendedSolution
             );
-=======
-            // Generate Message
-            const message = messageGenerator.generate(business.name, enrichment.industry, enrichment.painPoint, enrichment.suggestedSolution);
->>>>>>> 6c9b1eb90b6e95f077b1c7bd634f5c5c35c78336
 
             // Save Lead
             const lead = await prisma.lead.create({
