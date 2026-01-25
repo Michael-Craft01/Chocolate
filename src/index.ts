@@ -47,7 +47,7 @@ async function runEngine() {
             const enrichment = await aiService.enrichLead(business.name, business.category ?? undefined);
 
             // Generate Message
-            const message = messageGenerator.generate(business.name, enrichment.industry, enrichment.painPoint);
+            const message = messageGenerator.generate(business.name, enrichment.industry, enrichment.painPoint, enrichment.suggestedSolution);
 
             // Save Lead
             const lead = await prisma.lead.create({
