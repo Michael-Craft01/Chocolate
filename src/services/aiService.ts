@@ -13,7 +13,7 @@ export class AIService {
 
     constructor() {
         this.genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
-        this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        this.model = this.genAI.getGenerativeModel({ model: 'gemma-3-27b-it' });
     }
 
     async enrichLead(businessName: string, category?: string, description?: string): Promise<AIEnrichment> {

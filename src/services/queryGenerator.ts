@@ -1,20 +1,53 @@
 import prisma from '../lib/prisma.js';
-import { LOCATIONS, INDUSTRIES, QUERY_TEMPLATES } from '../constants.js';
+import { LOCATIONS_ZW, LOCATIONS_SA, INDUSTRIES, QUERY_TEMPLATES } from '../constants.js';
 import { logger } from '../lib/logger.js';
 import { config } from '../config.js';
 
+export interface QueryData {
+    query: string;
+    location: string;
+    industry: string;
+    country: 'ZW' | 'SA';
+}
+
 export class QueryGenerator {
-    async generateNextQuery() {
+    /**
+     * Generate a batch of queries for a cycle - targeting both ZW and SA
+     * @param countPerCountry Number of queries to generate per country
+     */
+    async generateBatchQueries(countPerCountry: number = 25): Promise<QueryData[]> {
+        const queries: QueryData[] = [];
+
+        // Generate queries for Zimbabwe
+        const zwQueries = await this.generateQueriesForCountry(LOCATIONS_ZW, 'ZW', countPerCountry);
+        queries.push(...zwQueries);
+
+        // Generate queries for South Africa
+        const saQueries = await this.generateQueriesForCountry(LOCATIONS_SA, 'SA', countPerCountry);
+        queries.push(...saQueries);
+
+        logger.info(`Generated ${queries.length} queries (${zwQueries.length} ZW, ${saQueries.length} SA)`);
+        return queries;
+    }
+
+    private async generateQueriesForCountry(
+        locations: string[],
+        country: 'ZW' | 'SA',
+        maxQueries: number
+    ): Promise<QueryData[]> {
         const now = new Date();
         const rangeLimit = new Date(now.getTime() - config.ROTATION_PERIOD_DAYS * 24 * 60 * 60 * 1000);
+        const queries: QueryData[] = [];
 
-        // Strictly randomize the order every time to ensure we don't get stuck in a pattern
-        const shuffledLocations = this.shuffle([...LOCATIONS]);
+        const shuffledLocations = this.shuffle([...locations]);
         const shuffledIndustries = this.shuffle([...INDUSTRIES]);
 
         for (const location of shuffledLocations) {
+            if (queries.length >= maxQueries) break;
+
             for (const industry of shuffledIndustries) {
-                // Check if this combo was searched recently
+                if (queries.length >= maxQueries) break;
+
                 const recentHistory = await prisma.queryHistory.findUnique({
                     where: {
                         location_industry: {
@@ -28,9 +61,7 @@ export class QueryGenerator {
                     const template = this.getRandomItem(QUERY_TEMPLATES);
                     const query = template.replace('{industry}', industry).replace('{location}', location);
 
-                    logger.info(`Generated new query: "${query}" for ${location}/${industry}`);
-
-                    // Upsert to history to mark as "searched"
+                    // Upsert to history
                     await prisma.queryHistory.upsert({
                         where: {
                             location_industry: {
@@ -49,13 +80,20 @@ export class QueryGenerator {
                         },
                     });
 
-                    return { query, location, industry };
+                    queries.push({ query, location, industry, country });
                 }
             }
         }
 
-        logger.warn('No new location/industry combinations found for the current rotation period.');
-        return null;
+        return queries;
+    }
+
+    /**
+     * Legacy method for single query generation (backward compatibility)
+     */
+    async generateNextQuery(): Promise<QueryData | null> {
+        const batch = await this.generateBatchQueries(1);
+        return batch[0] ?? null;
     }
 
     private shuffle<T>(array: T[]): T[] {

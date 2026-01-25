@@ -2,25 +2,22 @@ import { logger } from '../lib/logger.js';
 
 export class MessageGenerator {
     generate(businessName: string, industry: string, painPoint: string): string {
-        // Greeting
-        const greeting = `Hello ${businessName} team,`;
+        const message = `Hey there! 👋
 
-        // Expert Introduction
-        const intro = `I'm a Digital Growth Expert from LogicHQ in Belvedere, Harare (www.logichq.tech), specializing in helping ${industry} businesses scale their operations and increase revenue.`;
+I'm Michael from LogicHQ — we help ${industry} businesses like yours get more customers through smart digital marketing.
 
-        // Interest
-        const interest = `I've been following the ${industry} space in your area and noticed your business standing out, but I also see an opportunity for growth that isn't being fully tapped.`;
+I came across ${businessName} and honestly, you've got something great going. But here's the thing — I noticed a gap that's costing you leads right now: ${painPoint.toLowerCase()}.
 
-        // Pain Point & Consequence
-        const pain = `Specifically, many businesses in your sector struggle with ${painPoint.toLowerCase()}. If not addressed, this often leads to missed customer opportunities and stagnating growth while competitors get ahead.`;
+Most businesses in your space are leaving money on the table because of this. We've helped dozens of companies fix exactly that — and the results speak for themselves.
 
-        // Solution
-        const solution = `I help businesses solve exactly this by implementing targeted strategies that turn this weakness into a competitive advantage.`;
+I'm not here to sell you a dream. I'm here because I genuinely think we can make a difference for your business.
 
-        // Call to Action
-        const cta = `I'd love to share a few ideas on how we can fix this for you. Are you open to a brief 10-minute chat this week?`;
+Got 10 minutes this week? I'll show you exactly what's holding you back and how we can turn it around.
 
-        const message = `${greeting}\n\n${intro}\n\n${interest}\n\n${pain}\n\n${solution}\n\n${cta}`;
+Let's chat! 🚀
+
+— Michael
+LogicHQ | www.logichq.tech`;
 
         logger.debug(`Generated message for ${businessName}`);
         return message;

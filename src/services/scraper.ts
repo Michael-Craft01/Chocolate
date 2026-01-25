@@ -158,11 +158,23 @@ export class Scraper {
                     };
 
                     // Try different selectors for Name
-                    const name =
+                    let rawName =
                         el.querySelector('div[role="heading"]')?.textContent ||
                         el.querySelector('.OSrXXb')?.textContent ||
                         el.querySelector('.V_P8d')?.textContent ||
                         'Unknown';
+
+                    // Clean the name - remove Google UI junk
+                    const cleanName = (name: string): string => {
+                        return name
+                            .replace(/My Ad Centre/gi, '')
+                            .replace(/Ad\s*·/gi, '')
+                            .replace(/Sponsored/gi, '')
+                            .replace(/\s{2,}/g, ' ')
+                            .trim();
+                    };
+
+                    const name = cleanName(rawName);
 
                     // Try different selectors for Website
                     const website =

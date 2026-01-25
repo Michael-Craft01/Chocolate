@@ -1,5 +1,5 @@
-export const LOCATIONS = [
-    // Zimbabwe
+// Zimbabwe Locations
+export const LOCATIONS_ZW = [
     'Harare',
     'Bulawayo',
     'Chitungwiza',
@@ -13,8 +13,10 @@ export const LOCATIONS = [
     'Marondera',
     'Norton',
     'Chegutu',
+];
 
-    // South Africa
+// South Africa Locations
+export const LOCATIONS_SA = [
     'Johannesburg',
     'Cape Town',
     'Durban',
@@ -27,8 +29,11 @@ export const LOCATIONS = [
     'Roodepoort',
     'Soweto',
     'Randburg',
-    'Kempton Park'
+    'Kempton Park',
 ];
+
+// Combined for backward compatibility
+export const LOCATIONS = [...LOCATIONS_ZW, ...LOCATIONS_SA];
 
 export const INDUSTRIES = [
     // Trades

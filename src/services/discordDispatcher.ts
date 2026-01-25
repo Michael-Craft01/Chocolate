@@ -15,7 +15,7 @@ export interface LeadPayload {
 export class DiscordDispatcher {
     async dispatch(lead: LeadPayload) {
         const embed = {
-            title: '🚀Michael WatchOut Bro, New Lead Found! Keep Your Headup Nigga',
+            title: '🚀 Michael, New Lead Found! Keep Your Headup!',
             color: 0x5865f2,
             fields: [
                 { name: 'Business', value: lead.name, inline: true },
@@ -29,35 +29,58 @@ export class DiscordDispatcher {
             timestamp: new Date().toISOString(),
         };
 
-        // Build Action Links (Markdown) because Webhooks don't support Button Components
-        const actions: string[] = [];
+        const components: any[] = [];
+        const buttonRow = {
+            type: 1, // ActionRow
+            components: [] as any[],
+        };
 
+        // Phone Button
         if (lead.phone) {
             const cleanPhone = lead.phone.replace(/[^0-9+]/g, '');
-            actions.push(`[📞 Call](tel:${cleanPhone})`);
 
-            const waPhone = cleanPhone.replace('+', '');
-            actions.push(`[💬 WhatsApp](https://wa.me/${waPhone})`);
+            // Only add buttons if phone number looks valid (at least 7 digits)
+            if (cleanPhone.replace(/\D/g, '').length >= 7) {
+                buttonRow.components.push({
+                    type: 2, // Button
+                    style: 5, // Link
+                    label: '📞 Call',
+                    url: `tel:${cleanPhone}`,
+                });
+
+                // WhatsApp Business Button - Use api.whatsapp.com for Business app
+                const waPhone = cleanPhone.replace('+', '');
+                const waMessage = encodeURIComponent(lead.message);
+                buttonRow.components.push({
+                    type: 2, // Button
+                    style: 5, // Link
+                    label: '💬 WhatsApp',
+                    url: `https://api.whatsapp.com/send?phone=${waPhone}&text=${waMessage}`,
+                });
+            }
         }
 
+        // Email Button
         if (lead.email) {
             const subject = encodeURIComponent(`Growth Opportunity for ${lead.name}`);
             const body = encodeURIComponent(lead.message);
-            actions.push(`[✉️ Email](mailto:${lead.email}?subject=${subject}&body=${body})`);
+            buttonRow.components.push({
+                type: 2, // Button
+                style: 5, // Link
+                label: '✉️ Email',
+                url: `mailto:${lead.email}?subject=${subject}&body=${body}`,
+            });
         }
 
-        if (actions.length > 0) {
-            embed.fields.push({
-                name: '⚡ Quick Actions',
-                value: actions.join(' • '),
-                inline: false
-            });
+        if (buttonRow.components.length > 0) {
+            components.push(buttonRow);
         }
 
         try {
             logger.info(`Dispatching lead to Discord: ${lead.name}`);
             await axios.post(config.DISCORD_WEBHOOK, {
                 embeds: [embed],
+                components: components,
             });
         } catch (error) {
             logger.error({ err: error }, 'Discord Dispatch error:');
