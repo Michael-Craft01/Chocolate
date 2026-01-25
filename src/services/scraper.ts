@@ -51,6 +51,16 @@ export class Scraper {
 
             const results = await page.$$eval(resultSelector, (elements) => {
                 return elements.map((el) => {
+                    const findByText = (tag: string, text: string) => {
+                        const nodes = Array.from(el.querySelectorAll(tag));
+                        return nodes.find(n => n.textContent && n.textContent.includes(text));
+                    };
+
+                    const findByRegex = (tag: string, regex: RegExp) => {
+                        const nodes = Array.from(el.querySelectorAll(tag));
+                        return nodes.find(n => n.textContent && regex.test(n.textContent));
+                    };
+
                     // Try different selectors for Name
                     const name =
                         el.querySelector('div[role="heading"]')?.textContent ||
@@ -61,14 +71,17 @@ export class Scraper {
                     // Try different selectors for Website
                     const website =
                         (el.querySelector('a[aria-label*="Website"]') as HTMLAnchorElement)?.href ||
-                        (el.querySelector('a:has-text("Website")') as HTMLAnchorElement)?.href ||
+                        (findByText('a', 'Website') as HTMLAnchorElement)?.href ||
                         undefined;
 
                     // Try different selectors for Phone
-                    const phone =
-                        el.querySelector('span:has-text("0")')?.textContent ||
-                        el.querySelector('.LrzPdb')?.textContent ||
-                        undefined;
+                    // Look for sequences of digits that resemble a phone number (at least 6 digits roughly)
+                    const phoneRegex = /(\+?\d[\d\s-]{5,}\d)/;
+                    const phoneEl =
+                        findByRegex('span', phoneRegex) ||
+                        el.querySelector('.LrzPdb');
+
+                    const phone = phoneEl?.textContent || undefined;
 
                     return {
                         name: name.trim(),
