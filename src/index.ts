@@ -79,6 +79,8 @@ async function runEngine() {
         logger.info('--- Lead Engine Cycle Complete ---');
     } catch (error) {
         logger.error({ err: error }, 'Error in Lead Engine cycle:');
+    } finally {
+        await scraper.close();
     }
 }
 

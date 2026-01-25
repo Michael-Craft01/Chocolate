@@ -22,7 +22,12 @@ export class Scraper {
     }
 
     async scrape(query: string): Promise<ScrapedBusiness[]> {
-        if (!this.browser) await this.init();
+        // Ensure browser is healthy
+        if (!this.browser || !this.browser.isConnected()) {
+            if (this.browser) await this.close();
+            await this.init();
+        }
+
         const context = await this.browser!.newContext({
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
             extraHTTPHeaders: {
@@ -35,7 +40,20 @@ export class Scraper {
             logger.info(`Scraping Google for: "${query}"`);
 
             // Navigate to Google home first to mimic human behavior
-            await page.goto('https://www.google.com', { waitUntil: 'domcontentloaded', timeout: 60000 });
+            // Add retry logic for initial navigation
+            let attempts = 0;
+            const maxAttempts = 3;
+            while (attempts < maxAttempts) {
+                try {
+                    await page.goto('https://www.google.com', { waitUntil: 'domcontentloaded', timeout: 60000 });
+                    break;
+                } catch (navError: any) {
+                    attempts++;
+                    logger.warn(`Navigation attempt ${attempts} failed: ${navError.message}`);
+                    if (attempts >= maxAttempts) throw navError;
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+            }
 
             // Handle "Accept all" cookies if it appears
             const acceptBtn = await page.$('button:has-text("Accept all")');
