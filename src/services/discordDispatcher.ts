@@ -29,10 +29,53 @@ export class DiscordDispatcher {
             timestamp: new Date().toISOString(),
         };
 
+        const components: any[] = [];
+        const buttonRow = {
+            type: 1, // ActionRow
+            components: [] as any[],
+        };
+
+        // Phone Button
+        if (lead.phone) {
+            const cleanPhone = lead.phone.replace(/[^0-9+]/g, '');
+            buttonRow.components.push({
+                type: 2, // Button
+                style: 5, // Link
+                label: '📞 Call',
+                url: `tel:${cleanPhone}`,
+            });
+
+            // WhatsApp Button
+            const waPhone = cleanPhone.replace('+', '');
+            buttonRow.components.push({
+                type: 2, // Button
+                style: 5, // Link
+                label: '💬 WhatsApp',
+                url: `https://wa.me/${waPhone}`,
+            });
+        }
+
+        // Email Button
+        if (lead.email) {
+            const subject = encodeURIComponent(`Growth Opportunity for ${lead.name}`);
+            const body = encodeURIComponent(lead.message);
+            buttonRow.components.push({
+                type: 2, // Button
+                style: 5, // Link
+                label: '✉️ Email',
+                url: `mailto:${lead.email}?subject=${subject}&body=${body}`,
+            });
+        }
+
+        if (buttonRow.components.length > 0) {
+            components.push(buttonRow);
+        }
+
         try {
             logger.info(`Dispatching lead to Discord: ${lead.name}`);
             await axios.post(config.DISCORD_WEBHOOK, {
                 embeds: [embed],
+                components: components,
             });
         } catch (error) {
             logger.error({ err: error }, 'Discord Dispatch error:');
