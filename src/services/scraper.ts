@@ -115,9 +115,11 @@ export class Scraper {
                 '.VkpGBb', // Google Local snippet
                 '.u30pqe', // Alternate local snippet
                 'div[data-cid]', // Elements with cid (common in local results)
+                '.rllt__details', // Map list details container
+                'div.JsZOMb', // Another local pack container
             ].join(',');
 
-            await page!.waitForSelector(resultSelector, { timeout: 15000 }).catch(() => {
+            await page!.waitForSelector(resultSelector, { timeout: 30000 }).catch(() => {
                 logger.warn('No robust results found or selector timeout.');
             });
 
