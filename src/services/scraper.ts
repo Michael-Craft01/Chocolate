@@ -34,54 +34,75 @@ export class Scraper {
                 'Accept-Language': 'en-US,en;q=0.9',
             },
         });
-        const page = await context.newPage();
+
+        let page: Page;
 
         try {
             logger.info(`Scraping Google for: "${query}"`);
 
             // Navigate to Google home first to mimic human behavior
-            // Add retry logic for initial navigation
+            // Add retry logic for initial navigation with page recreation
             let attempts = 0;
             const maxAttempts = 3;
-            while (attempts < maxAttempts) {
+
+            while (true) {
                 try {
-                    await page.goto('https://www.google.com', { waitUntil: 'domcontentloaded', timeout: 60000 });
+                    page = await context.newPage();
+                    await page.goto('https://www.google.com', { waitUntil: 'domcontentloaded', timeout: 30000 });
                     break;
                 } catch (navError: any) {
                     attempts++;
                     logger.warn(`Navigation attempt ${attempts} failed: ${navError.message}`);
-                    if (attempts >= maxAttempts) throw navError;
+                    if (page!) await page!.close().catch(() => {});
+
+                    if (attempts >= maxAttempts) {
+                        throw navError;
+                    }
                     await new Promise(r => setTimeout(r, 2000));
                 }
             }
 
-            // Handle "Accept all" cookies if it appears
-            const acceptBtn = await page.$('button:has-text("Accept all")');
-            if (acceptBtn) await acceptBtn.click();
+            // Handle "Accept all" cookies if it appears (Wrap in try-catch for safety)
+            try {
+                const acceptBtn = await page!.$('button:has-text("Accept all")');
+                if (acceptBtn) await acceptBtn.click();
+            } catch (e) {
+                logger.debug('Cookie button interaction failed or not needed: ' + (e as Error).message);
+            }
 
             // Type the query
-            await page.fill('textarea[name="q"]', query);
-            await page.keyboard.press('Enter');
+            try {
+                await page!.waitForSelector('textarea[name="q"]', { timeout: 5000 });
+                await page!.fill('textarea[name="q"]', query);
+                await page!.keyboard.press('Enter');
+            } catch (e) {
+                logger.warn('Search box interaction failed, falling back to direct URL.');
+                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
+                await page!.goto(searchUrl, { waitUntil: 'domcontentloaded' });
+            }
 
             // Wait for results to load
-            await page.waitForTimeout(5000);
+            await page!.waitForTimeout(3000);
 
-            // Click on "Maps" or "More places" if available to ensure we get local results
-            // Note: This is tricky as the selector changes. We might need to construct the URL if this fails.
-            // But let's try direct URL navigation *after* establishing a session if typing fails to get local results.
-
-            const placesLink = await page.$('a:has-text("Maps")');
-            if (placesLink) {
-                 await placesLink.click();
-                 await page.waitForTimeout(3000);
-            } else {
-                 // Fallback: Force navigation to local results preserving the session
+            // Ensure we are on the maps/local results
+            try {
+                const placesLink = await page!.$('a:has-text("Maps")');
+                if (placesLink) {
+                     await placesLink.click();
+                     await page!.waitForTimeout(3000);
+                } else if (!page!.url().includes('tbm=lcl')) {
+                     // Fallback: Force navigation to local results if not already there
+                     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
+                     await page!.goto(searchUrl, { waitUntil: 'domcontentloaded' });
+                }
+            } catch (e) {
+                 logger.warn('Maps navigation failed, forcing URL: ' + (e as Error).message);
                  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
-                 await page.goto(searchUrl, { waitUntil: 'domcontentloaded' });
+                 await page!.goto(searchUrl, { waitUntil: 'domcontentloaded' });
             }
 
             // Manual wait to allow dynamic content/scripts to settle
-            await page.waitForTimeout(5000);
+            await page!.waitForTimeout(5000);
 
             // Enhanced extraction logic
             // Try multiple selectors for result containers
@@ -92,11 +113,11 @@ export class Scraper {
                 'div[data-cid]', // Elements with cid (common in local results)
             ].join(',');
 
-            await page.waitForSelector(resultSelector, { timeout: 15000 }).catch(() => {
+            await page!.waitForSelector(resultSelector, { timeout: 15000 }).catch(() => {
                 logger.warn('No robust results found or selector timeout.');
             });
 
-            const results = await page.$$eval(resultSelector, (elements) => {
+            const results = await page!.$$eval(resultSelector, (elements) => {
                 return elements.map((el) => {
                     const findByText = (tag: string, text: string) => {
                         const nodes = Array.from(el.querySelectorAll(tag));
