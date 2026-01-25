@@ -1,9 +1,10 @@
-import { PrismaClient } from '../../generated/prisma/index.js';
+import { PrismaClient } from '@prisma/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { config } from '../config.js';
 
-// Ensure the environment variable is set for the client
-process.env.DATABASE_URL = config.DATABASE_URL;
+const dbPath = config.DATABASE_URL.replace('file:', '');
+const adapter = new PrismaBetterSqlite3({ url: dbPath });
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter });
 
 export default prisma;

@@ -27,30 +27,55 @@ export class Scraper {
         try {
             logger.info(`Scraping Google for: "${query}"`);
             const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
-            await page.goto(searchUrl, { waitUntil: 'networkidle' });
+            await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+
+            // Manual wait to allow dynamic content/scripts to settle
+            await page.waitForTimeout(5000);
 
             // Handle "Accept all" cookies if it appears
             const acceptBtn = await page.$('button:has-text("Accept all")');
             if (acceptBtn) await acceptBtn.click();
 
-            // Simple extraction logic for Google Maps results
-            // Note: In a real production app, selectors might need more robustness (human-like behavior)
-            await page.waitForSelector('div[role="article"]', { timeout: 10000 }).catch(() => {
-                logger.warn('No results found or selector timeout.');
+            // Enhanced extraction logic
+            // Try multiple selectors for result containers
+            const resultSelector = [
+                'div[role="article"]',
+                '.VkpGBb', // Google Local snippet
+                '.u30pqe', // Alternate local snippet
+                'div[data-cid]', // Elements with cid (common in local results)
+            ].join(',');
+
+            await page.waitForSelector(resultSelector, { timeout: 15000 }).catch(() => {
+                logger.warn('No robust results found or selector timeout.');
             });
 
-            const results = await page.$$eval('div[role="article"]', (elements) => {
+            const results = await page.$$eval(resultSelector, (elements) => {
                 return elements.map((el) => {
-                    const name = el.querySelector('div[role="heading"]')?.textContent || 'Unknown';
-                    const website = (el.querySelector('a[aria-label*="Website"]') as HTMLAnchorElement)?.href || undefined;
-                    const phone = el.querySelector('span:has-text("0")')?.textContent || undefined; // Very basic regex-like grab
+                    // Try different selectors for Name
+                    const name =
+                        el.querySelector('div[role="heading"]')?.textContent ||
+                        el.querySelector('.OSrXXb')?.textContent ||
+                        el.querySelector('.V_P8d')?.textContent ||
+                        'Unknown';
+
+                    // Try different selectors for Website
+                    const website =
+                        (el.querySelector('a[aria-label*="Website"]') as HTMLAnchorElement)?.href ||
+                        (el.querySelector('a:has-text("Website")') as HTMLAnchorElement)?.href ||
+                        undefined;
+
+                    // Try different selectors for Phone
+                    const phone =
+                        el.querySelector('span:has-text("0")')?.textContent ||
+                        el.querySelector('.LrzPdb')?.textContent ||
+                        undefined;
 
                     return {
-                        name,
+                        name: name.trim(),
                         website,
-                        phone,
+                        phone: phone?.trim(),
                     };
-                });
+                }).filter(r => r.name !== 'Unknown');
             });
 
             logger.info(`Found ${results.length} potential leads.`);

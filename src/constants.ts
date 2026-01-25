@@ -25,8 +25,8 @@ export const INDUSTRIES = [
 ];
 
 export const QUERY_TEMPLATES = [
-    'best {industry} in {location}',
-    'top {industry} companies in {location}',
-    '{industry} services {location}',
-    'emergency {industry} {location}',
+    '{industry} in {location}',
+    'top {industry} companies {location}',
+    '{industry} near {location}',
+    'best {industry} {location}',
 ];
