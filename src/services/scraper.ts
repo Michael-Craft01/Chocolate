@@ -92,42 +92,26 @@ export class Scraper {
 
             // Ensure we are on the maps/local results
             try {
-<<<<<<< HEAD
-                const placesLink = await page!.$('a:has-text("Maps")');
-                if (placesLink) {
-                    await placesLink.click();
-                    await page!.waitForTimeout(3000);
-                } else if (!page!.url().includes('tbm=lcl')) {
-                    // Fallback: Force navigation to local results if not already there
-                    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
-                    await page!.goto(searchUrl, { waitUntil: 'domcontentloaded' });
-                }
-            } catch (e) {
-                logger.warn('Maps navigation failed, forcing URL: ' + (e as Error).message);
-                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
-                await page!.goto(searchUrl, { waitUntil: 'domcontentloaded' });
-=======
                 // Check if we are already on a local results page (sometimes Google redirects automatically)
                 if (page!.url().includes('tbm=lcl')) {
                     logger.info('Already on local results page.');
                 } else {
                     const placesLink = await page!.$('a:has-text("Maps")');
                     if (placesLink) {
-                         await placesLink.click();
-                         await page!.waitForTimeout(3000);
+                        await placesLink.click();
+                        await page!.waitForTimeout(3000);
                     } else {
-                         // Fallback: Force navigation to local results if not already there
-                         throw new Error('Maps link not found');
+                        // Fallback: Force navigation to local results if not already there
+                        throw new Error('Maps link not found');
                     }
                 }
             } catch (e) {
-                 logger.warn('Maps navigation failed/not found, forcing new page navigation: ' + (e as Error).message);
-                 // If context is destroyed or navigation failed, it's safer to recreate the page for the fallback
-                 try { await page!.close(); } catch {}
-                 page = await context.newPage();
-                 const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
-                 await page!.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
->>>>>>> d30202eeb273ab04888d9c3be3afc509fb87c3c1
+                logger.warn('Maps navigation failed/not found, forcing new page navigation: ' + (e as Error).message);
+                // If context is destroyed or navigation failed, it's safer to recreate the page for the fallback
+                try { await page!.close(); } catch { }
+                page = await context.newPage();
+                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
+                await page!.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
             }
 
             // Manual wait to allow dynamic content/scripts to settle
