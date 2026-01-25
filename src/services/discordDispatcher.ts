@@ -52,42 +52,42 @@ export class DiscordDispatcher {
 
         // WhatsApp button - direct to number, no pre-filled message
         if (lead.phone) {
-            // Remove everything except numbers
-            const cleanPhone = lead.phone.replace(/\D/g, '');
+            const cleanPhone = lead.phone.replace(/[^0-9+]/g, '');
+            actions.push(`[**📞 Call**](tel:${cleanPhone})`);
 
-            // Check if we have enough digits (at least 7)
-            if (cleanPhone.length >= 7) {
-                // Use wa.me short link format - often cleaner for Discord
-                // Ensure no leading '+' is double-added if cleanPhone has it (replace removes it)
-                const waUrl = `https://wa.me/${cleanPhone}`;
+            // Format for WhatsApp: remove '+' and ensure it doesn't start with '0' if possible
+            // Note: If it starts with '0', wa.me usually fails without country code.
+            // We strip non-digits (and +) for the API.
+            let waPhone = cleanPhone.replace(/[^0-9]/g, '');
 
-                buttonRow.components.push({
-                    type: 2, // Button
-                    style: 5, // Link
-                    label: 'WhatsApp', // Removed emoji just in case
-                    url: waUrl,
-                });
-                logger.debug(`Added WhatsApp button: ${waUrl}`);
-            } else {
-                logger.debug(`Skipped WhatsApp button -- Phone: ${lead.phone}, Clean: ${cleanPhone}`);
-            }
+            // Heuristic: If it starts with '0' (e.g. 077...), it likely needs a country code.
+            // Since we can't be 100% sure between Zim (+263) and SA (+27) without extra context,
+            // we will try to infer or just output it.
+            // However, the user wants a working link.
+            // If the scraped number came with a country code (e.g. +263...), we are good.
+            // If it came as 07..., we are stuck.
+            // BUT, we can include the pre-filled message which is very helpful.
+            // Truncate message to avoid Discord URL limits (2048 chars for URL, but field value limit is 1024)
+            const shortMessage = lead.message.length > 500 ? lead.message.substring(0, 500) + '...' : lead.message;
+            const encodedMessage = encodeURIComponent(shortMessage);
+            actions.push(`[**💬 WhatsApp**](https://api.whatsapp.com/send?phone=${waPhone}&text=${encodedMessage})`);
         }
 
-        // Website button - only valid URLs
-        if (validWebsite) {
-            buttonRow.components.push({
-                type: 2, // Button
-                style: 5, // Link
-                label: 'Website', // Removed emoji just in case
-                url: validWebsite,
+        if (lead.email) {
+            const subject = encodeURIComponent(`Growth Opportunity for ${lead.name}`);
+            const shortBody = lead.message.length > 500 ? lead.message.substring(0, 500) + '...' : lead.message;
+            const body = encodeURIComponent(shortBody);
+            actions.push(`[**✉️ Email**](mailto:${lead.email}?subject=${subject}&body=${body})`);
+        }
+
+        if (actions.length > 0) {
+            // Make it prominent by putting it at the top of fields or description
+            // We'll put it as the first field
+            embed.fields.unshift({
+                name: '⚡ **QUICK ACTIONS**',
+                value: actions.join('\n\n'), // Use newlines for better visibility/button-like feel
+                inline: false
             });
-        }
-
-        if (buttonRow.components.length > 0) {
-            components.push(buttonRow);
-            logger.debug(`Components check: ${JSON.stringify(buttonRow.components)}`);
-        } else {
-            logger.debug('No buttons generated for this lead');
         }
 
         try {

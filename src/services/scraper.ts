@@ -133,9 +133,10 @@ export class Scraper {
                 'div[data-cid]', // Elements with cid (common in local results)
                 '.rllt__details', // Map list details container
                 'div.JsZOMb', // Another local pack container
+                'div[jscontroller="AtSb"]', // Generic container often used
             ].join(',');
 
-            const selectorFound = await page!.waitForSelector(resultSelector, { timeout: 30000 }).catch(async () => {
+            await page!.waitForSelector(resultSelector, { timeout: 30000 }).catch(() => {
                 logger.warn('No robust results found or selector timeout.');
                 // Save failure screenshot
                 await page!.screenshot({ path: path.join(debugDir, `selector_fail_${timestamp}.png`), fullPage: true });
@@ -144,7 +145,7 @@ export class Scraper {
             });
 
             const results = await page!.$$eval(resultSelector, (elements) => {
-                // Debug log inside browser (will be invisible unless we listen to console, but good for future)
+                // Debug log inside browser
                 console.log(`Processing ${elements.length} elements`);
                 return elements.map((el) => {
                     const findByText = (tag: string, text: string) => {
@@ -176,16 +177,20 @@ export class Scraper {
 
                     const name = cleanName(rawName);
 
-                    // Try different selectors for Website
-                    const website =
-                        (el.querySelector('a[aria-label*="Website"]') as HTMLAnchorElement)?.href ||
-                        (findByText('a', 'Website') as HTMLAnchorElement)?.href ||
-                        (el.querySelector('a[href^="http"]:not([href*="google"])') as HTMLAnchorElement)?.href ||
-                        undefined;
+                    // Website Extraction: Search all anchors
+                    let website: string | undefined = undefined;
+                    const anchors = Array.from(el.querySelectorAll('a'));
+                    for (const a of anchors) {
+                        const href = a.href;
+                        if (!href) continue;
+                        if (href.startsWith('http') && !href.includes('google.com') && !href.includes('google.co')) {
+                            website = href;
+                            break; // Take the first external link
+                        }
+                    }
 
-                    // Try different selectors for Phone
-                    // Look for sequences of digits that resemble a phone number (at least 6 digits roughly)
-                    const phoneRegex = /(\+?\d[\d\s-]{5,}\d)/;
+                    // Phone Extraction
+                    const phoneRegex = /(\+?\d[\d\s-]{8,})/; // Slightly stricter to avoid dates, at least 8 digits
                     let phone: string | undefined = undefined;
 
                     // 1. Try finding in specific known containers first
@@ -201,18 +206,22 @@ export class Scraper {
                     }
 
                     if (!phone) {
-                        // 2. Fallback: Search the full text of the card but try to extract just the number
+                        // 2. Search full text of the card
                         const fullText = el.textContent || '';
                         const match = fullText.match(phoneRegex);
                         if (match) {
-                            phone = match[0];
+                            // Filter out common false positives like dates (2020-...) if needed,
+                            // but 8+ digits check helps.
+                            // Also check if it looks like a year (starting with 19 or 20 and 4 digits... regex is 8+)
+                            phone = match[0].trim();
                         }
                     }
 
                     // Email Extraction
                     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
-                    const fullText = el.textContent || '';
-                    const emailMatch = fullText.match(emailRegex);
+                    // Reuse fullText from above - ensure it is defined
+                    const fullTextForEmail = el.textContent || '';
+                    const emailMatch = fullTextForEmail.match(emailRegex);
                     const email = emailMatch ? emailMatch[0] : undefined;
 
                     return {
