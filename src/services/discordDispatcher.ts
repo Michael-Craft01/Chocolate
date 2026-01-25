@@ -11,6 +11,7 @@ export interface LeadPayload {
     website?: string | null;
     phone?: string | null;
     email?: string | null;
+    location: string;
 }
 
 export class DiscordDispatcher {
@@ -31,9 +32,10 @@ export class DiscordDispatcher {
         const embed = {
             title: '🚀 Michael, New Lead Found!',
             color: 0x5865f2,
-            description: `**Suggested Message:**\n\n${truncate(lead.message, 4000)}`,
+            description: truncate(lead.message, 4000),
             fields: [
                 { name: 'Business', value: lead.name, inline: true },
+                { name: '📍 Location', value: lead.location, inline: true },
                 { name: 'Industry', value: lead.industry, inline: true },
                 { name: 'Pain Point', value: truncate(lead.painPoint, 500) },
                 { name: 'Recommended Solution', value: truncate(lead.recommendedSolution || 'Digital marketing strategy', 500) },

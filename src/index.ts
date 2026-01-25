@@ -131,6 +131,7 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
                 message: message,
                 website: business.website,
                 phone: validPhone,
+                location: `${queryData.location}, ${queryData.country}`,
             });
 
             // Only mark as dispatched if Discord succeeded
