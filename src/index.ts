@@ -9,7 +9,15 @@ import { logger } from './lib/logger.js';
 import { config } from './config.js';
 
 async function runEngine() {
-    logger.info('--- Starting Lead Engine Cycle ---');
+    const funnyStartMessages = [
+        "Revving up the lead engine... Vroom Vroom! 🏎️",
+        "Unleashing the digital hounds... 🐕",
+        "Time to hunt some business! 🏹",
+        "Brewing a fresh pot of leads... ☕",
+        "Engaging hyper-drive... 🚀"
+    ];
+    const randomStart = funnyStartMessages[Math.floor(Math.random() * funnyStartMessages.length)];
+    logger.info(`--- ${randomStart} ---`);
 
     try {
         const queryData = await queryGenerator.generateNextQuery();

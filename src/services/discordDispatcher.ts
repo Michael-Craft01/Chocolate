@@ -14,18 +14,32 @@ export interface LeadPayload {
 
 export class DiscordDispatcher {
     async dispatch(lead: LeadPayload) {
+        const funQuotes = [
+            "Don't let this one slip! 🍌",
+            "Time to make some money! 💸",
+            "Lead secured. Mission accomplished. 🕵️‍♂️",
+            "Another one bites the dust... in a good way! 🎶",
+            "Go get 'em, tiger! 🐯",
+            "Cha-ching! 💰",
+        ];
+        const randomQuote = funQuotes[Math.floor(Math.random() * funQuotes.length)];
+
         const embed = {
-            title: '🚀 New Lead Found!',
-            color: 0x5865f2,
+            title: '🔥 HOT LEAD INCOMING! DO NOT DROP! 🚀',
+            description: `**${lead.name}** just landed on our radar. Here's the intel:`,
+            color: 0xFF4500, // OrangeRed
             fields: [
-                { name: 'Business', value: lead.name, inline: true },
-                { name: 'Industry', value: lead.industry, inline: true },
-                { name: 'Pain Point', value: lead.painPoint },
-                { name: 'Website', value: lead.website || 'N/A', inline: true },
-                { name: 'Phone', value: lead.phone || 'N/A', inline: true },
-                { name: 'Email', value: lead.email || 'N/A', inline: true },
-                { name: 'Suggested Message', value: `\`\`\`${lead.message}\`\`\`` },
+                { name: '🏢 Business', value: `**${lead.name}**`, inline: true },
+                { name: '🏭 Industry', value: lead.industry, inline: true },
+                { name: '🤕 Pain Point', value: lead.painPoint },
+                { name: '🌐 Website', value: lead.website || '_Ghost Town_', inline: true },
+                { name: '📱 Phone', value: lead.phone || '_No Signal_', inline: true },
+                { name: '📧 Email', value: lead.email || '_Snail Mail?_', inline: true },
+                { name: '💡 Suggested Attack Plan', value: `\`\`\`${lead.message}\`\`\`` },
             ],
+            footer: {
+                text: `LogicHQ Bot says: "${randomQuote}"`,
+            },
             timestamp: new Date().toISOString(),
         };
 
