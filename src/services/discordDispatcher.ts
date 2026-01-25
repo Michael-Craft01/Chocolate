@@ -36,8 +36,20 @@ export class DiscordDispatcher {
             const cleanPhone = lead.phone.replace(/[^0-9+]/g, '');
             actions.push(`[📞 Call](tel:${cleanPhone})`);
 
-            const waPhone = cleanPhone.replace('+', '');
-            actions.push(`[💬 WhatsApp](https://wa.me/${waPhone})`);
+            // Format for WhatsApp: remove '+' and ensure it doesn't start with '0' if possible
+            // Note: If it starts with '0', wa.me usually fails without country code.
+            // We strip non-digits (and +) for the API.
+            let waPhone = cleanPhone.replace(/[^0-9]/g, '');
+
+            // Heuristic: If it starts with '0' (e.g. 077...), it likely needs a country code.
+            // Since we can't be 100% sure between Zim (+263) and SA (+27) without extra context,
+            // we will try to infer or just output it.
+            // However, the user wants a working link.
+            // If the scraped number came with a country code (e.g. +263...), we are good.
+            // If it came as 07..., we are stuck.
+            // BUT, we can include the pre-filled message which is very helpful.
+            const encodedMessage = encodeURIComponent(lead.message);
+            actions.push(`[💬 WhatsApp](https://api.whatsapp.com/send?phone=${waPhone}&text=${encodedMessage})`);
         }
 
         if (lead.email) {
