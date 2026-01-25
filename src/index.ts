@@ -7,6 +7,7 @@ import { discordDispatcher } from './services/discordDispatcher.js';
 import prisma from './lib/prisma.js';
 import { logger } from './lib/logger.js';
 import { config } from './config.js';
+import { cleanupDatabase } from './services/databaseCleanup.js';
 
 const LEADS_PER_COUNTRY = 25;
 
@@ -155,6 +156,10 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
 
 async function runEngine() {
     logger.info('--- Starting Lead Engine Cycle ---');
+
+    // Clean up old records first (14 days)
+    await cleanupDatabase();
+
     logger.info(`Target: ${LEADS_PER_COUNTRY} leads from ZW + ${LEADS_PER_COUNTRY} leads from SA`);
 
     let zwLeads = 0;
