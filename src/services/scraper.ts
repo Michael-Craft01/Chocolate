@@ -136,7 +136,7 @@ export class Scraper {
                 'div[jscontroller="AtSb"]', // Generic container often used
             ].join(',');
 
-            await page!.waitForSelector(resultSelector, { timeout: 30000 }).catch(() => {
+            await page!.waitForSelector(resultSelector, { timeout: 30000 }).catch(async () => {
                 logger.warn('No robust results found or selector timeout.');
                 // Save failure screenshot
                 await page!.screenshot({ path: path.join(debugDir, `selector_fail_${timestamp}.png`), fullPage: true });

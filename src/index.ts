@@ -75,6 +75,7 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
             // AI Enrichment
             const enrichment = await aiService.enrichLead(business.name, business.category ?? undefined);
 
+<<<<<<< HEAD
             // Generate Message with recommended solution
             const message = messageGenerator.generate(
                 business.name,
@@ -82,6 +83,10 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
                 enrichment.painPoint,
                 enrichment.recommendedSolution
             );
+=======
+            // Generate Message
+            const message = messageGenerator.generate(business.name, enrichment.industry, enrichment.painPoint, enrichment.suggestedSolution);
+>>>>>>> 6c9b1eb90b6e95f077b1c7bd634f5c5c35c78336
 
             // Save Lead
             const lead = await prisma.lead.create({
