@@ -1,26 +1,33 @@
 import { logger } from '../lib/logger.js';
 
 export class MessageGenerator {
-    generate(businessName: string, industry: string, painPoint: string): string {
+    generate(businessName: string, industry: string, painPoint: string, recommendedSolution?: string): string {
+        const solution = recommendedSolution || 'smart digital marketing';
+
         const message = `Hey there! 👋
 
-I'm Michael from LogicHQ — we help ${industry} businesses like yours get more customers through smart digital marketing.
+I just came across ${businessName} and I have to say — I love what you're doing in the ${industry} space! Seriously impressive.
 
-I came across ${businessName} and honestly, you've got something great going. But here's the thing — I noticed a gap that's costing you leads right now: ${painPoint.toLowerCase()}.
+I'm Michael from LogicHQ, and I've been helping businesses just like yours grow for years. It's what I'm passionate about.
 
-Most businesses in your space are leaving money on the table because of this. We've helped dozens of companies fix exactly that — and the results speak for themselves.
+While checking out your business, I noticed something that might be holding you back: ${painPoint.toLowerCase()}.
 
-I'm not here to sell you a dream. I'm here because I genuinely think we can make a difference for your business.
+The good news? This is exactly what we specialize in fixing. Here's what I'd recommend: **${solution}**
 
-Got 10 minutes this week? I'll show you exactly what's holding you back and how we can turn it around.
+I'd genuinely love to chat and share some ideas — no pressure, just a friendly conversation about how we can help you grow.
 
-Let's chat! 🚀
+Got a few minutes? I'm easy to reach!
 
 — Michael
 LogicHQ | www.logichq.tech`;
 
         logger.debug(`Generated message for ${businessName}`);
         return message;
+    }
+
+    // Short greeting for WhatsApp pre-fill (under 200 chars)
+    generateWhatsAppGreeting(businessName: string): string {
+        return `Hi! I'm Michael from LogicHQ. I came across ${businessName} and would love to chat about helping you grow your business. Do you have a few minutes?`;
     }
 }
 

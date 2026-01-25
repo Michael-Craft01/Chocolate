@@ -20,6 +20,33 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
         for (const business of businesses) {
             if (leadsFound >= targetCount) break;
 
+            // Validate phone number (must be at least 7 digits)
+            let validPhone = business.phone;
+            if (validPhone) {
+                // Formatting: Remove non-digits
+                let digits = validPhone.replace(/\D/g, '');
+
+                // Add country code if missing (assuming starts with 0 means local)
+                if (validPhone.trim().startsWith('0')) {
+                    if (queryData.country === 'ZW') {
+                        digits = '263' + digits.substring(1); // Replace leading 0 with 263
+                    } else if (queryData.country === 'SA') {
+                        digits = '27' + digits.substring(1); // Replace leading 0 with 27
+                    }
+                    validPhone = '+' + digits;
+                }
+
+                if (digits.length < 9) { // Increased min length due to country code
+                    validPhone = null;
+                }
+            }
+
+            // Skip leads without valid phone AND email - we need contact info
+            if (!validPhone && !business.email) {
+                logger.debug(`Skipping ${business.name} - no valid phone or email`);
+                continue;
+            }
+
             // Check if business already exists
             let dbBusiness = await prisma.business.findFirst({
                 where: { name: business.name },
@@ -30,7 +57,7 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
                     data: {
                         name: business.name,
                         website: business.website,
-                        phone: business.phone,
+                        phone: validPhone, // Use validated phone
                     },
                 });
             }
@@ -48,8 +75,13 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
             // AI Enrichment
             const enrichment = await aiService.enrichLead(business.name, business.category ?? undefined);
 
-            // Generate Message
-            const message = messageGenerator.generate(business.name, enrichment.industry, enrichment.painPoint);
+            // Generate Message with recommended solution
+            const message = messageGenerator.generate(
+                business.name,
+                enrichment.industry,
+                enrichment.painPoint,
+                enrichment.recommendedSolution
+            );
 
             // Save Lead
             const lead = await prisma.lead.create({
@@ -62,20 +94,23 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
             });
 
             // Dispatch to Discord
-            await discordDispatcher.dispatch({
+            const dispatched = await discordDispatcher.dispatch({
                 name: business.name,
                 industry: enrichment.industry,
                 painPoint: enrichment.painPoint,
+                recommendedSolution: enrichment.recommendedSolution,
                 message: message,
                 website: business.website,
-                phone: business.phone,
+                phone: validPhone,
             });
 
-            // Update lead as dispatched
-            await prisma.lead.update({
-                where: { id: lead.id },
-                data: { dispatchedAt: new Date() },
-            });
+            // Only mark as dispatched if Discord succeeded
+            if (dispatched) {
+                await prisma.lead.update({
+                    where: { id: lead.id },
+                    data: { dispatchedAt: new Date() },
+                });
+            }
 
             leadsFound++;
             logger.info(`Lead ${leadsFound}/${targetCount} processed: ${business.name} (${queryData.country})`);

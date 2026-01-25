@@ -6,6 +6,7 @@ export interface LeadPayload {
     name: string;
     industry: string;
     painPoint: string;
+    recommendedSolution?: string;
     message: string;
     website?: string | null;
     phone?: string | null;
@@ -13,67 +14,80 @@ export interface LeadPayload {
 }
 
 export class DiscordDispatcher {
+    private isValidWebsiteUrl(url: string | null | undefined): boolean {
+        if (!url) return false;
+        // Reject Google tracking URLs and very long URLs
+        if (url.includes('google.com/aclk')) return false;
+        if (url.includes('googleadservices.com')) return false;
+        if (url.length > 500) return false;
+        return url.startsWith('http://') || url.startsWith('https://');
+    }
+
     async dispatch(lead: LeadPayload) {
+        const truncate = (str: string, max: number) => str.length > max ? str.substring(0, max - 3) + '...' : str;
+
+        const validWebsite = this.isValidWebsiteUrl(lead.website) ? lead.website : null;
+
         const embed = {
-            title: '🚀 Michael, New Lead Found! Keep Your Headup!',
+            title: '🚀 Michael, New Lead Found!',
             color: 0x5865f2,
             fields: [
                 { name: 'Business', value: lead.name, inline: true },
                 { name: 'Industry', value: lead.industry, inline: true },
-                { name: 'Pain Point', value: lead.painPoint },
-                { name: 'Website', value: lead.website || 'N/A', inline: true },
+                { name: 'Pain Point', value: truncate(lead.painPoint, 500) },
+                { name: 'Recommended Solution', value: truncate(lead.recommendedSolution || 'Digital marketing strategy', 500) },
+                { name: 'Website', value: validWebsite || 'N/A', inline: true },
                 { name: 'Phone', value: lead.phone || 'N/A', inline: true },
                 { name: 'Email', value: lead.email || 'N/A', inline: true },
-                { name: 'Suggested Message', value: `\`\`\`${lead.message}\`\`\`` },
+                { name: 'Suggested Message', value: truncate(lead.message, 1000) },
             ],
             timestamp: new Date().toISOString(),
         };
 
         const components: any[] = [];
         const buttonRow = {
-            type: 1, // ActionRow
+            type: 1,
             components: [] as any[],
         };
 
-        // Phone Button
+        // WhatsApp button - direct to number, no pre-filled message
         if (lead.phone) {
-            const cleanPhone = lead.phone.replace(/[^0-9+]/g, '');
+            // Remove everything except numbers
+            const cleanPhone = lead.phone.replace(/\D/g, '');
 
-            // Only add buttons if phone number looks valid (at least 7 digits)
-            if (cleanPhone.replace(/\D/g, '').length >= 7) {
+            // Check if we have enough digits (at least 7)
+            if (cleanPhone.length >= 7) {
+                // Use wa.me short link format - often cleaner for Discord
+                // Ensure no leading '+' is double-added if cleanPhone has it (replace removes it)
+                const waUrl = `https://wa.me/${cleanPhone}`;
+
                 buttonRow.components.push({
                     type: 2, // Button
                     style: 5, // Link
-                    label: '📞 Call',
-                    url: `tel:${cleanPhone}`,
+                    label: 'WhatsApp', // Removed emoji just in case
+                    url: waUrl,
                 });
-
-                // WhatsApp Business Button - Use api.whatsapp.com for Business app
-                const waPhone = cleanPhone.replace('+', '');
-                const waMessage = encodeURIComponent(lead.message);
-                buttonRow.components.push({
-                    type: 2, // Button
-                    style: 5, // Link
-                    label: '💬 WhatsApp',
-                    url: `https://api.whatsapp.com/send?phone=${waPhone}&text=${waMessage}`,
-                });
+                logger.debug(`Added WhatsApp button: ${waUrl}`);
+            } else {
+                logger.debug(`Skipped WhatsApp button -- Phone: ${lead.phone}, Clean: ${cleanPhone}`);
             }
         }
 
-        // Email Button
-        if (lead.email) {
-            const subject = encodeURIComponent(`Growth Opportunity for ${lead.name}`);
-            const body = encodeURIComponent(lead.message);
+        // Website button - only valid URLs
+        if (validWebsite) {
             buttonRow.components.push({
                 type: 2, // Button
                 style: 5, // Link
-                label: '✉️ Email',
-                url: `mailto:${lead.email}?subject=${subject}&body=${body}`,
+                label: 'Website', // Removed emoji just in case
+                url: validWebsite,
             });
         }
 
         if (buttonRow.components.length > 0) {
             components.push(buttonRow);
+            logger.debug(`Components check: ${JSON.stringify(buttonRow.components)}`);
+        } else {
+            logger.debug('No buttons generated for this lead');
         }
 
         try {
@@ -82,8 +96,10 @@ export class DiscordDispatcher {
                 embeds: [embed],
                 components: components,
             });
+            return true;
         } catch (error) {
             logger.error({ err: error }, 'Discord Dispatch error:');
+            return false;
         }
     }
 }

@@ -5,6 +5,7 @@ import { logger } from '../lib/logger.js';
 export interface AIEnrichment {
     industry: string;
     painPoint: string;
+    recommendedSolution: string;
 }
 
 export class AIService {
@@ -18,13 +19,23 @@ export class AIService {
 
     async enrichLead(businessName: string, category?: string, description?: string): Promise<AIEnrichment> {
         const prompt = `
-      Classify the following business into a SPECIFIC industry (e.g., "Plumbing", "Digital Marketing", "Dentistry", not "General Business") and suggest a major pain point it likely faces regarding digital presence or operations.
-      Respond ONLY with a JSON object in this format: {"industry": "string", "painPoint": "string"}
+You are a digital marketing expert analyzing a business lead.
 
-      Business Name: ${businessName}
-      Category: ${category || 'Unknown'}
-      Description: ${description || 'N/A'}
-    `;
+Classify the following business into a SPECIFIC industry (e.g., "Plumbing", "Digital Marketing", "Dentistry", not "General Business").
+Identify their major pain point regarding digital presence or operations.
+Recommend a specific solution you can offer to solve this pain point.
+
+Respond ONLY with a JSON object in this exact format:
+{
+  "industry": "specific industry name",
+  "painPoint": "their main digital/operational challenge",
+  "recommendedSolution": "specific service or strategy you recommend"
+}
+
+Business Name: ${businessName}
+Category: ${category || 'Unknown'}
+Description: ${description || 'N/A'}
+`;
 
         try {
             logger.info(`Requesting AI enrichment for: ${businessName}`);
@@ -32,19 +43,20 @@ export class AIService {
             const response = await result.response;
             const text = response.text();
 
-            // Clean up the response (remove potential markdown blocks)
             const cleanedText = text.replace(/```json|```/g, '').trim();
             const parsed = JSON.parse(cleanedText);
 
             return {
                 industry: parsed.industry || 'General Business',
                 painPoint: parsed.painPoint || 'Low online visibility',
+                recommendedSolution: parsed.recommendedSolution || 'Digital marketing strategy',
             };
         } catch (error) {
             logger.error({ err: error }, 'AI Enrichment error:');
             return {
                 industry: 'General Business',
                 painPoint: 'Low online visibility',
+                recommendedSolution: 'Digital marketing strategy',
             };
         }
     }
