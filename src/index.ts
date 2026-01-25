@@ -8,12 +8,13 @@ import prisma from './lib/prisma.js';
 import { logger } from './lib/logger.js';
 import { config } from './config.js';
 
-async function runEngine() {
-    logger.info('--- Starting Lead Engine Cycle ---');
+const LEADS_PER_COUNTRY = 25;
+
+async function processLeadsForQuery(queryData: QueryData, targetCount: number): Promise<number> {
+    let leadsFound = 0;
 
     try {
-        const queryData = await queryGenerator.generateNextQuery();
-        if (!queryData) return;
+        logger.info(`Scraping for: "${queryData.query}" (${queryData.country})`);
 
         const businesses = await scraper.scrape(queryData.query);
 

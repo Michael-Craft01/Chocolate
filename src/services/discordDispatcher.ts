@@ -34,6 +34,7 @@ export class DiscordDispatcher {
             "Cha-ching! 💰",
         ];
         const randomQuote = funQuotes[Math.floor(Math.random() * funQuotes.length)];
+        const validWebsite = this.isValidWebsiteUrl(lead.website) ? lead.website : null;
 
         const embed = {
             title: '🔥 HOT LEAD INCOMING! DO NOT DROP! 🚀',
