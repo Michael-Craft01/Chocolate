@@ -1,5 +1,7 @@
 import { chromium, Browser, Page } from 'playwright';
 import { logger } from '../lib/logger.js';
+import path from 'path';
+import fs from 'fs';
 
 export interface ScrapedBusiness {
     name: string;
@@ -57,7 +59,7 @@ export class Scraper {
                 } catch (navError: any) {
                     attempts++;
                     logger.warn(`Navigation attempt ${attempts} failed: ${navError.message}`);
-                    if (page!) await page!.close().catch(() => {});
+                    if (page!) await page!.close().catch(() => { });
 
                     if (attempts >= maxAttempts) {
                         throw navError;
@@ -92,21 +94,28 @@ export class Scraper {
             try {
                 const placesLink = await page!.$('a:has-text("Maps")');
                 if (placesLink) {
-                     await placesLink.click();
-                     await page!.waitForTimeout(3000);
+                    await placesLink.click();
+                    await page!.waitForTimeout(3000);
                 } else if (!page!.url().includes('tbm=lcl')) {
-                     // Fallback: Force navigation to local results if not already there
-                     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
-                     await page!.goto(searchUrl, { waitUntil: 'domcontentloaded' });
+                    // Fallback: Force navigation to local results if not already there
+                    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
+                    await page!.goto(searchUrl, { waitUntil: 'domcontentloaded' });
                 }
             } catch (e) {
-                 logger.warn('Maps navigation failed, forcing URL: ' + (e as Error).message);
-                 const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
-                 await page!.goto(searchUrl, { waitUntil: 'domcontentloaded' });
+                logger.warn('Maps navigation failed, forcing URL: ' + (e as Error).message);
+                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=lcl`;
+                await page!.goto(searchUrl, { waitUntil: 'domcontentloaded' });
             }
 
             // Manual wait to allow dynamic content/scripts to settle
             await page!.waitForTimeout(5000);
+
+            // Debug: Save screenshot to see what Google returned
+            const debugDir = path.join(process.cwd(), 'debug');
+            if (!fs.existsSync(debugDir)) fs.mkdirSync(debugDir, { recursive: true });
+            const timestamp = Date.now();
+            await page!.screenshot({ path: path.join(debugDir, `google_page_${timestamp}.png`), fullPage: true });
+            logger.info(`Debug screenshot saved: debug/google_page_${timestamp}.png`);
 
             // Enhanced extraction logic
             // Try multiple selectors for result containers
@@ -119,8 +128,12 @@ export class Scraper {
                 'div.JsZOMb', // Another local pack container
             ].join(',');
 
-            await page!.waitForSelector(resultSelector, { timeout: 30000 }).catch(() => {
+            const selectorFound = await page!.waitForSelector(resultSelector, { timeout: 30000 }).catch(async () => {
                 logger.warn('No robust results found or selector timeout.');
+                // Save failure screenshot
+                await page!.screenshot({ path: path.join(debugDir, `selector_fail_${timestamp}.png`), fullPage: true });
+                logger.info(`Failure screenshot saved: debug/selector_fail_${timestamp}.png`);
+                return null;
             });
 
             const results = await page!.$$eval(resultSelector, (elements) => {
@@ -163,10 +176,13 @@ export class Scraper {
                         el.querySelector('.LrzPdb');
 
                     if (phoneEl?.textContent) {
-                        phone = phoneEl.textContent;
-                    } else {
+                        // Extract just the phone number, not the entire element text
+                        const phoneMatch = phoneEl.textContent.match(phoneRegex);
+                        phone = phoneMatch ? phoneMatch[0] : undefined;
+                    }
+
+                    if (!phone) {
                         // 2. Fallback: Search the full text of the card but try to extract just the number
-                        // This is riskier but catches cases where the number isn't in a nice span
                         const fullText = el.textContent || '';
                         const match = fullText.match(phoneRegex);
                         if (match) {
@@ -187,46 +203,46 @@ export class Scraper {
                         email,
                     };
                 }).filter(r => {
-                     // Filter out unknown names
-                     if (r.name === 'Unknown') return false;
+                    // Filter out unknown names
+                    if (r.name === 'Unknown') return false;
 
-                     // Filter out phones starting with +263 or 07
-                     if (r.phone) {
-                         // User logic: "leads that do not have phone numbers that start with +263/07"
-                         // Assuming this meant removing Zimbabwe specific personal numbers or just Zimbabwe leads in general.
-                         // However, since we are now searching in South Africa, +27 and 07... (SA mobile) are valid.
-                         // But if the user strictly said "no +263 or 07", I must obey the strict request for now,
-                         // UNLESS the query context implies we are in SA.
-                         // For safety and strict adherence to the previous prompt which might still apply:
-                         // We will block +263.
-                         // We will block 07 ONLY if it looks like a Zim mobile (071, 073, 077, 078) maybe?
-                         // But the user said "start with 07".
+                    // Filter out phones starting with +263 or 07
+                    if (r.phone) {
+                        // User logic: "leads that do not have phone numbers that start with +263/07"
+                        // Assuming this meant removing Zimbabwe specific personal numbers or just Zimbabwe leads in general.
+                        // However, since we are now searching in South Africa, +27 and 07... (SA mobile) are valid.
+                        // But if the user strictly said "no +263 or 07", I must obey the strict request for now,
+                        // UNLESS the query context implies we are in SA.
+                        // For safety and strict adherence to the previous prompt which might still apply:
+                        // We will block +263.
+                        // We will block 07 ONLY if it looks like a Zim mobile (071, 073, 077, 078) maybe?
+                        // But the user said "start with 07".
 
-                         // To support South Africa (where mobile starts with 07/08/06), we should probably RELAX the '07' rule
-                         // or make it specific to Zim (+263 7...).
-                         // However, if the phone string comes in as "07...", we can't tell country code easily without context.
+                        // To support South Africa (where mobile starts with 07/08/06), we should probably RELAX the '07' rule
+                        // or make it specific to Zim (+263 7...).
+                        // However, if the phone string comes in as "07...", we can't tell country code easily without context.
 
-                         // Let's assume the user wants to avoid +263.
-                         if (r.phone.startsWith('+263') || r.phone.startsWith('263')) {
-                             return false;
-                         }
+                        // Let's assume the user wants to avoid +263.
+                        if (r.phone.startsWith('+263') || r.phone.startsWith('263')) {
+                            return false;
+                        }
 
-                         // If the phone starts with 07, it's ambiguous (could be UK, SA, Zim).
-                         // If we are scraping 'Johannesburg', a '07' number is likely valid SA mobile.
-                         // If we are scraping 'Harare', a '07' number is likely Zim mobile.
-                         // Since we don't have location context easily here without passing it down,
-                         // I will relax the 07 filter slightly to allow it if it matches SA pattern length maybe?
-                         // Or just block it if it looks like Zim format?
-                         // Actually, sticking to the instruction "do not have phone numbers that start with +263/07" literally
-                         // would kill SA leads.
-                         // I will modify it to block +263.
-                         // I will BLOCK '07' only if it seems to be associated with a Zim entity, but that's hard.
-                         // I will comment out the 07 block for now to enable SA leads, as 07 is the main mobile prefix there.
-                         // If the user insists on blocking 07, they will get 0 SA mobile leads.
+                        // If the phone starts with 07, it's ambiguous (could be UK, SA, Zim).
+                        // If we are scraping 'Johannesburg', a '07' number is likely valid SA mobile.
+                        // If we are scraping 'Harare', a '07' number is likely Zim mobile.
+                        // Since we don't have location context easily here without passing it down,
+                        // I will relax the 07 filter slightly to allow it if it matches SA pattern length maybe?
+                        // Or just block it if it looks like Zim format?
+                        // Actually, sticking to the instruction "do not have phone numbers that start with +263/07" literally
+                        // would kill SA leads.
+                        // I will modify it to block +263.
+                        // I will BLOCK '07' only if it seems to be associated with a Zim entity, but that's hard.
+                        // I will comment out the 07 block for now to enable SA leads, as 07 is the main mobile prefix there.
+                        // If the user insists on blocking 07, they will get 0 SA mobile leads.
 
-                         // if (r.phone.startsWith('07')) { return false; }
-                     }
-                     return true;
+                        // if (r.phone.startsWith('07')) { return false; }
+                    }
+                    return true;
                 });
             });
 
