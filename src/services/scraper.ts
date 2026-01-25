@@ -17,7 +17,11 @@ export class Scraper {
     async init() {
         this.browser = await chromium.launch({
             headless: true,
-            args: ['--disable-blink-features=AutomationControlled'],
+            args: [
+                '--disable-blink-features=AutomationControlled',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+            ],
         });
     }
 
@@ -118,6 +122,8 @@ export class Scraper {
             });
 
             const results = await page!.$$eval(resultSelector, (elements) => {
+                // Debug log inside browser (will be invisible unless we listen to console, but good for future)
+                console.log(`Processing ${elements.length} elements`);
                 return elements.map((el) => {
                     const findByText = (tag: string, text: string) => {
                         const nodes = Array.from(el.querySelectorAll(tag));
