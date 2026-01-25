@@ -124,24 +124,25 @@ export class Scraper {
                 'div[data-cid]', // Elements with cid (common in local results)
                 '.rllt__details', // Map list details container
                 'div.JsZOMb', // Another local pack container
+                'div[jscontroller="AtSb"]', // Generic container often used
             ].join(',');
+
+            // Wait for network idle to ensure dynamic content is loaded
+            try {
+                await page!.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+            } catch (e) {}
 
             await page!.waitForSelector(resultSelector, { timeout: 30000 }).catch(() => {
                 logger.warn('No robust results found or selector timeout.');
             });
 
             const results = await page!.$$eval(resultSelector, (elements) => {
-                // Debug log inside browser (will be invisible unless we listen to console, but good for future)
+                // Debug log inside browser
                 console.log(`Processing ${elements.length} elements`);
                 return elements.map((el) => {
                     const findByText = (tag: string, text: string) => {
                         const nodes = Array.from(el.querySelectorAll(tag));
                         return nodes.find(n => n.textContent && n.textContent.includes(text));
-                    };
-
-                    const findByRegex = (tag: string, regex: RegExp) => {
-                        const nodes = Array.from(el.querySelectorAll(tag));
-                        return nodes.find(n => n.textContent && regex.test(n.textContent));
                     };
 
                     // Try different selectors for Name
@@ -151,39 +152,35 @@ export class Scraper {
                         el.querySelector('.V_P8d')?.textContent ||
                         'Unknown';
 
-                    // Try different selectors for Website
-                    const website =
-                        (el.querySelector('a[aria-label*="Website"]') as HTMLAnchorElement)?.href ||
-                        (findByText('a', 'Website') as HTMLAnchorElement)?.href ||
-                        (el.querySelector('a[href^="http"]:not([href*="google"])') as HTMLAnchorElement)?.href ||
-                        undefined;
+                    // Website Extraction: Search all anchors
+                    let website: string | undefined = undefined;
+                    const anchors = Array.from(el.querySelectorAll('a'));
+                    for (const a of anchors) {
+                        const href = a.href;
+                        if (!href) continue;
+                        if (href.startsWith('http') && !href.includes('google.com') && !href.includes('google.co')) {
+                            website = href;
+                            break; // Take the first external link
+                        }
+                    }
 
-                    // Try different selectors for Phone
-                    // Look for sequences of digits that resemble a phone number (at least 6 digits roughly)
-                    const phoneRegex = /(\+?\d[\d\s-]{5,}\d)/;
+                    // Phone Extraction
+                    const phoneRegex = /(\+?\d[\d\s-]{8,})/; // Slightly stricter to avoid dates, at least 8 digits
                     let phone: string | undefined = undefined;
 
-                    // 1. Try finding in specific known containers first
-                    const phoneEl =
-                        findByRegex('span', phoneRegex) ||
-                        findByRegex('div', phoneRegex) ||
-                        el.querySelector('.LrzPdb');
-
-                    if (phoneEl?.textContent) {
-                        phone = phoneEl.textContent;
-                    } else {
-                        // 2. Fallback: Search the full text of the card but try to extract just the number
-                        // This is riskier but catches cases where the number isn't in a nice span
-                        const fullText = el.textContent || '';
-                        const match = fullText.match(phoneRegex);
-                        if (match) {
-                            phone = match[0];
-                        }
+                    // 1. Search full text of the card
+                    const fullText = el.textContent || '';
+                    const match = fullText.match(phoneRegex);
+                    if (match) {
+                        // Filter out common false positives like dates (2020-...) if needed,
+                        // but 8+ digits check helps.
+                        // Also check if it looks like a year (starting with 19 or 20 and 4 digits... regex is 8+)
+                        phone = match[0].trim();
                     }
 
                     // Email Extraction
                     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
-                    const fullText = el.textContent || '';
+                    // Reuse fullText from above
                     const emailMatch = fullText.match(emailRegex);
                     const email = emailMatch ? emailMatch[0] : undefined;
 
