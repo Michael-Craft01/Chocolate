@@ -119,11 +119,11 @@ export class Scraper {
 
             // Debug: Save screenshot only if DEBUG_SCREENSHOTS is enabled (off by default in production)
             if (process.env.DEBUG_SCREENSHOTS === 'true') {
-                const debugDir = path.join(process.cwd(), 'debug');
+                const debugDir = path.join(process.cwd(), 'data', 'debug');
                 if (!fs.existsSync(debugDir)) fs.mkdirSync(debugDir, { recursive: true });
                 const timestamp = Date.now();
                 await page!.screenshot({ path: path.join(debugDir, `google_page_${timestamp}.png`), fullPage: true });
-                logger.info(`Debug screenshot saved: debug/google_page_${timestamp}.png`);
+                logger.info(`Debug screenshot saved: data/debug/google_page_${timestamp}.png`);
             }
 
             // Enhanced extraction logic
@@ -142,11 +142,11 @@ export class Scraper {
                 logger.warn('No robust results found or selector timeout.');
                 // Save failure screenshot only if debugging is enabled
                 if (process.env.DEBUG_SCREENSHOTS === 'true') {
-                    const debugDir = path.join(process.cwd(), 'debug');
+                    const debugDir = path.join(process.cwd(), 'data', 'debug');
                     if (!fs.existsSync(debugDir)) fs.mkdirSync(debugDir, { recursive: true });
                     const timestamp = Date.now();
                     await page!.screenshot({ path: path.join(debugDir, `selector_fail_${timestamp}.png`), fullPage: true });
-                    logger.info(`Failure screenshot saved: debug/selector_fail_${timestamp}.png`);
+                    logger.info(`Failure screenshot saved: data/debug/selector_fail_${timestamp}.png`);
                 }
                 return null;
             });
