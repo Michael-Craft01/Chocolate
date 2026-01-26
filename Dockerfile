@@ -1,5 +1,5 @@
 # Use the official Playwright image with matching version
-FROM mcr.microsoft.com/playwright:v1.50.0-noble
+FROM mcr.microsoft.com/playwright:v1.58.0-noble
 
 # Create app directory
 WORKDIR /usr/src/app
