@@ -4,21 +4,24 @@ FROM mcr.microsoft.com/playwright:v1.50.0-noble
 # Create app directory
 WORKDIR /usr/src/app
 
-# Install dependencies first (for better caching)
+# Install ALL dependencies (including dev for TypeScript compilation)
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy Prisma schema and generate client
 COPY prisma ./prisma/
 COPY prisma.config.ts ./
 RUN npx prisma generate
 
-# Copy source code
+# Copy source code and TypeScript config
 COPY src ./src/
 COPY tsconfig.json ./
+
+# Compile TypeScript to JavaScript
+RUN npx tsc
 
 # Create data directory for SQLite
 RUN mkdir -p data
 
-# Run the lead engine
-CMD ["npx", "ts-node", "--esm", "src/index.ts"]
+# Run the compiled JavaScript (not TypeScript)
+CMD ["node", "--experimental-specifier-resolution=node", "dist/index.js"]
