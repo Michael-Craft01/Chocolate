@@ -68,12 +68,37 @@ export class Scraper {
                 }
             }
 
-            // Handle "Accept all" cookies if it appears (Wrap in try-catch for safety)
+
+            // Handle cookie consent dialogs (EU GDPR) - try multiple language variants
             try {
-                const acceptBtn = await page!.$('button:has-text("Accept all")');
-                if (acceptBtn) await acceptBtn.click();
+                // Wait for consent dialog to appear (short timeout)
+                await page!.waitForSelector('button', { timeout: 3000 });
+
+                // Try multiple button texts used across EU regions
+                const consentButtons = [
+                    'button:has-text("Accept all")',           // English
+                    'button:has-text("Godkänn alla")',         // Swedish
+                    'button:has-text("Alle akzeptieren")',     // German
+                    'button:has-text("Accepter tout")',        // French
+                    'button:has-text("Accetta tutto")',        // Italian
+                    'button:has-text("Aceptar todo")',         // Spanish
+                    'button:has-text("Aceitar tudo")',         // Portuguese
+                    'button:has-text("Alles accepteren")',     // Dutch
+                    'button[id*="accept"]',                    // ID-based fallback
+                    'button[aria-label*="Accept"]',            // Aria-label fallback
+                ];
+
+                for (const selector of consentButtons) {
+                    const btn = await page!.$(selector);
+                    if (btn) {
+                        await btn.click();
+                        logger.info('Clicked cookie consent button');
+                        await page!.waitForTimeout(1000);
+                        break;
+                    }
+                }
             } catch (e) {
-                logger.debug('Cookie button interaction failed or not needed: ' + (e as Error).message);
+                logger.debug('Cookie consent handling: ' + (e as Error).message);
             }
 
             // Type the query
