@@ -7,5 +7,6 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - DISCORD_WEBHOOK=${DISCORD_WEBHOOK}
       - DATABASE_URL=file:/usr/src/app/data/dev.db
+      - DEBUG_SCREENSHOTS=true
     volumes:
       - ./data:/usr/src/app/data # This keeps your SQLite DB safe even if the container restarts
