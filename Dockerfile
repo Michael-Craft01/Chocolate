@@ -23,5 +23,5 @@ RUN npx tsc
 # Create data directory for SQLite
 RUN mkdir -p data
 
-# Run the compiled JavaScript (not TypeScript)
-CMD ["node", "--experimental-specifier-resolution=node", "dist/index.js"]
+# Run database migrations then start the app
+CMD ["sh", "-c", "npx prisma db push && node --experimental-specifier-resolution=node dist/index.js"]
