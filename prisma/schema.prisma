@@ -24,6 +24,10 @@ model Business {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   leads       Lead[]
+
+  @@index([name])
+  @@index([phone])
+  @@index([website])
 }
 
 model Lead {

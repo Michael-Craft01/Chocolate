@@ -1,0 +1,43 @@
+<%- include('partials/header') %>
+    <h1>All Leads</h1>
+    <div class="card">
+        <table class="glass-table">
+            <thead>
+                <tr>
+                    <th>Business</th>
+                    <th>Website</th>
+                    <th>Phone</th>
+                    <th>Industry</th>
+                    <th>Dispatched</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% leads.forEach(lead => { %>
+                <tr>
+                    <td><%= lead.business.name %></td>
+                    <td>
+                        <% if (lead.business.website && (lead.business.website.startsWith('http://') || lead.business.website.startsWith('https://'))) { %>
+                            <a href="<%= lead.business.website %>" target="_blank">Link</a>
+                        <% } else { %>
+                            -
+                        <% } %>
+                    </td>
+                    <td><%= lead.business.phone || '-' %></td>
+                    <td><%= lead.industry %></td>
+                    <td><%= lead.dispatchedAt ? '✅' : '⏳' %></td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <% if (pagination.page > 1) { %>
+                <a href="/leads?page=<%= pagination.page - 1 %>">Previous</a>
+            <% } %>
+            <span>Page <%= pagination.page %> of <%= pagination.totalPages %></span>
+            <% if (pagination.page < pagination.totalPages) { %>
+                <a href="/leads?page=<%= pagination.page + 1 %>">Next</a>
+            <% } %>
+        </div>
+    </div>
+<%- include('partials/footer') %>
