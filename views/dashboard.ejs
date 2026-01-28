@@ -1,0 +1,41 @@
+<%- include('partials/header') %>
+    <h1>Dashboard</h1>
+    <div class="stats-grid">
+        <div class="card stat-card">
+            <h3>Total Leads</h3>
+            <p class="stat-number"><%= stats.totalLeads %></p>
+        </div>
+        <div class="card stat-card">
+            <h3>Leads Today</h3>
+            <p class="stat-number"><%= stats.leadsToday %></p>
+        </div>
+        <div class="card stat-card">
+            <h3>Businesses Scraped</h3>
+            <p class="stat-number"><%= stats.totalBusinesses %></p>
+        </div>
+    </div>
+
+    <h2>Recent Leads</h2>
+    <div class="card">
+        <table class="glass-table">
+            <thead>
+                <tr>
+                    <th>Business</th>
+                    <th>Industry</th>
+                    <th>Pain Point</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% recentLeads.forEach(lead => { %>
+                <tr>
+                    <td><%= lead.business.name %></td>
+                    <td><%= lead.industry %></td>
+                    <td><%= lead.painPoint %></td>
+                    <td><%= lead.createdAt.toLocaleDateString() %></td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+<%- include('partials/footer') %>

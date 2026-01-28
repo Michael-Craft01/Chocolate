@@ -8,6 +8,7 @@ import prisma from './lib/prisma.js';
 import { logger } from './lib/logger.js';
 import { config } from './config.js';
 import { cleanupDatabase } from './services/databaseCleanup.js';
+import { startServer } from './web/server.js';
 
 const LEADS_PER_COUNTRY = 25;
 
@@ -17,7 +18,7 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
     try {
         logger.info(`Scraping for: "${queryData.query}" (${queryData.country})`);
 
-        const businesses = await scraper.scrape(queryData.query);
+        const businesses = await scraper.scrape(queryData.query, queryData.country);
 
         for (const business of businesses) {
             if (leadsFound >= targetCount) break;
@@ -203,5 +204,6 @@ cron.schedule(config.CRON_SCHEDULE, () => {
 
 // Run immediately on start
 runEngine();
+startServer();
 
 logger.info(`Lead Engine started. Schedule: ${config.CRON_SCHEDULE}`);
