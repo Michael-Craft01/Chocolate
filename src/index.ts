@@ -203,7 +203,16 @@ cron.schedule(config.CRON_SCHEDULE, () => {
 });
 
 // Run immediately on start
-runEngine();
-startServer();
+(async () => {
+    try {
+        // Enable WAL mode for concurrency
+        await prisma.$executeRawUnsafe('PRAGMA journal_mode = WAL;');
+        logger.info('Database WAL mode enabled');
+    } catch (e) {
+        logger.warn({ err: e }, 'Failed to set WAL mode');
+    }
 
-logger.info(`Lead Engine started. Schedule: ${config.CRON_SCHEDULE}`);
+    runEngine();
+    startServer();
+    logger.info(`Lead Engine started. Schedule: ${config.CRON_SCHEDULE}`);
+})();

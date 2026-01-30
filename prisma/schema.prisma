@@ -39,6 +39,9 @@ model Lead {
   suggestedMessage String
   dispatchedAt     DateTime?
   createdAt        DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([businessId])
 }
 
 model QueryHistory {
