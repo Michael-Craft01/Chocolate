@@ -1,4 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
+const { PrismaClient } = require('@prisma/client');
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { config } from '../config.js';
 
