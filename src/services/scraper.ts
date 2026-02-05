@@ -28,6 +28,26 @@ export class Scraper {
     }
 
     async scrape(query: string, country: string = 'ZW'): Promise<ScrapedBusiness[]> {
+        // DRY RUN: Return mock data if enabled
+        if (process.env.DRY_RUN === 'true') {
+            logger.info(`[DRY RUN] Skipping actual scrape for: "${query}"`);
+            return [
+                {
+                    name: `Mock Business ${Math.floor(Math.random() * 1000)}`,
+                    website: 'https://example.com',
+                    phone: country === 'ZW' ? '+263771234567' : '+27112345678',
+                    category: 'Mock Category',
+                    email: 'mock@example.com'
+                },
+                {
+                    name: `Another Mock ${Math.floor(Math.random() * 1000)}`,
+                    website: 'https://test-site.co.zw',
+                    phone: country === 'ZW' ? '+263719876543' : '+27829876543',
+                    category: 'Test Category'
+                }
+            ];
+        }
+
         // Ensure browser is healthy
         if (!this.browser || !this.browser.isConnected()) {
             if (this.browser) await this.close();
@@ -271,13 +291,13 @@ export class Scraper {
                         const cleanPhone = r.phone.replace(/\s/g, '');
 
                         if (country === 'SA') {
-                             // For South Africa, we allow 07/08/06 (Mobile/VoIP) and +27
-                             // We block +263 to ensure we don't get Zim businesses if they appear
-                             if (cleanPhone.startsWith('+263') || cleanPhone.startsWith('263')) return false;
+                            // For South Africa, we allow 07/08/06 (Mobile/VoIP) and +27
+                            // We block +263 to ensure we don't get Zim businesses if they appear
+                            if (cleanPhone.startsWith('+263') || cleanPhone.startsWith('263')) return false;
                         } else if (country === 'ZW') {
-                             // For Zimbabwe, we allow +263
-                             // We exclude SA numbers
-                             if (cleanPhone.startsWith('+27') || cleanPhone.startsWith('27')) return false;
+                            // For Zimbabwe, we allow +263
+                            // We exclude SA numbers
+                            if (cleanPhone.startsWith('+27') || cleanPhone.startsWith('27')) return false;
                         }
                     }
                     return true;

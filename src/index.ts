@@ -198,12 +198,23 @@ async function runEngine() {
 }
 
 // Schedule the job
-cron.schedule(config.CRON_SCHEDULE, () => {
+if (process.env.RUN_ONCE === 'true') {
+    logger.info('RUN_ONCE enabled: Executing immediate cycle and exiting...');
+    runEngine().then(() => {
+        logger.info('One-time execution complete. Exiting.');
+        process.exit(0);
+    }).catch(err => {
+        logger.error({ err }, 'One-time execution failed.');
+        process.exit(1);
+    });
+} else {
+    cron.schedule(config.CRON_SCHEDULE, () => {
+        runEngine();
+    });
+
+    // Run immediately on start
     runEngine();
-});
+    startServer();
 
-// Run immediately on start
-runEngine();
-startServer();
-
-logger.info(`Lead Engine started. Schedule: ${config.CRON_SCHEDULE}`);
+    logger.info(`Lead Engine started. Schedule: ${config.CRON_SCHEDULE}`);
+}

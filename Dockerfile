@@ -1,27 +1,41 @@
-# Use the official Playwright image with matching version
-FROM mcr.microsoft.com/playwright:v1.58.0-noble
+# Build Stage
+FROM node:20-bookworm-slim AS builder
 
-# Create app directory
 WORKDIR /usr/src/app
 
-# Install ALL dependencies (including dev for TypeScript compilation)
 COPY package*.json ./
 RUN npm ci
 
-# Copy Prisma schema and generate client
 COPY prisma ./prisma/
 COPY prisma.config.ts ./
 RUN npx prisma generate
 
-# Copy source code and TypeScript config
 COPY src ./src/
 COPY tsconfig.json ./
-
-# Compile TypeScript to JavaScript
 RUN npx tsc
 
-# Create data directory for SQLite
+# Production Stage
+FROM mcr.microsoft.com/playwright:v1.58.0-noble
+
+WORKDIR /usr/src/app
+
+# Copy package files for production install
+COPY package*.json ./
+
+# Copy Prisma schema (Required for db push)
+COPY prisma ./prisma/
+
+# Install only production dependencies
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# Copy verified artifacts from builder
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /usr/src/app/node_modules/@prisma ./node_modules/@prisma
+
+# Create data directory
 RUN mkdir -p data
 
 # Run database migrations then start the app
-CMD ["sh", "-c", "npx prisma db push && node --experimental-specifier-resolution=node dist/index.js"]
+CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]

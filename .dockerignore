@@ -12,7 +12,6 @@ debug/
 *.md
 
 # Development files
-.env
 *.log
 *.ts.map
 
