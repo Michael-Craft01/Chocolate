@@ -196,114 +196,100 @@ export class Scraper {
                 return null;
             });
 
-            // Use evaluate instead of $$eval to avoid tsx serialization issues with __name
-            const results = await page!.evaluate(({ resultSelector, country }) => {
-                console.log(`Processing elements for country: ${country}`);
-                const elements = Array.from(document.querySelectorAll(resultSelector));
+            // Use string-based evaluate to completely bypass tsx transpilation
+            const extractionScript = `
+                (function(args) {
+                    var resultSelector = args.resultSelector;
+                    var country = args.country;
+                    console.log('Processing elements for country: ' + country);
+                    var elements = Array.from(document.querySelectorAll(resultSelector));
+                    
+                    return elements.map(function(el) {
+                        // Try different selectors for Name
+                        var rawName =
+                            (el.querySelector('div[role="heading"]') && el.querySelector('div[role="heading"]').textContent) ||
+                            (el.querySelector('.OSrXXb') && el.querySelector('.OSrXXb').textContent) ||
+                            (el.querySelector('.V_P8d') && el.querySelector('.V_P8d').textContent) ||
+                            'Unknown';
 
-                return elements.map((el) => {
-                    const findByText = (tag, text) => {
-                        const nodes = Array.from(el.querySelectorAll(tag));
-                        return nodes.find(n => n.textContent && n.textContent.includes(text));
-                    };
-
-                    const findByRegex = (tag, regex) => {
-                        const nodes = Array.from(el.querySelectorAll(tag));
-                        return nodes.find(n => n.textContent && new RegExp(regex).test(n.textContent));
-                    };
-
-                    // Try different selectors for Name
-                    let rawName =
-                        el.querySelector('div[role="heading"]')?.textContent ||
-                        el.querySelector('.OSrXXb')?.textContent ||
-                        el.querySelector('.V_P8d')?.textContent ||
-                        'Unknown';
-
-                    // Clean the name - remove Google UI junk
-                    const cleanName = (name) => {
-                        return name
+                        // Clean the name - remove Google UI junk
+                        var name = rawName
                             .replace(/My Ad Centre/gi, '')
-                            .replace(/Ad\s*·/gi, '')
+                            .replace(/Ad\\s*·/gi, '')
                             .replace(/Sponsored/gi, '')
-                            .replace(/\s{2,}/g, ' ')
+                            .replace(/\\s{2,}/g, ' ')
                             .trim();
-                    };
 
-                    const name = cleanName(rawName);
-
-                    // Website Extraction: Search all anchors
-                    let website = undefined;
-                    const anchors = Array.from(el.querySelectorAll('a'));
-                    for (const a of anchors) {
-                        const href = a.href;
-                        if (!href) continue;
-                        if (href.startsWith('http') && !href.includes('google.com') && !href.includes('google.co')) {
-                            website = href;
-                            break; // Take the first external link
+                        // Website Extraction: Search all anchors
+                        var website = undefined;
+                        var anchors = Array.from(el.querySelectorAll('a'));
+                        for (var i = 0; i < anchors.length; i++) {
+                            var href = anchors[i].href;
+                            if (!href) continue;
+                            if (href.indexOf('http') === 0 && href.indexOf('google.com') === -1 && href.indexOf('google.co') === -1) {
+                                website = href;
+                                break;
+                            }
                         }
-                    }
 
-                    // Phone Extraction
-                    const phoneRegex = /(\+?\d[\d\s-]{8,})/; // Slightly stricter to avoid dates, at least 8 digits
-                    let phone = undefined;
+                        // Phone Extraction
+                        var phoneRegex = /(\\+?\\d[\\d\\s-]{8,})/;
+                        var phone = undefined;
 
-                    // 1. Try finding in specific known containers first
-                    // We need to reconstruct regex logic since we can't pass regex objects easily if we used them in findByRegex
-                    // But here we are inside evaluate, so we can just use new RegExp or literals if simple
-                    const phoneEl =
-                        Array.from(el.querySelectorAll('span')).find(n => n.textContent && /(\+?\d[\d\s-]{8,})/.test(n.textContent)) ||
-                        Array.from(el.querySelectorAll('div')).find(n => n.textContent && /(\+?\d[\d\s-]{8,})/.test(n.textContent)) ||
-                        el.querySelector('.LrzPdb');
-
-                    if (phoneEl?.textContent) {
-                        // Extract just the phone number, not the entire element text
-                        const phoneMatch = phoneEl.textContent.match(phoneRegex);
-                        phone = phoneMatch ? phoneMatch[0] : undefined;
-                    }
-
-                    if (!phone) {
-                        // 2. Search full text of the card
-                        const fullText = el.textContent || '';
-                        const match = fullText.match(phoneRegex);
-                        if (match) {
-                            phone = match[0].trim();
+                        // Try finding in span/div elements
+                        var spans = Array.from(el.querySelectorAll('span'));
+                        for (var j = 0; j < spans.length; j++) {
+                            if (spans[j].textContent && phoneRegex.test(spans[j].textContent)) {
+                                var match = spans[j].textContent.match(phoneRegex);
+                                if (match) { phone = match[0]; break; }
+                            }
                         }
-                    }
-
-                    // Email Extraction
-                    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
-                    // Reuse fullText from above - ensure it is defined
-                    const fullTextForEmail = el.textContent || '';
-                    const emailMatch = fullTextForEmail.match(emailRegex);
-                    const email = emailMatch ? emailMatch[0] : undefined;
-
-                    return {
-                        name: name.trim(),
-                        website,
-                        phone: phone?.trim(),
-                        email,
-                    };
-                }).filter(r => {
-                    // Filter out unknown names
-                    if (r.name === 'Unknown') return false;
-
-                    // Filter out phones based on country rules
-                    if (r.phone) {
-                        const cleanPhone = r.phone.replace(/\s/g, '');
-
-                        if (country === 'SA') {
-                            // For South Africa, we allow 07/08/06 (Mobile/VoIP) and +27
-                            // We block +263 to ensure we don't get Zim businesses if they appear
-                            if (cleanPhone.startsWith('+263') || cleanPhone.startsWith('263')) return false;
-                        } else if (country === 'ZW') {
-                            // For Zimbabwe, we allow +263
-                            // We exclude SA numbers
-                            if (cleanPhone.startsWith('+27') || cleanPhone.startsWith('27')) return false;
+                        
+                        if (!phone) {
+                            var divs = Array.from(el.querySelectorAll('div'));
+                            for (var k = 0; k < divs.length; k++) {
+                                if (divs[k].textContent && phoneRegex.test(divs[k].textContent)) {
+                                    var match2 = divs[k].textContent.match(phoneRegex);
+                                    if (match2) { phone = match2[0]; break; }
+                                }
+                            }
                         }
-                    }
-                    return true;
-                });
-            }, { resultSelector, country });
+
+                        if (!phone) {
+                            var fullText = el.textContent || '';
+                            var fullMatch = fullText.match(phoneRegex);
+                            if (fullMatch) { phone = fullMatch[0].trim(); }
+                        }
+
+                        // Email Extraction
+                        var emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/;
+                        var fullTextForEmail = el.textContent || '';
+                        var emailMatch = fullTextForEmail.match(emailRegex);
+                        var email = emailMatch ? emailMatch[0] : undefined;
+
+                        return {
+                            name: name.trim(),
+                            website: website,
+                            phone: phone ? phone.trim() : undefined,
+                            email: email,
+                        };
+                    }).filter(function(r) {
+                        if (r.name === 'Unknown') return false;
+
+                        if (r.phone) {
+                            var cleanPhone = r.phone.replace(/\\s/g, '');
+                            if (country === 'SA') {
+                                if (cleanPhone.indexOf('+263') === 0 || cleanPhone.indexOf('263') === 0) return false;
+                            } else if (country === 'ZW') {
+                                if (cleanPhone.indexOf('+27') === 0 || cleanPhone.indexOf('27') === 0) return false;
+                            }
+                        }
+                        return true;
+                    });
+                })(arguments[0])
+            `;
+
+            const results = await page!.evaluate(extractionScript, { resultSelector, country }) as ScrapedBusiness[];
 
             logger.info(`Found ${results.length} potential leads.`);
             return results;
