@@ -4,8 +4,8 @@
   "description": "Headless Lead Engine",
   "type": "module",
   "scripts": {
-    "start": "node --loader ts-node/esm src/index.ts",
-    "dev": "node --loader ts-node/esm src/index.ts",
+    "start": "tsx src/index.ts",
+    "dev": "tsx src/index.ts",
     "build": "tsc",
     "generate": "prisma generate",
     "postinstall": "npx playwright install chromium"
@@ -19,6 +19,7 @@
     "@types/node": "^25.2.0",
     "@types/node-cron": "^3.0.11",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {

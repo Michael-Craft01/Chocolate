@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import cron from 'node-cron';
 import { queryGenerator, QueryData } from './services/queryGenerator.js';
 import { scraper } from './services/scraper.js';

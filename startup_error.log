@@ -1,0 +1,19 @@
+
+> chocolate@1.0.0 dev
+> tsx src/index.ts
+
+C:\Users\ragum\OneDrive\Documents\Chocolate\node_modules\@prisma\client\src\runtime\utils\validatePrismaClientOptions.ts:229
+    throw new PrismaClientConstructorValidationError(
+          ^
+
+PrismaClientConstructorValidationError: Using engine type "client" requires either "adapter" or "accelerateUrl" to be provided to PrismaClient constructor.
+Read more at https://pris.ly/d/client-constructor
+    at validateDependentOptions (C:\Users\ragum\OneDrive\Documents\Chocolate\node_modules\@prisma\client\src\runtime\utils\validatePrismaClientOptions.ts:229:11)
+    at validatePrismaClientOptions (C:\Users\ragum\OneDrive\Documents\Chocolate\node_modules\@prisma\client\src\runtime\utils\validatePrismaClientOptions.ts:246:3)
+    at new t (C:\Users\ragum\OneDrive\Documents\Chocolate\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:281:7)
+    at <anonymous> (C:\Users\ragum\OneDrive\Documents\Chocolate\src\lib\prisma.ts:4:16)
+    at ModuleJob.run (node:internal/modules/esm/module_job:413:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:660:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.13.0
