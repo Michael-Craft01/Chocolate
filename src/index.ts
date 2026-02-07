@@ -92,6 +92,12 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
                 });
             }
 
+            // Safeguard: If business still doesn't exist, skip this lead
+            if (!dbBusiness || !dbBusiness.id) {
+                logger.warn(`Failed to create/find business record for ${business.name}, skipping lead`);
+                continue;
+            }
+
             // Check if we already processed this business as a lead RECENTLY
             const existingLead = await prisma.lead.findFirst({
                 where: { businessId: dbBusiness.id },

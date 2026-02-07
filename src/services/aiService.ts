@@ -26,36 +26,40 @@ export class AIService {
     }
 
     async enrichLead(businessName: string, category?: string, description?: string): Promise<AIEnrichment> {
+        // Add randomization hint to encourage varied responses
+        const painPointHint = Math.floor(Math.random() * 5) + 1;
+        const solutionHint = Math.floor(Math.random() * 12) + 1;
+
         const prompt = `
 You are a PropTech strategist analyzing real estate businesses in Zimbabwe and South Africa.
+IMPORTANT: Vary your responses. For this business, focus on pain point area #${painPointHint} and solution type #${solutionHint}.
 
-Identify ONE primary pain point from this list that most likely applies to this business:
-- No online booking for property viewings
-- Properties sitting on the market too long (slow sales cycle)
-- Competitors have better online presence
-- Manual WhatsApp follow-ups taking too much time
-- No CRM to track buyer/tenant inquiries
+Pain Points (choose ONE based on what fits this specific business):
+1. No online booking for property viewings
+2. Properties sitting on the market too long (slow sales cycle)
+3. Competitors have better online presence
+4. Manual WhatsApp follow-ups taking too much time
+5. No CRM to track buyer/tenant inquiries
 
-Then suggest ONE high-value tech solution from this list:
-- Property CRM System (lead & deal tracking)
-- WhatsApp Automation (instant inquiry response)
-- Professional Property Portal/Website
-- Virtual Tour Platform (3D/360 tours)
-- Agent Performance Dashboard
-- AI-Powered Property Valuation (AVM)
-- Automated Tenant Screening & Credit Scoring
-- Digital Lease Management & E-signatures
-- Smart Property Management (Rent collection & Maintenance)
-- Predictive Market Analytics
-- Blockchain-based Title Deed Verification
-- IoT-enabled Smart Building Management
+Solutions (choose ONE that solves the pain point):
+1. Property CRM System (lead & deal tracking)
+2. WhatsApp Automation (instant inquiry response)
+3. Professional Property Portal/Website
+4. Virtual Tour Platform (3D/360 tours)
+5. Agent Performance Dashboard
+6. AI-Powered Property Valuation (AVM)
+7. Automated Tenant Screening & Credit Scoring
+8. Digital Lease Management & E-signatures
+9. Smart Property Management (Rent collection & Maintenance)
+10. Predictive Market Analytics
+11. Blockchain-based Title Deed Verification
+12. IoT-enabled Smart Building Management
 
-Respond ONLY with a JSON object in this format:
-{"industry": "Real Estate", "painPoint": "Specific pain point from list", "recommendedSolution": "Specific solution from list"}
+Respond ONLY with a JSON object:
+{"industry": "Real Estate", "painPoint": "Your chosen pain point", "recommendedSolution": "Your chosen solution"}
 
-Business Name: ${businessName}
+Business: ${businessName}
 Category: ${category || 'Real Estate'}
-Description: ${description || 'N/A'}
 `;
 
         try {
