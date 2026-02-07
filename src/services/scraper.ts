@@ -198,9 +198,9 @@ export class Scraper {
 
             // Use string-based evaluate to completely bypass tsx transpilation
             const extractionScript = `
-                (function(args) {
-                    var resultSelector = args.resultSelector;
-                    var country = args.country;
+                (function() {
+                    var resultSelector = ${JSON.stringify(resultSelector)};
+                    var country = ${JSON.stringify(country)};
                     console.log('Processing elements for country: ' + country);
                     var elements = Array.from(document.querySelectorAll(resultSelector));
                     
@@ -286,10 +286,10 @@ export class Scraper {
                         }
                         return true;
                     });
-                })(arguments[0])
+                })()
             `;
 
-            const results = await page!.evaluate(extractionScript, { resultSelector, country }) as ScrapedBusiness[];
+            const results = await page!.evaluate(extractionScript) as ScrapedBusiness[];
 
             logger.info(`Found ${results.length} potential leads.`);
             return results;
