@@ -196,18 +196,20 @@ export class Scraper {
                 return null;
             });
 
-            const results = await page!.$$eval(resultSelector, function (elements, country) {
-                // Debug log inside browser
-                console.log(`Processing ${elements.length} elements for country: ${country}`);
+            // Use evaluate instead of $$eval to avoid tsx serialization issues with __name
+            const results = await page!.evaluate(({ resultSelector, country }) => {
+                console.log(`Processing elements for country: ${country}`);
+                const elements = Array.from(document.querySelectorAll(resultSelector));
+
                 return elements.map((el) => {
-                    const findByText = (tag: string, text: string) => {
+                    const findByText = (tag, text) => {
                         const nodes = Array.from(el.querySelectorAll(tag));
                         return nodes.find(n => n.textContent && n.textContent.includes(text));
                     };
 
-                    const findByRegex = (tag: string, regex: RegExp) => {
+                    const findByRegex = (tag, regex) => {
                         const nodes = Array.from(el.querySelectorAll(tag));
-                        return nodes.find(n => n.textContent && regex.test(n.textContent));
+                        return nodes.find(n => n.textContent && new RegExp(regex).test(n.textContent));
                     };
 
                     // Try different selectors for Name
@@ -218,7 +220,7 @@ export class Scraper {
                         'Unknown';
 
                     // Clean the name - remove Google UI junk
-                    const cleanName = (name: string): string => {
+                    const cleanName = (name) => {
                         return name
                             .replace(/My Ad Centre/gi, '')
                             .replace(/Ad\s*·/gi, '')
@@ -230,7 +232,7 @@ export class Scraper {
                     const name = cleanName(rawName);
 
                     // Website Extraction: Search all anchors
-                    let website: string | undefined = undefined;
+                    let website = undefined;
                     const anchors = Array.from(el.querySelectorAll('a'));
                     for (const a of anchors) {
                         const href = a.href;
@@ -243,12 +245,14 @@ export class Scraper {
 
                     // Phone Extraction
                     const phoneRegex = /(\+?\d[\d\s-]{8,})/; // Slightly stricter to avoid dates, at least 8 digits
-                    let phone: string | undefined = undefined;
+                    let phone = undefined;
 
                     // 1. Try finding in specific known containers first
+                    // We need to reconstruct regex logic since we can't pass regex objects easily if we used them in findByRegex
+                    // But here we are inside evaluate, so we can just use new RegExp or literals if simple
                     const phoneEl =
-                        findByRegex('span', phoneRegex) ||
-                        findByRegex('div', phoneRegex) ||
+                        Array.from(el.querySelectorAll('span')).find(n => n.textContent && /(\+?\d[\d\s-]{8,})/.test(n.textContent)) ||
+                        Array.from(el.querySelectorAll('div')).find(n => n.textContent && /(\+?\d[\d\s-]{8,})/.test(n.textContent)) ||
                         el.querySelector('.LrzPdb');
 
                     if (phoneEl?.textContent) {
@@ -262,9 +266,6 @@ export class Scraper {
                         const fullText = el.textContent || '';
                         const match = fullText.match(phoneRegex);
                         if (match) {
-                            // Filter out common false positives like dates (2020-...) if needed,
-                            // but 8+ digits check helps.
-                            // Also check if it looks like a year (starting with 19 or 20 and 4 digits... regex is 8+)
                             phone = match[0].trim();
                         }
                     }
@@ -302,7 +303,7 @@ export class Scraper {
                     }
                     return true;
                 });
-            }, country);
+            }, { resultSelector, country });
 
             logger.info(`Found ${results.length} potential leads.`);
             return results;
