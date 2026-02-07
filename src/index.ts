@@ -13,6 +13,18 @@ import { startServer } from './web/server.js';
 
 const LEADS_PER_COUNTRY = 25;
 
+/**
+ * Score a lead based on contact info completeness
+ * @returns 0-3 score (phone, email, website each add 1 point)
+ */
+function scoreLead(lead: { phone?: string | null; email?: string | null; website?: string | null }): number {
+    let score = 0;
+    if (lead.phone) score++;
+    if (lead.email) score++;
+    if (lead.website) score++;
+    return score;
+}
+
 async function processLeadsForQuery(queryData: QueryData, targetCount: number): Promise<number> {
     let leadsFound = 0;
 
@@ -126,7 +138,13 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
                 },
             });
 
-            // Dispatch to Discord
+            // Calculate lead score and tier
+            const leadScore = scoreLead({ phone: validPhone, email: business.email, website: business.website });
+            const tier: 'hot' | 'warm' = leadScore >= 2 ? 'hot' : 'warm';
+
+            logger.debug(`Lead score for ${business.name}: ${leadScore}/3 (${tier})`);
+
+            // Dispatch to Discord with tier
             const dispatched = await discordDispatcher.dispatch({
                 name: business.name,
                 industry: enrichment.industry,
@@ -135,8 +153,9 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
                 message: message,
                 website: business.website,
                 phone: validPhone,
+                email: business.email,
                 location: `${queryData.location}, ${queryData.country}`,
-            });
+            }, tier);
 
             // Only mark as dispatched if Discord succeeded
             if (dispatched) {
@@ -147,7 +166,7 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
             }
 
             leadsFound++;
-            logger.info(`Lead ${leadsFound}/${targetCount} processed: ${business.name} (${queryData.country})`);
+            logger.info(`Lead ${leadsFound}/${targetCount} processed: ${business.name} [${tier.toUpperCase()}] (${queryData.country})`);
         }
     } catch (error) {
         logger.error({ err: error }, `Error processing query: ${queryData.query}`);

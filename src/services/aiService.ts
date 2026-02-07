@@ -19,24 +19,28 @@ export class AIService {
 
     async enrichLead(businessName: string, category?: string, description?: string): Promise<AIEnrichment> {
         const prompt = `
-      You are an expert Software Engineer, AI Engineer, and Market Strategist.
-      Analyze the following business and identify a High-Value Operational or Strategic Pain Point (beyond just "visibility").
-      Focus on scaling bottlenecks, manual process inefficiencies, customer engagement friction, or data management issues.
+You are a PropTech strategist analyzing real estate businesses in Zimbabwe and South Africa.
 
-      Then, suggest a specific, high-tech solution from this list:
-      - WhatsApp Chatbots (for automated support/booking)
-      - AI Automations (for workflow efficiency)
-      - Custom Management Systems (CRM/ERP)
-      - Mobile Apps (for booking, membership, or loyalty)
-      - Custom Web Applications
-      - Strategic Branding & Digital Transformation
+Identify ONE primary pain point from this list that most likely applies to this business:
+- No online booking for property viewings
+- Properties sitting on the market too long (slow sales cycle)
+- Competitors have better online presence
+- Manual WhatsApp follow-ups taking too much time
+- No CRM to track buyer/tenant inquiries
 
-      Respond ONLY with a JSON object in this format:
-      {"industry": "Specific Industry", "painPoint": "Detailed operational pain point", "recommendedSolution": "Specific solution from the list matching the pain point"}
-      
-      Business Name: ${businessName}
-      Category: ${category || 'Unknown'}
-      Description: ${description || 'N/A'}
+Then suggest ONE high-value tech solution:
+- Property CRM System (lead & deal tracking)
+- WhatsApp Automation (instant inquiry response)
+- Professional Property Portal/Website
+- Virtual Tour Platform (3D/360° tours)
+- Agent Performance Dashboard
+
+Respond ONLY with a JSON object in this format:
+{"industry": "Real Estate", "painPoint": "Specific pain point from list", "recommendedSolution": "Specific solution from list"}
+
+Business Name: ${businessName}
+Category: ${category || 'Real Estate'}
+Description: ${description || 'N/A'}
 `;
 
         try {

@@ -24,7 +24,7 @@ export class DiscordDispatcher {
         return url.startsWith('http://') || url.startsWith('https://');
     }
 
-    async dispatch(lead: LeadPayload) {
+    async dispatch(lead: LeadPayload, tier: 'hot' | 'warm' = 'warm') {
         const truncate = (str: string, max: number) => str.length > max ? str.substring(0, max - 3) + '...' : str;
 
         const funQuotes = [
@@ -38,10 +38,14 @@ export class DiscordDispatcher {
         const randomQuote = funQuotes[Math.floor(Math.random() * funQuotes.length)];
         const validWebsite = this.isValidWebsiteUrl(lead.website) ? lead.website : null;
 
+        // Color and label based on tier
+        const embedColor = tier === 'hot' ? 0x00FF00 : 0xFFA500; // 🟢 Green vs 🟠 Orange
+        const tierLabel = tier === 'hot' ? '🔥 HOT LEAD' : '⚡ WARM LEAD';
+
         const detailsEmbed = {
-            title: 'New Lead Detected',
+            title: tierLabel,
             description: `**${lead.name}** just landed on our radar. Here's the intel:`,
-            color: 0xFF4500, // OrangeRed
+            color: embedColor,
             fields: [
                 { name: 'Business', value: `**${lead.name}**`, inline: true },
                 { name: 'Location', value: lead.location, inline: true },
@@ -59,7 +63,7 @@ export class DiscordDispatcher {
 
         const messageEmbed = {
             description: `**Suggested Attack Plan**\n\`\`\`${lead.message}\`\`\``,
-            color: 0xFF4500, // Match color
+            color: embedColor, // Match color to tier
         };
 
         const components: any[] = [];

@@ -1,96 +1,92 @@
-// Zimbabwe Locations
+// Zimbabwe Locations - Suburb-level for better targeting
 export const LOCATIONS_ZW = [
-    'Harare',
-    'Bulawayo',
-    'Chitungwiza',
+    // Harare suburbs (affluent areas)
+    'Borrowdale Harare',
+    'Mt Pleasant Harare',
+    'Avondale Harare',
+    'Greendale Harare',
+    'Highlands Harare',
+    'Belvedere Harare',
+    'Eastlea Harare',
+    'The Avenues Harare',
+    'Chisipite Harare',
+    'Glen Lorne Harare',
+    // Bulawayo
+    'Hillside Bulawayo',
+    'Burnside Bulawayo',
+    'Suburbs Bulawayo',
+    'Matsheumhlope Bulawayo',
+    // Other major cities
     'Mutare',
     'Gweru',
-    'Epworth',
-    'Kwekwe',
-    'Kadoma',
     'Masvingo',
+    'Victoria Falls',
     'Chinhoyi',
     'Marondera',
-    'Norton',
-    'Chegutu',
 ];
 
-// South Africa Locations
+// South Africa Locations - Key metros and affluent suburbs
 export const LOCATIONS_SA = [
-    'Johannesburg',
-    'Cape Town',
-    'Durban',
-    'Pretoria',
-    'Port Elizabeth',
-    'Bloemfontein',
-    'Centurion',
+    // Johannesburg / Gauteng
     'Sandton',
-    'Midrand',
-    'Roodepoort',
-    'Soweto',
+    'Fourways',
+    'Rosebank',
+    'Bryanston',
+    'Hyde Park',
     'Randburg',
-    'Kempton Park',
+    'Midrand',
+    'Centurion',
+    'Waterkloof Pretoria',
+    'Menlyn Pretoria',
+    'Brooklyn Pretoria',
+    // Cape Town
+    'Constantia Cape Town',
+    'Camps Bay Cape Town',
+    'Sea Point Cape Town',
+    'Stellenbosch',
+    'Paarl',
+    // Durban
+    'Umhlanga',
+    'Ballito',
+    'La Lucia Durban',
+    'Durban North',
 ];
 
 // Combined for backward compatibility
 export const LOCATIONS = [...LOCATIONS_ZW, ...LOCATIONS_SA];
 
+// Real Estate Industries - targeted segments
 export const INDUSTRIES = [
-    // Trades
-    'Plumbing',
-    'Electrician',
-    'Roofing',
-    'HVAC',
-    'Landscaping',
-    'Cleaning Services',
-    'Pest Control',
-    'Locksmith',
-    'Painting Contractors',
-    'Fencing Contractors',
-    'Solar Installation',
-    'Pool Maintenance',
+    // Core Real Estate
+    'Real Estate Agency',
+    'Estate Agents',
+    'Property Agents',
+    'Realtors',
 
-    // Professional Services
-    'Real Estate',
-    'Digital Marketing',
-    'Accounting',
-    'Legal Services',
-    'Architecture',
-    'Interior Design',
-    'IT Support',
-    'Web Design',
-    'Cybersecurity',
-    'HR Consulting',
-    'Business Coaching',
+    // Specialized
+    'Property Management',
+    'Letting Agents',
+    'Rental Agents',
+    'Commercial Real Estate',
+    'Industrial Property',
+    'Property Developers',
 
-    // Health & Wellness
-    'Dentist',
-    'Chiropractor',
-    'Physiotherapy',
-    'Gym',
-    'Yoga Studio',
-    'Spa and Wellness',
-
-    // Automotive
-    'Auto Repair',
-    'Car Detailing',
-    'Tyre Services',
-
-    // Retail/Hospitality
-    'Restaurant',
-    'Hotel',
-    'Event Planning',
-    'Catering',
-    'Florist'
+    // Supporting Services
+    'Property Valuers',
+    'Conveyancing Attorneys',
+    'Property Auctioneers',
+    'Real Estate Investment',
 ];
 
+// Query templates optimized for real estate
 export const QUERY_TEMPLATES = [
+    '{industry} {location}',
     '{industry} in {location}',
-    'top rated {industry} {location}',
-    '{industry} services near {location}',
-    'best {industry} companies in {location}',
-    'affordable {industry} {location}',
-    '{industry} experts {location}',
-    'commercial {industry} {location}',
-    'residential {industry} {location}'
+    'top {industry} {location}',
+    'best {industry} in {location}',
+    '{location} {industry}',
+    'property agents {location}',
+    'estate agency {location}',
+    'houses for sale {location}',
 ];
+
