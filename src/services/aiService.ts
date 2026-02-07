@@ -28,12 +28,19 @@ Identify ONE primary pain point from this list that most likely applies to this 
 - Manual WhatsApp follow-ups taking too much time
 - No CRM to track buyer/tenant inquiries
 
-Then suggest ONE high-value tech solution:
+Then suggest ONE high-value tech solution from this list:
 - Property CRM System (lead & deal tracking)
 - WhatsApp Automation (instant inquiry response)
 - Professional Property Portal/Website
-- Virtual Tour Platform (3D/360° tours)
+- Virtual Tour Platform (3D/360 tours)
 - Agent Performance Dashboard
+- AI-Powered Property Valuation (AVM)
+- Automated Tenant Screening & Credit Scoring
+- Digital Lease Management & E-signatures
+- Smart Property Management (Rent collection & Maintenance)
+- Predictive Market Analytics
+- Blockchain-based Title Deed Verification
+- IoT-enabled Smart Building Management
 
 Respond ONLY with a JSON object in this format:
 {"industry": "Real Estate", "painPoint": "Specific pain point from list", "recommendedSolution": "Specific solution from list"}
@@ -44,7 +51,7 @@ Description: ${description || 'N/A'}
 `;
 
         try {
-            logger.info(`Requesting AI enrichment for: ${businessName} `);
+            logger.info(`Requesting AI enrichment for: ${businessName}`);
             const result = await this.model.generateContent(prompt);
             const response = await result.response;
             const text = response.text();
@@ -59,16 +66,16 @@ Description: ${description || 'N/A'}
             const parsed = JSON.parse(cleanedText);
 
             return {
-                industry: parsed.industry || 'General Business',
-                painPoint: parsed.painPoint || 'Inefficient manual processes limiting growth',
-                recommendedSolution: parsed.recommendedSolution || parsed.suggestedSolution || 'Custom Digital Strategy',
+                industry: parsed.industry || 'Real Estate',
+                painPoint: parsed.painPoint || 'Manual processes limiting growth',
+                recommendedSolution: parsed.recommendedSolution || parsed.suggestedSolution || 'Property CRM System',
             };
         } catch (error) {
             logger.error({ err: error }, 'AI Enrichment error:');
             return {
-                industry: 'General Business',
-                painPoint: 'Inefficient manual processes limiting growth',
-                recommendedSolution: 'Custom Digital Strategy',
+                industry: 'Real Estate',
+                painPoint: 'Manual processes limiting growth',
+                recommendedSolution: 'Property CRM System',
             };
         }
     }
