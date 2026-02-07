@@ -1,9 +1,6 @@
 import 'dotenv/config'; // Ensure env is loaded
 import { PrismaClient } from '@prisma/client';
 
-console.log('DEBUG: PrismaClient type:', typeof PrismaClient);
-console.log('DEBUG: PrismaClient value:', PrismaClient);
-
 if (!process.env.DATABASE_URL) {
     console.warn('⚠️ DATABASE_URL is missing in prisma.ts! Prisma Client might fail.');
 }
