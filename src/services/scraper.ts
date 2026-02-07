@@ -196,7 +196,7 @@ export class Scraper {
                 return null;
             });
 
-            const results = await page!.$$eval(resultSelector, (elements, country) => {
+            const results = await page!.$$eval(resultSelector, function (elements, country) {
                 // Debug log inside browser
                 console.log(`Processing ${elements.length} elements for country: ${country}`);
                 return elements.map((el) => {
