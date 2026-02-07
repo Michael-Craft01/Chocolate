@@ -14,7 +14,7 @@ export class AIService {
 
     constructor() {
         this.genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
-        // Use temperature 0.9 for varied responses across different leads
+        // Use temperature 0.9 for varied responses
         this.model = this.genAI.getGenerativeModel({
             model: 'gemma-3-27b-it',
             generationConfig: {
