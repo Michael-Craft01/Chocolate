@@ -1,0 +1,64 @@
+name: Run Lead Engine
+
+on:
+  schedule:
+    # Run every 12 hours (midnight and noon UTC)
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:  # Manual trigger
+
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+  RUN_ONCE: 'true'
+  LOG_LEVEL: 'info'
+
+jobs:
+  run-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Push database schema
+        run: npx prisma db push --skip-generate
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Run Lead Engine
+        id: engine
+        run: npm run dev
+        continue-on-error: true
+
+      - name: Notify Discord on Success
+        if: steps.engine.outcome == 'success'
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{"embeds":[{"title":"✅ Lead Engine Complete","description":"Lead engine cycle completed successfully!","color":5763719,"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}' \
+            ${{ secrets.DISCORD_WEBHOOK }}
+
+      - name: Notify Discord on Failure
+        if: steps.engine.outcome == 'failure'
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{"embeds":[{"title":"❌ Lead Engine Failed","description":"Lead engine cycle failed. Check GitHub Actions logs.","color":15548997,"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}' \
+            ${{ secrets.DISCORD_WEBHOOK }}
+
+      - name: Fail the workflow if engine failed
+        if: steps.engine.outcome == 'failure'
+        run: exit 1

@@ -3,6 +3,12 @@ FROM node:20-bookworm-slim AS builder
 
 WORKDIR /usr/src/app
 
+# Install OpenSSL for Prisma
+RUN apt-get update -y && apt-get install -y openssl
+
+# Set dummy DATABASE_URL for build step (Prisma validation)
+ENV DATABASE_URL="file:./data/dev.db"
+
 COPY package*.json ./
 RUN npm ci
 
