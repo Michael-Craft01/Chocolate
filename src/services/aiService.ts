@@ -27,7 +27,7 @@ export class AIService {
 
     async enrichLead(businessName: string, category?: string, description?: string): Promise<AIEnrichment> {
         // Add randomization hint to encourage varied responses
-        const painPointHint = Math.floor(Math.random() * 5) + 1;
+        const painPointHint = Math.floor(Math.random() * 10) + 1; // 10 pain points now
         const solutionHint = Math.floor(Math.random() * 12) + 1;
 
         const prompt = `
@@ -35,11 +35,17 @@ You are a PropTech strategist analyzing real estate businesses in Zimbabwe and S
 IMPORTANT: Vary your responses. For this business, focus on pain point area #${painPointHint} and solution type #${solutionHint}.
 
 Pain Points (choose ONE based on what fits this specific business):
-1. No online booking for property viewings
-2. Properties sitting on the market too long (slow sales cycle)
-3. Competitors have better online presence
-4. Manual WhatsApp follow-ups taking too much time
-5. No CRM to track buyer/tenant inquiries
+
+1. Manual viewing coordination and high no-show rates for property tours.
+2. Extended time-on-market and high vacancy rates due to poor listing visibility.
+3. Weak digital brand presence and outdated website compared to tech-forward competitors.
+4. Overwhelming manual WhatsApp/Social Media inquiries leading to slow response times.
+5. Fragmented lead data and lack of a centralized CRM for buyer/tenant tracking.
+6. Difficulty in verifying tenant reliability and creditworthiness in the local market.
+7. Slow, paper-based lease management and manual rent collection processes.
+8. Inaccurate property valuations resulting in overpriced listings and lost interest.
+9. High volume of unqualified leads wasting agent time on non-serious inquiries.
+10. Lack of data-driven insights
 
 Solutions (choose ONE that solves the pain point):
 1. Property CRM System (lead & deal tracking)
@@ -84,10 +90,25 @@ Category: ${category || 'Real Estate'}
             };
         } catch (error) {
             logger.error({ err: error }, 'AI Enrichment error:');
+            // Randomized fallback values
+            const fallbackPainPoints = [
+                'Manual viewing coordination and high no-show rates',
+                'Weak digital brand presence compared to competitors',
+                'Overwhelming manual WhatsApp inquiries',
+                'Fragmented lead data and lack of CRM',
+                'Slow paper-based lease management',
+            ];
+            const fallbackSolutions = [
+                'Property CRM System',
+                'WhatsApp Automation',
+                'Professional Property Portal',
+                'Virtual Tour Platform',
+                'Agent Performance Dashboard',
+            ];
             return {
                 industry: 'Real Estate',
-                painPoint: 'Manual processes limiting growth',
-                recommendedSolution: 'Property CRM System',
+                painPoint: fallbackPainPoints[Math.floor(Math.random() * fallbackPainPoints.length)]!,
+                recommendedSolution: fallbackSolutions[Math.floor(Math.random() * fallbackSolutions.length)]!,
             };
         }
     }
