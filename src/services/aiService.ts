@@ -14,7 +14,15 @@ export class AIService {
 
     constructor() {
         this.genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
-        this.model = this.genAI.getGenerativeModel({ model: 'gemma-3-27b-it' });
+        // Use temperature 0.9 for varied responses across different leads
+        this.model = this.genAI.getGenerativeModel({
+            model: 'gemma-3-27b-it',
+            generationConfig: {
+                temperature: 0.9,
+                topP: 0.95,
+                topK: 40,
+            }
+        });
     }
 
     async enrichLead(businessName: string, category?: string, description?: string): Promise<AIEnrichment> {
