@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import { LOCATIONS_ZW, LOCATIONS_SA, INDUSTRIES, QUERY_TEMPLATES } from '../constants.js';
+import { LOCATIONS_ZW, INDUSTRIES, QUERY_TEMPLATES } from '../constants.js';
 import { logger } from '../lib/logger.js';
 import { config } from '../config.js';
 
@@ -12,21 +12,14 @@ export interface QueryData {
 
 export class QueryGenerator {
     /**
-     * Generate a batch of queries for a cycle - targeting both ZW and SA
-     * @param countPerCountry Number of queries to generate per country
+     * Generate a batch of queries for a cycle - targeting Zimbabwe (Harare)
+     * @param count Total number of queries to generate
      */
-    async generateBatchQueries(countPerCountry: number = 25): Promise<QueryData[]> {
-        const queries: QueryData[] = [];
+    async generateBatchQueries(count: number = 25): Promise<QueryData[]> {
+        // Generate queries for Zimbabwe only
+        const queries = await this.generateQueriesForCountry(LOCATIONS_ZW, 'ZW', count);
 
-        // Generate queries for Zimbabwe
-        const zwQueries = await this.generateQueriesForCountry(LOCATIONS_ZW, 'ZW', countPerCountry);
-        queries.push(...zwQueries);
-
-        // Generate queries for South Africa
-        const saQueries = await this.generateQueriesForCountry(LOCATIONS_SA, 'SA', countPerCountry);
-        queries.push(...saQueries);
-
-        logger.info(`Generated ${queries.length} queries (${zwQueries.length} ZW, ${saQueries.length} SA)`);
+        logger.info(`Generated ${queries.length} queries for Zimbabwe (Harare)`);
         return queries;
     }
 

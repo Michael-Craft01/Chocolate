@@ -11,7 +11,7 @@ import { config } from './config.js';
 import { cleanupDatabase } from './services/databaseCleanup.js';
 import { startServer } from './web/server.js';
 
-const LEADS_PER_COUNTRY = 25;
+const LEADS_PER_COUNTRY = 200;
 
 /**
  * Score a lead based on contact info completeness
@@ -187,35 +187,23 @@ async function runEngine() {
     // Clean up old records first (14 days)
     await cleanupDatabase();
 
-    logger.info(`Target: ${LEADS_PER_COUNTRY} leads from ZW + ${LEADS_PER_COUNTRY} leads from SA`);
+    logger.info(`Target: ${LEADS_PER_COUNTRY} leads from Zimbabwe (Harare)`);
 
     let zwLeads = 0;
-    let saLeads = 0;
 
     try {
-        // Generate batch queries for both countries
+        // Generate batch queries for Zimbabwe
         const queries = await queryGenerator.generateBatchQueries(LEADS_PER_COUNTRY);
 
-        // Separate queries by country
-        const zwQueries = queries.filter(q => q.country === 'ZW');
-        const saQueries = queries.filter(q => q.country === 'SA');
-
-        // Process ZW queries until we hit target
-        for (const queryData of zwQueries) {
+        // Process queries until we hit target
+        for (const queryData of queries) {
             if (zwLeads >= LEADS_PER_COUNTRY) break;
             const found = await processLeadsForQuery(queryData, LEADS_PER_COUNTRY - zwLeads);
             zwLeads += found;
         }
 
-        // Process SA queries until we hit target
-        for (const queryData of saQueries) {
-            if (saLeads >= LEADS_PER_COUNTRY) break;
-            const found = await processLeadsForQuery(queryData, LEADS_PER_COUNTRY - saLeads);
-            saLeads += found;
-        }
-
         logger.info(`--- Lead Engine Cycle Complete ---`);
-        logger.info(`Total leads: ${zwLeads + saLeads} (ZW: ${zwLeads}, SA: ${saLeads})`);
+        logger.info(`Total leads: ${zwLeads} (Zimbabwe)`);
     } catch (error) {
         logger.error({ err: error }, 'Error in Lead Engine cycle:');
     } finally {
