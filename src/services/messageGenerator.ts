@@ -11,24 +11,31 @@ export class MessageGenerator {
 
     // Intro variations
     private intros = [
-        `I'm Michael from LogicHQ — we build PropTech solutions that turn manual operations into automated growth systems.`,
-        `Michael here from LogicHQ. We specialize in building high-value technology for real estate leaders.`,
-        `I'm a PropTech engineer from LogicHQ. We help property businesses automate operations and close deals faster.`,
+        `I'm Michael from LogicHQ — we build smart systems that turn manual operations into automated growth engines.`,
+        `Michael here from LogicHQ. We specialize in building high-value software for growing local businesses.`,
+        `I'm a software engineer from LogicHQ. We help businesses automate operations and scale faster.`,
+        `I'm Michael, a software engineer who's passionate about helping local teams reclaim their time through smart automation.`,
+        `Michael here from LogicHQ. I spend my days building tools that help business owners focus on growth, rather than paperwork.`,
+        `I'm Michael, and I've dedicated my work at LogicHQ to solving the technical headaches that slow down ambitious firms.`,
+        `I'm Michael from LogicHQ. I love seeing how the right technology can completely transform a local business's workflow.`,
+        `Michael here. At LogicHQ, we're on a mission to give local leaders the high-end tech they need to outpace the market.`,
     ];
 
     // Interest hooks
     private hooks = [
-        `I've been researching the {{industry}} space in your area and noticed something interesting.`,
-        `While analyzing {{industry}} businesses in your market, your team caught my attention.`,
-        `I came across {{name}} while studying successful {{industry}} operations in the region.`,
+        `I've been tracking the evolution of ${process.env.TARGET_INDUSTRY || 'SMEs'} in Harare, and {{name}}'s trajectory stands out as particularly impressive.`,
+        `While auditing the current tech landscape for {{industry}} firms, I noticed {{name}} is positioned for significant scale, provided the right infrastructure is in place.`,
+        `I've been analyzing how top-tier {{industry}} players are adapting to market shifts, and I'd like to share some specific insights I've gathered regarding {{name}}'s current positioning.`,
+        `My research into the local {{industry}} market suggests that {{name}} is at a critical inflection point where legacy systems often become a bottleneck.`,
+        `I've been deep-diving into the operational models of high-growth {{industry}} firms, and {{name}} consistently comes up as a leader in the space.`,
     ];
 
     // CTA variations
     private ctas = [
-        `Would you be open to a quick 10-minute demo this week?`,
-        `Do you have 10 minutes this week for a brief walkthrough?`,
-        `Are you available for a quick call to explore this?`,
-        `Can I show you a quick demo of what this looks like in action?`,
+        `Would you be open to a quick 10-minute demo of Takada this week?`,
+        `Do you have 10 minutes this week for a brief walkthrough of how Takada works?`,
+        `Are you available for a quick call to explore how Takada can help?`,
+        `Can I show you a quick demo of Takada in action?`,
     ];
 
     private getRandomItem<T>(arr: T[]): T {
@@ -36,7 +43,7 @@ export class MessageGenerator {
     }
 
     generate(businessName: string, industry: string, painPoint: string, recommendedSolution?: string): string {
-        const suggestedSolution = recommendedSolution || 'custom PropTech solutions';
+        const suggestedSolution = recommendedSolution || 'Takada (Inventory Management System)';
 
         // Dynamic opening
         const greeting = this.getRandomItem(this.openings).replace('{{name}}', businessName);
@@ -50,17 +57,17 @@ export class MessageGenerator {
             .replace('{{name}}', businessName);
 
         // Pain point (from AI - should already be varied)
-        const pain = `Specifically, many agencies struggle with ${painPoint.toLowerCase()}. This often leads to lost deals, wasted time, and missed opportunities while competitors move faster.`;
+        const pain = `Specifically, I've noticed many businesses in your space struggle with ${painPoint.toLowerCase()}. This often leads to stockouts, manual errors, and missed profit opportunities while operations become more complex.`;
 
         // Solution
-        const solution = `I specialize in building ${suggestedSolution}. This isn't basic software — it's infrastructure that scales with your business and gives you a real edge.`;
+        const solution = `This is exactly why we built ${suggestedSolution} (https://takada.logichq.tech). It's designed specifically to automate stock tracking and give you real-time visibility into your business.`;
 
         // Dynamic CTA
         const cta = `${this.getRandomItem(this.ctas)}
 
 — Michael
-LogicHQ | PropTech Solutions
-www.logichq.tech`;
+LogicHQ | Automation Solutions
+https://takada.logichq.tech`;
 
         const message = `${greeting}\n\n${intro}\n\n${interest}\n\n${pain}\n\n${solution}\n\n${cta}`;
 
@@ -71,9 +78,9 @@ www.logichq.tech`;
     // Short greeting for WhatsApp (kept simple and universal)
     generateWhatsAppGreeting(businessName: string): string {
         const greetings = [
-            `Hi! I'm Michael from LogicHQ. I came across ${businessName} and would love to chat about helping grow your business. Do you have a few minutes?`,
-            `Hello! Michael here from LogicHQ. I noticed ${businessName} and had an idea I'd love to share. Quick call?`,
-            `Hi there! I'm Michael, a PropTech engineer. I researched ${businessName} and have a proposal. Interested?`,
+            `Hi! I'm Michael from LogicHQ. I came across ${businessName} and would love to chat about Takada (https://takada.logichq.tech) for your inventory. Quick call?`,
+            `Hello! Michael here from LogicHQ. I noticed ${businessName} and wanted to share how Takada can help with your stock management. Interested?`,
+            `Hi there! I'm Michael, a software engineer. I researched ${businessName} and have a proposal for your inventory tracking. Interested?`,
         ];
         return this.getRandomItem(greetings);
     }

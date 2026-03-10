@@ -8,7 +8,9 @@ async function test() {
         logger.info(`Diagnostic: Success! Business count: ${count}`);
         process.exit(0);
     } catch (err) {
-        logger.error({ err }, 'Diagnostic failed:');
+        console.error('--- FULL ERROR START ---');
+        console.error(err);
+        console.error('--- FULL ERROR END ---');
         process.exit(1);
     }
 }

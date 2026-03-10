@@ -27,45 +27,32 @@ export class AIService {
 
     async enrichLead(businessName: string, category?: string, description?: string): Promise<AIEnrichment> {
         // Add randomization hint to encourage varied responses
-        const painPointHint = Math.floor(Math.random() * 10) + 1; // 10 pain points now
-        const solutionHint = Math.floor(Math.random() * 12) + 1;
+        const painPointHint = Math.floor(Math.random() * 8) + 1;
+        const solutionHint = 1; // Always recommend Takada now
 
         const prompt = `
-You are a PropTech strategist analyzing real estate businesses in Zimbabwe and South Africa.
-IMPORTANT: Vary your responses. For this business, focus on pain point area #${painPointHint} and solution type #${solutionHint}.
+You are a business strategist specializing in inventory management systems (Takada) for SMEs in Zimbabwe.
+IMPORTANT: Vary your responses. For this business, focus on inventory pain point area #${painPointHint}.
 
 Pain Points (choose ONE based on what fits this specific business):
 
-1. Manual viewing coordination and high no-show rates for property tours.
-2. Extended time-on-market and high vacancy rates due to poor listing visibility.
-3. Weak digital brand presence and outdated website compared to tech-forward competitors.
-4. Overwhelming manual WhatsApp/Social Media inquiries leading to slow response times.
-5. Fragmented lead data and lack of a centralized CRM for buyer/tenant tracking.
-6. Difficulty in verifying tenant reliability and creditworthiness in the local market.
-7. Slow, paper-based lease management and manual rent collection processes.
-8. Inaccurate property valuations resulting in overpriced listings and lost interest.
-9. High volume of unqualified leads wasting agent time on non-serious inquiries.
-10. Lack of data-driven insights
+1. Manual stock taking leading to inaccuracies and "ghost stock".
+2. Frequent "out of stock" situations for popular items, losing sales.
+3. Overstocking slow-moving items, tying up valuable cash flow.
+4. Difficulty tracking stock across multiple branches or storage locations.
+5. Inefficient manual invoicing and receipting process.
+6. Lack of real-time visibility into profit margins and cost price changes.
+7. Theft or shrinkage (stock loss) due to lack of a robust tracking system.
+8. Slow reordering process because of manual inventory checks.
 
-Solutions (choose ONE that solves the pain point):
-1. Property CRM System (lead & deal tracking)
-2. WhatsApp Automation (instant inquiry response)
-3. Professional Property Portal/Website
-4. Virtual Tour Platform (3D/360 tours)
-5. Agent Performance Dashboard
-6. AI-Powered Property Valuation (AVM)
-7. Automated Tenant Screening & Credit Scoring
-8. Digital Lease Management & E-signatures
-9. Smart Property Management (Rent collection & Maintenance)
-10. Predictive Market Analytics
-11. Blockchain-based Title Deed Verification
-12. IoT-enabled Smart Building Management
+Solution:
+Always recommend "Takada (Inventory & Stock Management System)" which is a cloud-based solution (https://takada.logichq.tech).
 
 Respond ONLY with a JSON object:
-{"industry": "Real Estate", "painPoint": "Your chosen pain point", "recommendedSolution": "Your chosen solution"}
+{"industry": "SME / Retail", "painPoint": "Your chosen pain point", "recommendedSolution": "Takada (Inventory & Stock Management System)"}
 
 Business: ${businessName}
-Category: ${category || 'Real Estate'}
+Category: ${category || 'SME'}
 `;
 
         try {
@@ -84,31 +71,24 @@ Category: ${category || 'Real Estate'}
             const parsed = JSON.parse(cleanedText);
 
             return {
-                industry: parsed.industry || 'Real Estate',
-                painPoint: parsed.painPoint || 'Manual processes limiting growth',
-                recommendedSolution: parsed.recommendedSolution || parsed.suggestedSolution || 'Property CRM System',
+                industry: parsed.industry || 'SME / Retail',
+                painPoint: parsed.painPoint || 'Manual stock management issues',
+                recommendedSolution: 'Takada (Inventory & Stock Management System)',
             };
         } catch (error) {
             logger.error({ err: error }, 'AI Enrichment error:');
             // Randomized fallback values
             const fallbackPainPoints = [
-                'Manual viewing coordination and high no-show rates',
-                'Weak digital brand presence compared to competitors',
-                'Overwhelming manual WhatsApp inquiries',
-                'Fragmented lead data and lack of CRM',
-                'Slow paper-based lease management',
-            ];
-            const fallbackSolutions = [
-                'Property CRM System',
-                'WhatsApp Automation',
-                'Professional Property Portal',
-                'Virtual Tour Platform',
-                'Agent Performance Dashboard',
+                'Manual stock taking leading to inaccuracies',
+                'Frequent out of stock situations losing sales',
+                'Overstocking slow-moving items tying up cash',
+                'Lack of real-time visibility into profit margins',
+                'Inefficient manual invoicing and receipting',
             ];
             return {
-                industry: 'Real Estate',
+                industry: 'SME / Retail',
                 painPoint: fallbackPainPoints[Math.floor(Math.random() * fallbackPainPoints.length)]!,
-                recommendedSolution: fallbackSolutions[Math.floor(Math.random() * fallbackSolutions.length)]!,
+                recommendedSolution: 'Takada (Inventory & Stock Management System)',
             };
         }
     }

@@ -1,6 +1,6 @@
-// Zimbabwe Locations - Suburb-level for better targeting
+// Zimbabwe Locations - Harare Only for Takada targeting
 export const LOCATIONS_ZW = [
-    // Harare suburbs (affluent areas)
+    'Harare CBD',
     'Borrowdale Harare',
     'Mt Pleasant Harare',
     'Avondale Harare',
@@ -11,82 +11,59 @@ export const LOCATIONS_ZW = [
     'The Avenues Harare',
     'Chisipite Harare',
     'Glen Lorne Harare',
-    // Bulawayo
-    'Hillside Bulawayo',
-    'Burnside Bulawayo',
-    'Suburbs Bulawayo',
-    'Matsheumhlope Bulawayo',
-    // Other major cities
-    'Mutare',
-    'Gweru',
-    'Masvingo',
-    'Victoria Falls',
-    'Chinhoyi',
-    'Marondera',
+    'Msasa Harare',
+    'Workington Harare',
+    'Graniteside Harare',
+    'Southerton Harare',
+    'Ardbennie Harare',
+    'Hatfield Harare',
+    'Waterfalls Harare',
+    'Marlborough Harare',
+    'Mabelreign Harare',
+    'Milton Park Harare',
+    'Kensington Harare',
+    'Vainona Harare',
+    'Pomona Harare',
 ];
 
-// South Africa Locations - Key metros and affluent suburbs
-export const LOCATIONS_SA = [
-    // Johannesburg / Gauteng
-    'Sandton',
-    'Fourways',
-    'Rosebank',
-    'Bryanston',
-    'Hyde Park',
-    'Randburg',
-    'Midrand',
-    'Centurion',
-    'Waterkloof Pretoria',
-    'Menlyn Pretoria',
-    'Brooklyn Pretoria',
-    // Cape Town
-    'Constantia Cape Town',
-    'Camps Bay Cape Town',
-    'Sea Point Cape Town',
-    'Stellenbosch',
-    'Paarl',
-    // Durban
-    'Umhlanga',
-    'Ballito',
-    'La Lucia Durban',
-    'Durban North',
-];
+// Temporarily emptied SA locations as focus is on Harare
+export const LOCATIONS_SA = [];
 
 // Combined for backward compatibility
 export const LOCATIONS = [...LOCATIONS_ZW, ...LOCATIONS_SA];
 
-// Real Estate Industries - targeted segments
+// SME Industries with Stock/Inventory
 export const INDUSTRIES = [
-    // Core Real Estate
-    'Real Estate Agency',
-    'Estate Agents',
-    'Property Agents',
-    'Realtors',
-
-    // Specialized
-    'Property Management',
-    'Letting Agents',
-    'Rental Agents',
-    'Commercial Real Estate',
-    'Industrial Property',
-    'Property Developers',
-
-    // Supporting Services
-    'Property Valuers',
-    'Conveyancing Attorneys',
-    'Property Auctioneers',
-    'Real Estate Investment',
+    'Wholesale',
+    'Retail Store',
+    'Hardware Store',
+    'Auto Parts',
+    'Pharmacy',
+    'Medical Supplies',
+    'Clothing Boutique',
+    'Electronics Store',
+    'Supermarket',
+    'Furniture Store',
+    'Cosmetics Shop',
+    'Construction Supplies',
+    'Agrochemicals',
+    'Textiles',
+    'Stationery Shop',
+    'Battery Shop',
+    'Tyre Shop',
+    'Home Decor',
+    'Office Supplies',
+    'Warehouse',
 ];
 
-// Query templates optimized for real estate
+// Query templates optimized for local businesses
 export const QUERY_TEMPLATES = [
-    '{industry} {location}',
     '{industry} in {location}',
+    '{industry} {location}',
     'top {industry} {location}',
     'best {industry} in {location}',
     '{location} {industry}',
-    'property agents {location}',
-    'estate agency {location}',
-    'houses for sale {location}',
+    'suppliers of {industry} {location}',
+    'distributors of {industry} {location}',
 ];
 
