@@ -32,10 +32,10 @@ export class MessageGenerator {
 
     // CTA variations
     private ctas = [
-        `Would you be open to a quick 10-minute demo of Takada this week?`,
-        `Do you have 10 minutes this week for a brief walkthrough of how Takada works?`,
-        `Are you available for a quick call to explore how Takada can help?`,
-        `Can I show you a quick demo of Takada in action?`,
+        `Would you be open to a quick 10-minute demo of Takada's POS system this week?`,
+        `Do you have 10 minutes this week for a brief walkthrough of how Takada's POS can advance your operations?`,
+        `Are you available for a quick call to explore how Takada can scale your business with smart POS & inventory?`,
+        `Can I show you a quick demo of the Takada POS in action?`,
     ];
 
     private getRandomItem<T>(arr: T[]): T {
@@ -43,7 +43,7 @@ export class MessageGenerator {
     }
 
     generate(businessName: string, industry: string, painPoint: string, recommendedSolution?: string): string {
-        const suggestedSolution = recommendedSolution || 'Takada (Inventory Management System)';
+        const suggestedSolution = recommendedSolution || 'Takada (POS & Inventory Management System)';
 
         // Dynamic opening
         const greeting = this.getRandomItem(this.openings).replace('{{name}}', businessName);
@@ -60,7 +60,7 @@ export class MessageGenerator {
         const pain = `Specifically, I've noticed many businesses in your space struggle with ${painPoint.toLowerCase()}. This often leads to stockouts, manual errors, and missed profit opportunities while operations become more complex.`;
 
         // Solution
-        const solution = `This is exactly why we built ${suggestedSolution} (https://takada.logichq.tech). It's designed specifically to automate stock tracking and give you real-time visibility into your business.`;
+        const solution = `This is exactly why we built ${suggestedSolution} (https://takada.logichq.tech). It's a high-performance system designed to advance your business by automating stock tracking and providing real-time POS analytics.`;
 
         // Dynamic CTA
         const cta = `${this.getRandomItem(this.ctas)}
@@ -78,9 +78,9 @@ https://takada.logichq.tech`;
     // Short greeting for WhatsApp (kept simple and universal)
     generateWhatsAppGreeting(businessName: string): string {
         const greetings = [
-            `Hi! I'm Michael from LogicHQ. I came across ${businessName} and would love to chat about Takada (https://takada.logichq.tech) for your inventory. Quick call?`,
-            `Hello! Michael here from LogicHQ. I noticed ${businessName} and wanted to share how Takada can help with your stock management. Interested?`,
-            `Hi there! I'm Michael, a software engineer. I researched ${businessName} and have a proposal for your inventory tracking. Interested?`,
+            `Hi! I'm Michael from LogicHQ. I came across ${businessName} and would love to chat about Takada POS (https://takada.logichq.tech) for your business. Quick call?`,
+            `Hello! Michael here from LogicHQ. I noticed ${businessName} and wanted to share how our Takada POS system can advance your stock management. Interested?`,
+            `Hi there! I'm Michael, a software engineer. I researched ${businessName} and have a proposal for a smart POS that scales your inventory. Interested?`,
         ];
         return this.getRandomItem(greetings);
     }
