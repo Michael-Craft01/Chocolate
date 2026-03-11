@@ -24,18 +24,18 @@ export class MessageGenerator {
     // Interest hooks
     private hooks = [
         `I've been tracking the evolution of ${process.env.TARGET_INDUSTRY || 'SMEs'} in Harare, and {{name}}'s trajectory stands out as particularly impressive.`,
-        `While auditing the current tech landscape for {{industry}} firms, I noticed {{name}} is positioned for significant scale, provided the right infrastructure is in place.`,
-        `I've been analyzing how top-tier {{industry}} players are adapting to market shifts, and I'd like to share some specific insights I've gathered regarding {{name}}'s current positioning.`,
-        `My research into the local {{industry}} market suggests that {{name}} is at a critical inflection point where legacy systems often become a bottleneck.`,
-        `I've been deep-diving into the operational models of high-growth {{industry}} firms, and {{name}} consistently comes up as a leader in the space.`,
+        `I've noticed that while many {{industry}} firms are held back by expensive desktop-only POS systems, {{name}} is perfectly positioned to lead with a more agile, mobile-first approach.`,
+        `While auditing the current tech landscape, I saw how {{name}} could significantly advance by moving beyond bulky traditional infrastructure to a sleek, mobile-app based operation.`,
+        `My research into the local {{industry}} market suggests that {{name}} would benefit immensely from a POS that requires zero setup or server costs, running entirely from your team's phones.`,
+        `I've been deep-diving into how top-tier {{industry}} players are scaling without heavy tech overhead, and {{name}} came up as a prime candidate for a zero-infrastructure POS solution.`,
     ];
 
     // CTA variations
     private ctas = [
-        `Would you be open to a quick 10-minute demo of Takada's POS system this week?`,
-        `Do you have 10 minutes this week for a brief walkthrough of how Takada's POS can advance your operations?`,
-        `Are you available for a quick call to explore how Takada can scale your business with smart POS & inventory?`,
-        `Can I show you a quick demo of the Takada POS in action?`,
+        `Would you be open to a quick 10-minute demo of the Takada mobile POS this week?`,
+        `Do you have 10 minutes for a brief walkthrough of how Takada's app can advance your business without needing any desktop or servers?`,
+        `Are you available for a quick call to explore scaling {{name}} with a smart POS that runs entirely from your phone?`,
+        `Can I show you a quick demo of how Takada eliminates infrastructure costs for {{industry}} businesses?`,
     ];
 
     private getRandomItem<T>(arr: T[]): T {
@@ -43,7 +43,7 @@ export class MessageGenerator {
     }
 
     generate(businessName: string, industry: string, painPoint: string, recommendedSolution?: string): string {
-        const suggestedSolution = recommendedSolution || 'Takada (POS & Inventory Management System)';
+        const suggestedSolution = recommendedSolution || 'Takada (Mobile-First POS & Inventory System)';
 
         // Dynamic opening
         const greeting = this.getRandomItem(this.openings).replace('{{name}}', businessName);
@@ -57,13 +57,13 @@ export class MessageGenerator {
             .replace('{{name}}', businessName);
 
         // Pain point (from AI - should already be varied)
-        const pain = `Specifically, I've noticed many businesses in your space struggle with ${painPoint.toLowerCase()}. This often leads to stockouts, manual errors, and missed profit opportunities while operations become more complex.`;
+        const pain = `Specifically, I've noticed many businesses in your space struggle with ${painPoint.toLowerCase()}. This often leads to stockouts and manual errors, especially when tied down to traditional desktop-only systems.`;
 
         // Solution
-        const solution = `This is exactly why we built ${suggestedSolution} (https://takada.logichq.tech). It's a high-performance system designed to advance your business by automating stock tracking and providing real-time POS analytics.`;
+        const solution = `This is exactly why we built ${suggestedSolution} (https://takada.logichq.tech). It's a high-performance system that requires zero infrastructure and no desktop setup — you can run your entire business directly from a mobile app. It's designed to advance your operations instantly.`;
 
         // Dynamic CTA
-        const cta = `${this.getRandomItem(this.ctas)}
+        const cta = `${this.getRandomItem(this.ctas).replace('{{name}}', businessName).replace('{{industry}}', industry)}
 
 — Michael
 LogicHQ | Automation Solutions
@@ -78,9 +78,9 @@ https://takada.logichq.tech`;
     // Short greeting for WhatsApp (kept simple and universal)
     generateWhatsAppGreeting(businessName: string): string {
         const greetings = [
-            `Hi! I'm Michael from LogicHQ. I came across ${businessName} and would love to chat about Takada POS (https://takada.logichq.tech) for your business. Quick call?`,
-            `Hello! Michael here from LogicHQ. I noticed ${businessName} and wanted to share how our Takada POS system can advance your stock management. Interested?`,
-            `Hi there! I'm Michael, a software engineer. I researched ${businessName} and have a proposal for a smart POS that scales your inventory. Interested?`,
+            `Hi! I'm Michael from LogicHQ. I noticed ${businessName} and wanted to share how you can run your entire POS from your phone with Takada (https://takada.logichq.tech). No desktop needed. Interested?`,
+            `Hello! Michael here. I have a proposal for a smart POS for ${businessName} that scales your business with zero infrastructure. Just an app on your phone. Quick call?`,
+            `Hi there! I'm Michael. I researched your business and noticed you could advance operations significantly with a mobile-first POS (no servers/setup needed). Interested?`,
         ];
         return this.getRandomItem(greetings);
     }
