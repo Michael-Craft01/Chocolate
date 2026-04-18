@@ -25,46 +25,47 @@ function scoreLead(lead: { phone?: string | null; email?: string | null; website
     return score;
 }
 
-async function processLeadsForQuery(queryData: QueryData, targetCount: number): Promise<number> {
+async function processLeadsForQuery(campaign: any, queryData: QueryData, targetCount: number): Promise<number> {
     let leadsFound = 0;
 
     try {
-        logger.info(`Scraping for: "${queryData.query}" (${queryData.country})`);
+        if (!campaign || campaign.status !== 'ACTIVE') {
+            logger.warn(`Campaign is not active, skipping...`);
+            return 0;
+        }
+
+        logger.info(`Scraping for campaign "${campaign.name}": "${queryData.query}" (${queryData.country})`);
 
         const businesses = await scraper.scrape(queryData.query, queryData.country);
 
         for (const business of businesses) {
             if (leadsFound >= targetCount) break;
 
-            // Validate phone number (must be at least 7 digits)
+            // Check collective user quota + credits
+            const user = await prisma.user.findUnique({ where: { id: campaign.userId } });
+            if (!user) break;
+
+            if (user.leadsFoundToday >= user.dailyLimit && user.creditBalance <= 0) {
+                logger.info(`User ${user.email} reached daily limit and has no credits. Stopping campaign ${campaign.name}.`);
+                break;
+            }
+
+            // Validate phone number (Robust & Global)
             let validPhone = business.phone;
             if (validPhone) {
-                // Formatting: Remove non-digits
                 let digits = validPhone.replace(/\D/g, '');
-
-                // Add country code if missing (assuming starts with 0 means local)
-                if (validPhone.trim().startsWith('0')) {
-                    if (queryData.country === 'ZW') {
-                        digits = '263' + digits.substring(1); // Replace leading 0 with 263
-                    } else if (queryData.country === 'SA') {
-                        digits = '27' + digits.substring(1); // Replace leading 0 with 27
-                    }
-                    validPhone = '+' + digits;
+                // Basic global normalization: If starts with 0 and we have a country code
+                if (validPhone.trim().startsWith('0') && queryData.country) {
+                    // Mapping for common target countries (easily expandable)
+                    const prefixes: Record<string, string> = { 'ZW': '263', 'SA': '27', 'UK': '44', 'US': '1' };
+                    const prefix = prefixes[queryData.country.toUpperCase()];
+                    if (prefix) digits = prefix + digits.substring(1);
                 }
-
-                if (digits.length < 9) { // Increased min length due to country code
-                    validPhone = null;
-                }
+                validPhone = digits.length >= 7 ? '+' + digits : null;
             }
 
-            // Skip leads without valid phone AND email - we need contact info
-            if (!validPhone && !business.email) {
-                logger.debug(`Skipping ${business.name} - no valid phone or email`);
-                continue;
-            }
+            if (!validPhone && !business.email) continue;
 
-            // Smarter Business Lookup: Check by Name AND (Phone OR Website) to match specific branches
-            // If we only have name, we fall back to name check.
             let dbBusiness = await prisma.business.findFirst({
                 where: {
                     name: business.name,
@@ -75,68 +76,66 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
                 },
             });
 
-            // Fallback: If no match with extra details, try just name (legacy behavior, but safer for partial data)
             if (!dbBusiness) {
-                dbBusiness = await prisma.business.findFirst({
-                    where: { name: business.name }
-                });
+                dbBusiness = await prisma.business.findFirst({ where: { name: business.name } });
             }
 
             if (!dbBusiness) {
                 dbBusiness = await prisma.business.create({
-                    data: {
-                        name: business.name,
-                        website: business.website,
-                        phone: validPhone, // Use validated phone
-                    },
+                    data: { name: business.name, website: business.website, phone: validPhone },
                 });
             }
 
-            // Safeguard: If business still doesn't exist, skip this lead
-            if (!dbBusiness || !dbBusiness.id) {
-                logger.warn(`Failed to create/find business record for ${business.name}, skipping lead`);
-                continue;
-            }
+            if (!dbBusiness || !dbBusiness.id) continue;
 
-            // Check if we already processed this business as a lead RECENTLY
+            // Cooldown check
             const existingLead = await prisma.lead.findFirst({
-                where: { businessId: dbBusiness.id },
-                orderBy: { createdAt: 'desc' } // Get most recent one
+                where: { businessId: dbBusiness.id, campaignId: campaign.id },
+                orderBy: { createdAt: 'desc' }
             });
 
             if (existingLead) {
-                // COOLDOWN LOGIC:
-                // If lead exists, check if we should re-engage.
-                // Rule: If dispatched > 30 days ago, OR never dispatched (failed?), we treat as new.
-
                 const thirtyDaysAgo = new Date();
                 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-                const recentlyDispatched = existingLead.dispatchedAt && existingLead.dispatchedAt > thirtyDaysAgo;
-
-                if (recentlyDispatched) {
-                    logger.debug(`Skipping recent lead: ${business.name} (Dispatched: ${existingLead.dispatchedAt?.toISOString()})`);
+                if (existingLead.dispatchedAt && existingLead.dispatchedAt > thirtyDaysAgo) {
                     continue;
                 }
-
-                logger.info(`Re-engaging lead: ${business.name} (Last dispatched: ${existingLead.dispatchedAt?.toISOString() ?? 'Never'})`);
-                // Proceed to create a NEW lead entry for this cycle to track the re-engagement
             }
 
-            // AI Enrichment
-            const enrichment = await aiService.enrichLead(business.name, business.category ?? undefined);
+            // AI Enrichment (Robust)
+            const enrichment = await aiService.enrichLead(
+                business.name, 
+                business.category ?? undefined,
+                {
+                    productDescription: campaign.productDescription,
+                    targetPainPoints: campaign.targetPainPoints
+                }
+            );
 
-            // Generate Message
+            // Generate Message (Context-Aware)
             const message = messageGenerator.generate(
+                campaign,
                 business.name,
                 enrichment.industry,
                 enrichment.painPoint,
                 enrichment.recommendedSolution
             );
 
+            // Use credit if above limit
+            let usedCredit = false;
+            if (user.leadsFoundToday >= user.dailyLimit && user.creditBalance > 0) {
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: { creditBalance: { decrement: 1 } }
+                });
+                usedCredit = true;
+                logger.debug(`Used 1 overage credit for user ${user.email}`);
+            }
+
             // Save Lead
             const lead = await prisma.lead.create({
                 data: {
+                    campaignId: campaign.id,
                     businessId: dbBusiness.id,
                     industry: enrichment.industry,
                     painPoint: enrichment.painPoint,
@@ -144,13 +143,16 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
                 },
             });
 
-            // Calculate lead score and tier
+            // Increment lead count for user
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { leadsFoundToday: { increment: 1 } }
+            });
+
             const leadScore = scoreLead({ phone: validPhone, email: business.email, website: business.website });
             const tier: 'hot' | 'warm' = leadScore >= 2 ? 'hot' : 'warm';
 
-            logger.debug(`Lead score for ${business.name}: ${leadScore}/3 (${tier})`);
-
-            // Dispatch to Discord with tier
+            // Dispatch (Multi-tenant)
             const dispatched = await discordDispatcher.dispatch({
                 name: business.name,
                 industry: enrichment.industry,
@@ -161,9 +163,8 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
                 phone: validPhone,
                 email: business.email,
                 location: `${queryData.location}, ${queryData.country}`,
-            }, tier);
+            }, tier, campaign.discordWebhook);
 
-            // Only mark as dispatched if Discord succeeded
             if (dispatched) {
                 await prisma.lead.update({
                     where: { id: lead.id },
@@ -172,63 +173,92 @@ async function processLeadsForQuery(queryData: QueryData, targetCount: number): 
             }
 
             leadsFound++;
-            logger.info(`Lead ${leadsFound}/${targetCount} processed: ${business.name} [${tier.toUpperCase()}] (${queryData.country})`);
         }
     } catch (error) {
-        logger.error({ err: error }, `Error processing query: ${queryData.query}`);
+        logger.error({ err: error }, `Error processing query for campaign ${campaign.id}`);
     }
 
     return leadsFound;
 }
 
-async function runEngine() {
-    logger.info('--- Starting Lead Engine Cycle ---');
+export async function triggerEngineCycle() {
+    logger.info('--- Triggered Multi-Tenant Engine Sweep ---');
 
-    // Clean up old records first (14 days)
     await cleanupDatabase();
 
-    logger.info(`Target: ${LEADS_PER_COUNTRY} leads from Zimbabwe (Harare)`);
-
-    let zwLeads = 0;
-
     try {
-        // Generate batch queries for Zimbabwe
-        const queries = await queryGenerator.generateBatchQueries(LEADS_PER_COUNTRY);
+        // Fetch a batch of active campaigns to process
+        // We order by updatedAt to ensure fairness among campaigns
+        const activeCampaigns = await prisma.campaign.findMany({
+            where: {
+                status: 'ACTIVE',
+                user: {
+                    paymentStatus: 'active'
+                }
+            },
+            include: { user: true },
+            orderBy: { updatedAt: 'asc' },
+            take: config.MAX_CAMPAIGNS_PER_SWEEP
+        });
 
-        // Process queries until we hit target
-        for (const queryData of queries) {
-            if (zwLeads >= LEADS_PER_COUNTRY) break;
-            const found = await processLeadsForQuery(queryData, LEADS_PER_COUNTRY - zwLeads);
-            zwLeads += found;
+        if (activeCampaigns.length === 0) {
+            logger.info('No active campaigns found in this sweep.');
+            return { processed: 0, leads: 0 };
         }
 
-        logger.info(`--- Lead Engine Cycle Complete ---`);
-        logger.info(`Total leads: ${zwLeads} (Zimbabwe)`);
+        let totalLeadsFound = 0;
+
+        for (const campaign of activeCampaigns) {
+            const user = campaign.user;
+            const remainingQuota = Math.max(0, user.dailyLimit - user.leadsFoundToday);
+            const totalAvailable = remainingQuota + user.creditBalance;
+
+            if (totalAvailable <= 0) {
+                logger.info(`User ${user.email} exhausted budget. Skipping campaign ${campaign.name}.`);
+                continue;
+            }
+
+            logger.info(`Sweeping campaign: ${campaign.name} for user: ${user.email} (Budget: ${totalAvailable} leads)`);
+
+            // Generate queries
+            const queries = await queryGenerator.generateBatchQueries(totalAvailable, campaign);
+
+            let campaignLeads = 0;
+            for (const queryData of queries) {
+                if (campaignLeads >= totalAvailable) break;
+                const found = await processLeadsForQuery(campaign, queryData, totalAvailable - campaignLeads);
+                campaignLeads += found;
+            }
+
+            // Update campaign timestamp to move it to end of queue for next sweep
+            await prisma.campaign.update({
+                where: { id: campaign.id },
+                data: { updatedAt: new Date() }
+            });
+
+            totalLeadsFound += campaignLeads;
+        }
+
+        logger.info(`--- Sweep Complete: ${activeCampaigns.length} campaigns, ${totalLeadsFound} leads ---`);
+        return { processed: activeCampaigns.length, leads: totalLeadsFound };
     } catch (error) {
-        logger.error({ err: error }, 'Error in Lead Engine cycle:');
-    } finally {
-        await scraper.close();
+        logger.error({ err: error }, 'Error in Engine sweep:');
+        throw error;
     }
 }
 
-// Schedule the job
+// Reset daily quotas at midnight
+cron.schedule('0 0 * * *', async () => {
+    logger.info('Resetting daily lead quotas...');
+    await prisma.user.updateMany({
+        data: { leadsFoundToday: 0, lastQuotaReset: new Date() }
+    });
+});
+
+// Server Initialization
 if (process.env.RUN_ONCE === 'true') {
-    logger.info('RUN_ONCE enabled: Executing immediate cycle and exiting...');
-    runEngine().then(() => {
-        logger.info('One-time execution complete. Exiting.');
-        process.exit(0);
-    }).catch(err => {
-        logger.error({ err }, 'One-time execution failed.');
-        process.exit(1);
-    });
+    triggerEngineCycle().then(() => process.exit(0)).catch(() => process.exit(1));
 } else {
-    cron.schedule(config.CRON_SCHEDULE, () => {
-        runEngine();
-    });
-
-    // Run immediately on start
-    runEngine();
+    // Start the Web Server (Webhook trigger lives here)
     startServer();
-
-    logger.info(`Lead Engine started. Schedule: ${config.CRON_SCHEDULE}`);
 }

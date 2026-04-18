@@ -7,33 +7,49 @@ export interface QueryData {
     query: string;
     location: string;
     industry: string;
-    country: 'ZW' | 'SA';
+    country: string;
 }
 
 export class QueryGenerator {
     /**
-     * Generate a batch of queries for a cycle - targeting Zimbabwe (Harare)
-     * @param count Total number of queries to generate
+     * Generate a batch of queries for a specific campaign cycle
      */
-    async generateBatchQueries(count: number = 25): Promise<QueryData[]> {
-        // Generate queries for Zimbabwe only
-        const queries = await this.generateQueriesForCountry(LOCATIONS_ZW, 'ZW', count);
+    async generateBatchQueries(count: number = 25, campaign?: any): Promise<QueryData[]> {
+        const locations = campaign?.locations && campaign.locations.length > 0 
+            ? campaign.locations 
+            : (LOCATIONS_ZW.length > 0 ? LOCATIONS_ZW : ['Global']);
+            
+        const industries = campaign?.industries && campaign.industries.length > 0
+            ? campaign.industries
+            : (INDUSTRIES.length > 0 ? INDUSTRIES : ['Business']);
 
-        logger.info(`Generated ${queries.length} queries for Zimbabwe (Harare)`);
+        const country = campaign?.targetCountry || 'US';
+        
+        const queries = await this.generateQueriesForContext(
+            locations, 
+            industries,
+            country, 
+            count,
+            campaign?.id
+        );
+
+        logger.info(`Generated ${queries.length} queries for Campaign: ${campaign?.name || 'Global'}`);
         return queries;
     }
 
-    private async generateQueriesForCountry(
+    private async generateQueriesForContext(
         locations: string[],
-        country: 'ZW' | 'SA',
-        maxQueries: number
+        industries: string[],
+        country: string,
+        maxQueries: number,
+        campaignId?: string
     ): Promise<QueryData[]> {
         const now = new Date();
         const rangeLimit = new Date(now.getTime() - config.ROTATION_PERIOD_DAYS * 24 * 60 * 60 * 1000);
         const queries: QueryData[] = [];
 
         const shuffledLocations = this.shuffle([...locations]);
-        const shuffledIndustries = this.shuffle([...INDUSTRIES]);
+        const shuffledIndustries = this.shuffle([...industries]);
 
         for (const location of shuffledLocations) {
             if (queries.length >= maxQueries) break;
@@ -43,9 +59,10 @@ export class QueryGenerator {
 
                 const recentHistory = await prisma.queryHistory.findUnique({
                     where: {
-                        location_industry: {
+                        location_industry_campaignId: {
                             location,
                             industry,
+                            campaignId: campaignId || null as any
                         },
                     },
                 });
@@ -57,9 +74,10 @@ export class QueryGenerator {
                     // Upsert to history
                     await prisma.queryHistory.upsert({
                         where: {
-                            location_industry: {
+                            location_industry_campaignId: {
                                 location,
                                 industry,
+                                campaignId: campaignId || null as any
                             },
                         },
                         update: {
@@ -70,6 +88,7 @@ export class QueryGenerator {
                             location,
                             industry,
                             query,
+                            campaignId: campaignId || null
                         },
                     });
 
@@ -79,14 +98,6 @@ export class QueryGenerator {
         }
 
         return queries;
-    }
-
-    /**
-     * Legacy method for single query generation (backward compatibility)
-     */
-    async generateNextQuery(): Promise<QueryData | null> {
-        const batch = await this.generateBatchQueries(1);
-        return batch[0] ?? null;
     }
 
     private shuffle<T>(array: T[]): T[] {

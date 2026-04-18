@@ -1,13 +1,24 @@
-import 'dotenv/config'; // Ensure env is loaded
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { logger } from './logger.js';
+
+let prisma: PrismaClient;
 
 if (!process.env.DATABASE_URL) {
-    console.warn('⚠️ DATABASE_URL is missing in prisma.ts! Prisma Client might fail.');
+    logger.error('❌ DATABASE_URL is missing! Database operations will fail.');
+    // We instantiate with a dummy URL to avoid the constructor validation error,
+    // though actual queries will still fail until the .env is fixed.
+    prisma = new PrismaClient({
+        datasources: {
+            db: {
+                url: 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
+            }
+        }
+    });
+} else {
+    prisma = new PrismaClient({
+        log: process.env.LOG_LEVEL === 'debug' ? ['query', 'info', 'warn', 'error'] : ['error'],
+    });
 }
-
-// Prisma 7: Standard client initialization for PostgreSQL
-const prisma = new PrismaClient({
-    log: process.env.LOG_LEVEL === 'debug' ? ['query', 'info', 'warn', 'error'] : ['error'],
-});
 
 export default prisma;

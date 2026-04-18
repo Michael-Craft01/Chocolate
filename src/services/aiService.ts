@@ -25,70 +25,66 @@ export class AIService {
         });
     }
 
-    async enrichLead(businessName: string, category?: string, description?: string): Promise<AIEnrichment> {
+    async enrichLead(
+        businessName: string, 
+        category?: string, 
+        campaignConfig?: { productDescription?: string | null, targetPainPoints?: string | null }
+    ): Promise<AIEnrichment> {
+        // Defaults to Takada if no config provided (backward compatibility / default)
+        const product = campaignConfig?.productDescription || "Takada (Inventory & Stock Management System)";
+        const customInstructions = campaignConfig?.targetPainPoints || "";
+
         // Add randomization hint to encourage varied responses
         const painPointHint = Math.floor(Math.random() * 8) + 1;
-        const solutionHint = 1; // Always recommend Takada now
 
         const prompt = `
-You are a business strategist specializing in inventory management systems (Takada) for SMEs in Zimbabwe.
-IMPORTANT: Vary your responses. For this business, focus on inventory pain point area #${painPointHint}.
+You are a business strategist specializing in selling: "${product}".
+${customInstructions}
 
-Pain Points (choose ONE based on what fits this specific business):
+IMPORTANT: Vary your responses. Focus on a unique pain point that matches the business.
 
-1. Manual stock taking leading to inaccuracies and "ghost stock".
-2. Frequent "out of stock" situations for popular items, losing sales.
-3. Overstocking slow-moving items, tying up valuable cash flow.
-4. Difficulty tracking stock across multiple branches or storage locations.
-5. Inefficient manual invoicing and receipting process.
-6. Lack of real-time visibility into profit margins and cost price changes.
-7. Theft or shrinkage (stock loss) due to lack of a robust tracking system.
-8. Slow reordering process because of manual inventory checks.
-
-Solution:
-Always recommend "Takada (Inventory & Stock Management System)" which is a cloud-based solution (https://takada.logichq.tech).
+Example Pain Points to consider (if applicable):
+1. Manual processes leading to inaccuracies.
+2. Loss of sales due to inefficiency.
+3. Cash flow tied up in slow-moving operations.
+4. Difficulty tracking across branches.
+5. Inefficient invoicing and receipting.
+6. Lack of real-time visibility.
+7. Shrinkage or loss.
+8. Slow reordering/ restocking.
 
 Respond ONLY with a JSON object:
-{"industry": "SME / Retail", "painPoint": "Your chosen pain point", "recommendedSolution": "Takada (Inventory & Stock Management System)"}
+{"industry": "Specific Industry", "painPoint": "Specific identified pain point", "recommendedSolution": "${product}"}
 
 Business: ${businessName}
 Category: ${category || 'SME'}
 `;
 
         try {
-            logger.info(`Requesting AI enrichment for: ${businessName}`);
+            logger.info(`Requesting AI enrichment for: ${businessName} (Product: ${product})`);
             const result = await this.model.generateContent(prompt);
             const response = await result.response;
             const text = response.text();
 
-            // Robust JSON extraction: Find the first '{' and the last '}'
+            // Robust JSON extraction
             const jsonMatch = text.match(/\{[\s\S]*\}/);
             if (!jsonMatch) {
                 throw new Error('No JSON object found in AI response');
             }
 
-            const cleanedText = jsonMatch[0];
-            const parsed = JSON.parse(cleanedText);
+            const parsed = JSON.parse(jsonMatch[0]);
 
             return {
                 industry: parsed.industry || 'SME / Retail',
-                painPoint: parsed.painPoint || 'Manual stock management issues',
-                recommendedSolution: 'Takada (Inventory & Stock Management System)',
+                painPoint: parsed.painPoint || 'Manual management issues',
+                recommendedSolution: product,
             };
         } catch (error) {
             logger.error({ err: error }, 'AI Enrichment error:');
-            // Randomized fallback values
-            const fallbackPainPoints = [
-                'Manual stock taking leading to inaccuracies',
-                'Frequent out of stock situations losing sales',
-                'Overstocking slow-moving items tying up cash',
-                'Lack of real-time visibility into profit margins',
-                'Inefficient manual invoicing and receipting',
-            ];
             return {
                 industry: 'SME / Retail',
-                painPoint: fallbackPainPoints[Math.floor(Math.random() * fallbackPainPoints.length)]!,
-                recommendedSolution: 'Takada (Inventory & Stock Management System)',
+                painPoint: 'Inefficient manual operations',
+                recommendedSolution: product,
             };
         }
     }

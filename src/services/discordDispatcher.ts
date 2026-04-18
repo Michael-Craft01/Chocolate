@@ -24,7 +24,14 @@ export class DiscordDispatcher {
         return url.startsWith('http://') || url.startsWith('https://');
     }
 
-    async dispatch(lead: LeadPayload, tier: 'hot' | 'warm' = 'warm') {
+    async dispatch(lead: LeadPayload, tier: 'hot' | 'warm' = 'warm', webhookUrl?: string | null) {
+        const targetWebhook = webhookUrl || config.DISCORD_WEBHOOK;
+        
+        if (!targetWebhook) {
+            logger.warn('No Discord webhook configured for dispatch');
+            return false;
+        }
+
         const truncate = (str: string, max: number) => str.length > max ? str.substring(0, max - 3) + '...' : str;
 
         const funQuotes = [
@@ -56,7 +63,7 @@ export class DiscordDispatcher {
                 { name: 'Email', value: lead.email || '_Snail Mail?_', inline: true },
             ],
             footer: {
-                text: `LogicHQ Bot says: "${randomQuote}"`,
+                text: `Lead Engine says: "${randomQuote}"`,
             },
             timestamp: new Date().toISOString(),
         };
@@ -72,41 +79,26 @@ export class DiscordDispatcher {
             components: [] as any[],
         };
 
-        // WhatsApp button - direct to number, no pre-filled message
+        // WhatsApp button
         if (lead.phone) {
-            // Remove everything except numbers (and keep + if present)
-            // Actually, for wa.me, we just want numbers.
             const cleanPhone = lead.phone.replace(/\D/g, '');
-
-            // Check if we have enough digits (at least 7)
             if (cleanPhone.length >= 7) {
-                // Use full API link as it can be more reliable than wa.me shortlinks in some clients
                 const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}`;
 
                 buttonRow.components.push({
-                    type: 2, // Button
-                    style: 5, // Link
-                    label: 'Chat on WhatsApp', // More descriptive label
+                    type: 2,
+                    style: 5,
+                    label: 'Chat on WhatsApp',
                     url: waUrl,
                 });
-                logger.debug(`Added WhatsApp button: ${waUrl}`);
-
-                // Add a fallback link in the embed fields to ensure visibility
-                detailsEmbed.fields.push({
-                    name: '📱 WhatsApp Link',
-                    value: `[Click to Chat](${waUrl})`,
-                    inline: true
-                });
-            } else {
-                logger.debug(`Skipped WhatsApp button -- Phone: ${lead.phone}, Clean: ${cleanPhone}`);
             }
         }
 
-        // Website button - only valid URLs
+        // Website button
         if (validWebsite) {
             buttonRow.components.push({
-                type: 2, // Button
-                style: 5, // Link
+                type: 2,
+                style: 5,
                 label: 'Website',
                 url: validWebsite,
             });
@@ -114,14 +106,11 @@ export class DiscordDispatcher {
 
         if (buttonRow.components.length > 0) {
             components.push(buttonRow);
-            logger.debug(`Components check: ${JSON.stringify(buttonRow.components)}`);
-        } else {
-            logger.debug('No buttons generated for this lead');
         }
 
         try {
-            logger.info(`Dispatching lead to Discord: ${lead.name}`);
-            await axios.post(config.DISCORD_WEBHOOK, {
+            logger.info(`Dispatching lead to Discord: ${lead.name} (Webhook: ${targetWebhook.substring(0, 30)}...)`);
+            await axios.post(targetWebhook, {
                 embeds: [detailsEmbed, messageEmbed],
                 components: components,
             });
