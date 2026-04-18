@@ -11,7 +11,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 const navItems = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Campaigns", href: "/campaigns", icon: Target },
   { name: "Billing", href: "/billing", icon: CreditCard },
   { name: "Settings", href: "/settings", icon: Settings },
@@ -23,7 +23,7 @@ export function Sidebar() {
   return (
     <div className="flex h-screen w-64 flex-col border-r border-card-border bg-card">
       <div className="flex h-20 items-center px-6">
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+        <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl">
           <Zap className="h-6 w-6 text-primary fill-primary" />
           <span className="gradient-text">Chocolate</span>
         </Link>
