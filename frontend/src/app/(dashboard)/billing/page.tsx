@@ -70,7 +70,7 @@ export default function BillingPage() {
         {tiers.map((tier) => (
           <div 
             key={tier.name} 
-            className={`glass rounded-2xl p-8 border flex flex-col relative ${
+            className={`glass rounded-2xl p-8 border flex flex-col relative interactive-card ${
               tier.popular ? "border-primary/50 shadow-2xl shadow-primary/10" : "border-white/5"
             }`}
           >
@@ -116,7 +116,7 @@ export default function BillingPage() {
       </div>
 
       {/* Credits Section */}
-      <div className="glass rounded-2xl p-10 mt-20 border border-white/5 relative overflow-hidden group">
+      <div className="glass rounded-2xl p-10 mt-20 border border-white/5 relative overflow-hidden group interactive-card">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-3 max-w-md">

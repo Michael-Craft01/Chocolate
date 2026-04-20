@@ -17,6 +17,17 @@ export const leadStatusSchema = z.object({
   status: z.enum(['NEW', 'CONTACTED', 'CONVERTED', 'REJECTED']),
 });
 
+export const campaignStatusSchema = z.object({
+  status: z.enum(['ACTIVE', 'PAUSED', 'EXHAUSTED']),
+});
+
+// Billing Checkout Schema
+export const billingSchema = z.object({
+  method: z.enum(['STRIPE', 'PAYNOW']),
+  tier: z.enum(['STARTER', 'PROFESSIONAL', 'ELITE', 'CREDIT']),
+  amount: z.number().optional(), // For credit topups
+});
+
 // Validation Middleware
 export const validate = (schema: z.ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -26,7 +37,7 @@ export const validate = (schema: z.ZodSchema) => (req: Request, res: Response, n
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         error: 'Validation Failed',
-        details: error.errors.map(e => ({ path: e.path, message: e.message }))
+        details: error.issues.map((issue) => ({ path: issue.path, message: issue.message }))
       });
     }
     next(error);

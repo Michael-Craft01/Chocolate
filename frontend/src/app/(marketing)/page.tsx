@@ -1,7 +1,9 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Zap, Target, ArrowRight, Brain, Cpu, MessageSquare, Discord, Check, ShieldCheck, Globe } from "lucide-react";
+import { Zap, Target, ArrowRight, Brain, Cpu, MessageSquare, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
 export default function LandingPage() {
@@ -54,22 +56,22 @@ export default function LandingPage() {
       <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -z-10" />
       
       {/* Navbar */}
-      <nav className="max-w-7xl mx-auto px-6 py-8 flex items-center justify-between">
+      <nav className="sticky top-0 z-20 max-w-7xl mx-auto mt-3 px-4 py-4 sm:px-6 sm:py-5 flex items-center justify-between rounded-2xl glass">
         <Link href="/" className="flex items-center gap-2 font-bold text-2xl">
           <Zap className="h-7 w-7 text-primary fill-primary" />
           <span className="gradient-text">Chocolate</span>
         </Link>
-        <div className="flex items-center gap-8">
-          <Link href="#features" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">How it works</Link>
-          <Link href="#pricing" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Pricing</Link>
-          <Link href="/dashboard" className="h-11 px-6 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sm font-bold hover:bg-white/10 transition-all font-black uppercase tracking-widest">
+        <div className="flex items-center gap-2 sm:gap-8">
+          <Link href="#features" className="hidden sm:inline-flex text-sm font-medium text-zinc-400 hover:text-white transition-colors">How it works</Link>
+          <Link href="#pricing" className="hidden sm:inline-flex text-sm font-medium text-zinc-400 hover:text-white transition-colors">Pricing</Link>
+          <Link href="/dashboard" className="h-11 px-4 sm:px-6 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs sm:text-sm font-bold hover:bg-white/10 transition-all uppercase tracking-widest">
             {session ? 'Go to Dashboard' : 'Login'}
           </Link>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 pt-24 pb-32 text-center">
+      <section className="max-w-7xl mx-auto px-6 pt-20 pb-28 text-center">
         <motion.div
            initial={{ opacity: 0, y: 20 }}
            animate={{ opacity: 1, y: 0 }}
@@ -79,21 +81,28 @@ export default function LandingPage() {
             <Zap className="h-3 w-3" />
             V2.0 Scaling Update Live
           </span>
-          <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tight">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 tracking-tight leading-[1.02]">
             The engine for <br />
             <span className="gradient-text">High-Ticket Leads.</span>
           </h1>
-          <p className="max-w-2xl mx-auto text-xl text-zinc-400 mb-12">
+          <p className="max-w-2xl mx-auto text-lg sm:text-xl text-zinc-400 mb-12">
             Chocolate is a headless automate-and-forget lead engine. We find, classify, and research businesses so you only talk to people ready to buy.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/onboarding" className="h-14 px-10 rounded-2xl bg-primary text-white font-bold text-lg hover:bg-primary-hover transition-all flex items-center gap-2 shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-98">
+            <Link href="/onboarding" className="h-14 px-10 rounded-2xl bg-primary text-white font-bold text-lg hover:bg-primary-hover transition-all flex items-center gap-2 shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95">
               {session ? 'Open Dashboard' : 'Launch Your Engine'}
               <ArrowRight className="h-5 w-5" />
             </Link>
-            <button className="h-14 px-10 rounded-2xl bg-white/5 border border-white/10 font-bold text-lg hover:bg-white/10 transition-all">
-              Watch Engine Demo
-            </button>
+            <Link href="#features" className="h-14 px-10 rounded-2xl bg-white/5 border border-white/10 font-bold text-lg hover:bg-white/10 transition-all inline-flex items-center">
+              Explore Features
+            </Link>
+          </div>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs sm:text-sm text-zinc-500">
+            <span>No credit card required</span>
+            <span className="hidden sm:inline">•</span>
+            <span>Setup in under 3 minutes</span>
+            <span className="hidden sm:inline">•</span>
+            <span>Cancel anytime</span>
           </div>
         </motion.div>
       </section>
@@ -111,7 +120,7 @@ export default function LandingPage() {
       </section>
 
       {/* Workflow Section */}
-      <section id="features" className="max-w-7xl mx-auto px-6 py-32">
+      <section id="features" className="max-w-7xl mx-auto px-6 py-28">
         <div className="text-center mb-20">
           <h2 className="text-4xl font-black mb-4">Automation as Art</h2>
           <p className="text-zinc-500">How the Chocolate engine transforms the web into a sales machine.</p>
@@ -120,9 +129,9 @@ export default function LandingPage() {
           {steps.map((step, i) => {
             const Icon = step.icon;
             return (
-              <div key={i} className="relative group">
+              <div key={i} className="relative group interactive-card rounded-2xl p-4">
                 {i < 3 && <div className="hidden md:block absolute top-12 right-[-20%] w-[40%] h-[1px] bg-gradient-to-r from-primary/30 to-transparent" />}
-                <div className="h-24 w-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:border-primary/50 transition-colors">
+                <div className="h-20 w-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-5 group-hover:border-primary/50 transition-colors">
                   <Icon className="h-10 w-10 text-primary" />
                 </div>
                 <h3 className="font-bold text-lg mb-2">{step.title}</h3>
@@ -134,12 +143,12 @@ export default function LandingPage() {
       </section>
 
       {/* Feature Grid */}
-      <section className="max-w-7xl mx-auto px-6 py-32 bg-white/[0.01] rounded-[4rem]">
+      <section className="max-w-7xl mx-auto px-6 py-28 bg-white/[0.01] rounded-[3rem]">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {features.map((f, i) => {
             const Icon = f.icon;
             return (
-              <div key={i} className="glass rounded-3xl p-10 hover:border-white/20 transition-all">
+              <div key={i} className="glass rounded-3xl p-10 interactive-card">
                 <Icon className={`h-12 w-12 mb-8 ${f.color}`} />
                 <h3 className="text-2xl font-black mb-4">{f.title}</h3>
                 <p className="text-zinc-400 leading-relaxed mb-6">{f.desc}</p>
@@ -154,14 +163,14 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="max-w-7xl mx-auto px-6 py-32">
+      <section id="pricing" className="max-w-7xl mx-auto px-6 py-28">
         <div className="text-center mb-20">
           <h2 className="text-4xl font-black mb-4">Transparent Scale</h2>
           <p className="text-zinc-500">Choose the volume your business needs to grow.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {pricing.map((p, i) => (
-            <div key={i} className={`glass rounded-3xl p-10 relative overflow-hidden ${p.featured ? 'border-primary/50 ring-1 ring-primary/20' : ''}`}>
+            <div key={i} className={`glass rounded-3xl p-10 relative overflow-hidden interactive-card ${p.featured ? 'border-primary/50 ring-1 ring-primary/20' : ''}`}>
               {p.featured && <div className="absolute top-0 right-0 px-4 py-1 bg-primary text-[10px] font-black uppercase tracking-widest">Most Popular</div>}
               <div className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-2">{p.name}</div>
               <div className="flex items-baseline gap-1 mb-8">

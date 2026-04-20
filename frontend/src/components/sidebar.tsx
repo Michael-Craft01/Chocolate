@@ -31,21 +31,22 @@ export function Sidebar() {
 
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
 
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "group flex items-center gap-3 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
                 isActive 
-                  ? "bg-primary/10 text-primary" 
-                  : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
+                  ? "border-primary/30 bg-primary/10 text-primary shadow-[0_0_0_1px_rgba(59,130,246,0.2)]"
+                  : "border-transparent text-zinc-400 hover:border-white/10 hover:bg-zinc-800/50 hover:text-zinc-200"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className={cn("h-4 w-4 transition-transform", isActive ? "scale-105" : "group-hover:scale-105")} />
               {item.name}
             </Link>
           );
@@ -53,10 +54,10 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto border-t border-card-border p-4">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200 transition-colors cursor-pointer">
+        <button className="flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-zinc-400 transition-all hover:border-white/10 hover:bg-zinc-800/50 hover:text-zinc-200">
           <LogOut className="h-4 w-4" />
           Sign Out
-        </div>
+        </button>
       </div>
     </div>
   );

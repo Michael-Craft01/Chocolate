@@ -1,64 +1,72 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Filter, ExternalLink, MoreVertical, MessageSquare } from "lucide-react";
-
-interface Lead {
-  id: string;
-  industry: string;
-  painPoint: string;
-  suggestedMessage: string;
-  status: string;
-  createdAt: string;
-  business: {
-    name: string;
-    website: string;
-    phone: string;
-  };
-}
-
+import { Search, ExternalLink, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { Skeleton, TableSkeleton } from "@/components/skeleton";
+import { Skeleton } from "@/components/skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { ApiAuthError, ApiRequestError } from "@/lib/api";
+import type { Lead, PaginationMeta } from "@/lib/types";
+import { fetchLeads as fetchLeadList, updateLeadStatus } from "@/lib/services/leads";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | Lead["status"]>("ALL");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, totalPages: 1, totalLeads: 0 });
 
   const fetchLeads = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/leads");
-      const data = await res.json();
+      setError(null);
+      const data = await fetchLeadList(page, 20);
       setLeads(data.leads || []);
+      setPagination(data.pagination || { page: 1, totalPages: 1, totalLeads: 0 });
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching leads:", err);
+      if (err instanceof ApiAuthError) {
+        setError("Please sign in to view your leads.");
+      } else if (err instanceof ApiRequestError) {
+        setError(err.message);
+      } else {
+        console.error("Error fetching leads:", err);
+        setError("Unable to load leads right now. Please refresh.");
+      }
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchLeads();
-  }, []);
+  }, [page]);
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, status: Lead["status"]) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/leads/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status })
-      });
-      if (res.ok) fetchLeads();
+      await updateLeadStatus(id, status);
+      fetchLeads();
     } catch (err) {
-      console.error("Status update failed", err);
+      if (err instanceof ApiAuthError) {
+        setError("Authentication expired. Please sign in again.");
+      } else if (err instanceof ApiRequestError) {
+        setError(err.message);
+      } else {
+        console.error("Status update failed", err);
+      }
     }
   };
 
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+  const copyToClipboard = async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error("Clipboard copy failed", err);
+      setError("Could not copy message to clipboard.");
+    }
   };
 
   const statusColors: Record<string, string> = {
@@ -67,6 +75,17 @@ export default function LeadsPage() {
     CONVERTED: "bg-emerald-400/10 text-emerald-400",
     REJECTED: "bg-zinc-800 text-zinc-500",
   };
+
+  const filteredLeads = leads.filter((lead) => {
+    const query = searchQuery.toLowerCase().trim();
+    const searchMatch = !query || (
+      lead.business.name.toLowerCase().includes(query) ||
+      lead.industry.toLowerCase().includes(query) ||
+      lead.painPoint.toLowerCase().includes(query)
+    );
+    const statusMatch = statusFilter === "ALL" || lead.status === statusFilter;
+    return searchMatch && statusMatch;
+  });
 
   return (
     <motion.div 
@@ -85,15 +104,45 @@ export default function LeadsPage() {
             <input 
               type="text" 
               placeholder="Search leads..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="h-10 rounded-xl bg-zinc-900 border border-white/5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all focus:border-primary/50"
             />
           </div>
-          <button className="flex h-10 items-center gap-2 rounded-xl bg-zinc-900 border border-white/5 px-4 text-sm font-medium hover:bg-zinc-800 transition-all">
-            <Filter className="h-4 w-4" />
-            Filter
-          </button>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as "ALL" | Lead["status"])}
+            className="h-10 rounded-xl bg-zinc-900 border border-white/5 px-4 text-sm font-medium text-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all focus:border-primary/50"
+          >
+            <option value="ALL">All statuses</option>
+            <option value="NEW">New</option>
+            <option value="CONTACTED">Contacted</option>
+            <option value="CONVERTED">Converted</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
         </div>
       </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="glass rounded-xl border border-white/5 p-4">
+          <p className="muted-label mb-2">Total Leads</p>
+          <p className="text-2xl font-bold">{pagination.totalLeads}</p>
+        </div>
+        <div className="glass rounded-xl border border-white/5 p-4">
+          <p className="muted-label mb-2">Page</p>
+          <p className="text-2xl font-bold">{pagination.page} / {pagination.totalPages}</p>
+        </div>
+        <div className="glass rounded-xl border border-white/5 p-4">
+          <p className="muted-label mb-2">Visible</p>
+          <p className="text-2xl font-bold">{filteredLeads.length}</p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {error}
+        </div>
+      )}
 
       <div className="glass overflow-hidden rounded-2xl border border-white/5 shadow-2xl">
         <div className="overflow-x-auto">
@@ -109,17 +158,25 @@ export default function LeadsPage() {
             </thead>
             <tbody className="divide-y divide-white/5">
               {loading ? (
-                <TableSkeleton rows={8} />
-              ) : leads.length === 0 ? (
+                [...Array(6)].map((_, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-5"><Skeleton className="h-6 w-44" /></td>
+                    <td className="px-6 py-5"><Skeleton className="h-6 w-40" /></td>
+                    <td className="px-6 py-5"><Skeleton className="h-7 w-24 rounded-full" /></td>
+                    <td className="px-6 py-5"><Skeleton className="h-5 w-20" /></td>
+                    <td className="px-6 py-5"><div className="ml-auto w-fit"><Skeleton className="h-9 w-28 rounded-xl" /></div></td>
+                  </tr>
+                ))
+              ) : filteredLeads.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12">
                     <EmptyState 
-                      title="No leads captured yet"
-                      description="Launch a campaign or refine your search targets to start populating your hub with AI-enriched leads."
+                      title="No matching leads"
+                      description="Try a broader search term or clear your current query."
                     />
                   </td>
                 </tr>
-              ) : leads.map((lead) => (
+              ) : filteredLeads.map((lead) => (
                 <tr key={lead.id} className="hover:bg-white/[0.02] transition-colors group">
                   <td className="px-6 py-5">
                     <div className="font-bold text-white text-base">{lead.business.name}</div>
@@ -138,7 +195,7 @@ export default function LeadsPage() {
                   <td className="px-6 py-5">
                     <select 
                       value={lead.status}
-                      onChange={(e) => updateStatus(lead.id, e.target.value)}
+                      onChange={(e) => updateStatus(lead.id, e.target.value as Lead["status"])}
                       className={`rounded-full px-3 py-1 text-[10px] font-black uppercase cursor-pointer border-none ring-1 ring-inset ring-white/10 focus:ring-primary/50 ${statusColors[lead.status] || "bg-zinc-800 text-zinc-400"}`}
                     >
                       <option value="NEW">NEW</option>
@@ -167,6 +224,30 @@ export default function LeadsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-zinc-500">
+          Showing page {pagination.page} of {pagination.totalPages}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1 || loading}
+            className="inline-flex h-9 items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-zinc-300 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Prev
+          </button>
+          <button
+            onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+            disabled={page >= pagination.totalPages || loading}
+            className="inline-flex h-9 items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-zinc-300 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </motion.div>

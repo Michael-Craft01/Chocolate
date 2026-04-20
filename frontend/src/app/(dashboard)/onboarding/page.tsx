@@ -3,11 +3,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-    Rocket, 
     User, 
     Briefcase, 
     Target, 
-    ArrowRight, 
     Check, 
     Globe, 
     Zap,
@@ -35,6 +33,7 @@ export default function OnboardingPage() {
     });
 
     const totalSteps = 4;
+    const inputBaseClass = "w-full bg-white/5 border border-white/10 rounded-2xl p-4 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/40";
 
     const nextStep = () => setStep(s => Math.min(s + 1, totalSteps));
     const prevStep = () => setStep(s => Math.max(s - 1, 1));
@@ -56,6 +55,13 @@ export default function OnboardingPage() {
         router.push("/dashboard");
     };
 
+    const currentStepHint = () => {
+        if (step === 1) return "Add your company name to personalize your workspace.";
+        if (step === 2) return "Set sender identity used in outreach signatures.";
+        if (step === 3) return "Describe your offer so AI can match real pain points.";
+        return "Final review complete. Launch your dashboard.";
+    };
+
     const containerVariants = {
         hidden: { opacity: 0, scale: 0.95 },
         visible: { 
@@ -69,14 +75,14 @@ export default function OnboardingPage() {
     return (
         <div className="min-h-screen bg-[#070707] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
             {/* Background Glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-500/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
             
             {/* Progress Bar */}
             <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
                 <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${(step / totalSteps) * 100}%` }}
-                    className="h-full bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]"
+                    className="h-full bg-primary shadow-[0_0_15px_rgba(59,130,246,0.5)]"
                 />
             </div>
 
@@ -91,7 +97,7 @@ export default function OnboardingPage() {
                 >
                     {/* Header */}
                     <div className="mb-10 text-center">
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-red-600/20 border border-red-600/30 text-red-500 mb-6">
+                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/20 border border-primary/30 text-primary mb-6">
                             {step === 1 && <Briefcase size={28} />}
                             {step === 2 && <User size={28} />}
                             {step === 3 && <Zap size={28} />}
@@ -106,6 +112,7 @@ export default function OnboardingPage() {
                         <p className="text-white/40 text-sm">
                             Step {step} of {totalSteps} — {step === 1 ? "Business Foundation" : step === 2 ? "Identity & Tone" : step === 3 ? "Product Intelligence" : "Market Focus"}
                         </p>
+                        <p className="mt-2 text-xs text-zinc-500">{currentStepHint()}</p>
                     </div>
 
                     {/* Step 1: Company */}
@@ -118,16 +125,16 @@ export default function OnboardingPage() {
                                     placeholder="e.g. LogicHQ"
                                     value={formData.companyName}
                                     onChange={(e) => handleFormUpdate("companyName", e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all font-medium"
+                                    className={`${inputBaseClass} font-medium`}
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col gap-2">
-                                    <Globe className="text-red-500" size={20} />
+                                    <Globe className="text-primary" size={20} />
                                     <span className="text-xs text-white/40">Global Search Enabled</span>
                                 </div>
                                 <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col gap-2">
-                                    <Zap className="text-red-500" size={20} />
+                                    <Zap className="text-primary" size={20} />
                                     <span className="text-xs text-white/40">AI Engine Ready</span>
                                 </div>
                             </div>
@@ -145,7 +152,7 @@ export default function OnboardingPage() {
                                         placeholder="e.g. Michael"
                                         value={formData.senderName}
                                         onChange={(e) => handleFormUpdate("senderName", e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all"
+                                        className={inputBaseClass}
                                     />
                                 </div>
                                 <div>
@@ -155,7 +162,7 @@ export default function OnboardingPage() {
                                         placeholder="e.g. Founder"
                                         value={formData.senderRole}
                                         onChange={(e) => handleFormUpdate("senderRole", e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all"
+                                        className={inputBaseClass}
                                     />
                                 </div>
                             </div>
@@ -176,7 +183,7 @@ export default function OnboardingPage() {
                                     placeholder="e.g. Takada Mobile POS"
                                     value={formData.productName}
                                     onChange={(e) => handleFormUpdate("productName", e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all font-medium"
+                                    className={`${inputBaseClass} font-medium`}
                                 />
                             </div>
                             <div>
@@ -186,7 +193,7 @@ export default function OnboardingPage() {
                                     placeholder="What problem do you solve? (e.g. We build apps that let SMEs manage inventory from their phone.)"
                                     value={formData.productDescription}
                                     onChange={(e) => handleFormUpdate("productDescription", e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all resize-none text-sm leading-relaxed"
+                                    className={`${inputBaseClass} resize-none text-sm leading-relaxed`}
                                 />
                             </div>
                         </div>
@@ -195,9 +202,9 @@ export default function OnboardingPage() {
                     {/* Step 4: Targets */}
                     {step === 4 && (
                         <div className="space-y-6">
-                            <div className="p-6 rounded-[2rem] bg-red-600/5 border border-red-600/10 text-center flex flex-col items-center gap-4">
-                                <div className="w-16 h-16 rounded-full bg-red-600/20 flex items-center justify-center">
-                                    <Check className="text-red-500" size={32} />
+                            <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/20 text-center flex flex-col items-center gap-4">
+                                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                                    <Check className="text-primary" size={32} />
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-lg">System Calibrated</h3>
@@ -230,7 +237,7 @@ export default function OnboardingPage() {
                             className={`
                                 flex items-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all
                                 ${isStepValid() 
-                                    ? "bg-red-600 text-white shadow-[0_0_30px_rgba(220,38,38,0.3)] hover:bg-red-700" 
+                                    ? "bg-primary text-white shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:bg-primary-hover" 
                                     : "bg-white/5 text-white/20 cursor-not-allowed"}
                             `}
                         >
@@ -246,7 +253,7 @@ export default function OnboardingPage() {
                 {[1, 2, 3, 4].map((i) => (
                     <div 
                         key={i}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${i === step ? "w-8 bg-red-600" : "bg-white/10"}`}
+                        className={`w-2 h-2 rounded-full transition-all duration-300 ${i === step ? "w-8 bg-primary" : "bg-white/10"}`}
                     />
                 ))}
             </div>

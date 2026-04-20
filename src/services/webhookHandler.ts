@@ -3,12 +3,24 @@ import { logger } from '../lib/logger.js';
 
 export class WebhookHandler {
     static async handleSubscriptionSuccess(userId: string, tier: string, gatewayRef: string, gateway: 'STRIPE' | 'PAYNOW') {
-        logger.info({ userId, tier, gateway }, 'Processing successful subscription');
+        logger.info({ userId, tier, gateway, gatewayRef }, 'Processing subscription success');
+
+        // Idempotency check: Don't process the same transaction twice
+        const existing = await prisma.transaction.findUnique({
+            where: { gatewayRef }
+        });
+
+        if (existing && existing.status === 'SUCCESS') {
+            logger.warn({ gatewayRef }, 'Transaction already processed successfully. Skipping.');
+            return;
+        }
 
         const dailyLimit = tier === 'STARTER' ? 50 : tier === 'PROFESSIONAL' ? 200 : 1000;
         const maxCampaigns = tier === 'ELITE' ? 999 : tier === 'PROFESSIONAL' ? 5 : 1;
+        const price = tier === 'STARTER' ? 20 : tier === 'PROFESSIONAL' ? 49 : 300;
 
         await prisma.$transaction([
+            // Update User
             prisma.user.update({
                 where: { id: userId },
                 data: {
@@ -18,10 +30,13 @@ export class WebhookHandler {
                     paymentStatus: 'active',
                 }
             }),
-            prisma.transaction.create({
-                data: {
+            // Upsert Transaction (handle both Stripe's new-on-success and Paynow's update-existing)
+            prisma.transaction.upsert({
+                where: { gatewayRef },
+                update: { status: 'SUCCESS' },
+                create: {
                     userId,
-                    amount: tier === 'STARTER' ? 20 : tier === 'PROFESSIONAL' ? 49 : 300,
+                    amount: price,
                     gateway,
                     type: 'SUBSCRIPTION',
                     status: 'SUCCESS',
@@ -29,12 +44,23 @@ export class WebhookHandler {
                 }
             })
         ]);
+
+        logger.info({ userId, tier }, 'Subscription provisioned successfully');
     }
 
     static async handleCreditTopup(userId: string, amount: number, gatewayRef: string, gateway: 'STRIPE' | 'PAYNOW') {
-        logger.info({ userId, amount, gateway }, 'Processing credit topup');
+        logger.info({ userId, amount, gateway, gatewayRef }, 'Processing credit topup');
 
-        // Assuming 1 USD = 10 Credits for now
+        const existing = await prisma.transaction.findUnique({
+            where: { gatewayRef }
+        });
+
+        if (existing && existing.status === 'SUCCESS') {
+            logger.warn({ gatewayRef }, 'Credit topup already processed. Skipping.');
+            return;
+        }
+
+        // 1 USD = 10 Credits
         const credits = amount * 10;
 
         await prisma.$transaction([
@@ -44,8 +70,10 @@ export class WebhookHandler {
                     creditBalance: { increment: credits }
                 }
             }),
-            prisma.transaction.create({
-                data: {
+            prisma.transaction.upsert({
+                where: { gatewayRef },
+                update: { status: 'SUCCESS' },
+                create: {
                     userId,
                     amount,
                     gateway,
@@ -55,5 +83,7 @@ export class WebhookHandler {
                 }
             })
         ]);
+
+        logger.info({ userId, credits }, 'Credits provisioned successfully');
     }
 }

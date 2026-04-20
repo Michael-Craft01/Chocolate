@@ -6,11 +6,80 @@ import { logger } from '../lib/logger.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+const allowedOrigins = new Set([
+    config.FRONTEND_URL,
+    'http://localhost:3001',
+    'http://127.0.0.1:3001'
+]);
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow non-browser and same-origin requests
+        if (!origin) {
+            return callback(null, true);
+        }
+        if (allowedOrigins.has(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+    }
+}));
+
+app.get('/api/health', (_req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Middleware for Stripe Webhook needs raw body
+app.post('/api/payments/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    
+    if (!stripe || !config.STRIPE_WEBHOOK_SECRET) {
+        logger.error('Stripe is not configured for webhooks');
+        return res.status(500).send('Stripe Config Missing');
+    }
+
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(
+            req.body,
+            sig as string,
+            config.STRIPE_WEBHOOK_SECRET
+        );
+    } catch (err: any) {
+        logger.error({ err }, 'Stripe Webhook Signature Verification Failed');
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    try {
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object as any;
+            const { userId, tier } = session.metadata;
+            
+            logger.info({ userId, tier, sessionId: session.id }, 'Stripe Checkout Session Completed');
+            
+            if (tier === 'CREDIT') {
+                await WebhookHandler.handleCreditTopup(userId, session.amount_total / 100, session.id, 'STRIPE');
+            } else {
+                await WebhookHandler.handleSubscriptionSuccess(userId, tier, session.id, 'STRIPE');
+            }
+        }
+        
+        res.json({ received: true });
+    } catch (err: any) {
+        logger.error({ err }, 'Error processing Stripe webhook event');
+        res.status(500).send('Internal Processing Error');
+    }
+});
+
+// All other routes use JSON body parsing
 app.use(express.json());
 
-import { campaignSchema, leadStatusSchema, validate } from './middleware/validation.js';
+import { campaignSchema, leadStatusSchema, campaignStatusSchema, billingSchema, validate } from './middleware/validation.js';
 import { authenticate, AuthenticatedRequest } from './middleware/auth.js';
+import Stripe from 'stripe';
+
+const stripe = config.STRIPE_SECRET_KEY ? new Stripe(config.STRIPE_SECRET_KEY) : null;
 
 // API: Dashboard Stats (Protected)
 app.get('/api/stats', authenticate, async (req: AuthenticatedRequest, res) => {
@@ -99,16 +168,30 @@ app.post('/api/campaigns', authenticate, validate(campaignSchema), async (req: A
 });
 
 // API: Toggle Campaign Status (Protected)
-app.patch('/api/campaigns/:id/status', authenticate, async (req: AuthenticatedRequest, res) => {
+app.patch('/api/campaigns/:id/status', authenticate, validate(campaignStatusSchema), async (req: AuthenticatedRequest, res) => {
     try {
         const { id } = req.params;
+        if (typeof id !== 'string') {
+            return res.status(400).json({ error: 'Validation Failed', message: 'Invalid campaign id' });
+        }
         const { status } = req.body;
         const userId = req.user!.id;
 
-        const campaign = await prisma.campaign.update({
+        const updateResult = await prisma.campaign.updateMany({
             where: { id, userId },
             data: { status }
         });
+        if (updateResult.count === 0) {
+            return res.status(404).json({ error: 'Not Found', message: 'Campaign not found' });
+        }
+
+        const campaign = await prisma.campaign.findUnique({
+            where: { id }
+        });
+        if (!campaign) {
+            return res.status(404).json({ error: 'Not Found', message: 'Campaign not found' });
+        }
+
         res.json(campaign);
     } catch (error) {
         logger.error({ err: error }, 'Error toggling campaign status');
@@ -148,16 +231,29 @@ app.get('/api/leads', authenticate, async (req: AuthenticatedRequest, res) => {
 });
 
 // API: Lead Status Update (Protected)
-app.patch('/api/leads/:id/status', authenticate, async (req: AuthenticatedRequest, res) => {
+app.patch('/api/leads/:id/status', authenticate, validate(leadStatusSchema), async (req: AuthenticatedRequest, res) => {
     try {
         const userId = req.user!.id;
         const { id } = req.params;
+        if (typeof id !== 'string') {
+            return res.status(400).json({ error: 'Validation Failed', message: 'Invalid lead id' });
+        }
         const { status } = req.body;
 
-        const updatedLead = await prisma.lead.update({
+        const updateResult = await prisma.lead.updateMany({
             where: { id, campaign: { userId } },
             data: { status }
         });
+        if (updateResult.count === 0) {
+            return res.status(404).json({ error: 'Not Found', message: 'Lead not found' });
+        }
+
+        const updatedLead = await prisma.lead.findUnique({
+            where: { id }
+        });
+        if (!updatedLead) {
+            return res.status(404).json({ error: 'Not Found', message: 'Lead not found' });
+        }
 
         res.json(updatedLead);
     } catch (error) {
@@ -192,33 +288,12 @@ app.post('/api/engine/trigger', async (req, res) => {
         });
     } catch (error) {
         logger.error({ err: error }, 'Engine trigger error');
-        res.status(500).json({ error: 'Internal Server Error', details: error.message });
+        const details = error instanceof Error ? error.message : 'Unknown error';
+        res.status(500).json({ error: 'Internal Server Error', details });
     }
 });
 
-// API: Stripe Webhook
-app.post('/api/payments/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    // In production, we'd verify the signature with config.STRIPE_WEBHOOK_SECRET
-    try {
-        const event = JSON.parse(req.body.toString());
-        
-        if (event.type === 'checkout.session.completed') {
-            const session = event.data.object;
-            const { userId, tier } = session.metadata;
-            
-            if (tier === 'CREDIT') {
-                await WebhookHandler.handleCreditTopup(userId, session.amount_total / 100, session.id, 'STRIPE');
-            } else {
-                await WebhookHandler.handleSubscriptionSuccess(userId, tier, session.id, 'STRIPE');
-            }
-        }
-        
-        res.json({ received: true });
-    } catch (err) {
-        logger.error({ err }, 'Stripe Webhook Error');
-        res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-});
+// Stripe Webhook handled above with raw body parser
 
 // API: Paynow Result (Webhook)
 app.post('/api/payments/paynow/result', express.urlencoded({ extended: true }), async (req, res) => {
@@ -241,11 +316,35 @@ app.post('/api/payments/paynow/result', express.urlencoded({ extended: true }), 
                 }
             }
         }
-        
-        res.send('OK');
-    } catch (error) {
-        logger.error({ err: error }, 'Paynow result handling error');
-        res.status(500).send('Error');
+        res.sendStatus(200);
+    } catch (error: any) {
+        logger.error({ err: error }, 'Error processing Paynow webhook');
+        res.status(500).json({ error: 'Internal Server Error', message: error.message });
+    }
+});
+
+// API: Create Checkout Session (Protected)
+app.post('/api/billing/create-checkout', authenticate, validate(billingSchema), async (req: AuthenticatedRequest, res) => {
+    try {
+        const { method, tier, amount } = req.body;
+        const userId = req.user!.id;
+
+        logger.info({ userId, method, tier }, 'Creating checkout session');
+
+        let url: string | null;
+        if (method === 'STRIPE') {
+            url = await paymentService.createStripeCheckout({ userId, tier, amount });
+        } else {
+            url = await paymentService.createPaynowCheckout({ userId, tier, amount });
+        }
+        if (!url) {
+            return res.status(500).json({ error: 'Payment Service Error', message: 'Checkout URL not generated' });
+        }
+
+        res.json({ url });
+    } catch (error: any) {
+        logger.error({ err: error }, 'Error creating checkout session');
+        res.status(500).json({ error: 'Payment Service Error', message: error.message });
     }
 });
 
