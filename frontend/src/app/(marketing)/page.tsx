@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { Zap, Target, ArrowRight, Brain, Cpu, MessageSquare, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
+import Hero from "@/components/landing/Hero";
+
 export default function LandingPage() {
   const [session, setSession] = useState<any>(null);
   const supabase = createClient();
@@ -15,6 +17,7 @@ export default function LandingPage() {
       setSession(session);
     });
   }, []);
+
   const features = [
     {
       title: "Stealth Extraction",
@@ -32,7 +35,7 @@ export default function LandingPage() {
       title: "Automated Personalization",
       desc: "Generates laser-focused outreach copy tailored to the unique niche of reaching every single business.",
       icon: MessageSquare,
-      color: "text-warm"
+      color: "text-blue-300"
     }
   ];
 
@@ -44,68 +47,48 @@ export default function LandingPage() {
   ];
 
   const pricing = [
-    { name: "Starter", price: "Free", leads: "50 Leads", perks: ["Standard AI Enrichment", "Discord Dispatcher", "Single Campaign"] },
-    { name: "Professional", price: "$49", leads: "500 Leads", perks: ["Advanced GPT-4 Research", "Priority Sweep Logic", "Unlimited Campaigns", "Global Targeting"], featured: true },
-    { name: "Elite", price: "$149", leads: "2k+ Leads", perks: ["Custom Webhook Export", "Full White-label Engine", "24/7 Dedicated Support", "Whitelisted IPs"] }
+    { 
+      name: "Starter", 
+      price: "$20", 
+      leads: "50 Leads / day", 
+      perks: ["Standard AI Enrichment", "Discord Dispatcher", "1 Engine", "CSV Data Export"] 
+    },
+    { 
+      name: "Professional", 
+      price: "$49", 
+      leads: "200 Leads / day", 
+      perks: ["Advanced GPT-4 Research", "Priority Sweep Logic", "5 Engines", "Discord Webhooks"], 
+      featured: true 
+    },
+    { 
+      name: "Elite", 
+      price: "$300", 
+      leads: "1,000 Leads / day", 
+      perks: ["Instant WhatsApp Alerts", "Full White-label Engine", "Unlimited Engines", "Deep-Dive AI Intelligence"] 
+    }
   ];
 
   return (
-    <div className="relative overflow-hidden">
-      {/* Dynamic Background */}
-      <div className="absolute top-0 left-0 right-0 h-[800px] bg-gradient-to-b from-primary/5 via-transparent to-transparent -z-10" />
-      <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -z-10" />
-      
+    <div className="relative overflow-hidden selection:bg-primary/30">
       {/* Navbar */}
-      <nav className="sticky top-0 z-20 max-w-7xl mx-auto mt-3 px-4 py-4 sm:px-6 sm:py-5 flex items-center justify-between rounded-2xl glass">
-        <Link href="/" className="flex items-center gap-2 font-bold text-2xl">
-          <Zap className="h-7 w-7 text-primary fill-primary" />
-          <span className="gradient-text">Chocolate</span>
+      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl mx-auto px-6 py-3 flex items-center justify-between rounded-full glass border-white/5 shadow-2xl">
+        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <Zap className="h-5 w-5 text-white fill-white" />
+          </div>
+          <span className="tracking-tighter">Chocolate</span>
         </Link>
-        <div className="flex items-center gap-2 sm:gap-8">
-          <Link href="#features" className="hidden sm:inline-flex text-sm font-medium text-zinc-400 hover:text-white transition-colors">How it works</Link>
-          <Link href="#pricing" className="hidden sm:inline-flex text-sm font-medium text-zinc-400 hover:text-white transition-colors">Pricing</Link>
-          <Link href={session ? "/dashboard" : "/login"} className="h-11 px-4 sm:px-6 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs sm:text-sm font-bold hover:bg-white/10 transition-all uppercase tracking-widest">
-            {session ? 'Go to Dashboard' : 'Login'}
+        <div className="flex items-center gap-8 text-sm font-bold uppercase tracking-widest text-secondary-foreground/60">
+          <Link href="#features" className="hover:text-primary transition-colors">Technology</Link>
+          <Link href="#pricing" className="hover:text-primary transition-colors">Pricing</Link>
+          <Link href={session ? "/dashboard" : "/login"} className="h-10 px-6 rounded-full bg-primary text-white flex items-center justify-center hover:brightness-110 transition-all">
+            {session ? 'Dashboard' : 'Sign In'}
           </Link>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 pt-20 pb-28 text-center">
-        <motion.div
-           initial={{ opacity: 0, y: 20 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 0.5 }}
-        >
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold uppercase tracking-widest text-primary mb-8">
-            <Zap className="h-3 w-3" />
-            V2.0 Scaling Update Live
-          </span>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 tracking-tight leading-[1.02]">
-            The engine for <br />
-            <span className="gradient-text">High-Ticket Leads.</span>
-          </h1>
-          <p className="max-w-2xl mx-auto text-lg sm:text-xl text-zinc-400 mb-12">
-            Chocolate is a headless automate-and-forget lead engine. We find, classify, and research businesses so you only talk to people ready to buy.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/dashboard" className="h-14 px-10 rounded-2xl bg-primary text-white font-bold text-lg hover:bg-primary-hover transition-all flex items-center gap-2 shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95">
-              {session ? 'Open Dashboard' : 'Get Started'}
-              <ArrowRight className="h-5 w-5" />
-            </Link>
-            <Link href="#features" className="h-14 px-10 rounded-2xl bg-white/5 border border-white/10 font-bold text-lg hover:bg-white/10 transition-all inline-flex items-center">
-              Explore Features
-            </Link>
-          </div>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs sm:text-sm text-zinc-500">
-            <span>No credit card required</span>
-            <span className="hidden sm:inline">•</span>
-            <span>Setup in under 3 minutes</span>
-            <span className="hidden sm:inline">•</span>
-            <span>Cancel anytime</span>
-          </div>
-        </motion.div>
-      </section>
+      <Hero />
+
 
       {/* Stats/Social Proof */}
       <section className="max-w-7xl mx-auto px-6 py-20 border-y border-white/5">

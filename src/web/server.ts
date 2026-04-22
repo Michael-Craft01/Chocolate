@@ -172,9 +172,10 @@ app.get('/api/stats', authenticate, async (req: AuthenticatedRequest, res) => {
             totalBusinesses,
             totalLeads,
             leadsToday,
+            tier: user?.tier || 'FREE',
             quota: {
                 used: user?.leadsFoundToday || 0,
-                limit: user?.dailyLimit || 50,
+                limit: user?.dailyLimit || 10,
                 credits: user?.creditBalance || 0
             }
         });

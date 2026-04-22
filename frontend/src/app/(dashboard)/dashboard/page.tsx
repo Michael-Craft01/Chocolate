@@ -50,14 +50,19 @@ export default function Home() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-8 pb-10"
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold gradient-text">Dashboard</h1>
-          <p className="text-zinc-400">Welcome back. Here is what has happened in the last 24 hours.</p>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl font-black gradient-text tracking-tighter">Control Center</h1>
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold uppercase tracking-widest text-primary">
+              {stats?.tier === 'FREE' ? 'Free Mode' : stats?.tier || 'Loading...'}
+            </span>
+          </div>
+          <p className="text-xs text-zinc-400 font-medium">Real-time engine intelligence and lead telemetry.</p>
         </div>
-        <div className="flex items-center gap-2 text-xs sm:text-sm text-zinc-500">
-          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          System status healthy
+        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+          <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          Neural Link Active
         </div>
       </div>
 
@@ -70,54 +75,54 @@ export default function Home() {
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.name} className="glass rounded-xl p-6 interactive-card">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">{stat.name}</p>
-                <Icon className={`h-4 w-4 ${stat.color}`} />
+            <div key={stat.name} className="glass rounded-xl p-4 border border-white/5 interactive-card">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500">{stat.name}</p>
+                <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
               </div>
               {loading ? (
-                <Skeleton className="h-8 w-20 mt-1" />
+                <Skeleton className="h-6 w-16 mt-1" />
               ) : (
-                <p className="text-3xl font-bold">{stat.value ?? 0}</p>
+                <p className="text-2xl font-black tracking-tight">{stat.value ?? 0}</p>
               )}
             </div>
           );
         })}
       </div>
 
-      <div className="glass rounded-xl p-6 relative overflow-hidden group interactive-card">
+      <div className="glass rounded-xl p-5 relative overflow-hidden group interactive-card border border-white/5">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-emerald-400" />
-          Real-time activity
+        <h2 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-emerald-400" />
+          Live Telemetry
         </h2>
-        <div className="space-y-4">
-          <div className="flex items-center gap-4 text-sm px-4 py-3 rounded-lg bg-white/[0.02] border border-white/5">
-            <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-zinc-400">Engine currently scanning for new opportunities...</span>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 text-xs px-4 py-2.5 rounded-lg bg-white/[0.01] border border-white/5">
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-zinc-400 font-medium">Engine scanning global nodes for high-intent business clusters...</span>
           </div>
-          <div className="flex items-center gap-4 text-sm px-4 py-3 rounded-lg bg-white/[0.02] border border-white/5 text-zinc-500">
-            <Zap className="h-4 w-4 text-warm" />
-            <span>AI logic optimized for high-priority leads in 3 campaigns.</span>
+          <div className="flex items-center gap-3 text-xs px-4 py-2.5 rounded-lg bg-white/[0.01] border border-white/5 text-zinc-500">
+            <Zap className="h-3.5 w-3.5 text-warm" />
+            <span className="font-medium">AI research cycles optimized for {stats?.tier === 'FREE' ? 'Free' : 'Pro'} priority logic.</span>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Link href="/campaigns/new" className="glass rounded-xl p-5 interactive-card border border-white/5">
-          <p className="muted-label mb-2">Quick Action</p>
-          <p className="font-semibold">Create Campaign</p>
-          <p className="mt-1 text-sm text-zinc-400">Start a new lead engine with custom filters.</p>
+        <Link href="/campaigns/new" className="glass rounded-xl p-4 interactive-card border border-white/5">
+          <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Initialize</p>
+          <p className="text-sm font-bold">New Engine Sweep</p>
+          <p className="mt-1 text-xs text-zinc-500 leading-relaxed">Deploy a specialized AI cluster to hunt for niche opportunities.</p>
         </Link>
-        <Link href="/campaigns" className="glass rounded-xl p-5 interactive-card border border-white/5">
-          <p className="muted-label mb-2">Optimization</p>
-          <p className="font-semibold">Review Performance</p>
-          <p className="mt-1 text-sm text-zinc-400">Pause underperforming campaigns and scale winners.</p>
+        <Link href="/campaigns" className="glass rounded-xl p-4 interactive-card border border-white/5">
+          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-2">Optimization</p>
+          <p className="text-sm font-bold">Scale Performance</p>
+          <p className="mt-1 text-xs text-zinc-500 leading-relaxed">Analyze conversion rates and reallocate resources to winners.</p>
         </Link>
-        <Link href="/billing" className="glass rounded-xl p-5 interactive-card border border-white/5">
-          <p className="muted-label mb-2">Capacity</p>
-          <p className="font-semibold">Manage Quota</p>
-          <p className="mt-1 text-sm text-zinc-400">Upgrade plans or top up credits before hitting limits.</p>
+        <Link href="/billing" className="glass rounded-xl p-4 interactive-card border border-white/5">
+          <p className="text-[10px] font-black uppercase tracking-widest text-warm mb-2">Resource</p>
+          <p className="text-sm font-bold">Manage Capacity</p>
+          <p className="mt-1 text-xs text-zinc-500 leading-relaxed">Upgrade neural processing power and expand lead daily limits.</p>
         </Link>
       </div>
     </motion.div>

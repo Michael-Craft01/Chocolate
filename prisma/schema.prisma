@@ -14,6 +14,7 @@ datasource db {
 }
 
 enum Tier {
+  FREE
   STARTER
   PROFESSIONAL
   ELITE
@@ -22,7 +23,7 @@ enum Tier {
 model User {
   id                   String         @id // Map to Supabase auth.uid()
   email                String?        @unique
-  tier                 Tier           @default(STARTER)
+  tier                 Tier           @default(FREE)
   dailyLimit           Int            @default(10)
   maxCampaigns         Int            @default(1)
   leadsFoundToday      Int            @default(0)

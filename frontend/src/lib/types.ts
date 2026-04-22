@@ -2,6 +2,7 @@ export interface Stats {
   totalLeads: number;
   leadsToday: number;
   totalBusinesses: number;
+  tier: string;
   quota: {
     used: number;
     limit: number;

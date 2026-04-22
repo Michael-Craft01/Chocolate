@@ -143,31 +143,31 @@ function BillingContent() {
         </div>
       )}
 
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold gradient-text">Subscription & Billing</h1>
-        <p className="text-zinc-400 max-w-lg mx-auto">
-          Manage your subscription, top up credits, and view your transaction history.
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl font-black gradient-text tracking-tighter">Account Scaling</h1>
+        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">
+          Manage infrastructure resources and engine processing limits.
         </p>
       </div>
 
       {/* Gateway Toggle */}
       <div className="flex justify-center">
-        <div className="glass p-1 rounded-xl flex gap-1">
+        <div className="glass p-1 rounded-xl flex gap-1 border border-white/5 shadow-xl">
           <button 
             onClick={() => setGateway("STRIPE")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-              gateway === "STRIPE" ? "bg-primary text-white" : "text-zinc-400 hover:text-white"
+            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+              gateway === "STRIPE" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-zinc-500 hover:text-white"
             }`}
           >
-            <Globe className="h-4 w-4" /> Global (Stripe)
+            <Globe className="h-3 w-3" /> Global (Stripe)
           </button>
           <button 
             onClick={() => setGateway("PAYNOW")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-              gateway === "PAYNOW" ? "bg-primary text-white" : "text-zinc-400 hover:text-white"
+            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+              gateway === "PAYNOW" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-zinc-500 hover:text-white"
             }`}
           >
-            <Zap className="h-4 w-4" /> Local (Paynow)
+            <Zap className="h-3 w-3" /> Local (Paynow)
           </button>
         </div>
       </div>
@@ -184,28 +184,27 @@ function BillingContent() {
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                 Most Popular
               </div>
-            )}
-            <div className="mb-8">
-              <h3 className="text-xl font-bold mb-2">{tier.name}</h3>
+            )            <div className="mb-6">
+              <h3 className="text-sm font-black uppercase tracking-widest mb-1">{tier.name}</h3>
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-bold">${tier.price}</span>
-                <span className="text-zinc-500 text-sm">/month</span>
+                <span className="text-3xl font-black tracking-tighter">${tier.price}</span>
+                <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">/month</span>
               </div>
             </div>
 
-            <div className="space-y-4 mb-10 flex-1">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0" />
-                <span className="text-sm text-zinc-300 font-medium">{tier.leads}</span>
+            <div className="space-y-3 mb-8 flex-1">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span className="text-xs text-zinc-400 font-bold uppercase tracking-tighter">{tier.leads}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <Zap className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-sm text-zinc-300 font-medium">{tier.campaigns}</span>
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-xs text-zinc-400 font-bold uppercase tracking-tighter">{tier.campaigns}</span>
               </div>
-              <div className="pt-4 space-y-3">
+              <div className="pt-3 space-y-2">
                 {tier.features.map((f) => (
-                  <div key={f} className="flex items-start gap-3 text-xs text-zinc-400">
-                    <Check className="h-3 w-3 mt-0.5 text-zinc-500" />
+                  <div key={f} className="flex items-start gap-2 text-[10px] text-zinc-500 font-medium">
+                    <Check className="h-2.5 w-2.5 mt-0.5 text-zinc-600" />
                     {f}
                   </div>
                 ))}
@@ -215,107 +214,107 @@ function BillingContent() {
             <button 
               onClick={() => handleSubscribe(tier.name)}
               disabled={!!loading}
-              className={`w-full h-12 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${
+              className={`w-full h-10 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 ${
                 tier.popular ? "bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/20" : "bg-white/5 hover:bg-white/10 text-white"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {loading === tier.name && <Loader2 className="h-4 w-4 animate-spin" />}
-              {loading === tier.name ? "Redirecting..." : `Subscribe with ${gateway === 'STRIPE' ? 'Stripe' : 'Paynow'}`}
+              {loading === tier.name && <Loader2 className="h-3 w-3 animate-spin" />}
+              {loading === tier.name ? "Redirecting..." : `Select ${tier.name}`}
             </button>
           </div>
         ))}
       </div>
 
       {/* Credits Section */}
-      <div className="glass rounded-2xl p-10 mt-10 border border-white/5 relative overflow-hidden group interactive-card">
+      <div className="glass rounded-2xl p-8 mt-10 border border-white/5 relative overflow-hidden group interactive-card">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="space-y-3 max-w-md">
-            <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-widest">
-              <CreditCard className="h-4 w-4" /> Overage Credits
+          <div className="space-y-2 max-w-md">
+            <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.2em]">
+              <CreditCard className="h-3.5 w-3.5" /> Overage Credits
             </div>
-            <h2 className="text-3xl font-bold">Need more leads?</h2>
-            <p className="text-zinc-400 text-sm">
-              Top up your account with credits to keep the engine running after your 
-              daily quota is hit. Credits never expire.
+            <h2 className="text-xl font-black tracking-tight">Expand Quota Instantly</h2>
+            <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+              Top up your engine with credits to keep searching after your 
+              daily limit is reached. Non-expiring high-priority capacity.
             </p>
           </div>
-          <div className="flex flex-col items-center gap-4 min-w-[200px]">
+          <div className="flex flex-col items-center gap-3 min-w-[200px]">
             <div className="text-center">
-              <span className="text-3xl font-bold">$10</span>
-              <span className="text-zinc-500 text-sm"> / 100 Credits</span>
+              <span className="text-2xl font-black tracking-tight">$10</span>
+              <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest"> / 100 Leads</span>
             </div>
             <button 
               onClick={handleBuyCredits}
               disabled={!!loading}
-              className="w-full h-12 px-8 rounded-xl bg-white text-black font-bold hover:bg-zinc-200 transition-colors shadow-xl flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full h-10 px-8 rounded-lg bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-colors shadow-xl flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {loading === "CREDITS" && <Loader2 className="h-4 w-4 animate-spin text-black" />}
-              {loading === "CREDITS" ? "Redirecting..." : "Buy Credits"}
+              {loading === "CREDITS" && <Loader2 className="h-3 w-3 animate-spin text-black" />}
+              {loading === "CREDITS" ? "Redirecting..." : "Acquire Credits"}
             </button>
           </div>
         </div>
       </div>
 
       {/* Transaction History Table */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 text-zinc-300 font-bold">
-          <History className="h-5 w-5 text-primary" />
-          <h2>Billing History</h2>
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-zinc-300">
+          <History className="h-4 w-4 text-primary" />
+          <h2 className="text-xs font-black uppercase tracking-widest">Telemetry Log</h2>
         </div>
         
-        <div className="glass rounded-2xl border border-white/5 overflow-hidden">
+        <div className="glass rounded-xl border border-white/5 overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-white/5 text-xs uppercase tracking-wider text-zinc-500">
-                <th className="px-6 py-4 font-bold">Transaction ID</th>
-                <th className="px-6 py-4 font-bold">Date</th>
-                <th className="px-6 py-4 font-bold">Type</th>
-                <th className="px-6 py-4 font-bold">Amount</th>
-                <th className="px-6 py-4 font-bold text-center">Gateway</th>
-                <th className="px-6 py-4 font-bold text-right">Status</th>
+              <tr className="bg-white/[0.02] text-[10px] uppercase tracking-[0.15em] text-zinc-500">
+                <th className="px-6 py-3 font-black">ID</th>
+                <th className="px-6 py-3 font-black">Timestamp</th>
+                <th className="px-6 py-3 font-black">Type</th>
+                <th className="px-6 py-3 font-black">Amount</th>
+                <th className="px-6 py-3 font-black text-center">Node</th>
+                <th className="px-6 py-3 font-black text-right">State</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {loadingTransactions ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-10 text-center text-zinc-500">
-                    <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
-                    Loading history...
+                    <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Fetching telemetry...</span>
                   </td>
                 </tr>
               ) : transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-zinc-500">
-                    No transactions found yet.
+                  <td colSpan={6} className="px-6 py-10 text-center text-zinc-500 text-[10px] font-bold uppercase tracking-widest">
+                    No records found.
                   </td>
                 </tr>
               ) : (
                 transactions.map((tx) => (
-                  <tr key={tx.id} className="text-sm hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-6 py-4 font-mono text-xs text-zinc-500 group-hover:text-zinc-300">
-                      {tx.id.substring(0, 12)}...
+                  <tr key={tx.id} className="text-[11px] hover:bg-white/[0.01] transition-colors group">
+                    <td className="px-6 py-3 font-mono text-zinc-500 group-hover:text-zinc-300">
+                      {tx.id.substring(0, 8)}
                     </td>
-                    <td className="px-6 py-4 text-zinc-400">
+                    <td className="px-6 py-3 text-zinc-500 font-medium">
                       {new Date(tx.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 rounded-md bg-white/5 text-[10px] font-bold uppercase">
+                    <td className="px-6 py-3">
+                      <span className="px-1.5 py-0.5 rounded bg-white/5 text-[9px] font-black uppercase tracking-tighter text-zinc-400">
                         {tx.type}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-bold">
+                    <td className="px-6 py-3 font-black text-zinc-300">
                       ${tx.amount}
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${
-                        tx.gateway === 'PAYNOW' ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-400'
+                    <td className="px-6 py-3 text-center">
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-black tracking-tighter ${
+                        tx.gateway === 'PAYNOW' ? 'bg-amber-500/10 text-amber-500/70' : 'bg-blue-500/10 text-blue-500/70'
                       }`}>
                         {tx.gateway}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                    <td className="px-6 py-3 text-right">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
                         tx.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400' : 
                         tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-400'
                       }`}>
@@ -328,7 +327,7 @@ function BillingContent() {
             </tbody>
           </table>
         </div>
-      </div>
+      </div>v>
     </div>
   );
 }

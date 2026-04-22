@@ -40,24 +40,42 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "group flex items-center gap-3 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
+                "group flex items-center gap-3 rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all",
                 isActive 
-                  ? "border-primary/30 bg-primary/10 text-primary shadow-[0_0_0_1px_rgba(59,130,246,0.2)]"
-                  : "border-transparent text-zinc-400 hover:border-white/10 hover:bg-zinc-800/50 hover:text-zinc-200"
+                  ? "border-primary/30 bg-primary/10 text-primary shadow-[0_0_0_1px_rgba(59,130,246,0.1)]"
+                  : "border-transparent text-zinc-500 hover:border-white/10 hover:bg-zinc-800/50 hover:text-zinc-200"
               )}
             >
-              <Icon className={cn("h-4 w-4 transition-transform", isActive ? "scale-105" : "group-hover:scale-105")} />
+              <Icon className={cn("h-3.5 w-3.5 transition-transform", isActive ? "scale-105" : "group-hover:scale-105")} />
               {item.name}
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-auto border-t border-card-border p-4">
-        <button className="flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-zinc-400 transition-all hover:border-white/10 hover:bg-zinc-800/50 hover:text-zinc-200">
-          <LogOut className="h-4 w-4" />
+      <div className="mt-auto p-4 space-y-4">
+        <div className="rounded-xl bg-primary/5 border border-primary/10 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Free Mode</span>
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
+              <span>Usage</span>
+              <span>0 / 10 Leads</span>
+            </div>
+            <div className="h-1 w-full bg-primary/10 rounded-full overflow-hidden">
+              <div className="h-full bg-primary w-[0%] transition-all duration-500" />
+            </div>
+          </div>
+          <Link href="/billing" className="mt-3 block w-full py-2 rounded-lg bg-primary text-white text-[10px] font-black uppercase tracking-widest text-center hover:brightness-110 transition-all">
+            Upgrade
+          </Link>
+        </div>
+
+        <button className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-500 transition-all hover:text-zinc-200 uppercase tracking-wider">
+          <LogOut className="h-3.5 w-3.5" />
           Sign Out
         </button>
       </div>

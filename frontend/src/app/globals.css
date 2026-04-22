@@ -17,17 +17,39 @@
 }
 
 :root {
-  --background: #0a0a0b;
-  --foreground: #ffffff;
+  --background: #0a1931;
+  --foreground: #f6fafd;
+  --primary: #4a7fa7;
+  --primary-foreground: #f6fafd;
+  --secondary: #1a3d63;
+  --secondary-foreground: #b3cfe5;
+  --accent: #b3cfe5;
+  --accent-foreground: #0a1931;
+  --muted: #1a3d63;
+  --muted-foreground: #b3cfe5;
+  --card: #0d1e3d;
+  --card-border: #1a3d63;
+  --glass: rgba(10, 25, 49, 0.7);
+  --glass-border: rgba(74, 127, 167, 0.2);
+  --animate-beam: beam 2s linear infinite;
+  --animate-spin-slow: spin-slow 8s linear infinite;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  overflow-x: hidden;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+@keyframes beam {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)] antialiased selection:bg-primary/30;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
 }
 
 /* Premium Glassmorphism */
