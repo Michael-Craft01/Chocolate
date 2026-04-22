@@ -13,7 +13,8 @@ import {
   Loader2,
   Building2,
   ShieldCheck,
-  Webhook
+  Webhook,
+  MapPin
 } from "lucide-react";
 import { authJson } from "@/lib/api";
 import { motion } from "framer-motion";
@@ -27,14 +28,11 @@ export default function SettingsPage() {
     // Business Profile
     companyName: "",
     website: "",
-    industry: "",
+    industry: "", // Global primary industry
     defaultSenderName: "",
     defaultSenderRole: "",
     
-    // Target Market
-    productName: "",
-    productDescription: "",
-    targetPainPoints: "",
+    // Target Market (Global Defaults)
     targetCountry: "ZW",
     locations: ["Harare"],
     industries: [""],
@@ -55,9 +53,6 @@ export default function SettingsPage() {
           industry: data.profile?.industry || "",
           defaultSenderName: data.profile?.defaultSenderName || "",
           defaultSenderRole: data.profile?.defaultSenderRole || "",
-          productName: data.campaign?.productName || "",
-          productDescription: data.campaign?.productDescription || "",
-          targetPainPoints: data.campaign?.targetPainPoints || "",
           targetCountry: data.campaign?.targetCountry || "ZW",
           locations: data.campaign?.locations || ["Harare"],
           industries: data.campaign?.industries || [""],
@@ -105,8 +100,8 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto space-y-10 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold gradient-text">Engine Settings</h1>
-          <p className="text-zinc-400 text-sm mt-1">Configure your business identity and targeting intelligence.</p>
+          <h1 className="text-3xl font-bold gradient-text">Company Settings</h1>
+          <p className="text-zinc-400 text-sm mt-1">Configure your business identity and global market targeting.</p>
         </div>
         <button 
           onClick={handleSave}
@@ -154,7 +149,7 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Sender Name</label>
+                <label className={labelClass}>Default Sender</label>
                 <input 
                   type="text" 
                   value={formData.defaultSenderName}
@@ -170,7 +165,7 @@ export default function SettingsPage() {
                   type="text" 
                   value={formData.defaultSenderRole}
                   onChange={e => setFormData({...formData, defaultSenderRole: e.target.value})}
-                  placeholder="e.g. CEO"
+                  placeholder="e.g. Director"
                   className={inputClass}
                   required
                 />
@@ -180,55 +175,30 @@ export default function SettingsPage() {
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex gap-3 items-start">
               <MessageSquare size={18} className="text-primary mt-1 shrink-0" />
               <p className="text-[11px] text-zinc-400 leading-relaxed">
-                These details are used to generate natural, human-sounding outreach messages. 
-                Ensure your role matches the tone of your business.
+                Your sender name and role appear in outreach messages. Use a professional role that builds trust with your target industry.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Section 2: Targeting Intelligence */}
+        {/* Section 2: Global Market Target */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-              <Target size={20} />
+              <Globe size={20} />
             </div>
-            <h2 className="text-xl font-bold">Targeting Intelligence</h2>
+            <h2 className="text-xl font-bold">Market Intelligence</h2>
           </div>
 
           <div className="glass p-6 rounded-2xl border border-white/5 space-y-5">
             <div>
-              <label className={labelClass}>Product / Service Name</label>
+              <label className={labelClass}>Primary Industry</label>
               <input 
                 type="text" 
-                value={formData.productName}
-                onChange={e => setFormData({...formData, productName: e.target.value})}
-                placeholder="What are you selling?"
+                value={formData.industry}
+                onChange={e => setFormData({...formData, industry: e.target.value})}
+                placeholder="e.g. Real Estate, SaaS, Manufacturing"
                 className={inputClass}
-                required
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Product Description</label>
-              <textarea 
-                rows={3}
-                value={formData.productDescription}
-                onChange={e => setFormData({...formData, productDescription: e.target.value})}
-                placeholder="Briefly describe the value proposition..."
-                className={`${inputClass} resize-none`}
-                required
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Key Pain Points to Solve</label>
-              <textarea 
-                rows={2}
-                value={formData.targetPainPoints}
-                onChange={e => setFormData({...formData, targetPainPoints: e.target.value})}
-                placeholder="e.g. Manual accounting, lack of visibility..."
-                className={`${inputClass} resize-none`}
                 required
               />
             </div>
@@ -248,39 +218,57 @@ export default function SettingsPage() {
                 </select>
               </div>
               <div>
-                <label className={labelClass}>Discord Webhook (Optional)</label>
+                <label className={labelClass}>Primary City</label>
                 <input 
-                  type="url" 
-                  value={formData.discordWebhook}
-                  onChange={e => setFormData({...formData, discordWebhook: e.target.value})}
-                  placeholder="https://discord.com/api/webhooks/..."
+                  type="text" 
+                  value={formData.locations[0]}
+                  onChange={e => setFormData({...formData, locations: [e.target.value]})}
+                  placeholder="e.g. Harare"
                   className={inputClass}
+                  required
                 />
               </div>
+            </div>
+
+            <div>
+              <label className={labelClass}>Discord Notifications (Webhook URL)</label>
+              <input 
+                type="url" 
+                value={formData.discordWebhook}
+                onChange={e => setFormData({...formData, discordWebhook: e.target.value})}
+                placeholder="https://discord.com/api/webhooks/..."
+                className={inputClass}
+              />
+            </div>
+
+            <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex gap-3 items-start">
+              <MapPin size={18} className="text-emerald-400 mt-1 shrink-0" />
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                Setting your primary industry and city helps the AI calibrate its initial search sweeps. You can override these in specific campaigns.
+              </p>
             </div>
           </div>
         </div>
       </form>
 
-      {/* Engine Status Card */}
+      {/* Calibration Card */}
       <div className="glass rounded-[2rem] p-8 border border-primary/20 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-[0.2em]">
-              <Zap className="h-4 w-4" /> Engine Calibration
+              <Zap className="h-4 w-4" /> Global Alignment
             </div>
-            <h3 className="text-2xl font-bold">Ready to launch?</h3>
+            <h3 className="text-2xl font-bold">Sync Company Profile</h3>
             <p className="text-zinc-400 text-sm max-w-md">
-              Saving these settings will automatically calibrate the "Main Engine" campaign. 
-              The AI will use this intelligence to find and score leads that match your profile.
+              Updating your profile will ensure all future campaigns use your correct branding and target the right global market.
             </p>
           </div>
           <button 
             onClick={handleSave}
             className="px-8 py-4 bg-white text-black font-bold rounded-2xl hover:bg-zinc-200 transition-all shadow-2xl flex items-center gap-3"
           >
-            Deploy Calibration <ShieldCheck className="h-5 w-5" />
+            Update Profile <ShieldCheck className="h-5 w-5" />
           </button>
         </div>
       </div>

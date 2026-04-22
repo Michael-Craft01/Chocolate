@@ -200,7 +200,8 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: Au
         const userId = req.user!.id;
         const data = req.body;
         
-        await prisma.profile.upsert({
+        // 1. Update Profile (Identity & Market)
+        const profile = await prisma.profile.upsert({
             where: { userId },
             create: {
                 userId,
@@ -221,24 +222,25 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: Au
             }
         });
         
+        // 2. Update the "Main Engine" Campaign (Market Sync only)
         const existingCampaign = await prisma.campaign.findFirst({ where: { userId, name: 'Main Engine' } });
         
         const mainCampaign = await prisma.campaign.upsert({
             where: { 
-                id: existingCampaign?.id || '00000000-0000-0000-0000-000000000000' // Use a dummy UUID that won't exist if creating new
+                id: existingCampaign?.id || '00000000-0000-0000-0000-000000000000'
             },
             create: {
                 userId,
                 name: 'Main Engine',
-                senderName: data.defaultSenderName,
-                senderRole: data.defaultSenderRole,
-                companyName: data.companyName,
-                productName: data.productName,
-                productDescription: data.productDescription,
-                targetPainPoints: data.targetPainPoints,
-                targetCountry: data.targetCountry,
-                locations: data.locations,
-                industries: data.industries,
+                senderName: data.defaultSenderName || '',
+                senderRole: data.defaultSenderRole || '',
+                companyName: data.companyName || '',
+                productName: 'My Main Service', // Default placeholder
+                productDescription: 'Our primary offering as defined in the company profile.',
+                targetPainPoints: 'Various industry challenges.',
+                targetCountry: data.targetCountry || 'ZW',
+                locations: data.locations || [],
+                industries: data.industries || [],
                 discordWebhook: data.discordWebhook,
                 status: 'ACTIVE'
             },
@@ -246,9 +248,6 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: Au
                 senderName: data.defaultSenderName,
                 senderRole: data.defaultSenderRole,
                 companyName: data.companyName,
-                productName: data.productName,
-                productDescription: data.productDescription,
-                targetPainPoints: data.targetPainPoints,
                 targetCountry: data.targetCountry,
                 locations: data.locations,
                 industries: data.industries,
@@ -256,7 +255,7 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: Au
             }
         });
         
-        res.json({ success: true, campaign: mainCampaign });
+        res.json({ success: true, profile, campaign: mainCampaign });
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
@@ -327,10 +326,17 @@ app.post('/api/campaigns/:id/trigger', authenticate, requireActiveSubscription, 
 // API: Leads
 app.get('/api/leads', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
+        const { campaignId } = req.query;
         const leads = await prisma.lead.findMany({
-            where: { campaign: { userId: req.user!.id } },
+            where: { 
+                campaign: { 
+                    userId: req.user!.id,
+                    id: campaignId ? String(campaignId) : undefined
+                } 
+            },
+            orderBy: { createdAt: 'desc' },
             take: 50,
-            include: { business: true }
+            include: { business: true, campaign: { select: { name: true } } }
         });
         res.json(leads);
     } catch (error) {

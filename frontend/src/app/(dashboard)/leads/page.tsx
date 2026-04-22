@@ -1,60 +1,69 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, ExternalLink, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { 
+  Search, 
+  ExternalLink, 
+  MessageSquare, 
+  ChevronLeft, 
+  ChevronRight, 
+  Filter, 
+  Target,
+  Loader2
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/skeleton";
 import { EmptyState } from "@/components/empty-state";
-import { ApiAuthError, ApiRequestError } from "@/lib/api";
-import type { Lead, PaginationMeta } from "@/lib/types";
+import { authJson, ApiAuthError, ApiRequestError } from "@/lib/api";
+import type { Lead, PaginationMeta, Campaign } from "@/lib/types";
 import { fetchLeads as fetchLeadList, updateLeadStatus } from "@/lib/services/leads";
+import { fetchCampaigns } from "@/lib/services/campaigns";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | Lead["status"]>("ALL");
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>("ALL");
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, totalPages: 1, totalLeads: 0 });
 
-  const fetchLeads = async () => {
+  const fetchData = async () => {
     try {
+      setLoading(true);
       setError(null);
-      const data = await fetchLeadList(page, 20);
-      setLeads(data.leads || []);
-      setPagination(data.pagination || { page: 1, totalPages: 1, totalLeads: 0 });
-      setLoading(false);
+      
+      const campaignFilter = selectedCampaignId === "ALL" ? undefined : selectedCampaignId;
+      
+      const [leadsData, campaignsData] = await Promise.all([
+        fetchLeadList(page, 50, campaignFilter),
+        fetchCampaigns()
+      ]);
+
+      setLeads(leadsData.leads || []);
+      setCampaigns(campaignsData || []);
+      setPagination(leadsData.pagination || { page: 1, totalPages: 1, totalLeads: 0 });
     } catch (err) {
-      if (err instanceof ApiAuthError) {
-        setError("Please sign in to view your leads.");
-      } else if (err instanceof ApiRequestError) {
-        setError(err.message);
-      } else {
-        console.error("Error fetching leads:", err);
-        setError("Unable to load leads right now. Please refresh.");
-      }
+      console.error("Error fetching data:", err);
+      setError("Unable to load intelligence hub. Please refresh.");
+    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLeads();
-  }, [page]);
+    fetchData();
+  }, [page, selectedCampaignId]);
 
   const updateStatus = async (id: string, status: Lead["status"]) => {
     try {
       await updateLeadStatus(id, status);
-      fetchLeads();
+      fetchData();
     } catch (err) {
-      if (err instanceof ApiAuthError) {
-        setError("Authentication expired. Please sign in again.");
-      } else if (err instanceof ApiRequestError) {
-        setError(err.message);
-      } else {
-        console.error("Status update failed", err);
-      }
+      console.error("Status update failed", err);
     }
   };
 
@@ -65,138 +74,137 @@ export default function LeadsPage() {
       setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
       console.error("Clipboard copy failed", err);
-      setError("Could not copy message to clipboard.");
     }
   };
 
   const statusColors: Record<string, string> = {
     NEW: "bg-primary/10 text-primary",
-    CONTACTED: "bg-warm/10 text-warm",
+    CONTACTED: "bg-amber-500/10 text-amber-400",
     CONVERTED: "bg-emerald-400/10 text-emerald-400",
     REJECTED: "bg-zinc-800 text-zinc-500",
   };
 
   const filteredLeads = leads.filter((lead) => {
     const query = searchQuery.toLowerCase().trim();
-    const searchMatch = !query || (
+    return !query || (
       lead.business.name.toLowerCase().includes(query) ||
-      lead.industry.toLowerCase().includes(query) ||
-      lead.painPoint.toLowerCase().includes(query)
+      lead.industry.toLowerCase().includes(query)
     );
-    const statusMatch = statusFilter === "ALL" || lead.status === statusFilter;
-    return searchMatch && statusMatch;
   });
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div className="flex items-center justify-between">
+    <div className="max-w-7xl mx-auto space-y-8 pb-20">
+      {/* Header & Global Filters */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold gradient-text">Lead Hub</h1>
-          <p className="text-zinc-400 text-sm">Real-time repository of enriched business intelligence.</p>
+          <h1 className="text-4xl font-black tracking-tight gradient-text">Intelligence Hub</h1>
+          <p className="text-zinc-400">Manage and export high-value leads captured by your engines.</p>
         </div>
-        <div className="flex gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+
+        <div className="flex flex-wrap gap-3">
+          <div className="relative min-w-[200px]">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
             <input 
               type="text" 
-              placeholder="Search leads..." 
+              placeholder="Search companies..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-10 rounded-xl bg-zinc-900 border border-white/5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all focus:border-primary/50"
+              className="w-full h-12 rounded-xl bg-white/5 border border-white/10 pl-12 pr-4 text-sm outline-none focus:border-primary/50"
             />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as "ALL" | Lead["status"])}
-            className="h-10 rounded-xl bg-zinc-900 border border-white/5 px-4 text-sm font-medium text-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all focus:border-primary/50"
-          >
-            <option value="ALL">All statuses</option>
-            <option value="NEW">New</option>
-            <option value="CONTACTED">Contacted</option>
-            <option value="CONVERTED">Converted</option>
-            <option value="REJECTED">Rejected</option>
-          </select>
+
+          <div className="flex items-center gap-2 h-12 px-4 rounded-xl bg-white/5 border border-white/10">
+            <Filter className="h-4 w-4 text-zinc-500" />
+            <select
+              value={selectedCampaignId}
+              onChange={(e) => setSelectedCampaignId(e.target.value)}
+              className="bg-transparent text-sm font-bold outline-none cursor-pointer"
+            >
+              <option value="ALL">All Campaigns</option>
+              {campaigns.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="glass rounded-xl border border-white/5 p-4">
-          <p className="muted-label mb-2">Total Leads</p>
-          <p className="text-2xl font-bold">{pagination.totalLeads}</p>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="glass p-6 rounded-2xl border border-white/5">
+          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Total Leads</p>
+          <p className="text-3xl font-black">{pagination.totalLeads}</p>
         </div>
-        <div className="glass rounded-xl border border-white/5 p-4">
-          <p className="muted-label mb-2">Page</p>
-          <p className="text-2xl font-bold">{pagination.page} / {pagination.totalPages}</p>
+        <div className="glass p-6 rounded-2xl border border-white/5">
+          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Active Filter</p>
+          <p className="text-xl font-bold text-primary truncate">
+            {selectedCampaignId === 'ALL' ? 'All Engines' : campaigns.find(c => c.id === selectedCampaignId)?.name}
+          </p>
         </div>
-        <div className="glass rounded-xl border border-white/5 p-4">
-          <p className="muted-label mb-2">Visible</p>
-          <p className="text-2xl font-bold">{filteredLeads.length}</p>
+        <div className="glass p-6 rounded-2xl border border-white/5">
+          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Success Rate</p>
+          <p className="text-3xl font-black text-emerald-400">0%</p>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-200 text-sm">
           {error}
         </div>
       )}
 
-      <div className="glass overflow-hidden rounded-2xl border border-white/5 shadow-2xl">
+      {/* Leads Table */}
+      <div className="glass rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-white/5 text-zinc-500 uppercase text-[10px] tracking-widest font-black">
-              <tr>
-                <th className="px-6 py-4">Lead Detail</th>
-                <th className="px-6 py-4">Intelligence</th>
-                <th className="px-6 py-4">Stage</th>
-                <th className="px-6 py-4">Captured</th>
-                <th className="px-6 py-4 text-right">Outreach</th>
+          <table className="w-full text-left">
+            <thead className="bg-white/5 border-b border-white/5">
+              <tr className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em]">
+                <th className="px-8 py-5">Company & Engine</th>
+                <th className="px-8 py-5">Intelligence Found</th>
+                <th className="px-8 py-5">Status</th>
+                <th className="px-8 py-5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {loading ? (
-                [...Array(6)].map((_, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-5"><Skeleton className="h-6 w-44" /></td>
-                    <td className="px-6 py-5"><Skeleton className="h-6 w-40" /></td>
-                    <td className="px-6 py-5"><Skeleton className="h-7 w-24 rounded-full" /></td>
-                    <td className="px-6 py-5"><Skeleton className="h-5 w-20" /></td>
-                    <td className="px-6 py-5"><div className="ml-auto w-fit"><Skeleton className="h-9 w-28 rounded-xl" /></div></td>
+                [1,2,3,4].map(i => (
+                  <tr key={i}>
+                    <td className="px-8 py-6"><Skeleton className="h-10 w-48" /></td>
+                    <td className="px-8 py-6"><Skeleton className="h-10 w-40" /></td>
+                    <td className="px-8 py-6"><Skeleton className="h-8 w-24 rounded-full" /></td>
+                    <td className="px-8 py-6 text-right"><Skeleton className="h-10 w-32 ml-auto" /></td>
                   </tr>
                 ))
               ) : filteredLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12">
-                    <EmptyState 
-                      title="No matching leads"
-                      description="Try a broader search term or clear your current query."
-                    />
+                  <td colSpan={4} className="py-20 text-center">
+                    <EmptyState title="No intelligence found" description="Adjust your filters or launch a new sweep." />
                   </td>
                 </tr>
               ) : filteredLeads.map((lead) => (
                 <tr key={lead.id} className="hover:bg-white/[0.02] transition-colors group">
-                  <td className="px-6 py-5">
-                    <div className="font-bold text-white text-base">{lead.business.name}</div>
-                    <div className="text-xs text-zinc-500 flex items-center gap-2 mt-1">
-                      {lead.business.website && (
-                        <a href={lead.business.website} target="_blank" className="hover:text-primary transition-colors flex items-center gap-1">
-                          <ExternalLink className="h-3 w-3" /> Visit Domain
-                        </a>
-                      )}
+                  <td className="px-8 py-6">
+                    <div className="space-y-1">
+                      <p className="font-bold text-lg text-white">{lead.business.name}</p>
+                      <div className="flex items-center gap-2">
+                        <Target className="h-3 w-3 text-primary" />
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                          {lead.campaign?.name || 'Unknown Engine'}
+                        </span>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-5">
-                    <div className="text-zinc-300 font-medium">{lead.industry}</div>
-                    <div className="text-[11px] text-zinc-500 mt-1 max-w-[200px] line-clamp-1 italic">"{lead.painPoint}"</div>
+                  <td className="px-8 py-6">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-zinc-300">{lead.industry}</p>
+                      <p className="text-xs text-zinc-500 italic max-w-xs line-clamp-1">{lead.painPoint}</p>
+                    </div>
                   </td>
-                  <td className="px-6 py-5">
+                  <td className="px-8 py-6">
                     <select 
                       value={lead.status}
-                      onChange={(e) => updateStatus(lead.id, e.target.value as Lead["status"])}
-                      className={`rounded-full px-3 py-1 text-[10px] font-black uppercase cursor-pointer border-none ring-1 ring-inset ring-white/10 focus:ring-primary/50 ${statusColors[lead.status] || "bg-zinc-800 text-zinc-400"}`}
+                      onChange={(e) => updateStatus(lead.id, e.target.value as any)}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase outline-none cursor-pointer border border-white/10 ${statusColors[lead.status]}`}
                     >
                       <option value="NEW">NEW</option>
                       <option value="CONTACTED">CONTACTED</option>
@@ -204,19 +212,24 @@ export default function LeadsPage() {
                       <option value="REJECTED">REJECTED</option>
                     </select>
                   </td>
-                  <td className="px-6 py-5 text-zinc-500 tabular-nums">
-                    {new Date(lead.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                  </td>
-                  <td className="px-6 py-5 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <td className="px-8 py-6 text-right">
+                    <div className="flex justify-end items-center gap-3">
+                      {lead.business.website && (
+                        <a 
+                          href={lead.business.website} 
+                          target="_blank" 
+                          className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
                       <button 
                         onClick={() => copyToClipboard(lead.suggestedMessage, lead.id)}
-                        className={`h-9 px-4 flex items-center gap-2 rounded-xl transition-all font-bold text-[11px] uppercase tracking-wider ${
-                          copiedId === lead.id ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white"
+                        className={`h-11 px-6 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+                          copiedId === lead.id ? "bg-emerald-500 text-white" : "bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/20"
                         }`}
                       >
-                        <MessageSquare className="h-4 w-4" />
-                        {copiedId === lead.id ? "Copied" : "Copy Message"}
+                        {copiedId === lead.id ? "Copied" : "Copy Pitch"}
                       </button>
                     </div>
                   </td>
@@ -226,30 +239,10 @@ export default function LeadsPage() {
           </table>
         </div>
       </div>
-
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-500">
-          Showing page {pagination.page} of {pagination.totalPages}
-        </p>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1 || loading}
-            className="inline-flex h-9 items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-zinc-300 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Prev
-          </button>
-          <button
-            onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-            disabled={page >= pagination.totalPages || loading}
-            className="inline-flex h-9 items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-zinc-300 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </motion.div>
+    </div>
   );
+}
+
+function Skeleton({ className }: { className: string }) {
+  return <div className={`animate-pulse bg-white/5 ${className}`} />;
 }

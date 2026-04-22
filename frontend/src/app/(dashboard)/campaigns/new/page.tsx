@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
     ArrowLeft, 
     Save, 
@@ -8,19 +8,23 @@ import {
     MapPin, 
     User, 
     Link,
+    Briefcase,
+    Target,
+    Loader2,
+    CheckCircle2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ApiAuthError, ApiRequestError } from "@/lib/api";
+import { authJson, ApiAuthError, ApiRequestError } from "@/lib/api";
 import { createCampaign } from "@/lib/services/campaigns";
 
 export default function NewCampaignPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [fetchingProfile, setFetchingProfile] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const inputClass = "w-full bg-white/5 border border-white/10 rounded-2xl p-4 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/40";
+    const inputClass = "w-full bg-white/5 border border-white/10 rounded-2xl p-4 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/40 text-sm";
     
-    // Campaign State (Robust)
     const [campaign, setCampaign] = useState({
         name: "",
         senderName: "",
@@ -29,23 +33,40 @@ export default function NewCampaignPage() {
         productName: "",
         productDescription: "",
         targetPainPoints: "",
-        industries: "", // Will split to array
-        locations: "", // Will split to array
+        industries: "", 
+        locations: "", 
         outreachTone: "PROFESSIONAL",
         ctaLink: "",
         discordWebhook: "",
     });
 
+    useEffect(() => {
+        loadProfileDefaults();
+    }, []);
+
+    const loadProfileDefaults = async () => {
+        try {
+            const data = await authJson<any>("/api/me");
+            if (data.profile) {
+                setCampaign(prev => ({
+                    ...prev,
+                    senderName: data.profile.defaultSenderName || "",
+                    senderRole: data.profile.defaultSenderRole || "",
+                    companyName: data.profile.companyName || "",
+                    industries: data.profile.industry || "",
+                    locations: "Harare" // Default city
+                }));
+            }
+        } catch (err) {
+            console.error("Failed to load profile defaults:", err);
+        } finally {
+            setFetchingProfile(false);
+        }
+    };
+
     const handleSave = async () => {
-        if (
-            !campaign.name.trim() ||
-            !campaign.senderName.trim() ||
-            !campaign.senderRole.trim() ||
-            !campaign.companyName.trim() ||
-            !campaign.productName.trim() ||
-            !campaign.productDescription.trim()
-        ) {
-            setError("Please complete campaign identity and product details before saving.");
+        if (!campaign.productName.trim() || !campaign.productDescription.trim()) {
+            setError("Please provide at least a Product Name and Description.");
             return;
         }
 
@@ -56,14 +77,14 @@ export default function NewCampaignPage() {
             const locations = campaign.locations.split(",").map(l => l.trim()).filter(l => l);
 
             const payload = {
-                name: campaign.name.trim(),
+                name: campaign.name.trim() || `${campaign.productName} Launch`,
                 senderName: campaign.senderName.trim(),
                 senderRole: campaign.senderRole.trim(),
                 companyName: campaign.companyName.trim(),
                 productName: campaign.productName.trim(),
                 productDescription: campaign.productDescription.trim(),
-                targetPainPoints: campaign.targetPainPoints.trim() || "General lead generation and outreach optimization",
-                industries: industries.length ? industries : ["Retail"],
+                targetPainPoints: campaign.targetPainPoints.trim() || "General industry efficiency",
+                industries: industries.length ? industries : ["Business"],
                 locations: locations.length ? locations : ["Harare"],
                 outreachTone: campaign.outreachTone,
                 ctaLink: campaign.ctaLink.trim() || undefined,
@@ -72,123 +93,184 @@ export default function NewCampaignPage() {
             };
 
             await createCampaign(payload);
-
             router.push("/campaigns");
         } catch (error) {
-            if (error instanceof ApiAuthError) {
-                setError("Please sign in to create a campaign.");
-            } else if (error instanceof ApiRequestError) {
-                setError(error.message);
-            } else {
-                console.error(error);
-                setError(error instanceof Error ? error.message : "Could not save campaign. Please try again.");
-            }
+            setError(error instanceof Error ? error.message : "Failed to launch campaign.");
         } finally {
             setLoading(false);
         }
     };
 
-    const SectionHeader = ({ icon: Icon, title, desc }: any) => (
-        <div className="flex items-start gap-4 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
-                <Icon size={24} />
+    if (fetchingProfile) {
+        return (
+            <div className="h-screen flex flex-col items-center justify-center gap-4 bg-[#070707]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-zinc-500 font-medium">Syncing with Company Profile...</p>
             </div>
-            <div>
-                <h2 className="text-xl font-bold">{title}</h2>
-                <p className="text-white/40 text-sm">{desc}</p>
-            </div>
-        </div>
-    );
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-[#070707] text-white p-6 md:p-12">
-            <div className="max-w-4xl mx-auto">
-                {/* Back Button */}
-                <button 
-                    onClick={() => router.back()}
-                    className="flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-12 group"
-                >
-                    <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                    Back to Campaigns
-                </button>
-
-                <div className="flex items-center justify-between mb-12">
-                    <h1 className="text-4xl font-extrabold tracking-tight">New Campaign Console</h1>
-                    <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleSave}
-                        disabled={loading}
-                        className="bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.25)] disabled:opacity-50"
+        <div className="min-h-screen bg-[#070707] text-white p-6 md:p-12 pb-32">
+            <div className="max-w-4xl mx-auto space-y-12">
+                <div className="flex items-center justify-between">
+                    <button 
+                        onClick={() => router.back()}
+                        className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group"
                     >
-                        {loading ? "Initializing..." : <>
-                            <Save size={20} />
-                            Save Campaign
-                        </>}
-                    </motion.button>
+                        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                        Back
+                    </button>
+                    <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Identity Synced
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <h1 className="text-5xl font-black tracking-tighter">Launch New Engine</h1>
+                    <p className="text-zinc-400 text-lg">Define your product and let the AI find your future customers.</p>
                 </div>
 
                 {error && (
-                    <div className="mb-8 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                        {error}
+                    <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-4 text-sm text-red-200 flex items-center gap-3">
+                        <Zap className="h-5 w-5 text-red-500" /> {error}
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-12">
-                    {/* General Settings */}
-                    <section className="bg-white/[0.02] border border-white/5 p-8 rounded-3xl backdrop-blur-sm">
-                        <SectionHeader 
-                            icon={Zap} 
-                            title="Campaign Essentials" 
-                            desc="Core settings for engine tracking and identification."
-                        />
-                        <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-10">
+                    {/* PRODUCT SECTION - HIGHLIGHTED */}
+                    <section className="glass p-8 md:p-10 rounded-[2.5rem] border border-primary/30 bg-primary/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32" />
+                        
+                        <div className="relative space-y-8">
+                            <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                                    <Target className="h-6 w-6 text-white" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold">The Product Offer</h2>
+                                    <p className="text-zinc-400 text-sm">Tell the AI exactly what you are selling.</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-6">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Product or Service Name</label>
+                                    <input 
+                                        type="text"
+                                        placeholder="e.g. Solar Power Installation Kit"
+                                        value={campaign.productName}
+                                        onChange={(e) => setCampaign({...campaign, productName: e.target.value})}
+                                        className={`${inputClass} !text-lg !font-bold !bg-white/10`}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Value Proposition (What do you do?)</label>
+                                    <textarea 
+                                        rows={4}
+                                        placeholder="Explain the core benefit of your offer. The AI will use this to pitch your leads."
+                                        value={campaign.productDescription}
+                                        onChange={(e) => setCampaign({...campaign, productDescription: e.target.value})}
+                                        className={`${inputClass} resize-none leading-relaxed`}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Customer Pain Points</label>
+                                    <input 
+                                        type="text"
+                                        placeholder="e.g. High electricity bills, frequent power cuts"
+                                        value={campaign.targetPainPoints}
+                                        onChange={(e) => setCampaign({...campaign, targetPainPoints: e.target.value})}
+                                        className={inputClass}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* MARKET & TARGETING */}
+                    <section className="glass p-8 md:p-10 rounded-[2.5rem] border border-white/5 space-y-8">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
+                                <MapPin className="h-6 w-6" />
+                            </div>
                             <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Internal Campaign Name</label>
+                                <h2 className="text-2xl font-bold">Target Market</h2>
+                                <p className="text-zinc-400 text-sm">Where should the AI hunt for these specific customers?</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Campaign Nickname</label>
                                 <input 
                                     type="text"
-                                    placeholder="e.g. Zimbabwe Retail Q2"
+                                    placeholder="e.g. Winter Promo 2024"
                                     value={campaign.name}
                                     onChange={(e) => setCampaign({...campaign, name: e.target.value})}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Target Industries</label>
+                                <input 
+                                    type="text"
+                                    placeholder="e.g. Homeowners, Factories"
+                                    value={campaign.industries}
+                                    onChange={(e) => setCampaign({...campaign, industries: e.target.value})}
+                                    className={inputClass}
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Specific Cities / Areas</label>
+                                <input 
+                                    type="text"
+                                    placeholder="e.g. Harare, Bulawayo, Mutare"
+                                    value={campaign.locations}
+                                    onChange={(e) => setCampaign({...campaign, locations: e.target.value})}
                                     className={inputClass}
                                 />
                             </div>
                         </div>
                     </section>
 
-                    {/* Identity Settings */}
-                    <section className="bg-white/[0.02] border border-white/5 p-8 rounded-3xl">
-                        <SectionHeader 
-                            icon={User} 
-                            title="Sender Identity" 
-                            desc="Who is the AI pretending to be for this specific campaign?"
-                        />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* SENDER IDENTITY (SYCED) */}
+                    <section className="glass p-8 md:p-10 rounded-[2.5rem] border border-white/5 bg-white/[0.01] space-y-8">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
+                                    <User className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold">Sender Identity</h2>
+                                    <p className="text-zinc-400 text-sm">Synchronized with your Company Profile.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 opacity-80">
                             <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Sender Name</label>
+                                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Sender Name</label>
                                 <input 
                                     type="text"
-                                    placeholder="e.g. Michael"
                                     value={campaign.senderName}
                                     onChange={(e) => setCampaign({...campaign, senderName: e.target.value})}
-                                    className={`${inputClass} font-medium`}
+                                    className={inputClass}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Sender Role</label>
+                                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Role</label>
                                 <input 
                                     type="text"
-                                    placeholder="e.g. Founder & CEO"
                                     value={campaign.senderRole}
                                     onChange={(e) => setCampaign({...campaign, senderRole: e.target.value})}
                                     className={inputClass}
                                 />
                             </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Company Entity</label>
+                            <div>
+                                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Company</label>
                                 <input 
                                     type="text"
-                                    placeholder="e.g. LogicHQ Automation"
                                     value={campaign.companyName}
                                     onChange={(e) => setCampaign({...campaign, companyName: e.target.value})}
                                     className={inputClass}
@@ -196,114 +278,19 @@ export default function NewCampaignPage() {
                             </div>
                         </div>
                     </section>
+                </div>
 
-                    {/* Target Logic */}
-                    <section className="bg-white/[0.02] border border-white/5 p-8 rounded-3xl">
-                        <SectionHeader 
-                            icon={MapPin} 
-                            title="Target Parameters" 
-                            desc="Define where and what industries the engine should scrape."
-                        />
-                        <div className="grid grid-cols-1 gap-6">
-                            <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Target Industries (Comma-separated)</label>
-                                <input 
-                                    type="text"
-                                    placeholder="Retail, Wholesale, Hardware Store"
-                                    value={campaign.industries}
-                                    onChange={(e) => setCampaign({...campaign, industries: e.target.value})}
-                                    className={`${inputClass} font-medium`}
-                                />
-                                <p className="text-[10px] text-white/20 mt-2 ml-1">LEAVE EMPTY TO USE SYSTEM DEFAULTS (ZIMBABWE SME LIST)</p>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Target Locations (Comma-separated)</label>
-                                <input 
-                                    type="text"
-                                    placeholder="Harare CBD, Bulawayo CBD, Gweru"
-                                    value={campaign.locations}
-                                    onChange={(e) => setCampaign({...campaign, locations: e.target.value})}
-                                    className={`${inputClass} font-medium`}
-                                />
-                                <p className="text-[10px] text-white/20 mt-2 ml-1">LEAVE EMPTY TO USE SYSTEM DEFAULTS (500+ HARARE ZONES)</p>
-                            </div>
-                        </div>
-                    </section>
-                    
-                    {/* Intelligence Section */}
-                    <section className="bg-white/[0.02] border border-white/5 p-8 rounded-3xl">
-                        <SectionHeader 
-                            icon={Zap} 
-                            title="AI Intelligence" 
-                            desc="The core 'Knowledge' used to identify pain points and build trust."
-                        />
-                        <div className="grid grid-cols-1 gap-6">
-                            <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Product Name</label>
-                                <input 
-                                    type="text"
-                                    placeholder="e.g. Takada POS"
-                                    value={campaign.productName}
-                                    onChange={(e) => setCampaign({...campaign, productName: e.target.value})}
-                                    className={`${inputClass} font-medium`}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Product Value Prop (AI Prompt Context)</label>
-                                <textarea 
-                                    rows={4}
-                                    placeholder="Explain exactly what problem your product solves. The AI will use this to find matching pain points in the leads it finds."
-                                    value={campaign.productDescription}
-                                    onChange={(e) => setCampaign({...campaign, productDescription: e.target.value})}
-                                    className={`${inputClass} resize-none text-sm leading-relaxed`}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Outreach Tone</label>
-                                <select 
-                                    value={campaign.outreachTone}
-                                    onChange={(e) => setCampaign({...campaign, outreachTone: e.target.value})}
-                                    className={inputClass}
-                                >
-                                    <option value="PROFESSIONAL">Professional & Institutional</option>
-                                    <option value="DIRECT">Direct & Bold</option>
-                                    <option value="FRIENDLY">Friendly & Social</option>
-                                    <option value="EDUCATIONAL">Educational & Helpful</option>
-                                </select>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Delivery & CTA */}
-                    <section className="bg-white/[0.02] border border-white/5 p-8 rounded-3xl mb-12">
-                        <SectionHeader 
-                            icon={Link} 
-                            title="CTA & Delivery" 
-                            desc="Where should the results go and where should the lead click?"
-                        />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Campaign Website / CTA Link</label>
-                                <input 
-                                    type="url"
-                                    placeholder="https://yourproduct.com/demo"
-                                    value={campaign.ctaLink}
-                                    onChange={(e) => setCampaign({...campaign, ctaLink: e.target.value})}
-                                    className={inputClass}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Discord Webhook (Optional Notification)</label>
-                                <input 
-                                    type="text"
-                                    placeholder="Paste Discord Webhook URL"
-                                    value={campaign.discordWebhook}
-                                    onChange={(e) => setCampaign({...campaign, discordWebhook: e.target.value})}
-                                    className={`${inputClass} text-xs`}
-                                />
-                            </div>
-                        </div>
-                    </section>
+                <div className="flex items-center justify-center pt-10">
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleSave}
+                        disabled={loading}
+                        className="bg-primary hover:bg-primary-hover text-white px-12 py-5 rounded-[2rem] font-black text-xl flex items-center gap-4 shadow-2xl shadow-primary/40 disabled:opacity-50"
+                    >
+                        {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Zap size={24} className="fill-white" />}
+                        {loading ? "INITIALIZING ENGINE..." : "DEPLOY CAMPAIGN"}
+                    </motion.button>
                 </div>
             </div>
         </div>
