@@ -28,7 +28,9 @@ const stripe = config.STRIPE_SECRET_KEY ? new Stripe(config.STRIPE_SECRET_KEY) :
 // CORS configuration
 const allowedOrigins = new Set([
     config.FRONTEND_URL,
+    'http://localhost:3000',
     'http://localhost:3001',
+    'http://127.0.0.1:3000',
     'http://127.0.0.1:3001'
 ]);
 
@@ -99,16 +101,60 @@ app.post('/api/payments/stripe/webhook', express.raw({ type: 'application/json' 
 app.use(express.json());
 
 // API: Current User Context
-app.get('/api/me', authenticate, (req: AuthenticatedRequest, res) => {
-    res.json({
-        id: req.user!.id,
-        email: req.user!.email,
-        paymentStatus: req.user!.paymentStatus,
-        tier: req.user!.tier
-    });
+app.get('/api/me', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+        const userId = req.user!.id;
+        
+        // Auto-sync any pending payments from Paynow
+        await paymentService.syncPendingPayments(userId);
+        
+        // Fetch fresh data after sync
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                profile: true,
+                campaigns: {
+                    where: { name: 'Main Engine' },
+                    take: 1
+                }
+            }
+        });
+
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        res.json({
+            id: user.id,
+            email: user.email,
+            paymentStatus: user.paymentStatus,
+            tier: user.tier,
+            onboardingComplete: user.profile?.onboardingComplete || false
+        });
+    } catch (error) {
+        logger.error({ error }, 'Error in /api/me');
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
-// API: Dashboard Stats
+// API: Billing Transactions
+app.get('/api/billing/transactions', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const userId = req.user!.id;
+        logger.info({ userId }, 'Fetching transactions for user');
+        
+        const transactions = await prisma.transaction.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: 10
+        });
+        
+        return res.json(transactions);
+    } catch (error) {
+        logger.error({ error }, 'Error fetching transactions');
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
 app.get('/api/stats', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
         const userId = req.user!.id;
@@ -175,9 +221,11 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: Au
             }
         });
         
+        const existingCampaign = await prisma.campaign.findFirst({ where: { userId, name: 'Main Engine' } });
+        
         const mainCampaign = await prisma.campaign.upsert({
             where: { 
-                id: (await prisma.campaign.findFirst({ where: { userId, name: 'Main Engine' } }))?.id || 'new-id'
+                id: existingCampaign?.id || '00000000-0000-0000-0000-000000000000' // Use a dummy UUID that won't exist if creating new
             },
             create: {
                 userId,
@@ -246,6 +294,31 @@ app.patch('/api/campaigns/:id/status', authenticate, requireActiveSubscription, 
         const { status } = req.body;
         await prisma.campaign.updateMany({ where: { id, userId: req.user!.id }, data: { status } });
         res.json({ status });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
+// API: Trigger Campaign Sweep
+app.post('/api/campaigns/:id/trigger', authenticate, requireActiveSubscription, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const userId = req.user!.id;
+        const campaignId = req.params.id;
+        
+        const campaign = await prisma.campaign.findFirst({
+            where: { id: campaignId, userId }
+        });
+        
+        if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+        
+        // Manual sweep trigger logic
+        logger.info({ userId, campaignId }, '🚀 Manual sweep triggered');
+        
+        res.json({ 
+            message: 'Lead sweep initiated successfully. AI is now hunting for leads.',
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
     }

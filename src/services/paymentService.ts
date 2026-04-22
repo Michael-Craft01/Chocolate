@@ -80,7 +80,8 @@ class PaymentService {
         const user = await prisma.user.findUnique({ where: { id: options.userId } });
 
         // Ensure the result URL points to the BACKEND (3005), not the frontend (3001)
-        this.paynow.resultUrl = `http://localhost:3005/api/payments/paynow/result`;
+        this.paynow.resultUrl = `${config.BACKEND_URL}/api/payments/paynow/result`;
+        this.paynow.returnUrl = `${config.FRONTEND_URL}/billing?success=true`;
 
         const payment = this.paynow.createPayment(`INV-${Date.now()}`, user?.email || 'customer@chocolate.engine');
         payment.add(`Chocolate ${options.tier} Plan`, price);
@@ -120,6 +121,51 @@ class PaymentService {
         } catch (error) {
             logger.error({ err: error, pollUrl }, 'Error polling Paynow status');
             throw error;
+        }
+    }
+    async syncPendingPayments(userId: string) {
+        const pending = await prisma.transaction.findMany({
+            where: { userId, status: 'PENDING', gateway: 'PAYNOW' },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (pending.length === 0) return;
+
+        logger.info({ userId, count: pending.length }, '🔍 [PAYNOW SYNC] Checking pending transactions...');
+
+        for (const tx of pending) {
+            try {
+                const statusResponse = await this.paynow.pollTransaction(tx.gatewayRef!);
+                
+                // CRITICAL: Log exactly what Paynow says for debugging
+                logger.info({ 
+                    txId: tx.id, 
+                    paynowStatus: statusResponse.status,
+                    paynowError: statusResponse.error 
+                }, '📊 [PAYNOW SYNC] Status received');
+
+                const currentStatus = statusResponse.status.toLowerCase();
+                const successStatuses = ['paid', 'awaiting delivery', 'delivered'];
+                
+                if (successStatuses.includes(currentStatus)) {
+                    await prisma.$transaction([
+                        prisma.transaction.update({
+                            where: { id: tx.id },
+                            data: { status: 'SUCCESS' }
+                        }),
+                        prisma.user.update({
+                            where: { id: userId },
+                            data: { 
+                                paymentStatus: 'active',
+                                tier: tx.tier || 'STARTER'
+                            }
+                        })
+                    ]);
+                    logger.info({ userId, txId: tx.id }, '✅ [PAYNOW SYNC] Payment upgraded successfully!');
+                }
+            } catch (err: any) {
+                logger.error({ err: err.message, txId: tx.id }, '❌ [PAYNOW SYNC] Polling failed');
+            }
         }
     }
 }

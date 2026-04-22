@@ -49,8 +49,9 @@ const configSchema = z.object({
     ENGINE_TRIGGER_SECRET: z.string().optional().default('dev-engine-trigger'),
     MAX_CAMPAIGNS_PER_SWEEP: z.string().transform(v => parseInt(v, 10)).default('50'),
 
-    // UI Config
-    FRONTEND_URL: z.string().url().default('http://localhost:3001'),
+    // UI & API Config
+    FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+    BACKEND_URL: z.string().url().default('http://localhost:3005'),
 });
 
 const parsedConfig = configSchema.safeParse(process.env);
@@ -72,5 +73,6 @@ export const config = parsedConfig.success ? parsedConfig.data : {
     SERPER_API_KEY: process.env.SERPER_API_KEY ?? '',
     ENGINE_TRIGGER_SECRET: process.env.ENGINE_TRIGGER_SECRET ?? 'dev-engine-trigger',
     MAX_CAMPAIGNS_PER_SWEEP: process.env.MAX_CAMPAIGNS_PER_SWEEP ? parseInt(process.env.MAX_CAMPAIGNS_PER_SWEEP, 10) : 50,
-    FRONTEND_URL: process.env.FRONTEND_URL ?? 'http://localhost:3001',
+    FRONTEND_URL: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    BACKEND_URL: process.env.BACKEND_URL ?? 'http://localhost:3005',
 };

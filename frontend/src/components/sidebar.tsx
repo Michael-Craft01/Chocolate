@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Target, CreditCard, Settings, LogOut, Zap, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Target, CreditCard, Settings, LogOut, Zap, MessageSquare, User } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -15,6 +15,7 @@ const navItems = [
   { name: "Campaigns", href: "/campaigns", icon: Target },
   { name: "Leads", href: "/leads", icon: MessageSquare },
   { name: "Billing", href: "/billing", icon: CreditCard },
+  { name: "Profile", href: "/profile", icon: User },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
