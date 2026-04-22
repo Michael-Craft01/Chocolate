@@ -28,6 +28,24 @@ export const billingSchema = z.object({
   amount: z.number().optional(), // For credit topups
 });
 
+export const settingsSchema = z.object({
+  // Profile (Business Identity)
+  companyName: z.string().min(2),
+  website: z.string().url().optional().nullable(),
+  industry: z.string().optional().nullable(),
+  defaultSenderName: z.string().min(2),
+  defaultSenderRole: z.string().min(2),
+  
+  // Default Campaign (Targeting Intelligence)
+  productName: z.string().min(2),
+  productDescription: z.string().min(10),
+  targetPainPoints: z.string().min(10),
+  targetCountry: z.string().length(2).default('ZW'),
+  locations: z.array(z.string()).min(1),
+  industries: z.array(z.string()).min(1),
+  discordWebhook: z.string().url().optional().nullable(),
+});
+
 // Validation Middleware
 export const validate = (schema: z.ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
   try {

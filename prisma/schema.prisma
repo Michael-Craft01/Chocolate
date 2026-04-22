@@ -23,14 +23,14 @@ model User {
   id                   String         @id // Map to Supabase auth.uid()
   email                String?        @unique
   tier                 Tier           @default(STARTER)
-  dailyLimit           Int            @default(50)
+  dailyLimit           Int            @default(10)
   maxCampaigns         Int            @default(1)
   leadsFoundToday      Int            @default(0)
   creditBalance        Int            @default(0)
   lastQuotaReset       DateTime       @default(now())
   stripeCustomerId     String?        @unique
   stripeSubscriptionId String?        @unique
-  paymentStatus        String         @default("active") // active, past_due, canceled, incomplete
+  paymentStatus        String         @default("free") // active, free, past_due, canceled, incomplete
   profile              Profile?
   campaigns            Campaign[]
   transactions         Transaction[]
@@ -143,6 +143,7 @@ model Transaction {
   status      TransactionStatus @default(PENDING)
   gateway     PaymentGateway
   type        TransactionType
+  tier        Tier?             // Added to store what the user is buying
   gatewayRef  String?           @unique // Stripe Session ID or Paynow Poll URL
   createdAt   DateTime          @default(now())
 }

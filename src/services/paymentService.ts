@@ -71,34 +71,54 @@ class PaymentService {
     }
 
     async createPaynowCheckout(options: CheckoutOptions) {
-        if (!this.paynow) throw new Error('Paynow is not configured');
+        if (!this.paynow) {
+            logger.error('Paynow attempt made but no keys are configured in .env');
+            throw new Error('Paynow is not configured. Check your .env file for INTEGRATION_ID and KEY.');
+        }
 
         const price = options.amount || this.getTierPrice(options.tier);
         const user = await prisma.user.findUnique({ where: { id: options.userId } });
 
-        const payment = this.paynow.createPayment(`INV-${Date.now()}`, user?.email || 'sales@logic.hq');
+        // Ensure the result URL points to the BACKEND (3005), not the frontend (3001)
+        this.paynow.resultUrl = `http://localhost:3005/api/payments/paynow/result`;
+
+        const payment = this.paynow.createPayment(`INV-${Date.now()}`, user?.email || 'customer@chocolate.engine');
         payment.add(`Chocolate ${options.tier} Plan`, price);
 
         try {
             const response = await this.paynow.send(payment);
             if (response.success) {
-                // Save transaction as PENDING
+                logger.info({ pollUrl: response.pollUrl }, 'Paynow checkout initiated successfully');
                 await prisma.transaction.create({
                     data: {
                         userId: options.userId,
                         amount: price,
                         gateway: 'PAYNOW',
                         type: options.tier === 'CREDIT' ? 'CREDIT_TOPUP' : 'SUBSCRIPTION',
+                        tier: options.tier === 'CREDIT' ? null : options.tier as any,
                         gatewayRef: response.pollUrl,
                         status: 'PENDING',
                     }
                 });
                 return response.redirectUrl;
             } else {
-                throw new Error('Paynow failed to initiate payment');
+                logger.error({ response }, 'Paynow rejected the payment initiation');
+                throw new Error(`Paynow Error: ${response.error || 'Unknown initiation error'}`);
             }
+        } catch (error: any) {
+            logger.error({ err: error.message }, 'Critical Paynow initiation failure');
+            throw error;
+        }
+    }
+
+    async verifyPaynowTransaction(pollUrl: string) {
+        if (!this.paynow) throw new Error('Paynow is not configured');
+        
+        try {
+            const status = await this.paynow.pollTransaction(pollUrl);
+            return status; // Returns object with status, amount, reference, etc.
         } catch (error) {
-            logger.error({ err: error }, 'Paynow initiation error');
+            logger.error({ err: error, pollUrl }, 'Error polling Paynow status');
             throw error;
         }
     }

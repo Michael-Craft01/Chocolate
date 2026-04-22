@@ -1,15 +1,35 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootPath = path.resolve(__dirname, '../');
+const envPath = path.join(rootPath, '.env');
+
+console.log(`\n🔍 [CONFIG] Searching for .env at: ${envPath}`);
+
+if (fs.existsSync(envPath)) {
+    console.log(`✅ [CONFIG] .env file found! Reading...`);
+    const result = dotenv.config({ path: envPath });
+    if (result.error) {
+        console.error(`❌ [CONFIG] Error loading .env:`, result.error);
+    } else {
+        const keys = Object.keys(result.parsed || {});
+        console.log(`📊 [CONFIG] Loaded ${keys.length} keys: ${keys.join(', ')}`);
+    }
+} else {
+    console.warn(`⚠️ [CONFIG] .env file NOT FOUND at ${envPath}. Using fallbacks.`);
+}
 
 const configSchema = z.object({
-    GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
-    DISCORD_WEBHOOK: z.string().url('DISCORD_WEBHOOK must be a valid URL'),
+    GEMINI_API_KEY: z.string().optional().default(''),
+    DISCORD_WEBHOOK: z.string().url().optional().default('https://example.com/webhook-placeholder'),
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
     LOG_LEVEL: z.enum(['info', 'debug', 'error', 'warn']).default('info'),
-    CRON_SCHEDULE: z.string().default('0 */6 * * *'), // Every 6 hours
-    ROTATION_PERIOD_DAYS: z.number().default(7), // 1 week rotation
+    CRON_SCHEDULE: z.string().default('0 */6 * * *'),
+    ROTATION_PERIOD_DAYS: z.number().default(7),
     
     // Stripe Config
     STRIPE_SECRET_KEY: z.string().optional(),
@@ -20,14 +40,14 @@ const configSchema = z.object({
     PAYNOW_INTEGRATION_KEY: z.string().optional(),
     
     // Supabase Config
-    SUPABASE_URL: z.string().url('SUPABASE_URL is required'),
-    SUPABASE_ANON_KEY: z.string().min(1, 'SUPABASE_ANON_KEY is required'),
-    SUPABASE_JWT_SECRET: z.string().min(1, 'SUPABASE_JWT_SECRET is required'),
+    SUPABASE_URL: z.string().url().optional().default('http://localhost:54321'),
+    SUPABASE_ANON_KEY: z.string().optional().default('placeholder-anon-key'),
+    SUPABASE_JWT_SECRET: z.string().optional().default('placeholder-jwt-secret'),
     
     // Scaling & Engine Config
-    SERPER_API_KEY: z.string().min(1, 'SERPER_API_KEY is required'),
-    ENGINE_TRIGGER_SECRET: z.string().min(1, 'ENGINE_TRIGGER_SECRET is required'),
-    MAX_CAMPAIGNS_PER_SWEEP: z.string().transform(v => parseInt(v, 10)).default(50),
+    SERPER_API_KEY: z.string().optional().default(''),
+    ENGINE_TRIGGER_SECRET: z.string().optional().default('dev-engine-trigger'),
+    MAX_CAMPAIGNS_PER_SWEEP: z.string().transform(v => parseInt(v, 10)).default('50'),
 
     // UI Config
     FRONTEND_URL: z.string().url().default('http://localhost:3001'),
@@ -35,18 +55,7 @@ const configSchema = z.object({
 
 const parsedConfig = configSchema.safeParse(process.env);
 
-if (!parsedConfig.success) {
-    console.error('\n' + '='.repeat(50));
-    console.error('❌ PLATFORM SETUP REQUIRED');
-    console.error('='.repeat(50));
-    console.error('Your .env file is missing or contains invalid values.');
-    console.error('\n1. Copy .env.example to .env');
-    console.error('2. Fill in your API keys and credentials.');
-    console.error('3. Restart the application.');
-    console.error('='.repeat(50) + '\n');
-}
-
-const fallbackConfig = {
+export const config = parsedConfig.success ? parsedConfig.data : {
     GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? '',
     DISCORD_WEBHOOK: process.env.DISCORD_WEBHOOK ?? 'https://example.com/webhook-placeholder',
     DATABASE_URL: process.env.DATABASE_URL ?? '',
@@ -65,10 +74,3 @@ const fallbackConfig = {
     MAX_CAMPAIGNS_PER_SWEEP: process.env.MAX_CAMPAIGNS_PER_SWEEP ? parseInt(process.env.MAX_CAMPAIGNS_PER_SWEEP, 10) : 50,
     FRONTEND_URL: process.env.FRONTEND_URL ?? 'http://localhost:3001',
 };
-
-const shouldFailOnInvalidConfig = process.env.STRICT_CONFIG_VALIDATION === 'true';
-if (!parsedConfig.success && shouldFailOnInvalidConfig) {
-    process.exit(1);
-}
-
-export const config = parsedConfig.success ? parsedConfig.data : fallbackConfig;

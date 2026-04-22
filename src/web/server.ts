@@ -1,11 +1,31 @@
 import express from 'express';
 import cors from 'cors';
+import Stripe from 'stripe';
 import prisma from '../lib/prisma.js';
 import { logger } from '../lib/logger.js';
+import { config } from '../config.js';
+import { paymentService } from '../services/paymentService.js';
+import { WebhookHandler } from '../services/webhookHandler.js';
+import { triggerEngineCycle } from '../index.js';
+import { 
+    campaignSchema, 
+    leadStatusSchema, 
+    campaignStatusSchema, 
+    billingSchema, 
+    settingsSchema, 
+    validate 
+} from './middleware/validation.js';
+import { 
+    authenticate, 
+    requireActiveSubscription, 
+    AuthenticatedRequest 
+} from './middleware/auth.js';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3005; // Forced to 3005 to avoid port 3000 conflict
+const stripe = config.STRIPE_SECRET_KEY ? new Stripe(config.STRIPE_SECRET_KEY) : null;
 
+// CORS configuration
 const allowedOrigins = new Set([
     config.FRONTEND_URL,
     'http://localhost:3001',
@@ -14,40 +34,39 @@ const allowedOrigins = new Set([
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow non-browser and same-origin requests
-        if (!origin) {
-            return callback(null, true);
-        }
-        if (allowedOrigins.has(origin)) {
+        if (!origin || allowedOrigins.has(origin)) {
             return callback(null, true);
         }
         return callback(new Error('Not allowed by CORS'));
     }
 }));
 
+// Request Logger for debugging 404s
+app.use((req, res, next) => {
+    logger.info(`${req.method} ${req.url}`);
+    next();
+});
+
+// Traffic Monitor - See exactly what hits the engine
+app.use((req, res, next) => {
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`[ENGINE] ${timestamp} | ${req.method} ${req.url}`);
+    next();
+});
+
 app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Middleware for Stripe Webhook needs raw body
+// Stripe Webhook (needs raw body)
 app.post('/api/payments/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
-    
-    if (!stripe || !config.STRIPE_WEBHOOK_SECRET) {
-        logger.error('Stripe is not configured for webhooks');
-        return res.status(500).send('Stripe Config Missing');
-    }
+    if (!stripe || !config.STRIPE_WEBHOOK_SECRET) return res.status(500).send('Stripe Config Missing');
 
     let event;
-
     try {
-        event = stripe.webhooks.constructEvent(
-            req.body,
-            sig as string,
-            config.STRIPE_WEBHOOK_SECRET
-        );
+        event = stripe.webhooks.constructEvent(req.body, sig as string, config.STRIPE_WEBHOOK_SECRET);
     } catch (err: any) {
-        logger.error({ err }, 'Stripe Webhook Signature Verification Failed');
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -55,60 +74,54 @@ app.post('/api/payments/stripe/webhook', express.raw({ type: 'application/json' 
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object as any;
             const { userId, tier } = session.metadata;
-            
-            logger.info({ userId, tier, sessionId: session.id }, 'Stripe Checkout Session Completed');
-            
             if (tier === 'CREDIT') {
                 await WebhookHandler.handleCreditTopup(userId, session.amount_total / 100, session.id, 'STRIPE');
             } else {
                 await WebhookHandler.handleSubscriptionSuccess(userId, tier, session.id, 'STRIPE');
             }
+        } else if (event.type === 'customer.subscription.deleted') {
+            const subscription = event.data.object as any;
+            const userId = subscription.metadata?.userId;
+            if (userId) {
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: { paymentStatus: 'canceled', tier: 'STARTER', dailyLimit: 10, maxCampaigns: 1 }
+                });
+            }
         }
-        
         res.json({ received: true });
     } catch (err: any) {
-        logger.error({ err }, 'Error processing Stripe webhook event');
         res.status(500).send('Internal Processing Error');
     }
 });
 
-// All other routes use JSON body parsing
+// JSON parsing for all other routes
 app.use(express.json());
 
-import { campaignSchema, leadStatusSchema, campaignStatusSchema, billingSchema, validate } from './middleware/validation.js';
-import { authenticate, AuthenticatedRequest } from './middleware/auth.js';
-import Stripe from 'stripe';
+// API: Current User Context
+app.get('/api/me', authenticate, (req: AuthenticatedRequest, res) => {
+    res.json({
+        id: req.user!.id,
+        email: req.user!.email,
+        paymentStatus: req.user!.paymentStatus,
+        tier: req.user!.tier
+    });
+});
 
-const stripe = config.STRIPE_SECRET_KEY ? new Stripe(config.STRIPE_SECRET_KEY) : null;
-
-// API: Dashboard Stats (Protected)
+// API: Dashboard Stats
 app.get('/api/stats', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
         const userId = req.user!.id;
-        
-        // Global stats (for visibility)
         const totalBusinesses = await prisma.business.count();
+        const totalLeads = await prisma.lead.count({ where: { campaign: { userId } } });
         
-        // Multi-tenant Lead Stats
-        const totalLeads = await prisma.lead.count({
-            where: { campaign: { userId } }
-        });
-
         const startOfToday = new Date();
         startOfToday.setHours(0,0,0,0);
         const leadsToday = await prisma.lead.count({
-            where: { 
-                createdAt: { gte: startOfToday },
-                campaign: { userId }
-            }
+            where: { createdAt: { gte: startOfToday }, campaign: { userId } }
         });
 
-        // Current User Identity/Quota
-        const user = await prisma.user.findUnique({ 
-            where: { id: userId },
-            include: { profile: true }
-        });
-
+        const user = await prisma.user.findUnique({ where: { id: userId } });
         res.json({
             totalBusinesses,
             totalLeads,
@@ -120,12 +133,88 @@ app.get('/api/stats', authenticate, async (req: AuthenticatedRequest, res) => {
             }
         });
     } catch (error) {
-        logger.error({ err: error }, 'Error fetching stats');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-// API: Campaigns List (Protected)
+// API: Settings
+app.get('/api/settings', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+        const userId = req.user!.id;
+        const profile = await prisma.profile.findUnique({ where: { userId } });
+        const mainCampaign = await prisma.campaign.findFirst({ where: { userId, name: 'Main Engine' } });
+        res.json({ profile, campaign: mainCampaign });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.post('/api/settings', authenticate, validate(settingsSchema), async (req: AuthenticatedRequest, res) => {
+    try {
+        const userId = req.user!.id;
+        const data = req.body;
+        
+        await prisma.profile.upsert({
+            where: { userId },
+            create: {
+                userId,
+                companyName: data.companyName,
+                website: data.website,
+                industry: data.industry,
+                defaultSenderName: data.defaultSenderName,
+                defaultSenderRole: data.defaultSenderRole,
+                onboardingComplete: true
+            },
+            update: {
+                companyName: data.companyName,
+                website: data.website,
+                industry: data.industry,
+                defaultSenderName: data.defaultSenderName,
+                defaultSenderRole: data.defaultSenderRole,
+                onboardingComplete: true
+            }
+        });
+        
+        const mainCampaign = await prisma.campaign.upsert({
+            where: { 
+                id: (await prisma.campaign.findFirst({ where: { userId, name: 'Main Engine' } }))?.id || 'new-id'
+            },
+            create: {
+                userId,
+                name: 'Main Engine',
+                senderName: data.defaultSenderName,
+                senderRole: data.defaultSenderRole,
+                companyName: data.companyName,
+                productName: data.productName,
+                productDescription: data.productDescription,
+                targetPainPoints: data.targetPainPoints,
+                targetCountry: data.targetCountry,
+                locations: data.locations,
+                industries: data.industries,
+                discordWebhook: data.discordWebhook,
+                status: 'ACTIVE'
+            },
+            update: {
+                senderName: data.defaultSenderName,
+                senderRole: data.defaultSenderRole,
+                companyName: data.companyName,
+                productName: data.productName,
+                productDescription: data.productDescription,
+                targetPainPoints: data.targetPainPoints,
+                targetCountry: data.targetCountry,
+                locations: data.locations,
+                industries: data.industries,
+                discordWebhook: data.discordWebhook
+            }
+        });
+        
+        res.json({ success: true, campaign: mainCampaign });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Campaigns
 app.get('/api/campaigns', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
         const userId = req.user!.id;
@@ -136,216 +225,103 @@ app.get('/api/campaigns', authenticate, async (req: AuthenticatedRequest, res) =
         });
         res.json(campaigns);
     } catch (error) {
-        logger.error({ err: error }, 'Error fetching campaigns');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-// API: Create Campaign (Protected)
-app.post('/api/campaigns', authenticate, validate(campaignSchema), async (req: AuthenticatedRequest, res) => {
+app.post('/api/campaigns', authenticate, requireActiveSubscription, validate(campaignSchema), async (req: AuthenticatedRequest, res) => {
     try {
-        const data = req.body;
-        const userId = req.user!.id;
-
-        // Ensure user exists in our DB, if not create them (from Supabase Identity)
-        await prisma.user.upsert({
-            where: { id: userId },
-            update: {},
-            create: { id: userId, email: req.user!.email }
-        });
-
         const campaign = await prisma.campaign.create({
-            data: {
-                ...data,
-                userId
-            }
+            data: { ...req.body, userId: req.user!.id }
         });
         res.status(201).json(campaign);
     } catch (error) {
-        logger.error({ err: error }, 'Error creating campaign');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-// API: Toggle Campaign Status (Protected)
-app.patch('/api/campaigns/:id/status', authenticate, validate(campaignStatusSchema), async (req: AuthenticatedRequest, res) => {
+app.patch('/api/campaigns/:id/status', authenticate, requireActiveSubscription, validate(campaignStatusSchema), async (req: AuthenticatedRequest, res) => {
     try {
         const { id } = req.params;
-        if (typeof id !== 'string') {
-            return res.status(400).json({ error: 'Validation Failed', message: 'Invalid campaign id' });
-        }
         const { status } = req.body;
-        const userId = req.user!.id;
-
-        const updateResult = await prisma.campaign.updateMany({
-            where: { id, userId },
-            data: { status }
-        });
-        if (updateResult.count === 0) {
-            return res.status(404).json({ error: 'Not Found', message: 'Campaign not found' });
-        }
-
-        const campaign = await prisma.campaign.findUnique({
-            where: { id }
-        });
-        if (!campaign) {
-            return res.status(404).json({ error: 'Not Found', message: 'Campaign not found' });
-        }
-
-        res.json(campaign);
+        await prisma.campaign.updateMany({ where: { id, userId: req.user!.id }, data: { status } });
+        res.json({ status });
     } catch (error) {
-        logger.error({ err: error }, 'Error toggling campaign status');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-// API: Leads List (Protected)
+// API: Leads
 app.get('/api/leads', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
-        const userId = req.user!.id;
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 20;
-        const skip = (page - 1) * limit;
-
         const leads = await prisma.lead.findMany({
-            where: { campaign: { userId } },
-            skip,
-            take: limit,
-            orderBy: { createdAt: 'desc' },
+            where: { campaign: { userId: req.user!.id } },
+            take: 50,
             include: { business: true }
         });
-
-        const totalLeads = await prisma.lead.count({
-            where: { campaign: { userId } }
-        });
-        const totalPages = Math.ceil(totalLeads / limit);
-
-        res.json({
-            leads,
-            pagination: { page, totalPages, totalLeads }
-        });
+        res.json(leads);
     } catch (error) {
-        logger.error({ err: error }, 'Error fetching leads');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-// API: Lead Status Update (Protected)
-app.patch('/api/leads/:id/status', authenticate, validate(leadStatusSchema), async (req: AuthenticatedRequest, res) => {
-    try {
-        const userId = req.user!.id;
-        const { id } = req.params;
-        if (typeof id !== 'string') {
-            return res.status(400).json({ error: 'Validation Failed', message: 'Invalid lead id' });
-        }
-        const { status } = req.body;
-
-        const updateResult = await prisma.lead.updateMany({
-            where: { id, campaign: { userId } },
-            data: { status }
-        });
-        if (updateResult.count === 0) {
-            return res.status(404).json({ error: 'Not Found', message: 'Lead not found' });
-        }
-
-        const updatedLead = await prisma.lead.findUnique({
-            where: { id }
-        });
-        if (!updatedLead) {
-            return res.status(404).json({ error: 'Not Found', message: 'Lead not found' });
-        }
-
-        res.json(updatedLead);
-    } catch (error) {
-        logger.error({ err: error }, 'Error updating lead status');
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-// ... (previous imports)
-import { paymentService } from '../services/paymentService.js';
-import { WebhookHandler } from '../services/webhookHandler.js';
-import { config } from '../config.js';
-import { triggerEngineCycle } from '../index.js';
-
-// API: Engine Trigger (For remote cron services like cronjob.com)
+// API: Engine Trigger
 app.post('/api/engine/trigger', async (req, res) => {
     try {
         const { key } = req.query;
-
-        if (key !== config.ENGINE_TRIGGER_SECRET) {
-            logger.warn('Unauthorized engine trigger attempt');
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
-
-        logger.info('Engine sweep triggered via webhook');
+        if (key !== config.ENGINE_TRIGGER_SECRET) return res.status(401).json({ error: 'Unauthorized' });
         const results = await triggerEngineCycle();
-        
-        res.json({
-            success: true,
-            message: 'Sweep complete',
-            results
-        });
+        res.json({ success: true, results });
     } catch (error) {
-        logger.error({ err: error }, 'Engine trigger error');
-        const details = error instanceof Error ? error.message : 'Unknown error';
-        res.status(500).json({ error: 'Internal Server Error', details });
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-// Stripe Webhook handled above with raw body parser
-
-// API: Paynow Result (Webhook)
+// API: Paynow Webhook
 app.post('/api/payments/paynow/result', express.urlencoded({ extended: true }), async (req, res) => {
     try {
         const payload = req.body;
-        // Paynow sends: reference, amount, status, pollurl, hash
-        if (payload.status === 'Paid') {
-            // Find the transaction by reference or pollurl
-            const transaction = await prisma.transaction.findFirst({
-                where: { gatewayRef: payload.pollurl }
-            });
-            
-            if (transaction && transaction.status !== 'SUCCESS') {
-                if (transaction.type === 'CREDIT_TOPUP') {
-                    await WebhookHandler.handleCreditTopup(transaction.userId, parseFloat(payload.amount), payload.reference, 'PAYNOW');
-                } else {
-                    // We'd need to map the reference back to a tier, or store it in the transaction
-                    const tier = 'STARTER'; // Placeholder: Should be stored in transaction metadata
-                    await WebhookHandler.handleSubscriptionSuccess(transaction.userId, tier, payload.reference, 'PAYNOW');
-                }
+        const transaction = await prisma.transaction.findUnique({ where: { gatewayRef: payload.pollurl } });
+        if (!transaction || transaction.status === 'SUCCESS') return res.sendStatus(200);
+
+        const status = await paymentService.verifyPaynowTransaction(payload.pollurl);
+        if (status.status === 'Paid') {
+            if (transaction.type === 'CREDIT_TOPUP') {
+                await WebhookHandler.handleCreditTopup(transaction.userId, parseFloat(status.amount), status.reference, 'PAYNOW');
+            } else {
+                await WebhookHandler.handleSubscriptionSuccess(transaction.userId, transaction.tier || 'STARTER', status.reference, 'PAYNOW');
             }
         }
         res.sendStatus(200);
-    } catch (error: any) {
-        logger.error({ err: error }, 'Error processing Paynow webhook');
-        res.status(500).json({ error: 'Internal Server Error', message: error.message });
+    } catch (error) {
+        res.sendStatus(500);
     }
 });
 
-// API: Create Checkout Session (Protected)
+// API: Billing
 app.post('/api/billing/create-checkout', authenticate, validate(billingSchema), async (req: AuthenticatedRequest, res) => {
     try {
         const { method, tier, amount } = req.body;
-        const userId = req.user!.id;
-
-        logger.info({ userId, method, tier }, 'Creating checkout session');
-
-        let url: string | null;
-        if (method === 'STRIPE') {
-            url = await paymentService.createStripeCheckout({ userId, tier, amount });
-        } else {
-            url = await paymentService.createPaynowCheckout({ userId, tier, amount });
-        }
-        if (!url) {
-            return res.status(500).json({ error: 'Payment Service Error', message: 'Checkout URL not generated' });
-        }
-
+        const url = method === 'STRIPE' 
+            ? await paymentService.createStripeCheckout({ userId: req.user!.id, tier, amount })
+            : await paymentService.createPaynowCheckout({ userId: req.user!.id, tier, amount });
+        
+        if (!url) return res.status(500).json({ error: 'Checkout error' });
         res.json({ url });
-    } catch (error: any) {
-        logger.error({ err: error }, 'Error creating checkout session');
-        res.status(500).json({ error: 'Payment Service Error', message: error.message });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
     }
+});
+
+// Emergency 404 Catch-all (Keep this at the very bottom)
+app.use((req, res) => {
+    const timestamp = new Date().toLocaleTimeString();
+    console.warn(`[ENGINE 404] ${timestamp} | ${req.method} ${req.url} - No route matched!`);
+    res.status(404).json({ 
+        error: 'Not Found', 
+        message: `The engine does not recognize ${req.method} ${req.url}`,
+        availableRoutes: ['/api/me', '/api/stats', '/api/settings', '/api/campaigns', '/api/leads']
+    });
 });
 
 export const startServer = () => {

@@ -193,7 +193,9 @@ export async function triggerEngineCycle() {
             where: {
                 status: 'ACTIVE',
                 user: {
-                    paymentStatus: 'active'
+                    paymentStatus: {
+                        in: ['active', 'free', 'trialing']
+                    }
                 }
             },
             include: { user: true },

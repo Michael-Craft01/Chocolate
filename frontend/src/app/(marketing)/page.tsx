@@ -64,7 +64,7 @@ export default function LandingPage() {
         <div className="flex items-center gap-2 sm:gap-8">
           <Link href="#features" className="hidden sm:inline-flex text-sm font-medium text-zinc-400 hover:text-white transition-colors">How it works</Link>
           <Link href="#pricing" className="hidden sm:inline-flex text-sm font-medium text-zinc-400 hover:text-white transition-colors">Pricing</Link>
-          <Link href="/dashboard" className="h-11 px-4 sm:px-6 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs sm:text-sm font-bold hover:bg-white/10 transition-all uppercase tracking-widest">
+          <Link href={session ? "/dashboard" : "/login"} className="h-11 px-4 sm:px-6 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs sm:text-sm font-bold hover:bg-white/10 transition-all uppercase tracking-widest">
             {session ? 'Go to Dashboard' : 'Login'}
           </Link>
         </div>
@@ -89,8 +89,8 @@ export default function LandingPage() {
             Chocolate is a headless automate-and-forget lead engine. We find, classify, and research businesses so you only talk to people ready to buy.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/onboarding" className="h-14 px-10 rounded-2xl bg-primary text-white font-bold text-lg hover:bg-primary-hover transition-all flex items-center gap-2 shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95">
-              {session ? 'Open Dashboard' : 'Launch Your Engine'}
+            <Link href="/dashboard" className="h-14 px-10 rounded-2xl bg-primary text-white font-bold text-lg hover:bg-primary-hover transition-all flex items-center gap-2 shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95">
+              {session ? 'Open Dashboard' : 'Get Started'}
               <ArrowRight className="h-5 w-5" />
             </Link>
             <Link href="#features" className="h-14 px-10 rounded-2xl bg-white/5 border border-white/10 font-bold text-lg hover:bg-white/10 transition-all inline-flex items-center">

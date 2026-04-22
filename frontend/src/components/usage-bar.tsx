@@ -14,8 +14,11 @@ export function UsageBar() {
         const data = await fetchDashboardStats();
         if (data.quota) setUsage(data.quota);
       } catch (error) {
-        if (!(error instanceof ApiAuthError)) {
-          console.error(error);
+        // If the backend is offline or unauthenticated, we fail silently or show default
+        if (error instanceof ApiAuthError) {
+          // Normal: user just isn't logged in yet
+        } else {
+          console.warn("Usage data unavailable (Backend likely offline)");
         }
       }
     }
