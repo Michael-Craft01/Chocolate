@@ -6,7 +6,7 @@ import { logger } from '../lib/logger.js';
 import { config } from '../config.js';
 import { paymentService } from '../services/paymentService.js';
 import { WebhookHandler } from '../services/webhookHandler.js';
-import { triggerEngineCycle } from '../index.js';
+import { triggerEngineCycle } from '../services/engineService.js';
 import { 
     campaignSchema, 
     leadStatusSchema, 
@@ -262,6 +262,21 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: Au
 });
 
 // API: Campaigns
+app.post('/api/campaigns/:id/trigger', authenticate, requireActiveSubscription, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const userId = req.user!.id;
+        const campaignId = req.params.id;
+        logger.info(`[COMMAND CENTER] 🚀 Manual sweep request received for campaign: ${campaignId}`);
+        const campaign = await prisma.campaign.findFirst({ where: { id: campaignId, userId }, include: { user: true } });
+        if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+        logger.info({ userId, campaignId }, '🚀 Manual sweep triggered');
+        triggerEngineCycle().catch(err => logger.error({ err }, 'Manual trigger failed'));
+        res.json({ message: 'Lead sweep initiated successfully. AI is now hunting for leads.', timestamp: new Date().toISOString() });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 app.get('/api/campaigns', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
         const userId = req.user!.id;
@@ -299,31 +314,86 @@ app.patch('/api/campaigns/:id/status', authenticate, requireActiveSubscription, 
 });
 
 
-// API: Trigger Campaign Sweep
-app.post('/api/campaigns/:id/trigger', authenticate, requireActiveSubscription, async (req: AuthenticatedRequest, res: Response) => {
+
+
+// API: Public Lead View (Magic Link)
+app.get('/api/leads/public/:id', async (req, res) => {
     try {
-        const userId = req.user!.id;
-        const campaignId = req.params.id;
-        
-        const campaign = await prisma.campaign.findFirst({
-            where: { id: campaignId, userId }
+        const { id } = req.params;
+        const lead = await prisma.lead.findUnique({
+            where: { id },
+            include: { 
+                business: true,
+                campaign: {
+                    select: {
+                        productName: true,
+                        companyName: true,
+                        senderName: true
+                    }
+                }
+            }
         });
         
-        if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+        if (!lead) return res.status(404).json({ error: 'Lead not found' });
         
-        // Manual sweep trigger logic
-        logger.info({ userId, campaignId }, '🚀 Manual sweep triggered');
-        
-        res.json({ 
-            message: 'Lead sweep initiated successfully. AI is now hunting for leads.',
-            timestamp: new Date().toISOString()
+        // Hide sensitive backend IDs
+        res.json({
+            name: lead.business.name,
+            website: lead.business.website,
+            phone: lead.business.phone,
+            industry: lead.industry,
+            painPoint: lead.painPoint,
+            message: lead.suggestedMessage,
+            product: lead.campaign.productName,
+            company: lead.campaign.companyName,
+            sender: lead.campaign.senderName,
+            createdAt: lead.createdAt
         });
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-// API: Leads
+// API: Export Leads as CSV (Document)
+app.get('/api/leads/export', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+        const { campaignId } = req.query;
+        const leads = await prisma.lead.findMany({
+            where: { 
+                campaign: { 
+                    userId: req.user!.id,
+                    id: campaignId ? String(campaignId) : undefined
+                } 
+            },
+            include: { business: true }
+        });
+
+        // Generate CSV Header
+        let csv = 'Company Name,Industry,Phone,Website,Pain Point,Suggested Message,Captured Date\n';
+        
+        // Add Rows
+        leads.forEach(l => {
+            const row = [
+                `"${l.business.name.replace(/"/g, '""')}"`,
+                `"${l.industry}"`,
+                `"${l.business.phone || ''}"`,
+                `"${l.business.website || ''}"`,
+                `"${l.painPoint.replace(/"/g, '""')}"`,
+                `"${l.suggestedMessage.replace(/"/g, '""')}"`,
+                `"${l.createdAt.toISOString()}"`
+            ];
+            csv += row.join(',') + '\n';
+        });
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=leads_${campaignId || 'all'}.csv`);
+        res.send(csv);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Leads (Authenticated)
 app.get('/api/leads', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
         const { campaignId } = req.query;
@@ -339,6 +409,53 @@ app.get('/api/leads', authenticate, async (req: AuthenticatedRequest, res) => {
             include: { business: true, campaign: { select: { name: true } } }
         });
         res.json(leads);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Update Lead (Edit)
+app.patch('/api/leads/:id', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+        const { id } = req.params;
+        const { industry, painPoint, suggestedMessage, status } = req.body;
+        
+        // Ensure user owns the lead's campaign
+        const lead = await prisma.lead.findFirst({
+            where: { id, campaign: { userId: req.user!.id } }
+        });
+
+        if (!lead) return res.status(404).json({ error: 'Lead not found' });
+
+        const updatedLead = await prisma.lead.update({
+            where: { id },
+            data: { 
+                industry: industry || undefined,
+                painPoint: painPoint || undefined,
+                suggestedMessage: suggestedMessage || undefined,
+                status: status || undefined
+            }
+        });
+
+        res.json(updatedLead);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Delete Lead
+app.delete('/api/leads/:id', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+        const { id } = req.params;
+        
+        const lead = await prisma.lead.findFirst({
+            where: { id, campaign: { userId: req.user!.id } }
+        });
+
+        if (!lead) return res.status(404).json({ error: 'Lead not found' });
+
+        await prisma.lead.delete({ where: { id } });
+        res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
@@ -399,7 +516,7 @@ app.use((req, res) => {
     res.status(404).json({ 
         error: 'Not Found', 
         message: `The engine does not recognize ${req.method} ${req.url}`,
-        availableRoutes: ['/api/me', '/api/stats', '/api/settings', '/api/campaigns', '/api/leads']
+        availableRoutes: ['/api/me', '/api/stats', '/api/settings', '/api/campaigns', '/api/leads', '/api/leads/export', '/api/leads/public/:id']
     });
 });
 

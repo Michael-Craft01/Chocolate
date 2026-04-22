@@ -29,13 +29,27 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
     }
 
     try {
-        // Let Supabase verify the token — no algorithm guessing needed
-        const { data: { user }, error } = await supabase.auth.getUser(token);
+        let user = null;
+        let authError = null;
+        let attempts = 0;
 
-        if (error || !user) {
-            logger.error({ error: error?.message }, 'Supabase token verification failed');
-            return res.status(401).json({ error: 'Unauthorized', message: error?.message || 'Invalid token' });
+        while (attempts < 3) {
+        try {
+            const { data, error } = await supabase.auth.getUser(token);
+            user = data.user;
+            authError = error;
+            if (user || (authError && authError.status !== 500)) break;
+        } catch (err) {
+            logger.warn(`Auth attempt ${attempts + 1} failed, retrying...`);
         }
+        attempts++;
+        if (attempts < 3) await new Promise(r => setTimeout(r, 500));
+    }
+
+    if (authError || !user) {
+        logger.error({ error: authError?.message }, 'Supabase token verification failed');
+        return res.status(401).json({ error: 'Unauthorized', message: authError?.message || 'Invalid token' });
+    }
 
         // Sync user to our database
         const dbUser = await prisma.user.upsert({
@@ -63,12 +77,15 @@ export const requireActiveSubscription = (req: AuthenticatedRequest, res: Respon
         return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
     }
 
-    const allowedStatuses = ['active', 'free', 'trialing'];
-    if (!req.user.paymentStatus || !allowedStatuses.includes(req.user.paymentStatus)) {
-        logger.warn({ userId: req.user.id, status: req.user.paymentStatus }, 'Blocked: invalid subscription status');
+    const status = (req.user.paymentStatus || '').toLowerCase();
+    const allowedStatuses = ['active', 'free', 'trialing', 'success'];
+    const isProOrElite = ['PROFESSIONAL', 'ELITE'].includes(req.user.tier || '');
+
+    if (!allowedStatuses.includes(status) && !isProOrElite) {
+        logger.warn({ userId: req.user.id, status: req.user.paymentStatus, tier: req.user.tier }, 'Blocked: invalid subscription status');
         return res.status(403).json({ 
             error: 'Payment Required', 
-            message: 'An active subscription is required'
+            message: 'An active subscription is required to launch a sweep.'
         });
     }
 

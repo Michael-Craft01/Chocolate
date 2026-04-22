@@ -15,6 +15,12 @@ export class QueryGenerator {
      * Generate a batch of queries for a specific campaign cycle
      */
     async generateBatchQueries(count: number = 25, campaign?: any): Promise<QueryData[]> {
+        logger.info({ 
+            campaignId: campaign?.id, 
+            providedLocations: campaign?.locations?.length, 
+            providedIndustries: campaign?.industries?.length 
+        }, '🔍 Generating batch queries');
+
         const locations = campaign?.locations && campaign.locations.length > 0 
             ? campaign.locations 
             : (LOCATIONS_ZW.length > 0 ? LOCATIONS_ZW : ['Global']);
@@ -22,6 +28,11 @@ export class QueryGenerator {
         const industries = campaign?.industries && campaign.industries.length > 0
             ? campaign.industries
             : (INDUSTRIES.length > 0 ? INDUSTRIES : ['Business']);
+
+        logger.info({ 
+            finalLocations: locations.length, 
+            finalIndustries: industries.length 
+        }, '📊 Final query parameters decided');
 
         const country = campaign?.targetCountry || 'US';
         
@@ -67,7 +78,8 @@ export class QueryGenerator {
                     },
                 });
 
-                if (!recentHistory || recentHistory.createdAt < rangeLimit) {
+                // If no history exists, or it's old, OR if we need at least some queries to start
+                if (!recentHistory || recentHistory.createdAt < rangeLimit || queries.length < 5) {
                     const template = this.getRandomItem(QUERY_TEMPLATES);
                     const query = template.replace('{industry}', industry).replace('{location}', location);
 

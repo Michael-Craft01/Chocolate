@@ -1,12 +1,13 @@
 import { logger } from '../lib/logger.js';
-import { playwrightScraper, ScrapedBusiness } from './playwrightScraper.js';
+import { playwrightScraper } from './playwrightScraper.js';
+import type { ScrapedBusiness } from './playwrightScraper.js';
 
-export { ScrapedBusiness };
+export type { ScrapedBusiness };
 
 export class Scraper {
     /**
      * Scrapes businesses using the internal Playwright browser.
-     * This is the primary (and now only) method for finding leads.
+     * This is the primary method for finding leads (Browser-only as requested).
      */
     async scrape(query: string, country: string = 'ZW'): Promise<ScrapedBusiness[]> {
         // DRY RUN: Return mock data if enabled

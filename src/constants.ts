@@ -218,11 +218,11 @@ export const INDUSTRIES = [
 // Query templates optimized for local businesses
 export const QUERY_TEMPLATES = [
     '{industry} in {location}',
-    '{industry} {location}',
-    'top {industry} {location}',
-    'best {industry} in {location}',
-    '{location} {industry}',
-    'suppliers of {industry} {location}',
-    'distributors of {industry} {location}',
+    '{industry} companies {location}',
+    '{industry} suppliers {location}',
+    '{industry} wholesalers {location}',
+    'list of {industry} in {location}',
+    '{location} {industry} directory',
+    'best {industry} {location}',
 ];
 

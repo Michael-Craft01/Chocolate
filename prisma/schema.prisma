@@ -131,6 +131,8 @@ model Lead {
   suggestedMessage String
   status           LeadStatus  @default(NEW)
   dispatchedAt     DateTime?
+  sweepId          String?     // For cycle grouping
+  sweepDate        DateTime?   // For cycle timestamp
   createdAt        DateTime    @default(now())
 }
 

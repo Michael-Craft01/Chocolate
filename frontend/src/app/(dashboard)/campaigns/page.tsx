@@ -57,9 +57,11 @@ export default function CampaignsPage() {
     try {
       setTriggering(id);
       await authJson(`/api/campaigns/${id}/trigger`, { method: 'POST' });
-      alert("AI Sweep Initiated! The engine is now hunting for leads.");
+      // Redirect to leads page to see it happening live
+      router.push("/leads");
     } catch (err) {
-      alert("Failed to trigger sweep. Check your subscription status.");
+      console.error("Trigger failed", err);
+      setError("Failed to trigger sweep. Please check your connection.");
     } finally {
       setTriggering(null);
     }
