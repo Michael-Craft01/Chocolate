@@ -35,7 +35,7 @@ export class PlaywrightScraper {
         }
     }
 
-    async scrape(query: string, country: string = 'ZW'): Promise<ScrapedBusiness[]> {
+    async scrape(query: string, country: string = 'ZW', page: number = 1): Promise<ScrapedBusiness[]> {
         await this.init();
         
         const context = await this.browser!.newContext({
@@ -44,7 +44,7 @@ export class PlaywrightScraper {
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         });
         
-        const page = await context.newPage();
+        const p = await context.newPage();
         const results: ScrapedBusiness[] = [];
         
         try {
@@ -52,16 +52,20 @@ export class PlaywrightScraper {
             
             // --- SOURCE 1: Google (Primary) ---
             try {
-                const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query + ' ' + country)}&hl=en&gl=ZW`;
-                await page.goto(googleUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-                await page.waitForTimeout(5000); 
+                // Calculate Google Search pagination offset
+                const startOffset = (page - 1) * 10;
+                const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query + ' ' + country)}&hl=en&gl=ZW&start=${startOffset}`;
+                
+                logger.info(`[PLAYWRIGHT] Scraping: ${query} (Page: ${page}, Offset: ${startOffset})`);
+                await p.goto(googleUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+                await p.waitForTimeout(5000); 
 
                 // DIAGNOSTIC SCREENSHOT
                 const diagPath = `c:\\Users\\kudzi\\OneDrive\\Documents\\Chocolate-1\\google_diag.png`;
-                await page.screenshot({ path: diagPath });
+                await p.screenshot({ path: diagPath });
                 logger.info(`[DIAG] Search screenshot saved to ${diagPath}`);
 
-                const googleLeads = await page.evaluate((junkDomains) => {
+                const googleLeads = await p.evaluate((junkDomains) => {
                     const leads: any[] = [];
                     const textContent = document.body.innerText;
                     const phones = textContent.match(/(\+263|071|077|078|09)\s?\d[\d\s-]{6,}\d/g) || [];
@@ -131,10 +135,10 @@ export class PlaywrightScraper {
             if (results.length < 5) {
                 try {
                     const ddgUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query + ' ' + country)}&kl=zw-en`;
-                    await page.goto(ddgUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
-                    await page.waitForTimeout(3000); 
+                    await p.goto(ddgUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+                    await p.waitForTimeout(3000); 
 
-                    const ddgLeads = await page.evaluate((junkDomains) => {
+                    const ddgLeads = await p.evaluate((junkDomains) => {
                         const leads: any[] = [];
                         document.querySelectorAll('h2 a').forEach(el => {
                             let name = (el as HTMLElement).innerText

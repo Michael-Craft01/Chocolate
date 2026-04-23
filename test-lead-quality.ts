@@ -1,10 +1,13 @@
 import { playwrightScraper } from './src/services/playwrightScraper.js';
 import { aiService } from './src/services/aiService.js';
+import { ContactExtractor } from './src/services/contactExtractor.js';
 import { logger } from './src/lib/logger.js';
+
+const contactExtractor = new ContactExtractor();
 
 async function testQuality() {
     const query = "fashion retail Harare";
-    console.log(`\n🚀 TESTING HIGH-FIDELITY EXTRACTION`);
+    console.log(`\n🚀 TESTING HYPER-ROBUST MULTIMODAL EXTRACTION`);
     console.log(`Query: ${query}\n`);
 
     try {
@@ -13,14 +16,27 @@ async function testQuality() {
         console.log(`\n📊 RESULTS ANALYZED:`);
         console.log(`--------------------------------------------------`);
         
-        for (const lead of rawResults) {
-            console.log(`\nRAW SCRAPED NAME: "${lead.name}"`);
-            console.log(`WEBSITE: ${lead.website}`);
+        for (const lead of rawResults.slice(0, 3)) {
+            console.log(`\n🔍 PROCESSING: "${lead.name}"`);
+            console.log(`WEBSITE: ${lead.website || 'No Website'}`);
+            
+            let visualIntel: Buffer | null = null;
+            let email: string | null = null;
+            
+            if (lead.website) {
+                console.log(`📸 Capturing Visual Intel & Contacts...`);
+                const deepData = await contactExtractor.extract(lead.website);
+                visualIntel = deepData.screenshot || null;
+                email = deepData.email || null;
+                if (email) console.log(`📧 Found Email: ${email}`);
+            }
+
+            const telemetry = `Email: ${email || 'Hidden'} | Source: ${lead.category || 'Organic'}`;
             
             const enrichment = await aiService.enrichLead(lead.name, 'Boutique', {
-                productDescription: "HyprLead AI",
-                targetPainPoints: null // Let AI detect naturally
-            });
+                productDescription: "HyprLead AI Automation",
+                targetPainPoints: null
+            }, telemetry, visualIntel);
             
             console.log(`✅ CLEANED BRAND NAME: "${enrichment.brandName}"`);
             console.log(`INDUSTRY: ${enrichment.industry}`);

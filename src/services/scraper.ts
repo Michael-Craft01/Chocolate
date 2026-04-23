@@ -6,12 +6,16 @@ import type { ScrapedBusiness } from './playwrightScraper.js';
 
 export type { ScrapedBusiness };
 
+export interface Scraper {
+    scrape(query: string, country: string, page?: number): Promise<ScrapedBusiness[]>;
+}
+
 export class Scraper {
     /**
      * Scrapes businesses using the most reliable source available.
      * Prioritizes API-based search to avoid bot detection/throttling.
      */
-    async scrape(query: string, country: string = 'ZW'): Promise<ScrapedBusiness[]> {
+    async scrape(query: string, country: string = 'ZW', page: number = 1): Promise<ScrapedBusiness[]> {
         // DRY RUN: Return mock data if enabled
         if (process.env.DRY_RUN === 'true') {
             logger.info(`[DRY RUN] Skipping actual scrape for: "${query}"`);
@@ -26,12 +30,10 @@ export class Scraper {
             ];
         }
 
-        let results: ScrapedBusiness[] = [];
-
-        // 1. Try Serper API (Primary - Zero Throttling)
+        // Prefer Serper for stability and high-volume cycles
         if (config.SERPER_API_KEY) {
             try {
-                results = await serperScraper.scrape(query, country);
+                const results = await serperScraper.scrape(query, country, page);
                 if (results.length > 0) {
                     logger.info(`[SCRAPER] Successfully secured ${results.length} leads via high-reliability API.`);
                     return results;

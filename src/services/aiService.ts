@@ -29,73 +29,88 @@ export class AIService {
         businessName: string, 
         category?: string, 
         campaignConfig?: { productDescription?: string | null, targetPainPoints?: string | null },
-        context?: string | null
+        context?: string | null,
+        imageBuffer?: Buffer | null
     ): Promise<AIEnrichment> {
         const product = campaignConfig?.productDescription || "HyprLead Intelligence & Automation Solutions";
         const customInstructions = campaignConfig?.targetPainPoints || "";
 
-        // GEMMA 3 OPTIMIZED PROMPT STRUCTURE
+        // GEMMA 4 ROBUST REASONING PROMPT
         const prompt = `<start_of_turn>user
-SYSTEM INSTRUCTIONS:
-You are a high-performance business analyst for: "${product}". 
-Your goal is to perform high-fidelity extraction and operational friction detection.
-Always respond in valid, parseable JSON.
+SYSTEM: You are the HyprLead Engine (Gemma-4 Optimized). 
+GOAL: High-fidelity business extraction and deep-dive operational friction detection.
+REASONING: Use your internal thinking mode to analyze the telemetry AND visual data if provided.
+
+INPUT PACKAGE:
+- BRAND: "${businessName}"
+- SECTOR: "${category || 'SME'}"
+- TELEMETRY: "${context || 'No telemetry available'}"
 
 TASK:
-Analyze this intelligence package:
-- RAW TITLE: "${businessName}"
-- CONTEXT/TELEMETRY: "${context || 'No telemetry available'}"
-- SECTOR: "${category || 'SME'}"
-
-GUIDELINES:
-1. Extract the actual BRAND NAME (company name only).
-2. Detect a deep OPERATIONAL PAIN POINT based on the telemetry.
-   - Low ratings (<4.0) -> Customer experience or reputation friction.
-   - "Ghost Town" (No website) -> Digital invisibility and lead leakage.
-   - "Manual/Slow/Queue" in snippet -> Process automation bottleneck.
-   - Otherwise, identify a specific sectoral friction point.
+1. Clean the Brand Name.
+2. Identify 3 possible friction points, then select the MOST CRITICAL one.
+3. If an image/screenshot is provided, analyze the UI/UX and digital presence for specific failures.
 
 ${customInstructions}
 
-JSON OUTPUT FORMAT:
+JSON OUTPUT:
 {
-  "brandName": "Short, Clean Company Name",
-  "industry": "Specific Niche Industry", 
-  "painPoint": "Specific identified operational friction", 
+  "brandName": "Short Clean Name",
+  "industry": "Specific Vertical",
+  "painPoint": "Deep operational or visual friction point",
   "recommendedSolution": "${product}"
 }
 <end_of_turn>
 <start_of_turn>model
+<thought>
 `;
 
-        try {
-            logger.info(`[GEMMA-3] Requesting High-Fidelity enrichment for: ${businessName}`);
-            const result = await this.model.generateContent(prompt);
+        const parts: any[] = [{ text: prompt }];
+        if (imageBuffer) {
+            parts.push({
+                inlineData: {
+                    data: imageBuffer.toString('base64'),
+                    mimeType: 'image/png'
+                }
+            });
+        }
+
+        return this.retryOperation(async () => {
+            logger.info(`[GEMMA-4] Thinking... Deep-diving into: ${businessName}`);
+            const result = await this.model.generateContent(parts);
             const response = await result.response;
             const text = response.text();
-
+            
             const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error('No JSON object found in AI response');
-            }
-
+            if (!jsonMatch) throw new Error("Invalid AI Response Format");
+            
             const parsed = JSON.parse(jsonMatch[0]);
+            return {
+                brandName: parsed.brandName || businessName,
+                industry: parsed.industry || category || 'SME',
+                painPoint: parsed.painPoint || 'Operational friction detected',
+                recommendedSolution: product
+            };
+        });
+    }
 
-            return {
-                brandName: parsed.brandName || businessName.split(' ')[0] || 'Business',
-                industry: parsed.industry || category || 'SME / Retail',
-                painPoint: parsed.painPoint || 'Non-optimized operational workflow',
-                recommendedSolution: product,
-            };
-        } catch (error) {
-            logger.error({ err: error }, 'AI Enrichment error:');
-            return {
-                brandName: businessName.split(' ')[0] || 'Business',
-                industry: category || 'SME / Retail',
-                painPoint: 'Operational visibility gaps',
-                recommendedSolution: product,
-            };
+    private async retryOperation<T>(operation: () => Promise<T>, retries = 3): Promise<T> {
+        let lastError: any;
+        for (let i = 0; i < retries; i++) {
+            try {
+                return await operation();
+            } catch (err: any) {
+                lastError = err;
+                if (err.status === 429 || err.message?.includes('429')) {
+                    const wait = Math.pow(2, i) * 2000;
+                    logger.warn(`[GEMMA-4] Rate limited. Retrying in ${wait}ms...`);
+                    await new Promise(r => setTimeout(r, wait));
+                } else {
+                    throw err;
+                }
+            }
         }
+        throw lastError;
     }
 }
 

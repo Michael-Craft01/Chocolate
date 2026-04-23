@@ -11,16 +11,15 @@ export class SerperScraper {
         }
 
         try {
-            logger.info(`[SERPER] Searching via API for: "${query}"...`);
+            logger.info(`[SERPER] Searching: ${query} (Page: ${page})`);
             
-            const data = JSON.stringify({
+            const response = await axios.post('https://google.serper.dev/search', {
                 "q": query,
                 "gl": country.toLowerCase(),
                 "hl": "en",
-                "num": 20
-            });
-
-            const response = await axios.post('https://google.serper.dev/search', data, {
+                "num": 20,
+                "page": page
+            }, {
                 headers: { 
                     'X-API-KEY': config.SERPER_API_KEY, 
                     'Content-Type': 'application/json'

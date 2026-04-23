@@ -14,8 +14,8 @@ async function processLeadsForQuery(campaign: any, queryData: QueryData, targetC
     try {
         if (!campaign || campaign.status !== 'ACTIVE') return 0;
         
-        // 1. Bulk Scrape
-        const businesses = await scraper.scrape(queryData.query, queryData.country);
+        // 1. Bulk Scrape - Now using depth (page) for freshness
+        const businesses = await scraper.scrape(queryData.query, queryData.country, queryData.page);
         if (!businesses || businesses.length === 0) return 0;
 
         // 1. Parallel Enrichment (High-Latency Tasks)
@@ -48,6 +48,7 @@ async function processLeadsForQuery(campaign: any, queryData: QueryData, targetC
                 // --- HUNGRY MODE: Only deep dive if we really think this is a new lead ---
                 let hungryEmail = business.email;
                 let hungryPhone = business.phone;
+                let visualIntel: Buffer | null = null;
                 
                 // Quick check before expensive deep dive
                 const potentialDuplicate = await prisma.business.findFirst({
@@ -58,21 +59,15 @@ async function processLeadsForQuery(campaign: any, queryData: QueryData, targetC
                     const deepData = await contactExtractor.extract(business.website);
                     hungryEmail = hungryEmail || deepData.email;
                     hungryPhone = hungryPhone || deepData.phone;
+                    visualIntel = deepData.screenshot || null;
                 }
 
-                const validPhone = hungryPhone ? hungryPhone.replace(/\D/g, '') : null;
-                const message = messageGenerator.generate(campaign, cleanName, enrichment.industry, enrichment.painPoint, enrichment.recommendedSolution);
-
-                const result = await prisma.$transaction(async (tx) => {
-                    let dbBusiness = await tx.business.findFirst({
-                        where: { 
-                            name: cleanName, 
-                            OR: [
-                                { phone: validPhone || undefined }, 
-                                { website: business.website || undefined }
-                            ] 
-                        }
-                    });
+                // AI Enrichment with Telemetry & Visual Intel
+                const telemetry = `${business.address || ''} | ${business.website || 'No Site'}`;
+                const enrichment = await aiService.enrichLead(business.name, business.category ?? undefined, {
+                    productDescription: campaign.productDescription,
+                    targetPainPoints: campaign.targetPainPoints
+                }, telemetry, visualIntel);
 
                     if (!dbBusiness) {
                         dbBusiness = await tx.business.create({ 
