@@ -2,8 +2,9 @@
 
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Check, Zap, Globe, ShieldCheck, CreditCard, Loader2, PartyPopper, AlertCircle, X, History, ExternalLink } from "lucide-react";
+import { Check, Zap, Globe, ShieldCheck, CreditCard, Loader2, PartyPopper, AlertCircle, X, History, Sparkles } from "lucide-react";
 import { authJson } from "@/lib/api";
+import { motion } from "framer-motion";
 
 const tiers = [
   {
@@ -116,58 +117,65 @@ function BillingContent() {
   };
 
   return (
-    <div className="space-y-10 pb-20">
+    <div className="space-y-12 pb-20 font-sans">
       {/* Status Notifications */}
       {showStatus && (success || canceled) && (
-        <div className={`glass border p-6 rounded-2xl flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500 shadow-2xl ${
-          success ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-amber-500/50 bg-amber-500/10 text-amber-400"
-        }`}>
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-full ${success ? "bg-emerald-500/20" : "bg-amber-500/20"}`}>
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`glass-card border p-6 rounded-3xl flex items-center justify-between shadow-2xl ${
+            success ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" : "border-amber-500/30 bg-amber-500/5 text-amber-400"
+          }`}
+        >
+          <div className="flex items-center gap-5">
+            <div className={`p-4 rounded-2xl ${success ? "bg-emerald-500/10 glow-primary" : "bg-amber-500/10"}`}>
               {success ? <PartyPopper className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
             </div>
             <div>
-              <p className="font-bold text-lg">
-                {success ? "Payment Successful!" : "Payment Canceled"}
+              <p className="font-black text-xl tracking-tight">
+                {success ? "Handshake Successful" : "Access Canceled"}
               </p>
-              <p className="text-sm opacity-80 max-w-md">
+              <p className="text-[13px] font-medium opacity-70 max-w-md leading-relaxed">
                 {success 
-                  ? "Your account is being provisioned. We are syncing with the payment gateway—your new limits will be active in a few seconds." 
-                  : "No charges were made. You can try again whenever you're ready."}
+                  ? "Neural links are synchronizing. Your upgraded capacity will be active in approximately 30 seconds." 
+                  : "Checkout aborted. Your terminal parameters remain unchanged."}
               </p>
             </div>
           </div>
-          <button onClick={() => setShowStatus(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+          <button onClick={() => setShowStatus(false)} className="p-3 hover:bg-white/5 rounded-xl transition-all">
             <X className="h-5 w-5" />
           </button>
-        </div>
+        </motion.div>
       )}
 
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-black gradient-text tracking-tighter">Account Scaling</h1>
-        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">
-          Manage infrastructure resources and engine processing limits.
+      <div className="text-center space-y-4">
+        <div className="flex items-center justify-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
+          <Sparkles className="h-4 w-4 glow-primary" /> Resource Allocation
+        </div>
+        <h1 className="text-4xl font-black gradient-text tracking-tightest">Infrastructure Scale</h1>
+        <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em] max-w-xl mx-auto">
+          Manage your engine core clusters and extraction quotas.
         </p>
       </div>
 
       {/* Gateway Toggle */}
       <div className="flex justify-center">
-        <div className="glass p-1 rounded-xl flex gap-1 border border-white/5 shadow-xl">
+        <div className="glass-card p-1.5 rounded-2xl flex gap-1.5 border border-white/5 shadow-xl">
           <button 
             onClick={() => setGateway("STRIPE")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-              gateway === "STRIPE" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-zinc-500 hover:text-white"
+            className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+              gateway === "STRIPE" ? "bg-primary text-white glow-primary" : "text-zinc-500 hover:text-white hover:bg-white/5"
             }`}
           >
-            <Globe className="h-3 w-3" /> Global (Stripe)
+            <Globe className="h-4 w-4" /> Global Node
           </button>
           <button 
             onClick={() => setGateway("PAYNOW")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-              gateway === "PAYNOW" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-zinc-500 hover:text-white"
+            className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+              gateway === "PAYNOW" ? "bg-primary text-white glow-primary" : "text-zinc-500 hover:text-white hover:bg-white/5"
             }`}
           >
-            <Zap className="h-3 w-3" /> Local (Paynow)
+            <Zap className="h-4 w-4" /> Local Link
           </button>
         </div>
       </div>
@@ -176,35 +184,36 @@ function BillingContent() {
         {tiers.map((tier) => (
           <div 
             key={tier.name} 
-            className={`glass rounded-2xl p-8 border flex flex-col relative interactive-card ${
-              tier.popular ? "border-primary/50 shadow-2xl shadow-primary/10" : "border-white/5"
+            className={`glass-card rounded-[2rem] p-10 border flex flex-col relative group transition-all duration-500 ${
+              tier.popular ? "border-primary/40 shadow-[0_0_50px_-12px_rgba(59,130,246,0.15)]" : "border-white/5"
             }`}
           >
             {tier.popular && (
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                Most Popular
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] glow-primary">
+                Peak Efficiency
               </div>
-            )            <div className="mb-6">
-              <h3 className="text-sm font-black uppercase tracking-widest mb-1">{tier.name}</h3>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black tracking-tighter">${tier.price}</span>
-                <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">/month</span>
+            )}
+            <div className="mb-8">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-6">{tier.name}</h3>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-5xl font-black tracking-tightest text-white">${tier.price}</span>
+                <span className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest">/cycle</span>
               </div>
             </div>
 
-            <div className="space-y-3 mb-8 flex-1">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span className="text-xs text-zinc-400 font-bold uppercase tracking-tighter">{tier.leads}</span>
+            <div className="space-y-4 mb-10 flex-1">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0" />
+                <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-widest">{tier.leads}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-xs text-zinc-400 font-bold uppercase tracking-tighter">{tier.campaigns}</span>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                <Zap className="h-5 w-5 text-primary shrink-0 glow-primary" />
+                <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-widest">{tier.campaigns}</span>
               </div>
-              <div className="pt-3 space-y-2">
+              <div className="pt-6 space-y-3">
                 {tier.features.map((f) => (
-                  <div key={f} className="flex items-start gap-2 text-[10px] text-zinc-500 font-medium">
-                    <Check className="h-2.5 w-2.5 mt-0.5 text-zinc-600" />
+                  <div key={f} className="flex items-start gap-3 text-[11px] text-zinc-500 font-medium leading-relaxed">
+                    <Check className="h-3 w-3 mt-0.5 text-primary" />
                     {f}
                   </div>
                 ))}
@@ -214,127 +223,133 @@ function BillingContent() {
             <button 
               onClick={() => handleSubscribe(tier.name)}
               disabled={!!loading}
-              className={`w-full h-10 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 ${
-                tier.popular ? "bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/20" : "bg-white/5 hover:bg-white/10 text-white"
+              className={`w-full h-14 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3 ${
+                tier.popular ? "bg-primary text-white hover:scale-[1.02] glow-primary" : "bg-white/5 hover:bg-white/10 text-white"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {loading === tier.name && <Loader2 className="h-3 w-3 animate-spin" />}
-              {loading === tier.name ? "Redirecting..." : `Select ${tier.name}`}
+              {loading === tier.name && <Loader2 className="h-4 w-4 animate-spin" />}
+              {loading === tier.name ? "Syncing..." : `Deploy ${tier.name}`}
             </button>
           </div>
         ))}
       </div>
 
       {/* Credits Section */}
-      <div className="glass rounded-2xl p-8 mt-10 border border-white/5 relative overflow-hidden group interactive-card">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="space-y-2 max-w-md">
-            <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.2em]">
-              <CreditCard className="h-3.5 w-3.5" /> Overage Credits
+      <div className="glass-card rounded-[2.5rem] p-12 mt-12 border border-white/5 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -mr-64 -mt-64 group-hover:bg-primary/10 transition-colors" />
+        <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+          <div className="space-y-4 max-w-lg text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-3 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
+              <CreditCard className="h-4 w-4 glow-primary" /> Instant Overage
             </div>
-            <h2 className="text-xl font-black tracking-tight">Expand Quota Instantly</h2>
-            <p className="text-xs text-zinc-500 leading-relaxed font-medium">
-              Top up your engine with credits to keep searching after your 
-              daily limit is reached. Non-expiring high-priority capacity.
+            <h2 className="text-3xl font-black tracking-tight text-white">Neural Burst Capacity</h2>
+            <p className="text-[13px] text-zinc-500 leading-relaxed font-medium">
+              Inject additional credits into your engine for high-volume sweeps 
+              beyond your daily protocol. Instant activation, zero expiration.
             </p>
           </div>
-          <div className="flex flex-col items-center gap-3 min-w-[200px]">
+          <div className="flex flex-col items-center gap-6 min-w-[240px]">
             <div className="text-center">
-              <span className="text-2xl font-black tracking-tight">$10</span>
-              <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest"> / 100 Leads</span>
+              <span className="text-5xl font-black tracking-tightest text-white">$10</span>
+              <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mt-2">100 EXTRACTIONS</p>
             </div>
             <button 
               onClick={handleBuyCredits}
               disabled={!!loading}
-              className="w-full h-10 px-8 rounded-lg bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-colors shadow-xl flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full h-14 px-10 rounded-2xl bg-white text-black text-[11px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-all hover:scale-[1.02] flex items-center justify-center gap-3 disabled:opacity-50"
             >
-              {loading === "CREDITS" && <Loader2 className="h-3 w-3 animate-spin text-black" />}
-              {loading === "CREDITS" ? "Redirecting..." : "Acquire Credits"}
+              {loading === "CREDITS" && <Loader2 className="h-4 w-4 animate-spin text-black" />}
+              {loading === "CREDITS" ? "Injecting..." : "Inject Credits"}
             </button>
           </div>
         </div>
       </div>
 
       {/* Transaction History Table */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 text-zinc-300">
-          <History className="h-4 w-4 text-primary" />
-          <h2 className="text-xs font-black uppercase tracking-widest">Telemetry Log</h2>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 text-zinc-300">
+          <div className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center">
+            <History className="h-4 w-4 text-primary" />
+          </div>
+          <h2 className="text-xs font-black uppercase tracking-[0.2em]">Telemetry Logs</h2>
         </div>
         
-        <div className="glass rounded-xl border border-white/5 overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-white/[0.02] text-[10px] uppercase tracking-[0.15em] text-zinc-500">
-                <th className="px-6 py-3 font-black">ID</th>
-                <th className="px-6 py-3 font-black">Timestamp</th>
-                <th className="px-6 py-3 font-black">Type</th>
-                <th className="px-6 py-3 font-black">Amount</th>
-                <th className="px-6 py-3 font-black text-center">Node</th>
-                <th className="px-6 py-3 font-black text-right">State</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {loadingTransactions ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-zinc-500">
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Fetching telemetry...</span>
-                  </td>
+        <div className="glass-card rounded-3xl border border-white/5 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-white/[0.03] text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+                  <th className="px-8 py-5 font-black">Transfer ID</th>
+                  <th className="px-8 py-5 font-black">Timestamp</th>
+                  <th className="px-8 py-5 font-black">Protocol</th>
+                  <th className="px-8 py-5 font-black text-center">Amount</th>
+                  <th className="px-8 py-5 font-black text-center">Node</th>
+                  <th className="px-8 py-5 font-black text-right">Status</th>
                 </tr>
-              ) : transactions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-zinc-500 text-[10px] font-bold uppercase tracking-widest">
-                    No records found.
-                  </td>
-                </tr>
-              ) : (
-                transactions.map((tx) => (
-                  <tr key={tx.id} className="text-[11px] hover:bg-white/[0.01] transition-colors group">
-                    <td className="px-6 py-3 font-mono text-zinc-500 group-hover:text-zinc-300">
-                      {tx.id.substring(0, 8)}
-                    </td>
-                    <td className="px-6 py-3 text-zinc-500 font-medium">
-                      {new Date(tx.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-3">
-                      <span className="px-1.5 py-0.5 rounded bg-white/5 text-[9px] font-black uppercase tracking-tighter text-zinc-400">
-                        {tx.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3 font-black text-zinc-300">
-                      ${tx.amount}
-                    </td>
-                    <td className="px-6 py-3 text-center">
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-black tracking-tighter ${
-                        tx.gateway === 'PAYNOW' ? 'bg-amber-500/10 text-amber-500/70' : 'bg-blue-500/10 text-blue-500/70'
-                      }`}>
-                        {tx.gateway}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3 text-right">
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                        tx.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400' : 
-                        tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-400'
-                      }`}>
-                        {tx.status}
-                      </span>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {loadingTransactions ? (
+                  <tr>
+                    <td colSpan={6} className="px-8 py-20 text-center text-zinc-600">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-4" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Synchronizing Logs...</span>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-8 py-20 text-center text-zinc-600 text-[10px] font-black uppercase tracking-[0.2em]">
+                      Zero telemetry records detected.
+                    </td>
+                  </tr>
+                ) : (
+                  transactions.map((tx) => (
+                    <tr key={tx.id} className="text-[12px] hover:bg-white/[0.01] transition-all group">
+                      <td className="px-8 py-4 font-mono text-zinc-500 group-hover:text-primary transition-colors">
+                        {tx.id.substring(0, 12)}
+                      </td>
+                      <td className="px-8 py-4 text-zinc-500 font-medium">
+                        {new Date(tx.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-8 py-4">
+                        <span className="px-2 py-1 rounded-lg bg-white/5 text-[9px] font-black uppercase tracking-[0.1em] text-zinc-400">
+                          {tx.type}
+                        </span>
+                      </td>
+                      <td className="px-8 py-4 font-black text-white text-center">
+                        ${tx.amount}
+                      </td>
+                      <td className="px-8 py-4 text-center">
+                        <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] ${
+                          tx.gateway === 'PAYNOW' ? 'bg-amber-500/10 text-amber-500/80' : 'bg-blue-500/10 text-blue-500/80'
+                        }`}>
+                          {tx.gateway}
+                        </span>
+                      </td>
+                      <td className="px-8 py-4 text-right">
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] ${
+                          tx.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400' : 
+                          tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-400'
+                        }`}>
+                          {tx.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>v>
+      </div>
     </div>
   );
 }
 
 export default function BillingPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>}>
       <BillingContent />
     </Suspense>
   );

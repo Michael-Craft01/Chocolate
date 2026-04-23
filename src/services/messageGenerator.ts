@@ -2,44 +2,44 @@ import { logger } from '../lib/logger.js';
 
 export class MessageGenerator {
     private getOpenings(campaign: any, businessName: string) {
-        const company = campaign.companyName || 'our team';
+        const company = campaign.companyName || 'HyprLead';
         return [
             `Hello ${businessName} team,`,
             `Hi ${businessName},`,
-            `Good day ${businessName} team,`,
-            `Greetings from ${company},`,
+            `Good day ${businessName} leadership,`,
+            `Greetings from the ${company} operations desk,`,
         ];
     }
 
     private getIntros(campaign: any) {
         const name = campaign.senderName || 'Michael';
-        const company = campaign.companyName || 'LogicHQ';
-        const role = campaign.senderRole || 'Software Engineer';
-        const description = campaign.productDescription || 'we build smart systems that turn manual operations into automated growth engines.';
+        const company = campaign.companyName || 'HyprLead';
+        const role = campaign.senderRole || 'Intelligence Analyst';
+        const description = campaign.productDescription || 'we engineer autonomous systems that turn operational friction into high-velocity growth.';
 
         return [
             `I'm ${name} from ${company} — ${description}`,
-            `${name} here from ${company}. We specialize in ${campaign.productName || 'building high-value software'} for growing local businesses.`,
-            `I'm a ${role} from ${company}. We help businesses automate operations and scale faster.`,
-            `I'm ${name}, a ${role} who's passionate about helping local teams reclaim their time through smart automation.`,
+            `${name} here from ${company}. We specialize in ${campaign.productName || 'mission-critical intelligence'} for growing market leaders.`,
+            `I'm an ${role} at ${company}. We help businesses eliminate bottlenecks and scale with precision.`,
+            `I'm ${name}, a ${role} focused on helping teams reclaim their competitive edge through hyper-automation.`,
         ];
     }
 
     private getHooks(campaign: any, businessName: string, industry: string) {
-        const location = campaign.locations?.[0] || 'your area';
+        const location = campaign.locations?.[0] || 'your region';
         return [
-            `I've been tracking the evolution of businesses in ${location}, and ${businessName}'s trajectory stands out as particularly impressive.`,
-            `I've noticed that while many ${industry} firms are held back by traditional systems, ${businessName} is perfectly positioned to lead with a more agile approach.`,
-            `While auditing the current tech landscape, I saw how ${businessName} could significantly advance by moving beyond bulky traditional infrastructure.`,
+            `While mapping the growth trajectory of businesses in ${location}, ${businessName} stood out as a primary candidate for operational optimization.`,
+            `I've been analyzing the tech landscape for ${industry} players, and I noticed ${businessName} is perfectly positioned to capture more market share by modernizing your stack.`,
+            `During our latest sector audit, we identified how ${businessName} could significantly accelerate by moving beyond traditional legacy constraints.`,
         ];
     }
 
     private getCTAs(campaign: any, businessName: string, industry: string) {
-        const goal = campaign.targetPainPoints?.includes('demo') ? 'demo' : 'walkthrough';
+        const goal = campaign.targetPainPoints?.includes('demo') ? 'system demonstration' : 'strategic walkthrough';
         return [
-            `Would you be open to a quick 10-minute ${goal} of ${campaign.productName} this week?`,
-            `Do you have 10 minutes for a brief ${goal} of how our system can advance your business?`,
-            `Are you available for a quick call to explore scaling ${businessName} with our smart solutions?`,
+            `Would you be open to a 10-minute ${goal} of the HyprLead protocol this week?`,
+            `Do you have a small window for a brief ${goal} on how we can advance ${businessName}?`,
+            `Are you available for a brief session to explore scaling ${businessName} with our autonomous solutions?`,
         ];
     }
 
@@ -48,39 +48,39 @@ export class MessageGenerator {
     }
 
     generate(campaign: any, businessName: string, industry: string, painPoint: string, recommendedSolution?: string): string {
-        const product = campaign.productName || recommendedSolution || 'our solution';
+        const product = campaign.productName || recommendedSolution || 'HyprLead Core';
         const sender = campaign.senderName || 'Michael';
-        const company = campaign.companyName || 'LogicHQ';
-        const link = campaign.ctaLink || 'https://logichq.tech';
+        const company = campaign.companyName || 'HyprLead';
+        const link = campaign.ctaLink || 'https://hyprlead.com';
 
         const greeting = this.getRandomItem(this.getOpenings(campaign, businessName));
         const intro = this.getRandomItem(this.getIntros(campaign));
         const interest = this.getRandomItem(this.getHooks(campaign, businessName, industry));
 
-        const pain = `Specifically, I've noticed many businesses in your space struggle with ${painPoint.toLowerCase()}. This often leads to inefficiencies and lost opportunities.`;
+        const pain = `Specifically, my analysis indicates that ${businessName} may be experiencing friction due to ${painPoint.toLowerCase()}. In a high-velocity market, these gaps often lead to invisible revenue leakage.`;
         
-        const solution = `This is exactly why we built ${product} (${link}). It's a high-performance system designed to advance your operations instantly.`;
+        const solution = `This is exactly why we deployed ${product} (${link}). It is a high-performance framework designed to synchronize your operations and eliminate manual drag instantly.`;
 
         const cta = `${this.getRandomItem(this.getCTAs(campaign, businessName, industry))}
 
 — ${sender}
-${company} | Automation Solutions
+${company} | Intelligence & Automation
 ${link}`;
 
         const message = `${greeting}\n\n${intro}\n\n${interest}\n\n${pain}\n\n${solution}\n\n${cta}`;
 
-        logger.debug(`Generated dynamic message for ${businessName} via Campaign: ${campaign.name}`);
+        logger.debug(`Generated high-fidelity message for ${businessName} via Campaign: ${campaign.name}`);
         return message;
     }
 
     generateWhatsAppGreeting(campaign: any, businessName: string): string {
         const sender = campaign.senderName || 'Michael';
-        const company = campaign.companyName || 'LogicHQ';
-        const link = campaign.ctaLink || 'https://logichq.tech';
+        const company = campaign.companyName || 'HyprLead';
+        const link = campaign.ctaLink || 'https://hyprlead.com';
 
         const greetings = [
-            `Hi! I'm ${sender} from ${company}. I noticed ${businessName} and wanted to share how you can scale operations with our tools (${link}). Interested?`,
-            `Hello! ${sender} here. I have a proposal for a smart system for ${businessName} that scales your business with zero infrastructure. Quick call?`,
+            `Hi! I'm ${sender} from ${company}. I've identified a growth bottleneck at ${businessName} and wanted to share our optimization protocol (${link}). Interested in a brief brief?`,
+            `Hello! ${sender} here. We've mapped out a scaling framework for ${businessName} that eliminates manual friction. Do you have 2 minutes for a voice note?`,
         ];
         return this.getRandomItem(greetings);
     }

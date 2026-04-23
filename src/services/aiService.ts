@@ -3,6 +3,7 @@ import { config } from '../config.js';
 import { logger } from '../lib/logger.js';
 
 export interface AIEnrichment {
+    brandName: string;
     industry: string;
     painPoint: string;
     recommendedSolution: string;
@@ -14,9 +15,8 @@ export class AIService {
 
     constructor() {
         this.genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
-        // Use temperature 0.9 for varied responses
         this.model = this.genAI.getGenerativeModel({
-            model: 'gemma-3-27b-it',
+            model: config.GEMINI_MODEL,
             generationConfig: {
                 temperature: 0.9,
                 topP: 0.95,
@@ -28,45 +28,52 @@ export class AIService {
     async enrichLead(
         businessName: string, 
         category?: string, 
-        campaignConfig?: { productDescription?: string | null, targetPainPoints?: string | null }
+        campaignConfig?: { productDescription?: string | null, targetPainPoints?: string | null },
+        context?: string | null
     ): Promise<AIEnrichment> {
-        // Defaults to Takada if no config provided (backward compatibility / default)
-        const product = campaignConfig?.productDescription || "Takada (Inventory & Stock Management System)";
+        const product = campaignConfig?.productDescription || "HyprLead Intelligence & Automation Solutions";
         const customInstructions = campaignConfig?.targetPainPoints || "";
 
-        // Add randomization hint to encourage varied responses
-        const painPointHint = Math.floor(Math.random() * 8) + 1;
+        // GEMMA 3 OPTIMIZED PROMPT STRUCTURE
+        const prompt = `<start_of_turn>user
+SYSTEM INSTRUCTIONS:
+You are a high-performance business analyst for: "${product}". 
+Your goal is to perform high-fidelity extraction and operational friction detection.
+Always respond in valid, parseable JSON.
 
-        const prompt = `
-You are a business strategist specializing in selling: "${product}".
+TASK:
+Analyze this intelligence package:
+- RAW TITLE: "${businessName}"
+- CONTEXT/TELEMETRY: "${context || 'No telemetry available'}"
+- SECTOR: "${category || 'SME'}"
+
+GUIDELINES:
+1. Extract the actual BRAND NAME (company name only).
+2. Detect a deep OPERATIONAL PAIN POINT based on the telemetry.
+   - Low ratings (<4.0) -> Customer experience or reputation friction.
+   - "Ghost Town" (No website) -> Digital invisibility and lead leakage.
+   - "Manual/Slow/Queue" in snippet -> Process automation bottleneck.
+   - Otherwise, identify a specific sectoral friction point.
+
 ${customInstructions}
 
-IMPORTANT: Vary your responses. Focus on a unique pain point that matches the business.
-
-Example Pain Points to consider (if applicable):
-1. Manual processes leading to inaccuracies.
-2. Loss of sales due to inefficiency.
-3. Cash flow tied up in slow-moving operations.
-4. Difficulty tracking across branches.
-5. Inefficient invoicing and receipting.
-6. Lack of real-time visibility.
-7. Shrinkage or loss.
-8. Slow reordering/ restocking.
-
-Respond ONLY with a JSON object:
-{"industry": "Specific Industry", "painPoint": "Specific identified pain point", "recommendedSolution": "${product}"}
-
-Business: ${businessName}
-Category: ${category || 'SME'}
+JSON OUTPUT FORMAT:
+{
+  "brandName": "Short, Clean Company Name",
+  "industry": "Specific Niche Industry", 
+  "painPoint": "Specific identified operational friction", 
+  "recommendedSolution": "${product}"
+}
+<end_of_turn>
+<start_of_turn>model
 `;
 
         try {
-            logger.info(`Requesting AI enrichment for: ${businessName} (Product: ${product})`);
+            logger.info(`[GEMMA-3] Requesting High-Fidelity enrichment for: ${businessName}`);
             const result = await this.model.generateContent(prompt);
             const response = await result.response;
             const text = response.text();
 
-            // Robust JSON extraction
             const jsonMatch = text.match(/\{[\s\S]*\}/);
             if (!jsonMatch) {
                 throw new Error('No JSON object found in AI response');
@@ -75,15 +82,17 @@ Category: ${category || 'SME'}
             const parsed = JSON.parse(jsonMatch[0]);
 
             return {
-                industry: parsed.industry || 'SME / Retail',
-                painPoint: parsed.painPoint || 'Manual management issues',
+                brandName: parsed.brandName || businessName.split(' ')[0] || 'Business',
+                industry: parsed.industry || category || 'SME / Retail',
+                painPoint: parsed.painPoint || 'Non-optimized operational workflow',
                 recommendedSolution: product,
             };
         } catch (error) {
             logger.error({ err: error }, 'AI Enrichment error:');
             return {
-                industry: 'SME / Retail',
-                painPoint: 'Inefficient manual operations',
+                brandName: businessName.split(' ')[0] || 'Business',
+                industry: category || 'SME / Retail',
+                painPoint: 'Operational visibility gaps',
                 recommendedSolution: product,
             };
         }

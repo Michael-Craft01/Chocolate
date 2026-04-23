@@ -4,97 +4,122 @@ import { aiService } from './aiService.js';
 import { messageGenerator } from './messageGenerator.js';
 import { dispatchService } from './dispatchService.js';
 import { cleanupDatabase } from './databaseCleanup.js';
-import prisma from '../lib/prisma.js';
-import { logger } from '../lib/logger.js';
+import { contactExtractor } from './contactExtractor.js';
+
+const CONCURRENCY_LIMIT = 5; // Simultaneous queries per campaign
+const AI_CONCURRENCY_LIMIT = 3; // Simultaneous AI enrichments
 
 async function processLeadsForQuery(campaign: any, queryData: QueryData, targetCount: number, sweepId?: string, sweepDate?: Date): Promise<number> {
     let leadsFound = 0;
     try {
         if (!campaign || campaign.status !== 'ACTIVE') return 0;
-        const businesses = await scraper.scrape(queryData.query, queryData.country);
         
-        for (const business of businesses) {
-            if (leadsFound >= targetCount) break;
-            const user = await prisma.user.findUnique({ where: { id: campaign.userId } });
-            if (!user || (user.leadsFoundToday >= user.dailyLimit && user.creditBalance <= 0)) break;
+        // 1. Bulk Scrape
+        const businesses = await scraper.scrape(queryData.query, queryData.country);
+        if (!businesses || businesses.length === 0) return 0;
 
-            let validPhone = business.phone;
-            if (validPhone) {
-                let digits = validPhone.replace(/\D/g, '');
-                const prefixes: Record<string, string> = { 'ZW': '263', 'SA': '27', 'UK': '44', 'US': '1' };
-                const prefix = prefixes[queryData.country.toUpperCase()];
-                if (prefix && validPhone.trim().startsWith('0')) digits = prefix + digits.substring(1);
-                validPhone = digits.length >= 7 ? '+' + digits : null;
+        // 1. Parallel Enrichment (High-Latency Tasks)
+        const enrichmentTasks = businesses.slice(0, targetCount).map(async (business) => {
+            try {
+                const telemetry = `${business.address || ''} | ${business.website || 'No Site'}`;
+                const enrichment = await aiService.enrichLead(business.name, business.category ?? undefined, {
+                    productDescription: campaign.productDescription,
+                    targetPainPoints: campaign.targetPainPoints
+                }, telemetry);
+
+                return { business, enrichment };
+            } catch (err) {
+                return null;
             }
+        });
 
-            // 1. Enrich Lead OUTSIDE the transaction (Gemini takes time)
-            const enrichment = await aiService.enrichLead(business.name, business.category ?? undefined, {
-                productDescription: campaign.productDescription,
-                targetPainPoints: campaign.targetPainPoints
-            });
+        const enrichedResults = (await Promise.all(enrichmentTasks)).filter(Boolean);
 
-            const message = messageGenerator.generate(campaign, business.name, enrichment.industry, enrichment.painPoint, enrichment.recommendedSolution);
+        // 2. Sequential Database Sync (Low-Latency, Anti-Duplicate)
+        for (const { business, enrichment } of enrichedResults as any[]) {
+            try {
+                const user = await prisma.user.findUnique({ where: { id: campaign.userId } });
+                if (!user || (user.leadsFoundToday >= user.dailyLimit && user.creditBalance <= 0)) break;
 
-            // 2. Atomic Save INSIDE the transaction
-            const result = await prisma.$transaction(async (tx) => {
-                let dbBusiness = await tx.business.findFirst({
-                    where: { 
-                        name: business.name, 
-                        OR: [
-                            { phone: validPhone || undefined }, 
-                            { website: business.website || undefined }
-                        ] 
-                    }
+                const cleanName = enrichment.brandName;
+                const junkNames = ['unknown', 'unavailable', 'n/a', 'none', 'business', 'company'];
+                if (junkNames.includes(cleanName.toLowerCase()) || cleanName.length < 3) continue;
+
+                // --- HUNGRY MODE: Only deep dive if we really think this is a new lead ---
+                let hungryEmail = business.email;
+                let hungryPhone = business.phone;
+                
+                // Quick check before expensive deep dive
+                const potentialDuplicate = await prisma.business.findFirst({
+                    where: { name: cleanName, OR: [{ phone: business.phone || undefined }, { website: business.website || undefined }] }
                 });
 
-                if (!dbBusiness) {
-                    dbBusiness = await tx.business.create({ 
-                        data: { 
-                            name: business.name, 
-                            website: business.website, 
-                            phone: validPhone 
-                        } 
-                    });
+                if (!potentialDuplicate && business.website && (!hungryEmail || !hungryPhone)) {
+                    const deepData = await contactExtractor.extract(business.website);
+                    hungryEmail = hungryEmail || deepData.email;
+                    hungryPhone = hungryPhone || deepData.phone;
                 }
 
-                const existingLead = await tx.lead.findFirst({ 
-                    where: { businessId: dbBusiness.id, campaignId: campaign.id } 
-                });
+                const validPhone = hungryPhone ? hungryPhone.replace(/\D/g, '') : null;
+                const message = messageGenerator.generate(campaign, cleanName, enrichment.industry, enrichment.painPoint, enrichment.recommendedSolution);
 
-                if (existingLead) return null;
+                const result = await prisma.$transaction(async (tx) => {
+                    let dbBusiness = await tx.business.findFirst({
+                        where: { 
+                            name: cleanName, 
+                            OR: [
+                                { phone: validPhone || undefined }, 
+                                { website: business.website || undefined }
+                            ] 
+                        }
+                    });
 
-                return await tx.lead.create({
-                    data: {
-                        campaignId: campaign.id,
-                        businessId: dbBusiness.id,
-                        industry: enrichment.industry,
-                        painPoint: enrichment.painPoint,
-                        suggestedMessage: message,
-                        sweepId: sweepId,
-                        sweepDate: sweepDate
+                    if (!dbBusiness) {
+                        dbBusiness = await tx.business.create({ 
+                            data: { name: cleanName, website: business.website, phone: validPhone, email: hungryEmail } 
+                        });
                     }
-                });
-            }, { timeout: 10000 }); // Extra safety buffer
 
-            if (result) {
-                await prisma.user.update({ where: { id: user.id }, data: { leadsFoundToday: { increment: 1 } } });
-                leadsFound++;
-                console.log(`✅ Processed and saved lead: ${business.name}`);
+                    const existingLead = await tx.lead.findFirst({ 
+                        where: { businessId: dbBusiness.id, campaignId: campaign.id } 
+                    });
+
+                    if (existingLead) return null;
+
+                    return await tx.lead.create({
+                        data: {
+                            campaignId: campaign.id,
+                            businessId: dbBusiness.id,
+                            industry: enrichment.industry,
+                            painPoint: enrichment.painPoint,
+                            suggestedMessage: message,
+                            sweepId: sweepId,
+                            sweepDate: sweepDate
+                        }
+                    });
+                });
+
+                if (result) {
+                    await prisma.user.update({ where: { id: user.id }, data: { leadsFoundToday: { increment: 1 } } });
+                    leadsFound++;
+                    logger.info(`✅ [SECURED] ${cleanName} added to ${campaign.name}`);
+                }
+            } catch (err) {
+                logger.error({ err, business: business.name }, 'Lead sync failed');
             }
         }
         return leadsFound;
     } catch (error) {
-        logger.error({ err: error }, 'Error in processLeadsForQuery');
+        logger.error({ err: error, query: queryData.query }, 'Error in processLeadsForQuery');
         return leadsFound;
     }
 }
 
 export async function triggerEngineCycle() {
-    logger.info('🚀 Starting global lead engine cycle...');
-    const results: any[] = [];
-    const sweepSummary: Map<string, { count: number, campaign: any }> = new Map();
+    logger.info('🚀 HYPER-DRIVE ENGAGED: Starting massive lead extraction cycle...');
     const sweepId = `sweep_${Date.now()}`;
     const sweepDate = new Date();
+    const cycleSummary: any[] = [];
 
     try {
         const activeCampaigns = await prisma.campaign.findMany({
@@ -102,26 +127,39 @@ export async function triggerEngineCycle() {
             include: { user: true }
         });
 
-        for (const campaign of activeCampaigns) {
-            const queries = await queryGenerator.generateBatchQueries(25, campaign);
-            let totalNewLeads = 0;
-            for (const queryData of queries) {
-                const found = await processLeadsForQuery(campaign, queryData, 5, sweepId, sweepDate);
-                totalNewLeads += found;
-            }
-            if (totalNewLeads > 0) sweepSummary.set(campaign.id, { count: totalNewLeads, campaign });
-            results.push({ campaign: campaign.name, leadsFound: totalNewLeads });
-        }
+        // Parallelize Campaigns
+        await Promise.all(activeCampaigns.map(async (campaign) => {
+            logger.info(`🛰️  Campaign ${campaign.name}: Initiating parallel sector sweep...`);
+            
+            // Increase query batch for massive extraction (up to 50 queries per cycle)
+            const queries = await queryGenerator.generateBatchQueries(50, campaign);
+            let campaignTotal = 0;
 
-        for (const [campaignId, summary] of sweepSummary.entries()) {
-            const magicSheetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/leads?campaignId=${campaignId}`;
-            logger.info(`[SUMMARY] Sweep report for ${summary.campaign.user.email}: ${summary.count} leads. Link: ${magicSheetLink}`);
-        }
+            // Process queries in chunks to avoid slamming API/Memory
+            const queryChunks = [];
+            for (let i = 0; i < queries.length; i += CONCURRENCY_LIMIT) {
+                queryChunks.push(queries.slice(i, i + CONCURRENCY_LIMIT));
+            }
+
+            for (const chunk of queryChunks) {
+                const chunkResults = await Promise.all(
+                    chunk.map(query => processLeadsForQuery(campaign, query, 15, sweepId, sweepDate))
+                );
+                campaignTotal += chunkResults.reduce((a, b) => a + b, 0);
+            }
+
+            if (campaignTotal > 0) {
+                const magicLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/leads?campaignId=${campaign.id}`;
+                logger.info(`✅ [COMPLETED] ${campaign.name}: Secured ${campaignTotal} high-fidelity leads. Repo: ${magicLink}`);
+            }
+            cycleSummary.push({ campaign: campaign.name, count: campaignTotal });
+        }));
 
         await cleanupDatabase();
-        return results;
+        logger.info('🏁 Cycle complete. All intelligence synchronized.');
+        return cycleSummary;
     } catch (error) {
-        logger.error({ err: error }, 'Engine cycle failed');
+        logger.error({ err: error }, 'Massive engine cycle failed');
         throw error;
     }
 }

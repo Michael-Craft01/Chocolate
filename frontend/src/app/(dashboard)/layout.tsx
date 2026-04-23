@@ -1,6 +1,6 @@
 import { Sidebar } from "@/components/sidebar";
-import { UsageBar } from "@/components/usage-bar";
 import { SubscriptionGuard } from "@/components/subscription-guard";
+import { CommandPalette } from "@/components/CommandPalette";
 
 export default function DashboardLayout({
   children,
@@ -9,14 +9,15 @@ export default function DashboardLayout({
 }>) {
   return (
     <SubscriptionGuard>
-      <div className="flex h-screen bg-background">
-        <div className="flex flex-col border-r border-card-border bg-card overflow-hidden">
-          <Sidebar />
-          <div className="mt-auto border-t border-card-border bg-black/20">
-            <UsageBar />
-          </div>
-        </div>
-        <main className="flex-1 overflow-y-auto p-8">
+      <div className="flex h-screen bg-[#020203] text-white selection:bg-primary/30 font-sans">
+        <CommandPalette />
+        
+        <Sidebar />
+        
+        <main className="flex-1 overflow-y-auto p-10 custom-scrollbar relative">
+          {/* Subtle Ambient Glow */}
+          <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -z-10 pointer-events-none opacity-50" />
+          
           <div className="mx-auto max-w-6xl">
             {children}
           </div>

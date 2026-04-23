@@ -4,15 +4,18 @@ import { useState, useEffect } from "react";
 import { 
   Plus, Target, MapPin, Briefcase, Play, 
   Pause, Trash2, Search, Zap, Loader2, 
-  Radar, History, ChevronRight, Activity 
+  Radar, History, ChevronRight, Activity,
+  Sparkles,
+  Command
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CardSkeleton } from "@/components/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { useRouter } from "next/navigation";
-import { authJson, ApiAuthError, ApiRequestError } from "@/lib/api";
+import { authJson } from "@/lib/api";
 import { fetchCampaigns as fetchCampaignList, updateCampaignStatus } from "@/lib/services/campaigns";
 import type { Campaign } from "@/lib/types";
+import { Sparkline } from "@/components/Sparkline";
 
 export default function CampaignsPage() {
   const router = useRouter();
@@ -57,7 +60,6 @@ export default function CampaignsPage() {
     try {
       setTriggering(id);
       await authJson(`/api/campaigns/${id}/trigger`, { method: 'POST' });
-      // Redirect to leads page to see it happening live
       router.push("/leads");
     } catch (err) {
       console.error("Trigger failed", err);
@@ -75,154 +77,171 @@ export default function CampaignsPage() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-20">
+    <div className="max-w-6xl mx-auto space-y-10 pb-20 font-sans">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-widest">
-            <Activity className="h-4 w-4" /> System Health: Operational
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-6 border-b border-white/5 pb-10">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
+            <Sparkles className="h-4 w-4 glow-primary" /> Neural Link: Synchronized
           </div>
-          <h1 className="text-4xl font-black tracking-tight gradient-text">Lead Engines</h1>
-          <p className="text-zinc-400">Deploy and monitor your autonomous lead generation agents.</p>
+          <h1 className="text-4xl font-black tracking-tightest gradient-text">Lead Engines</h1>
+          <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Deploy and monitor autonomous lead generation clusters.</p>
         </div>
         <button 
           onClick={() => router.push("/campaigns/new")}
-          className="flex h-12 items-center gap-2 rounded-xl bg-primary px-8 text-sm font-bold text-white hover:bg-primary-hover transition-all shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95"
+          className="flex h-14 items-center gap-3 rounded-2xl bg-primary px-8 text-[11px] font-black uppercase tracking-widest text-white hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary shadow-2xl shadow-primary/20"
         >
           <Plus className="h-5 w-5" />
-          Deploy New Engine
+          Deploy Node
         </button>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {[
-          { label: "Active Engines", value: campaigns.filter(c => c.status === 'ACTIVE').length, icon: Zap, color: "text-emerald-400" },
-          { label: "Total Intelligence", value: campaigns.reduce((acc, c) => acc + (c._count?.leads || 0), 0), icon: Target, color: "text-primary" },
-          { label: "Paused", value: campaigns.filter(c => c.status === 'PAUSED').length, icon: Pause, color: "text-zinc-500" },
-          { label: "Total Sweeps", value: campaigns.length * 12, icon: History, color: "text-zinc-500" },
+          { label: "Nodes Active", value: campaigns.filter(c => c.status === 'ACTIVE').length, icon: Zap, color: "text-emerald-400" },
+          { label: "Intelligence", value: campaigns.reduce((acc, c) => acc + (c._count?.leads || 0), 0), icon: Target, color: "text-primary" },
+          { label: "Hibernating", value: campaigns.filter(c => c.status === 'PAUSED').length, icon: Pause, color: "text-zinc-600" },
+          { label: "Total Cycles", value: campaigns.length * 12, icon: History, color: "text-violet-400" },
         ].map((stat, i) => (
-          <div key={i} className="glass p-6 rounded-2xl border border-white/5 space-y-2">
+          <div key={i} className="glass-card p-6 rounded-3xl border border-white/5 space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{stat.label}</p>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{stat.label}</p>
+              <stat.icon className={`h-4 w-4 ${stat.color} ${stat.label === 'Nodes Active' ? 'glow-primary' : ''}`} />
             </div>
-            <p className="text-3xl font-black tracking-tighter">{stat.value}</p>
+            <p className="text-3xl font-black tracking-tightest text-white">{stat.value}</p>
           </div>
         ))}
       </div>
 
       {/* Filters & Search */}
       <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+        <div className="relative flex-1 group">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600 group-focus-within:text-primary transition-colors" />
           <input 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search engines by name..."
-            className="w-full h-12 bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 text-sm focus:border-primary/50 transition-colors outline-none"
+            placeholder="Search telemetry..."
+            className="w-full h-14 bg-white/[0.03] border border-white/5 rounded-2xl pl-14 pr-6 text-[12px] font-bold uppercase tracking-[0.1em] focus:border-primary/40 transition-all outline-none text-white placeholder:text-zinc-700"
           />
         </div>
-        <select 
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="h-12 bg-white/5 border border-white/10 rounded-xl px-6 text-sm focus:border-primary/50 outline-none"
-        >
-          <option value="ALL">All Statuses</option>
-          <option value="ACTIVE">Active Only</option>
-          <option value="PAUSED">Paused Only</option>
-        </select>
+        <div className="relative">
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="h-14 bg-white/[0.03] border border-white/5 rounded-2xl px-8 text-[11px] font-black uppercase tracking-widest focus:border-primary/40 outline-none cursor-pointer appearance-none text-zinc-400 hover:text-white transition-colors"
+          >
+            <option value="ALL">All Nodes</option>
+            <option value="ACTIVE">Active Only</option>
+            <option value="PAUSED">Paused Only</option>
+          </select>
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-600">
+            <ChevronRight className="h-4 w-4 rotate-90" />
+          </div>
+        </div>
       </div>
 
       {/* Campaigns Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <AnimatePresence mode="popLayout">
           {loading ? (
-            [1, 2].map(i => <CardSkeleton key={i} />)
+            [1, 2, 3, 4].map(i => <CardSkeleton key={i} />)
           ) : filteredCampaigns.length === 0 ? (
             <div className="md:col-span-2">
-              <EmptyState title="No Engines Found" description="Launch your first campaign to start finding leads." onAction={() => router.push("/campaigns/new")} actionText="Deploy Engine" />
+              <EmptyState title="No Nodes Detected" description="Initialize your first engine sweep to begin data extraction." onAction={() => router.push("/campaigns/new")} actionText="Deploy Node" />
             </div>
-          ) : filteredCampaigns.map((c) => (
+          ) : filteredCampaigns.map((c, idx) => (
             <motion.div 
               layout
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ delay: idx * 0.05 }}
               key={c.id} 
-              className="glass rounded-2xl border border-white/5 overflow-hidden group interactive-card"
+              className="glass-card rounded-[2.5rem] border border-white/5 overflow-hidden group"
             >
-              {/* Header */}
               <div className="p-8 space-y-6">
                 <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center relative overflow-hidden">
+                  <div className="flex items-center gap-5">
+                    <div className="h-14 w-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center relative overflow-hidden group-hover:border-primary/30 transition-all">
                       {c.status === 'ACTIVE' && (
-                        <div className="absolute inset-0 bg-primary/20 animate-pulse" />
+                        <div className="absolute inset-0 bg-primary/10 animate-pulse" />
                       )}
-                      <Target className="h-7 w-7 text-primary relative z-10" />
+                      <Target className="h-6 w-6 text-primary relative z-10 glow-primary" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold tracking-tight">{c.name}</h3>
+                      <h3 className="text-lg font-black tracking-tight text-white group-hover:text-primary transition-colors">{c.name}</h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <div className={`h-2 w-2 rounded-full ${c.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-zinc-600'}`} />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{c.status}</span>
+                        <div className={`h-1.5 w-1.5 rounded-full ${c.status === 'ACTIVE' ? 'bg-emerald-500 glow-primary shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse' : 'bg-zinc-700'}`} />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{c.status} PROTOCOL</span>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-y-2 group-hover:translate-y-0">
                     <button 
                       onClick={() => toggleStatus(c.id, c.status)}
                       disabled={busyCampaignId === c.id}
-                      className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all disabled:opacity-50"
+                      className="p-3 rounded-xl bg-white/5 hover:bg-primary/10 text-zinc-500 hover:text-primary transition-all disabled:opacity-50"
                     >
-                      {c.status === 'ACTIVE' ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                      {c.status === 'ACTIVE' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     </button>
-                    <button className="p-3 rounded-xl bg-white/5 hover:bg-red-500/10 text-zinc-400 hover:text-red-500 transition-all">
-                      <Trash2 className="h-5 w-5" />
+                    <button className="p-3 rounded-xl bg-white/5 hover:bg-red-500/10 text-zinc-500 hover:text-red-500 transition-all">
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-black/20 border border-white/5 space-y-1">
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Industry focus</p>
-                    <p className="text-sm font-medium truncate">{c.industries.join(", ") || 'General'}</p>
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1.5">
+                    <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">Market Sector</p>
+                    <p className="text-[12px] font-bold text-zinc-400 truncate">{c.industries.join(", ") || 'Global Sweep'}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-black/20 border border-white/5 space-y-1">
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Targeting</p>
-                    <p className="text-sm font-medium truncate">{c.locations.join(", ") || 'Global'}</p>
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1.5">
+                    <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">Spatial Grid</p>
+                    <p className="text-[12px] font-bold text-zinc-400 truncate">{c.locations.join(", ") || 'Global Grid'}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/10">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Radar className={`h-5 w-5 text-primary ${c.status === 'ACTIVE' ? 'animate-spin-slow' : ''}`} />
+                <div className="flex flex-col md:flex-row items-center justify-between p-5 rounded-2xl bg-primary/5 border border-primary/10 gap-6">
+                  <div className="flex-1 flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                      <Radar className={`h-5 w-5 text-primary ${c.status === 'ACTIVE' ? 'animate-spin-slow glow-primary' : ''}`} />
                     </div>
-                    <div>
-                      <p className="text-sm font-bold">{c._count?.leads || 0} Leads Found</p>
-                      <p className="text-[10px] text-zinc-500">Last sweep: {new Date().toLocaleTimeString()}</p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-black tracking-tight text-white">{c._count?.leads || 0} Entities Found</p>
+                      <div className="flex items-center gap-2">
+                        <div className="h-1 w-16 bg-primary/10 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: '75%' }}
+                            className="h-full bg-primary glow-primary" 
+                          />
+                        </div>
+                        <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Yield: 84%</span>
+                      </div>
                     </div>
+                  </div>
+                  <div className="hidden md:block px-4">
+                    <Sparkline color="#3b82f6" />
                   </div>
                   <button 
                     onClick={() => triggerSweep(c.id)}
                     disabled={triggering === c.id || c.status !== 'ACTIVE'}
-                    className="h-10 px-4 rounded-lg bg-primary text-white text-[10px] font-bold uppercase tracking-widest hover:bg-primary-hover transition-all disabled:opacity-50 disabled:grayscale"
+                    className="h-10 px-6 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all disabled:opacity-50 glow-primary"
                   >
-                    {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Run Sweep Now"}
+                    {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Initiate Sweep"}
                   </button>
                 </div>
               </div>
 
               {/* Footer Actions */}
-              <div className="bg-white/5 px-8 py-4 flex justify-between items-center border-t border-white/5">
-                <button className="text-[10px] font-bold text-zinc-500 hover:text-white transition-colors flex items-center gap-2 uppercase tracking-widest">
-                  View Leads <ChevronRight className="h-3 w-3" />
+              <div className="bg-white/[0.01] px-8 py-4 flex justify-between items-center border-t border-white/5">
+                <button className="text-[10px] font-black text-zinc-500 hover:text-white transition-all flex items-center gap-2 uppercase tracking-[0.2em] group/act">
+                  Neural Logs <ChevronRight className="h-3 w-3 group-hover/act:translate-x-1 transition-transform" />
                 </button>
-                <button className="text-[10px] font-bold text-zinc-500 hover:text-white transition-colors flex items-center gap-2 uppercase tracking-widest">
-                  Engine Settings
+                <button className="text-[10px] font-black text-zinc-500 hover:text-white transition-all flex items-center gap-2 uppercase tracking-[0.2em] group/act">
+                   Extraction Logic <Command className="h-3 w-3" />
                 </button>
               </div>
             </motion.div>

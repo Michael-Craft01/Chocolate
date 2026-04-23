@@ -1,6 +1,6 @@
-# fly.toml - Fly.io configuration for Chocolate Lead Engine
+# fly.toml - Fly.io configuration for HyprLead Lead Engine
 
-app = "chocolate-lead-engine"
+app = "hyprlead-lead-engine"
 primary_region = "jnb"  # Johannesburg - closest to ZW/SA
 
 [build]
@@ -15,5 +15,5 @@ primary_region = "jnb"  # Johannesburg - closest to ZW/SA
 
 # Persistent storage for SQLite database
 [mounts]
-  source = "chocolate_data"
+  source = "hyprlead_data"
   destination = "/usr/src/app/data"

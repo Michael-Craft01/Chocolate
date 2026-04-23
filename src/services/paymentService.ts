@@ -50,7 +50,7 @@ class PaymentService {
                     price_data: {
                         currency: 'usd',
                         product_data: {
-                            name: `Chocolate Lead Engine - ${options.tier} Plan`,
+                            name: `HyprLead Lead Engine - ${options.tier} Plan`,
                         },
                         unit_amount: price * 100,
                         recurring: options.tier !== 'CREDIT' ? { interval: 'month' } : undefined,
@@ -83,8 +83,8 @@ class PaymentService {
         this.paynow.resultUrl = `${config.BACKEND_URL}/api/payments/paynow/result`;
         this.paynow.returnUrl = `${config.FRONTEND_URL}/billing?success=true`;
 
-        const payment = this.paynow.createPayment(`INV-${Date.now()}`, user?.email || 'customer@chocolate.engine');
-        payment.add(`Chocolate ${options.tier} Plan`, price);
+        const payment = this.paynow.createPayment(`INV-${Date.now()}`, user?.email || 'customer@hyprlead.engine');
+        payment.add(`HyprLead ${options.tier} Plan`, price);
 
         try {
             const response = await this.paynow.send(payment);

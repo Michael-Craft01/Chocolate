@@ -1,8 +1,8 @@
-# 🚀 Project Chocolate: Headless Lead Generation Engine
+# 🚀 Project HyprLead: Headless Lead Generation Engine
 
-**Chocolate** is a high-performance, fully automated "set-and-forget" lead generation pipeline. It bridges the gap between raw web data and actionable sales outreach by combining stealth scraping, AI-driven business classification, and real-time Discord dispatching.
+**HyprLead** is a high-performance, fully automated "set-and-forget" lead generation pipeline. It bridges the gap between raw web data and actionable sales outreach by combining stealth scraping, AI-driven business classification, and real-time Discord dispatching.
 
-Named for its "smooth" execution and "rich" data output, Chocolate is built to run 24/7 in a headless Docker environment, ensuring a constant stream of high-ticket leads with zero manual intervention.
+Named for its "hyper-fast" execution and "premium" data output, HyprLead is built to run 24/7 in a headless Docker environment, ensuring a constant stream of high-ticket leads with zero manual intervention.
 
 ---
 
@@ -34,7 +34,7 @@ The system operates in a linear, 5-stage pipeline orchestrated by `node-cron`:
 ## 📁 Project Structure
 
 ```text
-chocolate/
+hyprlead/
 ├── src/
 │   ├── scraper/         # Playwright & Cheerio logic
 │   ├── ai/              # Gemini/OpenAI/Ollama integration
@@ -63,7 +63,7 @@ Create a `.env` file in the root:
 ```bash
 GEMINI_API_KEY=your_key_here
 DISCORD_WEBHOOK_URL=your_webhook_url
-DATABASE_URL="file:./data/chocolate.db"
+DATABASE_URL="file:./data/hyprlead.db"
 SCRAPE_INTERVAL="0 */6 * * *" # Every 6 hours
 ```
 
@@ -72,7 +72,7 @@ Build and run the headless engine:
 ```bash
 docker-compose up -d --build
 ```
-*The engine is now running in "Detached" mode. Use `docker logs -f chocolate-engine` to watch the leads roll in.*
+*The engine is now running in "Detached" mode. Use `docker logs -f hyprlead-engine` to watch the leads roll in.*
 
 ---
 

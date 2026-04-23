@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Target, CreditCard, Settings, LogOut, Zap, MessageSquare, User } from "lucide-react";
+import { LayoutDashboard, Target, CreditCard, Settings, LogOut, Zap, MessageSquare, User, ShieldCheck } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { motion } from "framer-motion";
+
+import { useState, useEffect } from "react";
+import { authJson } from "@/lib/api";
+import type { Stats } from "@/lib/types";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,17 +26,44 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [stats, setStats] = useState<Stats | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await authJson<Stats>("/api/stats");
+        setStats(data);
+      } catch (err) {}
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const dailyLimit = stats?.dailyLimit || 10;
+  const leadUsage = stats?.leadsToday || 0;
+  const usagePercent = Math.min(100, (leadUsage / dailyLimit) * 100);
+  const isFree = !stats?.tier || stats?.tier === 'FREE';
 
   return (
-    <div className="flex h-screen w-64 flex-col border-r border-card-border bg-card">
-      <div className="flex h-20 items-center px-6">
-        <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl">
-          <Zap className="h-6 w-6 text-primary fill-primary" />
-          <span className="gradient-text">Chocolate</span>
+    <div className="flex h-screen w-64 flex-col border-r border-white/5 bg-[#050505]">
+      <div className="flex h-24 items-center px-8">
+        <Link href="/dashboard" className="flex items-center gap-3 font-black text-xl tracking-tighter">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center glow-primary">
+            <Zap className="h-4 w-4 text-white fill-white" />
+          </div>
+          <span>HyprLead</span>
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <div className="px-4 mb-4">
+        <div className="px-4 py-2 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-2">
+          <ShieldCheck className="h-3 w-3 text-primary" />
+          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Security: Active</span>
+        </div>
+      </div>
+
+      <nav className="flex-1 px-4 space-y-1.5">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -41,44 +73,60 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex items-center gap-3 rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all",
+                "group flex items-center gap-3 rounded-xl px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-300",
                 isActive 
-                  ? "border-primary/30 bg-primary/10 text-primary shadow-[0_0_0_1px_rgba(59,130,246,0.1)]"
-                  : "border-transparent text-zinc-500 hover:border-white/10 hover:bg-zinc-800/50 hover:text-zinc-200"
+                  ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgba(59,130,246,0.1)] border border-primary/20"
+                  : "text-zinc-500 hover:text-white hover:bg-white/[0.03] border border-transparent"
               )}
             >
-              <Icon className={cn("h-3.5 w-3.5 transition-transform", isActive ? "scale-105" : "group-hover:scale-105")} />
+              <Icon className={cn("h-4 w-4 transition-transform duration-500", isActive ? "scale-110 glow-primary" : "group-hover:scale-110")} />
               {item.name}
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-auto p-4 space-y-4">
-        <div className="rounded-xl bg-primary/5 border border-primary/10 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Free Mode</span>
-            <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
-              <span>Usage</span>
-              <span>0 / 10 Leads</span>
+      <div className="p-4 mt-auto">
+        <div className="rounded-2xl glass-card p-5 space-y-5">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Subscription</p>
+              <p className="text-xs font-black tracking-tight text-white">{isFree ? "Free Mode" : `${stats?.tier} Tier`}</p>
             </div>
-            <div className="h-1 w-full bg-primary/10 rounded-full overflow-hidden">
-              <div className="h-full bg-primary w-[0%] transition-all duration-500" />
+            <div className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              isFree ? "bg-amber-500 animate-pulse" : "bg-primary glow-primary"
+            )} />
+          </div>
+          
+          <div className="space-y-2.5">
+            <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-tight">
+              <span>Quota Used</span>
+              <span className="text-white">{leadUsage} / {dailyLimit}</span>
+            </div>
+            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${usagePercent}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="h-full bg-primary glow-primary" 
+              />
             </div>
           </div>
-          <Link href="/billing" className="mt-3 block w-full py-2 rounded-lg bg-primary text-white text-[10px] font-black uppercase tracking-widest text-center hover:brightness-110 transition-all">
-            Upgrade
-          </Link>
+
+          {isFree && (
+            <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary">
+              Upgrade Engine
+            </Link>
+          )}
         </div>
 
-        <button className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-500 transition-all hover:text-zinc-200 uppercase tracking-wider">
-          <LogOut className="h-3.5 w-3.5" />
+        <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 mt-4 text-[10px] font-bold text-zinc-600 transition-all hover:text-white hover:bg-white/[0.02] uppercase tracking-[0.2em] group">
+          <LogOut className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
           Sign Out
         </button>
       </div>
     </div>
   );
 }
+

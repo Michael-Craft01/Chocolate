@@ -26,7 +26,7 @@ const apiBaseUrl = resolveApiBaseUrl();
 
 // Debugging: Log the target on every load
 if (typeof window !== 'undefined') {
-  console.log(`%c[Chocolate API] Backend: ${apiBaseUrl}`, "color: #3b82f6; font-weight: bold;");
+  console.log(`%c[HyprLead API] Backend: ${apiBaseUrl}`, "color: #3b82f6; font-weight: bold;");
 }
 
 export class ApiAuthError extends Error {

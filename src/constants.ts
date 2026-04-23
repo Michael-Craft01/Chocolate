@@ -217,12 +217,44 @@ export const INDUSTRIES = [
 
 // Query templates optimized for local businesses
 export const QUERY_TEMPLATES = [
+    // --- CORE INTENT ---
     '{industry} in {location}',
     '{industry} companies {location}',
     '{industry} suppliers {location}',
     '{industry} wholesalers {location}',
     'list of {industry} in {location}',
-    '{location} {industry} directory',
+    
+    // --- HIGH-INTENT MODIFIERS ---
     'best {industry} {location}',
+    'top rated {industry} {location}',
+    'leading {industry} services {location}',
+    'trusted {industry} specialists {location}',
+    'reliable {industry} in {location}',
+    
+    // --- B2B / SCALE MODIFIERS ---
+    'commercial {industry} {location}',
+    'industrial {industry} {location}',
+    '{industry} distribution center {location}',
+    '{industry} headquarters {location}',
+    '{industry} regional office {location}',
+    'major {industry} players {location}',
+    'enterprise {industry} solutions {location}',
+    
+    // --- CONTACT-OPTIMIZED (FINDING DATA) ---
+    '{industry} {location} contact us',
+    '{industry} {location} "whatsapp"',
+    '{industry} {location} "phone number"',
+    '{industry} {location} "email us"',
+    '{industry} {location} "get a quote"',
+    
+    // --- DIRECTORY & AGGREGATOR BYPASS ---
+    '{industry} {location} "powered by" -directory',
+    '{industry} {location} "copyright 2024" "2025"',
+    '{industry} {location} "about our company"',
+    
+    // --- HYPER-LOCAL ---
+    '{industry} nearby {location}',
+    'local {industry} shops {location}',
+    '{industry} businesses near {location}',
 ];
 

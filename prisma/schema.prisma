@@ -132,9 +132,10 @@ model Lead {
   suggestedMessage String
   status           LeadStatus  @default(NEW)
   dispatchedAt     DateTime?
-  sweepId          String?     // For cycle grouping
   sweepDate        DateTime?   // For cycle timestamp
   createdAt        DateTime    @default(now())
+
+  @@unique([campaignId, businessId])
 }
 
 model Transaction {
@@ -174,6 +175,7 @@ model QueryHistory {
   location   String
   industry   String
   query      String
+  page       Int       @default(1)
   createdAt  DateTime  @default(now())
 
   @@unique([location, industry, campaignId])

@@ -78,10 +78,20 @@ export class QueryGenerator {
                     },
                 });
 
-                // If no history exists, or it's old, OR if we need at least some queries to start
                 if (!recentHistory || recentHistory.createdAt < rangeLimit || queries.length < 5) {
                     const template = this.getRandomItem(QUERY_TEMPLATES);
-                    const query = template.replace('{industry}', industry).replace('{location}', location);
+                    
+                    // --- HIGH-VALUE INJECTION ---
+                    // Randomly inject high-performance modifiers to filter for better businesses
+                    const powerWords = ['', 'Premium ', 'Established ', 'Leading ', 'High-end ', 'Industrial '];
+                    const powerWord = Math.random() > 0.7 ? this.getRandomItem(powerWords) : '';
+                    
+                    let query = template
+                        .replace('{industry}', `${powerWord}${industry}`)
+                        .replace('{location}', location);
+
+                    // Add year for recency in some queries
+                    if (Math.random() > 0.8) query += ' 2025';
 
                     // Upsert to history
                     await prisma.queryHistory.upsert({
@@ -92,10 +102,7 @@ export class QueryGenerator {
                                 campaignId: campaignId || null as any
                             },
                         },
-                        update: {
-                            query,
-                            createdAt: new Date(),
-                        },
+                        update: { query, createdAt: new Date() },
                         create: {
                             location,
                             industry,

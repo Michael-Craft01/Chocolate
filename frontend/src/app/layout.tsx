@@ -7,7 +7,7 @@ import { UsageBar } from "@/components/usage-bar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Chocolate | Lead Generation SaaS",
+  title: "HyprLead | Lead Generation SaaS",
   description: "Next-generation lead generation engine with AI enrichment.",
 };
 

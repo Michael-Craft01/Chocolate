@@ -35,35 +35,35 @@ export class DiscordDispatcher {
         const truncate = (str: string, max: number) => str.length > max ? str.substring(0, max - 3) + '...' : str;
 
         const funQuotes = [
-            "Don't let this one slip! 🍌",
-            "Time to make some money! 💸",
-            "Lead secured. Mission accomplished. 🕵️‍♂️",
-            "Another one bites the dust... in a good way! 🎶",
-            "Go get 'em, tiger! 🐯",
-            "Cha-ching! 💰",
+            "Neural link established. Target identified. 🧠",
+            "High-value intelligence secured. 🎯",
+            "Extraction complete. Mission accomplished. 🕵️‍♂️",
+            "Market data synchronized. Opportunity detected. ⚡",
+            "Protocol engaged. Go get 'em, tiger! 🐯",
+            "Asset acquired. Awaiting deployment. 💰",
         ];
         const randomQuote = funQuotes[Math.floor(Math.random() * funQuotes.length)];
         const validWebsite = this.isValidWebsiteUrl(lead.website) ? lead.website : null;
 
         // Color and label based on tier
-        const embedColor = tier === 'hot' ? 0x00FF00 : 0xFFA500; // 🟢 Green vs 🟠 Orange
-        const tierLabel = tier === 'hot' ? '🔥 HOT LEAD' : '⚡ WARM LEAD';
+        const embedColor = tier === 'hot' ? 0x3b82f6 : 0x8b5cf6; // 🔵 Blue vs 🟣 Violet
+        const tierLabel = tier === 'hot' ? '🔵 HYPER-DRIVE LEAD' : '🟣 INTEL CAPTURE';
 
         const detailsEmbed = {
             title: tierLabel,
-            description: `**${lead.name}** just landed on our radar. Here's the intel:`,
+            description: `**${lead.name}** has been prioritized for extraction. Telemetry follows:`,
             color: embedColor,
             fields: [
-                { name: 'Business', value: `**${lead.name}**`, inline: true },
-                { name: 'Location', value: lead.location, inline: true },
-                { name: 'Industry', value: lead.industry, inline: true },
-                { name: 'Pain Point', value: lead.painPoint },
-                { name: 'Website', value: lead.website || '_Ghost Town_', inline: true },
-                { name: 'Phone', value: lead.phone || '_No Signal_', inline: true },
-                { name: 'Email', value: lead.email || '_Snail Mail?_', inline: true },
+                { name: 'Entity', value: `**${lead.name}**`, inline: true },
+                { name: 'Grid Location', value: lead.location, inline: true },
+                { name: 'Sector', value: lead.industry, inline: true },
+                { name: 'Pain Vector', value: lead.painPoint },
+                { name: 'Source Node', value: lead.website || '_Ghost Town_', inline: true },
+                { name: 'Frequency', value: lead.phone || '_No Signal_', inline: true },
+                { name: 'Registry', value: lead.email || '_Snail Mail?_', inline: true },
             ],
             footer: {
-                text: `Lead Engine says: "${randomQuote}"`,
+                text: `HyprLead Intelligence says: "${randomQuote}"`,
             },
             timestamp: new Date().toISOString(),
         };
