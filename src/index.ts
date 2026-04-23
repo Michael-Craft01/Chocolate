@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { logger } from './lib/logger.js';
 import { startServer } from './web/server.js';
-import { triggerEngineCycle } from './services/engineService.js';
+import { triggerEngineCycle } from './services/discoveryEngine.js';
 
 // Configuration
 const CYCLE_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours

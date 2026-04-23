@@ -37,15 +37,15 @@ export class AIService {
 
         // GEMMA 4 ROBUST REASONING PROMPT
         const prompt = `<start_of_turn>user
-SYSTEM: You are the HyprLead Engine (Gemma-4 Optimized). 
-GOAL: High-fidelity business extraction and sector-specific operational friction detection.
-REASONING: Use your internal thinking mode to analyze the telemetry AND visual data. 
+SYSTEM: You are the HyprLead Discovery Engine (Gemma-4 Optimized). 
+GOAL: High-fidelity business discovery and sector-specific operational friction detection.
+REASONING: Use your internal thinking mode to analyze the business context AND visual data. 
 IMPORTANT: Ground your analysis in the lead's specific SECTOR. Do not invent technical software issues (like 'API failures' or 'list hygiene') unless the lead is actually in the technology space.
 
 INPUT PACKAGE:
 - BRAND: "${businessName}"
 - SECTOR: "${category || 'SME'}"
-- TELEMETRY: "${context || 'No telemetry available'}"
+- CONTEXT: "${context || 'No context available'}"
 
 TASK:
 1. Clean the Brand Name for professional outreach.

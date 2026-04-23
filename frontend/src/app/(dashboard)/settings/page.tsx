@@ -84,127 +84,131 @@ export default function SettingsPage() {
     }
   };
 
-  const inputClass = "w-full bg-white/[0.02] border border-white/5 rounded-sm px-4 py-2.5 transition-all focus:outline-none focus:border-primary/50 text-xs font-bold";
-  const labelClass = "block text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-2 ml-1";
+  const inputClass = "w-full bg-white/[0.02] border border-white/5 rounded-sm px-5 py-3 transition-all focus:outline-none focus:border-primary/50 text-xs font-bold text-white placeholder:text-zinc-700";
+  const labelClass = "block text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-3 ml-1";
 
   if (loading) {
     return (
-      <div className="h-96 flex items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+      <div className="h-96 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 animate-pulse">Loading settings...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-10">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-black tracking-tighter gradient-text">Neural Calibration</h1>
-          <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em]">Configure global identity parameters and market targeting nodes.</p>
+    <div className="max-w-4xl mx-auto space-y-10 pb-20 font-sans">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-10 border-b border-white/5 pb-10">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
+            <ShieldCheck className="h-4 w-4 glow-primary" /> Secure Configuration
+          </div>
+          <h1 className="text-4xl font-black tracking-tightest gradient-text">Settings</h1>
+          <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Configure your business identity and discovery preferences.</p>
         </div>
         <button 
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-sm text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all  shadow-primary/10 disabled:opacity-50 min-w-[140px]"
+          className="flex items-center justify-center gap-3 h-14 px-10 bg-primary text-white rounded-sm text-[11px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary shadow-primary/20 disabled:opacity-50 min-w-[180px]"
         >
-          {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : success ? <Check className="h-3 w-3" /> : <Save className="h-3 w-3" />}
-          {saving ? "Syncing..." : success ? "Synced" : "Sync Profile"}
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : success ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+          {saving ? "Saving..." : success ? "Changes Saved" : "Save Settings"}
         </button>
       </div>
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* Section 1: Business Profile */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-sm bg-primary/10 flex items-center justify-center text-primary">
-              <Building2 size={16} />
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-sm bg-primary/5 border border-primary/10 flex items-center justify-center text-primary glow-primary">
+              <Building2 size={20} />
             </div>
-            <h2 className="text-sm font-black uppercase tracking-widest">Entity Profile</h2>
+            <h2 className="text-sm font-black uppercase tracking-widest text-white">Business Profile</h2>
           </div>
           
-          <div className="glass p-6 rounded-sm border border-white/5 space-y-4">
+          <div className="glass-card p-8 rounded-sm border border-white/5 space-y-6">
             <div>
-              <label className={labelClass}>Company Identity</label>
+              <label className={labelClass}>Company Name</label>
               <input 
                 type="text" 
                 value={formData.companyName}
                 onChange={e => setFormData({...formData, companyName: e.target.value})}
-                placeholder="e.g. HyprLead Tech"
+                placeholder="e.g. HyprLead Solutions"
                 className={inputClass}
                 required
               />
             </div>
 
             <div>
-              <label className={labelClass}>Neural Node (URL)</label>
+              <label className={labelClass}>Business Website</label>
               <input 
                 type="url" 
                 value={formData.website}
                 onChange={e => setFormData({...formData, website: e.target.value})}
-                placeholder="https://example.com"
+                placeholder="https://hyprlead.com"
                 className={inputClass}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Sender UID</label>
+                <label className={labelClass}>Your Full Name</label>
                 <input 
                   type="text" 
                   value={formData.defaultSenderName}
                   onChange={e => setFormData({...formData, defaultSenderName: e.target.value})}
-                  placeholder="Your Name"
+                  placeholder="John Doe"
                   className={inputClass}
                   required
                 />
               </div>
               <div>
-                <label className={labelClass}>Protocol Role</label>
+                <label className={labelClass}>Your Position</label>
                 <input 
                   type="text" 
                   value={formData.defaultSenderRole}
                   onChange={e => setFormData({...formData, defaultSenderRole: e.target.value})}
-                  placeholder="e.g. Director"
+                  placeholder="e.g. Founder"
                   className={inputClass}
                   required
                 />
               </div>
             </div>
 
-            <div className="p-3 rounded-sm bg-primary/5 border border-primary/10 flex gap-2 items-start">
-              <MessageSquare size={14} className="text-primary mt-0.5 shrink-0" />
-              <p className="text-[9px] text-zinc-500 leading-relaxed font-bold uppercase tracking-tighter">
-                IDENTITY METADATA IS INJECTED INTO ALL OUTREACH CYCLES TO ENSURE NEURAL ALIGNMENT AND TRUST SCALING.
+            <div className="p-4 rounded-sm bg-primary/5 border border-primary/10 flex gap-3 items-start">
+              <MessageSquare size={16} className="text-primary mt-0.5 shrink-0" />
+              <p className="text-[10px] text-zinc-500 leading-relaxed font-bold uppercase tracking-tight">
+                This information is used to personalize discovery reports and verify your business identity.
               </p>
             </div>
           </div>
         </div>
 
         {/* Section 2: Global Market Target */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-sm bg-emerald-500/10 flex items-center justify-center text-emerald-500/70">
-              <Globe size={16} />
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-sm bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center text-emerald-400">
+              <Globe size={20} />
             </div>
-            <h2 className="text-sm font-black uppercase tracking-widest">Market Targeting</h2>
+            <h2 className="text-sm font-black uppercase tracking-widest text-white">Default Targeting</h2>
           </div>
 
-          <div className="glass p-6 rounded-sm border border-white/5 space-y-4">
+          <div className="glass-card p-8 rounded-sm border border-white/5 space-y-6">
             <div>
-              <label className={labelClass}>Core Sector</label>
+              <label className={labelClass}>Core Industry</label>
               <input 
                 type="text" 
                 value={formData.industry}
                 onChange={e => setFormData({...formData, industry: e.target.value})}
-                placeholder="e.g. Real Estate, SaaS"
+                placeholder="e.g. Software, Real Estate"
                 className={inputClass}
                 required
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Region</label>
+                <label className={labelClass}>Default Region</label>
                 <select 
                   value={formData.targetCountry}
                   onChange={e => setFormData({...formData, targetCountry: e.target.value})}
@@ -217,7 +221,7 @@ export default function SettingsPage() {
                 </select>
               </div>
               <div>
-                <label className={labelClass}>Local Hub</label>
+                <label className={labelClass}>Default City</label>
                 <input 
                   type="text" 
                   value={formData.locations[0]}
@@ -230,7 +234,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className={labelClass}>Telemetry Webhook (Discord)</label>
+              <label className={labelClass}>Integration Hook (Discord)</label>
               <input 
                 type="url" 
                 value={formData.discordWebhook}
@@ -240,34 +244,34 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="p-3 rounded-sm bg-emerald-500/5 border border-emerald-500/10 flex gap-2 items-start">
-              <MapPin size={14} className="text-emerald-500/70 mt-0.5 shrink-0" />
-              <p className="text-[9px] text-zinc-500 leading-relaxed font-bold uppercase tracking-tighter">
-                SPATIAL FILTERS HELP THE AI CALIBRATE INITIAL SEARCH VECTORS. THESE CAN BE OVERRIDDEN AT THE NODE LEVEL.
+            <div className="p-4 rounded-sm bg-emerald-500/5 border border-emerald-500/10 flex gap-3 items-start">
+              <MapPin size={16} className="text-emerald-400 mt-0.5 shrink-0" />
+              <p className="text-[10px] text-zinc-500 leading-relaxed font-bold uppercase tracking-tight">
+                These location settings help our discovery engine find leads in your target area by default.
               </p>
             </div>
           </div>
         </div>
       </form>
 
-      {/* Calibration Card */}
-      <div className="glass rounded-sm p-8 border border-white/5 relative overflow-hidden group interactive-card">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-sm  -mr-32 -mt-32" />
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.2em]">
-              <Zap className="h-3.5 w-3.5" /> Global Sync
+      {/* Sync Card */}
+      <div className="glass-card rounded-sm p-10 border border-white/5 relative overflow-hidden group interactive-card">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full -mr-64 -mt-64 group-hover:bg-primary/10 transition-colors blur-3xl" />
+        <div className="flex flex-col md:flex-row items-center justify-between gap-10 relative z-10">
+          <div className="space-y-2 max-w-lg">
+            <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.3em]">
+              <Zap className="h-4 w-4 glow-primary" /> Account Synchronization
             </div>
-            <h3 className="text-xl font-black tracking-tight">Synchronize Identity</h3>
-            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest max-w-sm">
-              Applying these updates ensures all future autonomous cycles use the correct branding and target hubs.
+            <h3 className="text-2xl font-black tracking-tight text-white">Update Your Global Identity</h3>
+            <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-widest leading-relaxed">
+              Applying these updates ensures all future discovery cycles use the correct branding and target hubs.
             </p>
           </div>
           <button 
             onClick={handleSave}
-            className="px-8 py-3 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-sm hover:brightness-90 transition-all  flex items-center gap-2"
+            className="h-14 px-10 bg-white text-black text-[11px] font-black uppercase tracking-widest rounded-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-3 shadow-xl shadow-white/5"
           >
-            Deploy Sync <ShieldCheck className="h-4 w-4" />
+            Deploy Settings <ShieldCheck className="h-5 w-5" />
           </button>
         </div>
       </div>

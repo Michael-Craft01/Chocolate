@@ -81,8 +81,6 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
             finalIndustries: industries.length 
         }, '📊 Final query parameters decided');
 
-        const country = campaign?.targetCountry || 'US';
-        
         const queries = await this.generateQueriesForContext(
             locations, 
             industries,

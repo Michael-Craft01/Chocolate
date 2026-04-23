@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Target, CreditCard, Settings, LogOut, Zap, MessageSquare, User, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Settings, LogOut, User, ShieldCheck, Search, Heart, Lock, Home } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { motion } from "framer-motion";
@@ -16,10 +16,10 @@ function cn(...inputs: ClassValue[]) {
 }
 
 const navItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Campaigns", href: "/campaigns", icon: Target },
-  { name: "Leads", href: "/leads", icon: MessageSquare },
-  { name: "Billing", href: "/billing", icon: CreditCard },
+  { name: "Home", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Discovery", href: "/campaigns", icon: Search },
+  { name: "Collection", href: "/leads", icon: Heart },
+  { name: "Growth Plan", href: "/billing", icon: Lock },
   { name: "Profile", href: "/profile", icon: User },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
@@ -50,7 +50,7 @@ export function Sidebar() {
       <div className="flex h-24 items-center px-8">
         <Link href="/dashboard" className="flex items-center gap-3 font-black text-xl tracking-tighter">
           <div className="h-8 w-8 rounded-sm bg-primary flex items-center justify-center glow-primary">
-            <Zap className="h-4 w-4 text-white fill-white" />
+            <Home className="h-4 w-4 text-white fill-white" />
           </div>
           <span>HyprLead</span>
         </Link>
@@ -59,7 +59,7 @@ export function Sidebar() {
       <div className="px-4 mb-4">
         <div className="px-4 py-2 rounded-sm bg-white/[0.02] border border-white/5 flex items-center gap-2">
           <ShieldCheck className="h-3 w-3 text-primary" />
-          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Security: Active</span>
+          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Secure Protocol</span>
         </div>
       </div>
 
@@ -90,8 +90,8 @@ export function Sidebar() {
         <div className="rounded-sm glass-card p-5 space-y-5">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Subscription</p>
-              <p className="text-xs font-black tracking-tight text-white">{isFree ? "Free Mode" : `${stats?.tier} Tier`}</p>
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Current Plan</p>
+              <p className="text-xs font-black tracking-tight text-white">{isFree ? "Free Access" : `${stats?.tier} Plan`}</p>
             </div>
             <div className={cn(
               "h-1.5 w-1.5 rounded-sm",
@@ -101,7 +101,7 @@ export function Sidebar() {
           
           <div className="space-y-2.5">
             <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-tight">
-              <span>Quota Used</span>
+              <span>Daily Progress</span>
               <span className="text-white">{leadUsage} / {dailyLimit}</span>
             </div>
             <div className="h-1.5 w-full bg-white/5 rounded-sm overflow-hidden">
@@ -116,7 +116,7 @@ export function Sidebar() {
 
           {isFree && (
             <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-sm bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary">
-              Upgrade Engine
+              Upgrade Plan
             </Link>
           )}
         </div>

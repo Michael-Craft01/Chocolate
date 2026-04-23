@@ -6,7 +6,10 @@ import {
   Pause, Trash2, Search, Zap, Loader2, 
   Radar, History, ChevronRight, Activity,
   Sparkles,
-  Command
+  Command,
+  ShieldCheck,
+  Heart,
+  Home
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CardSkeleton } from "@/components/skeleton";
@@ -34,7 +37,7 @@ export default function CampaignsPage() {
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch campaigns", err);
-      setError("Could not load campaigns. Please try again.");
+      setError("Could not load discovery hubs. Please try again.");
       setLoading(false);
     }
   };
@@ -63,7 +66,7 @@ export default function CampaignsPage() {
       router.push("/leads");
     } catch (err) {
       console.error("Trigger failed", err);
-      setError("Failed to trigger sweep. Please check your connection.");
+      setError("Failed to start scan. Please check your connection.");
     } finally {
       setTriggering(null);
     }
@@ -82,32 +85,32 @@ export default function CampaignsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-6 border-b border-white/5 pb-10">
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
-            <Sparkles className="h-4 w-4 glow-primary" /> Neural Link: Synchronized
+            <ShieldCheck className="h-4 w-4 glow-primary" /> Verified Discovery
           </div>
-          <h1 className="text-4xl font-black tracking-tightest gradient-text">Lead Engines</h1>
-          <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Deploy and monitor autonomous lead generation clusters.</p>
+          <h1 className="text-4xl font-black tracking-tightest gradient-text">Discovery Hubs</h1>
+          <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Create and manage your business discovery projects.</p>
         </div>
         <button 
           onClick={() => router.push("/campaigns/new")}
-          className="flex h-14 items-center gap-3 rounded-sm bg-primary px-8 text-[11px] font-black uppercase tracking-widest text-white hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary  shadow-primary/20"
+          className="flex h-14 items-center gap-3 rounded-sm bg-primary px-8 text-[11px] font-black uppercase tracking-widest text-white hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary shadow-primary/20"
         >
           <Plus className="h-5 w-5" />
-          Deploy Node
+          New Discovery Hub
         </button>
       </div>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {[
-          { label: "Nodes Active", value: campaigns.filter(c => c.status === 'ACTIVE').length, icon: Zap, color: "text-emerald-400" },
-          { label: "Intelligence", value: campaigns.reduce((acc, c) => acc + (c._count?.leads || 0), 0), icon: Target, color: "text-primary" },
-          { label: "Hibernating", value: campaigns.filter(c => c.status === 'PAUSED').length, icon: Pause, color: "text-zinc-600" },
-          { label: "Total Cycles", value: campaigns.length * 12, icon: History, color: "text-violet-400" },
+          { label: "Hubs Active", value: campaigns.filter(c => c.status === 'ACTIVE').length, icon: Search, color: "text-emerald-400" },
+          { label: "Discoveries Found", value: campaigns.reduce((acc, c) => acc + (c._count?.leads || 0), 0), icon: Heart, color: "text-primary" },
+          { label: "Paused Hubs", value: campaigns.filter(c => c.status === 'PAUSED').length, icon: Pause, color: "text-zinc-600" },
+          { label: "Discovery Cycles", value: campaigns.length * 12, icon: History, color: "text-violet-400" },
         ].map((stat, i) => (
           <div key={i} className="glass-card p-6 rounded-sm border border-white/5 space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{stat.label}</p>
-              <stat.icon className={`h-4 w-4 ${stat.color} ${stat.label === 'Nodes Active' ? 'glow-primary' : ''}`} />
+              <stat.icon className={`h-4 w-4 ${stat.color} ${stat.label === 'Hubs Active' ? 'glow-primary' : ''}`} />
             </div>
             <p className="text-3xl font-black tracking-tightest text-white">{stat.value}</p>
           </div>
@@ -121,7 +124,7 @@ export default function CampaignsPage() {
           <input 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search telemetry..."
+            placeholder="Search hubs..."
             className="w-full h-14 bg-white/[0.03] border border-white/5 rounded-sm pl-14 pr-6 text-[12px] font-bold uppercase tracking-[0.1em] focus:border-primary/40 transition-all outline-none text-white placeholder:text-zinc-700"
           />
         </div>
@@ -131,7 +134,7 @@ export default function CampaignsPage() {
             onChange={(e) => setStatusFilter(e.target.value as any)}
             className="h-14 bg-white/[0.03] border border-white/5 rounded-sm px-8 text-[11px] font-black uppercase tracking-widest focus:border-primary/40 outline-none cursor-pointer appearance-none text-zinc-400 hover:text-white transition-colors"
           >
-            <option value="ALL">All Nodes</option>
+            <option value="ALL">All Hubs</option>
             <option value="ACTIVE">Active Only</option>
             <option value="PAUSED">Paused Only</option>
           </select>
@@ -148,7 +151,7 @@ export default function CampaignsPage() {
             [1, 2, 3, 4].map(i => <CardSkeleton key={i} />)
           ) : filteredCampaigns.length === 0 ? (
             <div className="md:col-span-2">
-              <EmptyState title="No Nodes Detected" description="Initialize your first engine sweep to begin data extraction." onAction={() => router.push("/campaigns/new")} actionText="Deploy Node" />
+              <EmptyState title="No Hubs Found" description="Create your first discovery hub to start finding leads." onAction={() => router.push("/campaigns/new")} actionText="New Hub" />
             </div>
           ) : filteredCampaigns.map((c, idx) => (
             <motion.div 
@@ -167,13 +170,13 @@ export default function CampaignsPage() {
                       {c.status === 'ACTIVE' && (
                         <div className="absolute inset-0 bg-primary/10 animate-pulse" />
                       )}
-                      <Target className="h-6 w-6 text-primary relative z-10 glow-primary" />
+                      <Home className="h-6 w-6 text-primary relative z-10 glow-primary" />
                     </div>
                     <div>
                       <h3 className="text-lg font-black tracking-tight text-white group-hover:text-primary transition-colors">{c.name}</h3>
                       <div className="flex items-center gap-2 mt-1">
                         <div className={`h-1.5 w-1.5 rounded-sm ${c.status === 'ACTIVE' ? 'bg-emerald-500 glow-primary shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse' : 'bg-zinc-700'}`} />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{c.status} PROTOCOL</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{c.status} MODE</span>
                       </div>
                     </div>
                   </div>
@@ -194,31 +197,31 @@ export default function CampaignsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-sm bg-white/[0.02] border border-white/5 space-y-1.5">
-                    <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">Market Sector</p>
-                    <p className="text-[12px] font-bold text-zinc-400 truncate">{c.industries.join(", ") || 'Global Sweep'}</p>
+                    <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">Target Industry</p>
+                    <p className="text-[12px] font-bold text-zinc-400 truncate">{c.industries.join(", ") || 'All Industries'}</p>
                   </div>
                   <div className="p-4 rounded-sm bg-white/[0.02] border border-white/5 space-y-1.5">
-                    <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">Spatial Grid</p>
-                    <p className="text-[12px] font-bold text-zinc-400 truncate">{c.locations.join(", ") || 'Global Grid'}</p>
+                    <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">Target Location</p>
+                    <p className="text-[12px] font-bold text-zinc-400 truncate">{c.locations.join(", ") || 'All Locations'}</p>
                   </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center justify-between p-5 rounded-sm bg-primary/5 border border-primary/10 gap-6">
                   <div className="flex-1 flex items-center gap-4">
                     <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center border border-primary/20">
-                      <Radar className={`h-5 w-5 text-primary ${c.status === 'ACTIVE' ? 'animate-spin-slow glow-primary' : ''}`} />
+                      <Search className={`h-5 w-5 text-primary ${c.status === 'ACTIVE' ? 'animate-pulse glow-primary' : ''}`} />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-black tracking-tight text-white">{c._count?.leads || 0} Entities Found</p>
+                      <p className="text-sm font-black tracking-tight text-white">{c._count?.leads || 0} Businesses Found</p>
                       <div className="flex items-center gap-2">
                         <div className="h-1 w-16 bg-primary/10 rounded-sm overflow-hidden">
                           <motion.div 
                             initial={{ width: 0 }}
-                            animate={{ width: '75%' }}
+                            animate={{ width: '85%' }}
                             className="h-full bg-primary glow-primary" 
                           />
                         </div>
-                        <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Yield: 84%</span>
+                        <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Score: 85%</span>
                       </div>
                     </div>
                   </div>
@@ -230,7 +233,7 @@ export default function CampaignsPage() {
                     disabled={triggering === c.id || c.status !== 'ACTIVE'}
                     className="h-10 px-6 rounded-sm bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all disabled:opacity-50 glow-primary"
                   >
-                    {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Initiate Sweep"}
+                    {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Scan for Leads"}
                   </button>
                 </div>
               </div>
@@ -238,10 +241,10 @@ export default function CampaignsPage() {
               {/* Footer Actions */}
               <div className="bg-white/[0.01] px-8 py-4 flex justify-between items-center border-t border-white/5">
                 <button className="text-[10px] font-black text-zinc-500 hover:text-white transition-all flex items-center gap-2 uppercase tracking-[0.2em] group/act">
-                  Neural Logs <ChevronRight className="h-3 w-3 group-hover/act:translate-x-1 transition-transform" />
+                  Discovery Logs <ChevronRight className="h-3 w-3 group-hover/act:translate-x-1 transition-transform" />
                 </button>
                 <button className="text-[10px] font-black text-zinc-500 hover:text-white transition-all flex items-center gap-2 uppercase tracking-[0.2em] group/act">
-                   Extraction Logic <Command className="h-3 w-3" />
+                   Targeting Setup <Command className="h-3 w-3" />
                 </button>
               </div>
             </motion.div>

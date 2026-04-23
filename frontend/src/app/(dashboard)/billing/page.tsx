@@ -2,7 +2,7 @@
 
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Check, Zap, Globe, ShieldCheck, CreditCard, Loader2, PartyPopper, AlertCircle, X, History, Sparkles } from "lucide-react";
+import { Check, Zap, Globe, ShieldCheck, CreditCard, Loader2, PartyPopper, AlertCircle, X, History, Sparkles, Lock, Home } from "lucide-react";
 import { authJson } from "@/lib/api";
 import { motion } from "framer-motion";
 
@@ -129,7 +129,7 @@ function BillingContent() {
         >
           <div className="flex items-center gap-5">
             <div className={`p-4 rounded-sm ${success ? "bg-emerald-500/10 glow-primary" : "bg-amber-500/10"}`}>
-              {success ? <PartyPopper className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
+              {success ? <Check className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
             </div>
             <div>
               <p className="font-black text-xl tracking-tight">
@@ -137,8 +137,8 @@ function BillingContent() {
               </p>
               <p className="text-[13px] font-medium opacity-70 max-w-md leading-relaxed">
                 {success 
-                  ? "Neural links are synchronizing. Your upgraded capacity will be active in approximately 30 seconds." 
-                  : "Checkout aborted. Your terminal parameters remain unchanged."}
+                  ? "Your account is being updated. Your new capacity will be active in just a few moments." 
+                  : "The process was canceled. No changes were made to your account."}
               </p>
             </div>
           </div>
@@ -150,11 +150,11 @@ function BillingContent() {
 
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
-          <Sparkles className="h-4 w-4 glow-primary" /> Resource Allocation
+          <ShieldCheck className="h-4 w-4 glow-primary" /> Growth Selection
         </div>
-        <h1 className="text-4xl font-black gradient-text tracking-tightest">Infrastructure Scale</h1>
+        <h1 className="text-4xl font-black gradient-text tracking-tightest">Your Growth Plan</h1>
         <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em] max-w-xl mx-auto">
-          Manage your engine core clusters and extraction quotas.
+          Choose the right path for your business discovery needs.
         </p>
       </div>
 
@@ -167,7 +167,7 @@ function BillingContent() {
               gateway === "STRIPE" ? "bg-primary text-white glow-primary" : "text-zinc-500 hover:text-white hover:bg-white/5"
             }`}
           >
-            <Globe className="h-4 w-4" /> Stripe (Credit Card)
+            <Globe className="h-4 w-4" /> Global Trust (Credit Card)
           </button>
           <button 
             onClick={() => setGateway("PAYNOW")}
@@ -175,7 +175,7 @@ function BillingContent() {
               gateway === "PAYNOW" ? "bg-primary text-white glow-primary" : "text-zinc-500 hover:text-white hover:bg-white/5"
             }`}
           >
-            <Zap className="h-4 w-4" /> Paynow (Ecocash)
+            <Lock className="h-4 w-4" /> Local Safety (Paynow)
           </button>
         </div>
       </div>
@@ -190,14 +190,14 @@ function BillingContent() {
           >
             {tier.popular && (
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary px-4 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-[0.2em] glow-primary">
-                Peak Efficiency
+                Best Value
               </div>
             )}
             <div className="mb-8">
               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-6">{tier.name}</h3>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-5xl font-black tracking-tightest text-white">${tier.price}</span>
-                <span className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest">/cycle</span>
+                <span className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest">/month</span>
               </div>
             </div>
 
@@ -207,8 +207,8 @@ function BillingContent() {
                 <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-widest">{tier.leads}</span>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.02] border border-white/5">
-                <Zap className="h-5 w-5 text-primary shrink-0 glow-primary" />
-                <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-widest">{tier.campaigns}</span>
+                <Home className="h-5 w-5 text-primary shrink-0 glow-primary" />
+                <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-widest">{tier.campaigns.replace('Engine', 'Discovery Hub')}</span>
               </div>
               <div className="pt-6 space-y-3">
                 {tier.features.map((f) => (
@@ -228,11 +228,14 @@ function BillingContent() {
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {loading === tier.name ? (
-                <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processing...</div>
+                <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Securing...</div>
               ) : (
                 <>
-                  <span>Select {tier.name}</span>
-                  <span className="text-[8px] tracking-[0.2em] opacity-70 normal-case font-bold">via {gateway === "STRIPE" ? "Stripe" : "Paynow (Ecocash/Zimswitch)"}</span>
+                  <span>Choose {tier.name}</span>
+                  <span className="text-[8px] tracking-[0.2em] opacity-70 normal-case font-bold flex items-center gap-1.5">
+                    <Lock className="h-2 w-2" />
+                    Secured by {gateway === "STRIPE" ? "Stripe" : "Paynow"}
+                  </span>
                 </>
               )}
             </button>
@@ -246,18 +249,18 @@ function BillingContent() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
           <div className="space-y-4 max-w-lg text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-3 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
-              <CreditCard className="h-4 w-4 glow-primary" /> Instant Overage
+              <CreditCard className="h-4 w-4 glow-primary" /> Quick Boost
             </div>
-            <h2 className="text-3xl font-black tracking-tight text-white">Neural Burst Capacity</h2>
+            <h2 className="text-3xl font-black tracking-tight text-white">Extra Growth Credits</h2>
             <p className="text-[13px] text-zinc-500 leading-relaxed font-medium">
-              Inject additional credits into your engine for high-volume sweeps 
-              beyond your daily protocol. Instant activation, zero expiration.
+              Need to find more businesses today? Add a quick boost of discovery credits to your account.
+              Available instantly, no expiration.
             </p>
           </div>
           <div className="flex flex-col items-center gap-6 min-w-[240px]">
             <div className="text-center">
               <span className="text-5xl font-black tracking-tightest text-white">$10</span>
-              <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mt-2">100 EXTRACTIONS</p>
+              <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mt-2">100 DISCOVERIES</p>
             </div>
             <button 
               onClick={handleBuyCredits}
@@ -265,7 +268,7 @@ function BillingContent() {
               className="w-full h-14 px-10 rounded-sm bg-white text-black text-[11px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-all hover:scale-[1.02] flex items-center justify-center gap-3 disabled:opacity-50"
             >
               {loading === "CREDITS" && <Loader2 className="h-4 w-4 animate-spin text-black" />}
-              {loading === "CREDITS" ? "Injecting..." : "Inject Credits"}
+              {loading === "CREDITS" ? "Processing..." : "Add Credits"}
             </button>
           </div>
         </div>
@@ -277,7 +280,7 @@ function BillingContent() {
           <div className="h-8 w-8 rounded-sm bg-white/5 flex items-center justify-center">
             <History className="h-4 w-4 text-primary" />
           </div>
-          <h2 className="text-xs font-black uppercase tracking-[0.2em]">Telemetry Logs</h2>
+          <h2 className="text-xs font-black uppercase tracking-[0.2em]">Billing History</h2>
         </div>
         
         <div className="glass-card rounded-sm border border-white/5 overflow-hidden">
@@ -285,11 +288,11 @@ function BillingContent() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-white/[0.03] text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                  <th className="px-8 py-5 font-black">Transfer ID</th>
-                  <th className="px-8 py-5 font-black">Timestamp</th>
-                  <th className="px-8 py-5 font-black">Protocol</th>
+                  <th className="px-8 py-5 font-black">Record ID</th>
+                  <th className="px-8 py-5 font-black">Date</th>
+                  <th className="px-8 py-5 font-black">Service</th>
                   <th className="px-8 py-5 font-black text-center">Amount</th>
-                  <th className="px-8 py-5 font-black text-center">Node</th>
+                  <th className="px-8 py-5 font-black text-center">Gateway</th>
                   <th className="px-8 py-5 font-black text-right">Status</th>
                 </tr>
               </thead>
@@ -298,13 +301,13 @@ function BillingContent() {
                   <tr>
                     <td colSpan={6} className="px-8 py-20 text-center text-zinc-600">
                       <Loader2 className="h-6 w-6 animate-spin mx-auto mb-4" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Synchronizing Logs...</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Loading Records...</span>
                     </td>
                   </tr>
                 ) : transactions.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-8 py-20 text-center text-zinc-600 text-[10px] font-black uppercase tracking-[0.2em]">
-                      Zero telemetry records detected.
+                      No billing records found.
                     </td>
                   </tr>
                 ) : (

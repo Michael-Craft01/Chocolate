@@ -6,7 +6,7 @@ import { logger } from '../lib/logger.js';
 import { config } from '../config.js';
 import { paymentService } from '../services/paymentService.js';
 import { WebhookHandler } from '../services/webhookHandler.js';
-import { triggerEngineCycle } from '../services/engineService.js';
+import { triggerEngineCycle } from '../services/discoveryEngine.js';
 import { 
     campaignSchema, 
     leadStatusSchema, 
