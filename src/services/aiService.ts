@@ -38,8 +38,9 @@ export class AIService {
         // GEMMA 4 ROBUST REASONING PROMPT
         const prompt = `<start_of_turn>user
 SYSTEM: You are the HyprLead Engine (Gemma-4 Optimized). 
-GOAL: High-fidelity business extraction and deep-dive operational friction detection.
-REASONING: Use your internal thinking mode to analyze the telemetry AND visual data if provided.
+GOAL: High-fidelity business extraction and sector-specific operational friction detection.
+REASONING: Use your internal thinking mode to analyze the telemetry AND visual data. 
+IMPORTANT: Ground your analysis in the lead's specific SECTOR. Do not invent technical software issues (like 'API failures' or 'list hygiene') unless the lead is actually in the technology space.
 
 INPUT PACKAGE:
 - BRAND: "${businessName}"
@@ -47,9 +48,10 @@ INPUT PACKAGE:
 - TELEMETRY: "${context || 'No telemetry available'}"
 
 TASK:
-1. Clean the Brand Name.
-2. Identify 3 possible friction points, then select the MOST CRITICAL one.
-3. If an image/screenshot is provided, analyze the UI/UX and digital presence for specific failures.
+1. Clean the Brand Name for professional outreach.
+2. Identify 3 possible friction points RELEVANT to a "${category || 'SME'}" business.
+3. Select the MOST CRITICAL friction point that "${product}" can actually solve.
+4. If a screenshot is provided, analyze the actual design/business presence, not just the code.
 
 ${customInstructions}
 
@@ -57,7 +59,7 @@ JSON OUTPUT:
 {
   "brandName": "Short Clean Name",
   "industry": "Specific Vertical",
-  "painPoint": "Deep operational or visual friction point",
+  "painPoint": "Sector-relevant friction point (e.g. 'Inconsistent brand aesthetic' for Fashion, or 'Supply chain opacity' for Logistics)",
   "recommendedSolution": "${product}"
 }
 <end_of_turn>

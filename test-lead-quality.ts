@@ -33,9 +33,9 @@ async function testQuality() {
 
             const telemetry = `Email: ${email || 'Hidden'} | Source: ${lead.category || 'Organic'}`;
             
-            const enrichment = await aiService.enrichLead(lead.name, 'Boutique', {
-                productDescription: "HyprLead AI Automation",
-                targetPainPoints: null
+            const enrichment = await aiService.enrichLead(lead.name, 'Fashion Boutique', {
+                productDescription: "Creative Branding & Visual Marketing",
+                targetPainPoints: "Inconsistent social presence, outdated website aesthetic, or poor digital engagement"
             }, telemetry, visualIntel);
             
             console.log(`✅ CLEANED BRAND NAME: "${enrichment.brandName}"`);
