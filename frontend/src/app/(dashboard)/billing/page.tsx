@@ -167,7 +167,7 @@ function BillingContent() {
               gateway === "STRIPE" ? "bg-primary text-white glow-primary" : "text-zinc-500 hover:text-white hover:bg-white/5"
             }`}
           >
-            <Globe className="h-4 w-4" /> Global Node
+            <Globe className="h-4 w-4" /> Stripe (Credit Card)
           </button>
           <button 
             onClick={() => setGateway("PAYNOW")}
@@ -175,7 +175,7 @@ function BillingContent() {
               gateway === "PAYNOW" ? "bg-primary text-white glow-primary" : "text-zinc-500 hover:text-white hover:bg-white/5"
             }`}
           >
-            <Zap className="h-4 w-4" /> Local Link
+            <Zap className="h-4 w-4" /> Paynow (Ecocash)
           </button>
         </div>
       </div>
@@ -223,12 +223,18 @@ function BillingContent() {
             <button 
               onClick={() => handleSubscribe(tier.name)}
               disabled={!!loading}
-              className={`w-full h-14 rounded-sm text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3 ${
+              className={`w-full h-14 rounded-sm text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 flex flex-col items-center justify-center gap-0.5 ${
                 tier.popular ? "bg-primary text-white hover:scale-[1.02] glow-primary" : "bg-white/5 hover:bg-white/10 text-white"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {loading === tier.name && <Loader2 className="h-4 w-4 animate-spin" />}
-              {loading === tier.name ? "Syncing..." : `Deploy ${tier.name}`}
+              {loading === tier.name ? (
+                <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processing...</div>
+              ) : (
+                <>
+                  <span>Select {tier.name}</span>
+                  <span className="text-[8px] tracking-[0.2em] opacity-70 normal-case font-bold">via {gateway === "STRIPE" ? "Stripe" : "Paynow (Ecocash/Zimswitch)"}</span>
+                </>
+              )}
             </button>
           </div>
         ))}

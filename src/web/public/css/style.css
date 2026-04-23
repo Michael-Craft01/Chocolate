@@ -15,9 +15,6 @@ body {
     min-height: 100vh;
 }
 
-* {
-    border-radius: 2px !important;
-}
 
 a {
     color: var(--text-color);

@@ -52,26 +52,25 @@ export default function LeadsPage() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, totalPages: 1, totalLeads: 0 });
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const campaignFilter = selectedCampaignId === "ALL" ? undefined : selectedCampaignId;
-      const [leadsData, campaignsData] = await Promise.all([
-        fetchLeadList(page, 100, campaignFilter),
-        fetchCampaigns()
-      ]);
-      setLeads(leadsData.leads || []);
-      setCampaigns(campaignsData || []);
-      setPagination(leadsData.pagination || { page: 1, totalPages: 1, totalLeads: 0 });
-    } catch (err) {
-      setError("Intelligence Hub unreachable. Check your network.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const campaignFilter = selectedCampaignId === "ALL" ? undefined : selectedCampaignId;
+        const [leadsData, campaignsData] = await Promise.all([
+          fetchLeadList(page, 100, campaignFilter),
+          fetchCampaigns()
+        ]);
+        setLeads(leadsData.leads || []);
+        setCampaigns(campaignsData || []);
+        setPagination(leadsData.pagination || { page: 1, totalPages: 1, totalLeads: 0 });
+      } catch (err) {
+        setError("Intelligence Hub unreachable. Check your network.");
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchData();
   }, [page, selectedCampaignId]);
 

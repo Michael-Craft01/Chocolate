@@ -40,8 +40,8 @@ export function Sidebar() {
     return () => clearInterval(interval);
   }, []);
 
-  const dailyLimit = stats?.dailyLimit || 10;
-  const leadUsage = stats?.leadsToday || 0;
+  const dailyLimit = stats?.quota?.limit || 10;
+  const leadUsage = stats?.quota?.used || 0;
   const usagePercent = Math.min(100, (leadUsage / dailyLimit) * 100);
   const isFree = !stats?.tier || stats?.tier === 'FREE';
 

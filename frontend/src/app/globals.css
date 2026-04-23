@@ -78,10 +78,6 @@
   /* Removed glow and complex effects for solid UI */
 }
 
-/* Base Radius overrides globally */
-* {
-  border-radius: 2px !important;
-}
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {

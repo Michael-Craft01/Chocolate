@@ -113,8 +113,8 @@ export default function DashboardPage() {
           <div className="flex-1 glass-card rounded-sm p-8 flex flex-col justify-between group">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Active Nodes</p>
-                <p className="text-4xl font-black tracking-tightest text-white">{stats?.activeCampaigns || 0}</p>
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Active Businesses</p>
+                <p className="text-4xl font-black tracking-tightest text-white">{stats?.totalBusinesses || 0}</p>
               </div>
               <div className="p-3 rounded-sm bg-violet-500/10 text-violet-400">
                 <Activity className="h-6 w-6" />
@@ -201,7 +201,7 @@ export default function DashboardPage() {
           <div className="glass-card rounded-sm p-8 flex items-center justify-between group border border-white/5">
             <div className="space-y-2">
               <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Engine Quota</p>
-              <p className="text-2xl font-black tracking-tightest text-white">{stats?.leadsToday || 0} / {stats?.dailyLimit || 10}</p>
+              <p className="text-2xl font-black tracking-tightest text-white">{stats?.quota?.used || 0} / {stats?.quota?.limit || 10}</p>
             </div>
             <div className="relative h-16 w-16 flex items-center justify-center">
               <svg className="h-full w-full rotate-[-90deg]">
@@ -211,7 +211,7 @@ export default function DashboardPage() {
                   className="stroke-primary fill-none glow-primary" 
                   strokeWidth="5" 
                   initial={{ strokeDasharray: "0 176" }}
-                  animate={{ strokeDasharray: `${Math.min(176, ((stats?.leadsToday || 0) / (stats?.dailyLimit || 10)) * 176)} 176` }}
+                  animate={{ strokeDasharray: `${Math.min(176, (((stats?.quota?.used || 0) / (stats?.quota?.limit || 10)) || 0) * 176)} 176` }}
                   transition={{ duration: 1.5, ease: "easeOut" }}
                 />
               </svg>
