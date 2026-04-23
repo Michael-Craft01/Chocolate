@@ -116,8 +116,8 @@ export default function LeadsPage() {
     <div className="min-h-screen pb-40 font-sans">
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none -z-10">
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 translate-x-1/4 animate-pulse-slow" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/4" />
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-sm  -translate-y-1/2 translate-x-1/4 animate-pulse-slow" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-violet-500/5 rounded-sm  translate-y-1/2 -translate-x-1/4" />
       </div>
 
       <div className="max-w-6xl mx-auto space-y-10 relative">
@@ -138,13 +138,13 @@ export default function LeadsPage() {
                 const filter = selectedCampaignId === "ALL" ? "" : `?campaignId=${selectedCampaignId}`;
                 window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005'}/api/leads/export${filter}${filter ? '&' : '?'}token=${token}`, "_blank");
               }}
-              className="h-12 px-8 rounded-2xl bg-white text-black font-black text-[11px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-3 shadow-2xl shadow-white/5"
+              className="h-12 px-8 rounded-sm bg-white text-black font-black text-[11px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-3  shadow-white/5"
             >
               <FileDown className="h-4 w-4" /> Export Data
             </button>
 
             <div className="relative group">
-              <div className="h-12 px-6 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center gap-3 group-hover:border-white/10 transition-all">
+              <div className="h-12 px-6 rounded-sm bg-white/[0.03] border border-white/5 flex items-center gap-3 group-hover:border-white/10 transition-all">
                 <Filter className="h-4 w-4 text-zinc-500" />
                 <select
                   value={selectedCampaignId}
@@ -168,29 +168,29 @@ export default function LeadsPage() {
             placeholder="Search extraction telemetry..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-16 bg-white/[0.03] border border-white/5 rounded-[1.25rem] pl-16 pr-8 text-sm font-bold uppercase tracking-widest outline-none focus:bg-white/[0.05] focus:border-primary/30 transition-all text-white placeholder:text-zinc-700"
+            className="w-full h-16 bg-white/[0.03] border border-white/5 rounded-sm pl-16 pr-8 text-sm font-bold uppercase tracking-widest outline-none focus:bg-white/[0.05] focus:border-primary/30 transition-all text-white placeholder:text-zinc-700"
           />
         </div>
 
         {/* The Timeline */}
         <div className="relative space-y-24 pt-10">
           {/* Timeline Center Line */}
-          <div className="absolute left-0 md:left-10 top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary/40 via-white/5 to-transparent" />
+          <div className="absolute left-0 md:left-10 top-0 bottom-0 w-[2px]   via-white/5 " />
 
           <AnimatePresence mode="popLayout">
             {loading ? (
-              [1, 2].map(i => <Skeleton key={i} className="h-96 rounded-[3rem] ml-0 md:ml-24 bg-white/[0.02]" />)
+              [1, 2].map(i => <Skeleton key={i} className="h-96 rounded-sm ml-0 md:ml-24 bg-white/[0.02]" />)
             ) : sortedGroups.length === 0 ? (
               <EmptyState title="Timeline Offline" description="Launch an extraction engine sweep to begin populating this hub." />
             ) : sortedGroups.map((group: any) => (
               <div key={group.id} className="relative">
                 {/* Cycle Header */}
                 <div className="sticky top-28 z-10 flex items-center gap-8 mb-12 -ml-2 md:-ml-0">
-                  <div className="h-16 w-16 rounded-[1.25rem] bg-background border border-white/5 flex items-center justify-center shadow-2xl relative group/node">
-                    <div className="absolute inset-0 bg-primary/10 rounded-[1.25rem] animate-pulse" />
+                  <div className="h-16 w-16 rounded-sm bg-background border border-white/5 flex items-center justify-center  relative group/node">
+                    <div className="absolute inset-0 bg-primary/10 rounded-sm animate-pulse" />
                     <Activity className="h-6 w-6 text-primary glow-primary relative z-10" />
                   </div>
-                  <div className="glass-card px-6 py-3 rounded-2xl border border-white/5 flex items-center gap-6 shadow-2xl">
+                  <div className="glass-card px-6 py-3 rounded-sm border border-white/5 flex items-center gap-6 ">
                     <div className="flex items-center gap-3">
                       <Clock className="h-4 w-4 text-primary glow-primary" />
                       <span className="text-[11px] font-black uppercase tracking-widest text-white">
@@ -215,7 +215,7 @@ export default function LeadsPage() {
                       transition={{ delay: idx * 0.05 }}
                       className="group relative"
                     >
-                      <div className="glass-card rounded-[2.5rem] border border-white/5 p-8 md:p-10 hover:border-primary/20 transition-all duration-500">
+                      <div className="glass-card rounded-sm border border-white/5 p-8 md:p-10 hover:border-primary/20 transition-all duration-500">
                         <div className="flex flex-col lg:flex-row gap-12">
                           {/* Company Detail */}
                           <div className="flex-1 space-y-6">
@@ -226,7 +226,7 @@ export default function LeadsPage() {
                                 </div>
                                 <h3 className="text-3xl font-black tracking-tightest text-white group-hover:text-primary transition-colors">{lead.business.name}</h3>
                                 <div className="flex items-center gap-3 text-zinc-500 font-black text-[11px] uppercase tracking-widest">
-                                  <div className="h-5 w-5 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                                  <div className="h-5 w-5 rounded-sm bg-emerald-500/10 flex items-center justify-center">
                                     <MapPin className="h-3 w-3 text-emerald-500" />
                                   </div>
                                   {lead.industry}
@@ -234,19 +234,19 @@ export default function LeadsPage() {
                               </div>
 
                               <div className="flex items-center gap-2">
-                                <button onClick={() => handleDelete(lead.id)} className="h-10 w-10 rounded-xl bg-white/5 hover:bg-red-500/10 flex items-center justify-center text-zinc-600 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"><Trash2 className="h-4 w-4" /></button>
+                                <button onClick={() => handleDelete(lead.id)} className="h-10 w-10 rounded-sm bg-white/5 hover:bg-red-500/10 flex items-center justify-center text-zinc-600 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"><Trash2 className="h-4 w-4" /></button>
                               </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                               {lead.business.phone && (
-                                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 group/info">
+                                <div className="p-4 rounded-sm bg-white/[0.02] border border-white/5 group/info">
                                   <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-2 group-hover:text-zinc-500 transition-colors">Neural Frequency (Phone)</p>
                                   <p className="text-[13px] font-bold text-zinc-300">{lead.business.phone}</p>
                                 </div>
                               )}
                               {lead.business.website && (
-                                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 group/info">
+                                <div className="p-4 rounded-sm bg-white/[0.02] border border-white/5 group/info">
                                   <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-2 group-hover:text-zinc-500 transition-colors">Source Node (Website)</p>
                                   <p className="text-[13px] font-bold text-zinc-300 truncate">{lead.business.website.replace(/https?:\/\//, '')}</p>
                                 </div>
@@ -256,7 +256,7 @@ export default function LeadsPage() {
 
                           {/* AI Intelligence */}
                           <div className="flex-1 lg:max-w-md space-y-6">
-                            <div className="p-8 rounded-[2rem] bg-primary/5 border border-primary/10 relative overflow-hidden group/intel">
+                            <div className="p-8 rounded-sm bg-primary/5 border border-primary/10 relative overflow-hidden group/intel">
                               <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover/intel:opacity-[0.08] transition-opacity duration-700">
                                 <BrainCircuit className="h-20 w-20" />
                               </div>
@@ -265,7 +265,7 @@ export default function LeadsPage() {
                                   <label className="text-[10px] font-black text-primary uppercase tracking-[0.3em] glow-text">Neural Match Confidence</label>
                                   <span className="text-[11px] font-black text-primary">8.4 / 10</span>
                                 </div>
-                                <div className="h-2 w-full bg-primary/10 rounded-full overflow-hidden">
+                                <div className="h-2 w-full bg-primary/10 rounded-sm overflow-hidden">
                                   <motion.div 
                                     initial={{ width: 0 }}
                                     whileInView={{ width: "84%" }}
@@ -288,7 +288,7 @@ export default function LeadsPage() {
                             <div className="flex gap-3">
                               <button 
                                 onClick={() => copyFullIntel(lead)}
-                                className={`flex-1 h-14 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 active:scale-95 ${
+                                className={`flex-1 h-14 rounded-sm font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 active:scale-95 ${
                                   copiedId === lead.id ? "bg-emerald-500 text-white shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)]" : "bg-white text-black hover:bg-zinc-200"
                                 }`}
                               >
@@ -298,7 +298,7 @@ export default function LeadsPage() {
                               <a 
                                 href={lead.business.website}
                                 target="_blank"
-                                className="h-14 w-14 rounded-2xl bg-white/[0.03] border border-white/5 text-zinc-500 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all group/src"
+                                className="h-14 w-14 rounded-sm bg-white/[0.03] border border-white/5 text-zinc-500 flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all group/src"
                               >
                                 <Globe className="h-5 w-5 group-hover/src:glow-primary" />
                               </a>

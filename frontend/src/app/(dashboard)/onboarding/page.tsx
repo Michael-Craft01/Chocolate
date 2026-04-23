@@ -33,7 +33,7 @@ export default function OnboardingPage() {
     });
 
     const totalSteps = 4;
-    const inputBaseClass = "w-full bg-white/5 border border-white/10 rounded-2xl p-4 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/40";
+    const inputBaseClass = "w-full bg-white/5 border border-white/10 rounded-sm p-4 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/40";
 
     const nextStep = () => setStep(s => Math.min(s + 1, totalSteps));
     const prevStep = () => setStep(s => Math.max(s - 1, 1));
@@ -67,7 +67,7 @@ export default function OnboardingPage() {
         visible: { 
             opacity: 1, 
             scale: 1,
-            transition: { duration: 0.4, ease: "easeOut" }
+            transition: { duration: 0.4, ease: "easeOut" as const }
         },
         exit: { opacity: 0, scale: 1.05, transition: { duration: 0.2 } }
     };
@@ -75,7 +75,7 @@ export default function OnboardingPage() {
     return (
         <div className="min-h-screen bg-[#070707] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
             {/* Background Glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-sm  pointer-events-none" />
             
             {/* Progress Bar */}
             <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
@@ -93,11 +93,11 @@ export default function OnboardingPage() {
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    className="w-full max-w-xl bg-white/[0.03] border border-white/10 p-8 md:p-12 rounded-[2rem] backdrop-blur-xl shadow-2xl relative z-10"
+                    className="w-full max-w-xl bg-white/[0.03] border border-white/10 p-8 md:p-12 rounded-sm   relative z-10"
                 >
                     {/* Header */}
                     <div className="mb-10 text-center">
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/20 border border-primary/30 text-primary mb-6">
+                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-sm bg-primary/20 border border-primary/30 text-primary mb-6">
                             {step === 1 && <Briefcase size={28} />}
                             {step === 2 && <User size={28} />}
                             {step === 3 && <Zap size={28} />}
@@ -129,11 +129,11 @@ export default function OnboardingPage() {
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col gap-2">
+                                <div className="p-4 rounded-sm bg-white/[0.02] border border-white/5 flex flex-col gap-2">
                                     <Globe className="text-primary" size={20} />
                                     <span className="text-xs text-white/40">Global Search Enabled</span>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col gap-2">
+                                <div className="p-4 rounded-sm bg-white/[0.02] border border-white/5 flex flex-col gap-2">
                                     <Zap className="text-primary" size={20} />
                                     <span className="text-xs text-white/40">AI Engine Ready</span>
                                 </div>
@@ -166,7 +166,7 @@ export default function OnboardingPage() {
                                     />
                                 </div>
                             </div>
-                            <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20 text-blue-200/70 text-sm flex gap-3">
+                            <div className="p-4 rounded-sm bg-blue-500/5 border border-blue-500/20 text-blue-200/70 text-sm flex gap-3">
                                 <MessageSquare size={20} className="shrink-0" />
                                 <p>We use these details to sign off your automated messages professionally.</p>
                             </div>
@@ -202,8 +202,8 @@ export default function OnboardingPage() {
                     {/* Step 4: Targets */}
                     {step === 4 && (
                         <div className="space-y-6">
-                            <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/20 text-center flex flex-col items-center gap-4">
-                                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                            <div className="p-6 rounded-sm bg-primary/5 border border-primary/20 text-center flex flex-col items-center gap-4">
+                                <div className="w-16 h-16 rounded-sm bg-primary/20 flex items-center justify-center">
                                     <Check className="text-primary" size={32} />
                                 </div>
                                 <div>
@@ -235,7 +235,7 @@ export default function OnboardingPage() {
                             onClick={step === totalSteps ? finishOnboarding : nextStep}
                             disabled={!isStepValid()}
                             className={`
-                                flex items-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all
+                                flex items-center gap-2 px-8 py-4 rounded-sm font-bold transition-all
                                 ${isStepValid() 
                                     ? "bg-primary text-white shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:bg-primary-hover" 
                                     : "bg-white/5 text-white/20 cursor-not-allowed"}
@@ -253,7 +253,7 @@ export default function OnboardingPage() {
                 {[1, 2, 3, 4].map((i) => (
                     <div 
                         key={i}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${i === step ? "w-8 bg-primary" : "bg-white/10"}`}
+                        className={`w-2 h-2 rounded-sm transition-all duration-300 ${i === step ? "w-8 bg-primary" : "bg-white/10"}`}
                     />
                 ))}
             </div>

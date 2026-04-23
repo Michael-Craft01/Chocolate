@@ -61,11 +61,11 @@ export default function DashboardPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <div className="glass-card px-5 py-2.5 rounded-2xl flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 glow-primary animate-pulse" />
+          <div className="glass-card px-5 py-2.5 rounded-sm flex items-center gap-3">
+            <div className="h-2 w-2 rounded-sm bg-emerald-500 glow-primary animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Node: Active</span>
           </div>
-          <div className="glass-card px-5 py-2.5 rounded-2xl bg-primary/10 border-primary/20 flex items-center gap-2">
+          <div className="glass-card px-5 py-2.5 rounded-sm bg-primary/10 border-primary/20 flex items-center gap-2">
             <Zap className="h-4 w-4 text-primary fill-primary" />
             <span className="text-[10px] font-black uppercase tracking-widest text-primary">{stats?.tier || 'FREE'} ENGINE</span>
           </div>
@@ -76,10 +76,10 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         
         {/* Main Neural Pulse - Bento Core */}
-        <div className="md:col-span-8 glass-card rounded-[2.5rem] overflow-hidden relative min-h-[400px] group">
+        <div className="md:col-span-8 glass-card rounded-sm overflow-hidden relative min-h-[400px] group">
           <div className="absolute top-0 left-0 p-10 z-20 pointer-events-none">
             <h2 className="text-lg font-black uppercase tracking-widest mb-2 flex items-center gap-2">
-              Neural Network <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+              Neural Network <div className="h-1.5 w-1.5 rounded-sm bg-primary animate-ping" />
             </h2>
             <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Real-time Global Sync</p>
           </div>
@@ -92,13 +92,13 @@ export default function DashboardPage() {
 
         {/* Rapid Telemetry Stats - Sidebar of Bento */}
         <div className="md:col-span-4 flex flex-col gap-6">
-          <div className="flex-1 glass-card rounded-3xl p-8 flex flex-col justify-between group">
+          <div className="flex-1 glass-card rounded-sm p-8 flex flex-col justify-between group">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
                 <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Total Captures</p>
                 <p className="text-4xl font-black tracking-tightest text-white">{stats?.totalLeads || 0}</p>
               </div>
-              <div className="p-3 rounded-2xl bg-primary/10 text-primary glow-primary">
+              <div className="p-3 rounded-sm bg-primary/10 text-primary glow-primary">
                 <Target className="h-6 w-6" />
               </div>
             </div>
@@ -110,13 +110,13 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex-1 glass-card rounded-3xl p-8 flex flex-col justify-between group">
+          <div className="flex-1 glass-card rounded-sm p-8 flex flex-col justify-between group">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
                 <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Active Nodes</p>
                 <p className="text-4xl font-black tracking-tightest text-white">{stats?.activeCampaigns || 0}</p>
               </div>
-              <div className="p-3 rounded-2xl bg-violet-500/10 text-violet-400">
+              <div className="p-3 rounded-sm bg-violet-500/10 text-violet-400">
                 <Activity className="h-6 w-6" />
               </div>
             </div>
@@ -130,10 +130,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Intelligence Feed - Bento Bottom Left */}
-        <div className="md:col-span-7 glass-card rounded-[2.5rem] p-10 space-y-8 group">
+        <div className="md:col-span-7 glass-card rounded-sm p-10 space-y-8 group">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary glow-primary">
+              <div className="h-12 w-12 rounded-sm bg-primary/10 flex items-center justify-center text-primary glow-primary">
                 <BrainCircuit className="h-6 w-6" />
               </div>
               <div>
@@ -153,10 +153,10 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="flex items-center justify-between p-5 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group/item"
+                className="flex items-center justify-between p-5 rounded-sm bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group/item"
               >
                 <div className="flex items-center gap-5">
-                  <div className="h-12 w-12 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center font-black text-zinc-400 text-sm group-hover/item:border-primary/30 transition-colors">
+                  <div className="h-12 w-12 rounded-sm bg-white/5 border border-white/5 flex items-center justify-center font-black text-zinc-400 text-sm group-hover/item:border-primary/30 transition-colors">
                     {lead.business.name.charAt(0)}
                   </div>
                   <div>
@@ -181,7 +181,7 @@ export default function DashboardPage() {
 
         {/* System Health & Insights - Bento Bottom Right */}
         <div className="md:col-span-5 flex flex-col gap-6">
-          <div className="glass-card rounded-3xl p-10 bg-gradient-to-br from-primary/10 to-transparent relative overflow-hidden group flex-1">
+          <div className="glass-card rounded-sm p-10    relative overflow-hidden group flex-1">
              <div className="relative z-10 space-y-6">
                 <div className="flex items-center gap-3 text-primary">
                   <Radar className="h-6 w-6 animate-pulse glow-primary" />
@@ -198,7 +198,7 @@ export default function DashboardPage() {
              </div>
           </div>
           
-          <div className="glass-card rounded-3xl p-8 flex items-center justify-between group border border-white/5">
+          <div className="glass-card rounded-sm p-8 flex items-center justify-between group border border-white/5">
             <div className="space-y-2">
               <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Engine Quota</p>
               <p className="text-2xl font-black tracking-tightest text-white">{stats?.leadsToday || 0} / {stats?.dailyLimit || 10}</p>

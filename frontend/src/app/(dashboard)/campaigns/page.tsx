@@ -41,7 +41,7 @@ export default function CampaignsPage() {
 
   useEffect(() => {
     fetchCampaigns();
-    const interval = setInterval(fetchCampaigns, 30000); // Auto-refresh every 30s
+    const interval = setInterval(fetchCampaigns, 30000); // Au every 30s
     return () => clearInterval(interval);
   }, []);
 
@@ -89,7 +89,7 @@ export default function CampaignsPage() {
         </div>
         <button 
           onClick={() => router.push("/campaigns/new")}
-          className="flex h-14 items-center gap-3 rounded-2xl bg-primary px-8 text-[11px] font-black uppercase tracking-widest text-white hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary shadow-2xl shadow-primary/20"
+          className="flex h-14 items-center gap-3 rounded-sm bg-primary px-8 text-[11px] font-black uppercase tracking-widest text-white hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary  shadow-primary/20"
         >
           <Plus className="h-5 w-5" />
           Deploy Node
@@ -104,7 +104,7 @@ export default function CampaignsPage() {
           { label: "Hibernating", value: campaigns.filter(c => c.status === 'PAUSED').length, icon: Pause, color: "text-zinc-600" },
           { label: "Total Cycles", value: campaigns.length * 12, icon: History, color: "text-violet-400" },
         ].map((stat, i) => (
-          <div key={i} className="glass-card p-6 rounded-3xl border border-white/5 space-y-2">
+          <div key={i} className="glass-card p-6 rounded-sm border border-white/5 space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{stat.label}</p>
               <stat.icon className={`h-4 w-4 ${stat.color} ${stat.label === 'Nodes Active' ? 'glow-primary' : ''}`} />
@@ -122,14 +122,14 @@ export default function CampaignsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search telemetry..."
-            className="w-full h-14 bg-white/[0.03] border border-white/5 rounded-2xl pl-14 pr-6 text-[12px] font-bold uppercase tracking-[0.1em] focus:border-primary/40 transition-all outline-none text-white placeholder:text-zinc-700"
+            className="w-full h-14 bg-white/[0.03] border border-white/5 rounded-sm pl-14 pr-6 text-[12px] font-bold uppercase tracking-[0.1em] focus:border-primary/40 transition-all outline-none text-white placeholder:text-zinc-700"
           />
         </div>
         <div className="relative">
           <select 
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="h-14 bg-white/[0.03] border border-white/5 rounded-2xl px-8 text-[11px] font-black uppercase tracking-widest focus:border-primary/40 outline-none cursor-pointer appearance-none text-zinc-400 hover:text-white transition-colors"
+            className="h-14 bg-white/[0.03] border border-white/5 rounded-sm px-8 text-[11px] font-black uppercase tracking-widest focus:border-primary/40 outline-none cursor-pointer appearance-none text-zinc-400 hover:text-white transition-colors"
           >
             <option value="ALL">All Nodes</option>
             <option value="ACTIVE">Active Only</option>
@@ -158,12 +158,12 @@ export default function CampaignsPage() {
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ delay: idx * 0.05 }}
               key={c.id} 
-              className="glass-card rounded-[2.5rem] border border-white/5 overflow-hidden group"
+              className="glass-card rounded-sm border border-white/5 overflow-hidden group"
             >
               <div className="p-8 space-y-6">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-5">
-                    <div className="h-14 w-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center relative overflow-hidden group-hover:border-primary/30 transition-all">
+                    <div className="h-14 w-14 rounded-sm bg-primary/5 border border-primary/10 flex items-center justify-center relative overflow-hidden group-hover:border-primary/30 transition-all">
                       {c.status === 'ACTIVE' && (
                         <div className="absolute inset-0 bg-primary/10 animate-pulse" />
                       )}
@@ -172,7 +172,7 @@ export default function CampaignsPage() {
                     <div>
                       <h3 className="text-lg font-black tracking-tight text-white group-hover:text-primary transition-colors">{c.name}</h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <div className={`h-1.5 w-1.5 rounded-full ${c.status === 'ACTIVE' ? 'bg-emerald-500 glow-primary shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse' : 'bg-zinc-700'}`} />
+                        <div className={`h-1.5 w-1.5 rounded-sm ${c.status === 'ACTIVE' ? 'bg-emerald-500 glow-primary shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse' : 'bg-zinc-700'}`} />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{c.status} PROTOCOL</span>
                       </div>
                     </div>
@@ -182,36 +182,36 @@ export default function CampaignsPage() {
                     <button 
                       onClick={() => toggleStatus(c.id, c.status)}
                       disabled={busyCampaignId === c.id}
-                      className="p-3 rounded-xl bg-white/5 hover:bg-primary/10 text-zinc-500 hover:text-primary transition-all disabled:opacity-50"
+                      className="p-3 rounded-sm bg-white/5 hover:bg-primary/10 text-zinc-500 hover:text-primary transition-all disabled:opacity-50"
                     >
                       {c.status === 'ACTIVE' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     </button>
-                    <button className="p-3 rounded-xl bg-white/5 hover:bg-red-500/10 text-zinc-500 hover:text-red-500 transition-all">
+                    <button className="p-3 rounded-sm bg-white/5 hover:bg-red-500/10 text-zinc-500 hover:text-red-500 transition-all">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1.5">
+                  <div className="p-4 rounded-sm bg-white/[0.02] border border-white/5 space-y-1.5">
                     <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">Market Sector</p>
                     <p className="text-[12px] font-bold text-zinc-400 truncate">{c.industries.join(", ") || 'Global Sweep'}</p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1.5">
+                  <div className="p-4 rounded-sm bg-white/[0.02] border border-white/5 space-y-1.5">
                     <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">Spatial Grid</p>
                     <p className="text-[12px] font-bold text-zinc-400 truncate">{c.locations.join(", ") || 'Global Grid'}</p>
                   </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row items-center justify-between p-5 rounded-2xl bg-primary/5 border border-primary/10 gap-6">
+                <div className="flex flex-col md:flex-row items-center justify-between p-5 rounded-sm bg-primary/5 border border-primary/10 gap-6">
                   <div className="flex-1 flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                    <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center border border-primary/20">
                       <Radar className={`h-5 w-5 text-primary ${c.status === 'ACTIVE' ? 'animate-spin-slow glow-primary' : ''}`} />
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-black tracking-tight text-white">{c._count?.leads || 0} Entities Found</p>
                       <div className="flex items-center gap-2">
-                        <div className="h-1 w-16 bg-primary/10 rounded-full overflow-hidden">
+                        <div className="h-1 w-16 bg-primary/10 rounded-sm overflow-hidden">
                           <motion.div 
                             initial={{ width: 0 }}
                             animate={{ width: '75%' }}
@@ -228,7 +228,7 @@ export default function CampaignsPage() {
                   <button 
                     onClick={() => triggerSweep(c.id)}
                     disabled={triggering === c.id || c.status !== 'ACTIVE'}
-                    className="h-10 px-6 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all disabled:opacity-50 glow-primary"
+                    className="h-10 px-6 rounded-sm bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all disabled:opacity-50 glow-primary"
                   >
                     {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Initiate Sweep"}
                   </button>

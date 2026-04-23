@@ -1,39 +1,46 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #020203;
-  --color-foreground: #ffffff;
+  --color-background: #000000;
+  --color-foreground: #b8b08d;
   
-  --color-card: #09090b;
-  --color-card-border: rgba(255, 255, 255, 0.08);
+  --color-card: #202c39;
+  --color-card-border: #283845;
   
-  --color-primary: #3b82f6;
-  --color-primary-hover: #60a5fa;
+  --color-primary: #f29559;
+  --color-primary-hover: #f2d492;
   
-  --color-secondary: #0f172a;
-  --color-accent: #8b5cf6;
+  --color-secondary: #283845;
+  --color-accent: #f2d492;
   
   --color-hot: #ef4444;
   --color-warm: #f59e0b;
   
   --font-sans: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  --radius: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
 }
 
 :root {
-  --background: #020203;
-  --foreground: #ffffff;
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
-  --secondary: #0f172a;
-  --secondary-foreground: #94a3b8;
-  --accent: #8b5cf6;
-  --accent-foreground: #ffffff;
-  --muted: #09090b;
-  --muted-foreground: #71717a;
-  --card: #09090b;
-  --card-border: rgba(255, 255, 255, 0.08);
-  --glass: rgba(2, 2, 3, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.05);
+  --background: #000000;
+  --foreground: #b8b08d;
+  --primary: #f29559;
+  --primary-foreground: #000000;
+  --secondary: #283845;
+  --secondary-foreground: #b8b08d;
+  --accent: #f2d492;
+  --accent-foreground: #000000;
+  --muted: #202c39;
+  --muted-foreground: #b8b08d;
+  --card: #202c39;
+  --card-border: #283845;
+  --glass: #202c39;
+  --glass-border: #283845;
 }
 
 @layer base {
@@ -47,64 +54,33 @@
   }
 }
 
-/* Premium Design Utilities */
+/* Standard UI Utilities */
 
-.glass {
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-
-.glass-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
+.glass, .glass-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 2px;
 }
 
 .glass-card:hover {
-  border-color: rgba(59, 130, 246, 0.3);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%);
-  box-shadow: 0 0 40px -10px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary);
 }
 
 .gradient-text {
-  background: linear-gradient(to right, #fff, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--foreground);
 }
 
 .gradient-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: var(--primary);
 }
 
-.glow-primary {
-  box-shadow: 0 0 20px -5px rgba(59, 130, 246, 0.5);
+.glow-primary, .glow-text, .hyper-border {
+  /* Removed glow and complex effects for solid UI */
 }
 
-.glow-text {
-  text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-}
-
-.hyper-border {
-  position: relative;
-}
-
-.hyper-border::after {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
-  z-index: -1;
-  border-radius: inherit;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.hyper-border:hover::after {
-  opacity: 1;
+/* Base Radius overrides globally */
+* {
+  border-radius: 2px !important;
 }
 
 /* Custom Scrollbar */
@@ -116,28 +92,9 @@
 }
 ::-webkit-scrollbar-thumb {
   background: #1e1e21;
-  border-radius: 10px;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #2d2d30;
-}
-
-/* Animations */
-@keyframes pulse-slow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
-}
-
-.animate-pulse-slow {
-  animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
 }
 

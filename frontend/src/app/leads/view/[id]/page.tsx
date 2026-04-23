@@ -24,21 +24,20 @@ export default function PublicLeadPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchLead = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005'}/api/leads/public/${params.id}`);
+        if (!res.ok) throw new Error("Lead not found or link expired.");
+        const data = await res.json();
+        setLead(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchLead();
   }, [params.id]);
-
-  const fetchLead = async () => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005'}/api/leads/public/${params.id}`);
-      if (!res.ok) throw new Error("Lead not found or link expired.");
-      const data = await res.json();
-      setLead(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getWhatsAppLink = (phone: string) => {
     const clean = phone.replace(/\D/g, "");
@@ -59,11 +58,11 @@ export default function PublicLeadPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-[#070707] flex items-center justify-center p-6">
-        <div className="max-w-md w-full glass p-8 rounded-[2rem] border border-red-500/20 text-center space-y-4">
+        <div className="max-w-md w-full glass p-8 rounded-sm border border-red-500/20 text-center space-y-4">
           <Zap className="h-12 w-12 text-red-500 mx-auto" />
           <h1 className="text-2xl font-bold text-white">Expired Link</h1>
           <p className="text-zinc-400">{error}</p>
-          <button onClick={() => window.location.reload()} className="px-6 py-2 bg-white/5 hover:bg-white/10 rounded-full text-sm font-bold">Try Again</button>
+          <button onClick={() => window.location.reload()} className="px-6 py-2 bg-white/5 hover:bg-white/10 rounded-sm text-sm font-bold">Try Again</button>
         </div>
       </div>
     );
@@ -73,14 +72,14 @@ export default function PublicLeadPage() {
     <div className="min-h-screen bg-[#070707] text-white selection:bg-primary/30">
       {/* Dynamic Background Blur */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-sm " />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-sm " />
       </div>
 
       <div className="relative max-w-lg mx-auto p-6 pt-12 pb-32 space-y-8">
         {/* Header Section */}
         <div className="flex flex-col items-center text-center space-y-4">
-          <div className="h-20 w-20 rounded-[2.5rem] bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center shadow-2xl shadow-primary/20 rotate-12">
+          <div className="h-20 w-20 rounded-sm    flex items-center justify-center  shadow-primary/20 rotate-12">
             <Building2 className="h-10 w-10 text-white -rotate-12" />
           </div>
           <div className="space-y-1">
@@ -100,10 +99,10 @@ export default function PublicLeadPage() {
               whileTap={{ scale: 0.98 }}
               href={getWhatsAppLink(lead.phone)}
               target="_blank"
-              className="flex items-center justify-between p-6 bg-emerald-500 rounded-[2rem] text-white font-black text-xl shadow-xl shadow-emerald-500/20 group"
+              className="flex items-center justify-between p-6 bg-emerald-500 rounded-sm text-white font-black text-xl  shadow-emerald-500/20 group"
             >
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-sm bg-white/20 flex items-center justify-center">
                   <Phone className="h-6 w-6" />
                 </div>
                 Chat on WhatsApp
@@ -118,10 +117,10 @@ export default function PublicLeadPage() {
               whileTap={{ scale: 0.98 }}
               href={lead.website}
               target="_blank"
-              className="flex items-center justify-between p-6 bg-white/5 border border-white/10 rounded-[2rem] text-white font-bold group"
+              className="flex items-center justify-between p-6 bg-white/5 border border-white/10 rounded-sm text-white font-bold group"
             >
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-sm bg-white/10 flex items-center justify-center">
                   <Globe className="h-6 w-6" />
                 </div>
                 Visit Website
@@ -132,7 +131,7 @@ export default function PublicLeadPage() {
         </div>
 
         {/* Intelligence Card */}
-        <div className="glass p-8 rounded-[2.5rem] border border-white/5 space-y-8 relative overflow-hidden">
+        <div className="glass p-8 rounded-sm border border-white/5 space-y-8 relative overflow-hidden">
           <div className="flex items-center gap-3">
             <Zap className="h-5 w-5 text-primary" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Business Intel</span>
@@ -144,7 +143,7 @@ export default function PublicLeadPage() {
               <p className="text-xl font-bold leading-tight">{lead.painPoint}</p>
             </div>
 
-            <div className="p-6 rounded-[1.5rem] bg-white/[0.03] border border-white/5 space-y-4">
+            <div className="p-6 rounded-sm bg-white/[0.03] border border-white/5 space-y-4">
               <div className="flex items-center gap-2 text-emerald-400">
                 <MessageSquare className="h-4 w-4" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Recommended Pitch</span>
@@ -159,7 +158,7 @@ export default function PublicLeadPage() {
         {/* Footer Detail */}
         <div className="flex items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-bold">
+            <div className="h-8 w-8 rounded-sm bg-zinc-800 flex items-center justify-center text-[10px] font-bold">
               {lead.sender[0]}
             </div>
             <div className="text-[10px]">

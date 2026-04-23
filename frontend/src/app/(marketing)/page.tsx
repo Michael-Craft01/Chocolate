@@ -71,9 +71,9 @@ export default function LandingPage() {
   return (
     <div className="relative min-h-screen selection:bg-primary/30 font-sans">
       {/* Navbar */}
-      <nav className="fixed top-8 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-4xl mx-auto px-6 py-2 flex items-center justify-between rounded-2xl glass-card border-white/5 shadow-2xl backdrop-blur-xl">
+      <nav className="fixed top-8 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-4xl mx-auto px-6 py-2 flex items-center justify-between rounded-sm glass-card border-white/5  ">
         <Link href="/" className="flex items-center gap-2 font-black text-lg tracking-tight">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center glow-primary">
+          <div className="h-8 w-8 rounded-sm bg-primary flex items-center justify-center glow-primary">
             <Zap className="h-4 w-4 text-white fill-white" />
           </div>
           <span>HyprLead</span>
@@ -82,7 +82,7 @@ export default function LandingPage() {
           <Link href="#features" className="hover:text-white transition-colors">Technology</Link>
           <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
         </div>
-        <Link href={session ? "/dashboard" : "/login"} className="h-10 px-6 rounded-xl bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center justify-center">
+        <Link href={session ? "/dashboard" : "/login"} className="h-10 px-6 rounded-sm bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center justify-center">
           {session ? 'Dashboard' : 'Sign In'}
         </Link>
       </nav>
@@ -103,7 +103,7 @@ export default function LandingPage() {
 
       {/* Workflow Section */}
       <section id="features" className="max-w-7xl mx-auto px-6 py-32 relative">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px]   via-white/10 " />
         <div className="text-center mb-24">
           <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">Automation as Art</h2>
           <p className="text-zinc-500 max-w-xl mx-auto text-lg leading-relaxed">How the HyprLead engine transforms the web into a sales machine.</p>
@@ -115,9 +115,9 @@ export default function LandingPage() {
               <motion.div 
                 key={i} 
                 whileHover={{ y: -5 }}
-                className="relative group glass-card rounded-3xl p-8 border border-white/5"
+                className="relative group glass-card rounded-sm p-8 border border-white/5"
               >
-                <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6 group-hover:glow-primary transition-all duration-500">
+                <div className="h-14 w-14 rounded-sm bg-primary/10 border border-primary/20 flex items-center justify-center mb-6 group-hover:glow-primary transition-all duration-500">
                   <Icon className="h-7 w-7 text-primary" />
                 </div>
                 <h3 className="font-bold text-lg mb-3 tracking-tight">{step.title}</h3>
@@ -135,14 +135,14 @@ export default function LandingPage() {
           {features.map((f, i) => {
             const Icon = f.icon;
             return (
-              <div key={i} className="glass-card rounded-[2.5rem] p-12 relative overflow-hidden group">
-                <div className="absolute -top-24 -right-24 h-48 w-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+              <div key={i} className="glass-card rounded-sm p-12 relative overflow-hidden group">
+                <div className="absolute -top-24 -right-24 h-48 w-48 bg-primary/5 rounded-sm  group-hover:bg-primary/10 transition-colors" />
                 <Icon className={`h-12 w-12 mb-10 ${f.color}`} />
                 <h3 className="text-3xl font-black mb-6 tracking-tight">{f.title}</h3>
                 <p className="text-zinc-400 leading-relaxed mb-8 text-lg">{f.desc}</p>
                 <div className="flex gap-3">
-                   <span className="px-3 py-1 rounded-lg bg-white/5 text-[9px] uppercase font-bold tracking-widest text-zinc-500">Headless</span>
-                   <span className="px-3 py-1 rounded-lg bg-white/5 text-[9px] uppercase font-bold tracking-widest text-zinc-500">AI-Powered</span>
+                   <span className="px-3 py-1 rounded-sm bg-white/5 text-[9px] uppercase font-bold tracking-widest text-zinc-500">Headless</span>
+                   <span className="px-3 py-1 rounded-sm bg-white/5 text-[9px] uppercase font-bold tracking-widest text-zinc-500">AI-Powered</span>
                 </div>
               </div>
             );
@@ -158,7 +158,7 @@ export default function LandingPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {pricing.map((p, i) => (
-            <div key={i} className={`glass-card rounded-[2rem] p-10 relative overflow-hidden flex flex-col ${p.featured ? 'border-primary/40 shadow-[0_0_50px_-12px_rgba(59,130,246,0.2)]' : 'border-white/5'}`}>
+            <div key={i} className={`glass-card rounded-sm p-10 relative overflow-hidden flex flex-col ${p.featured ? 'border-primary/40 shadow-[0_0_50px_-12px_rgba(59,130,246,0.2)]' : 'border-white/5'}`}>
               {p.featured && (
                 <div className="absolute top-0 right-0 px-5 py-1.5 bg-primary text-[9px] font-black uppercase tracking-[0.2em] text-white">
                   Most Popular
@@ -177,7 +177,7 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
-              <Link href="/dashboard" className={`w-full h-14 rounded-2xl flex items-center justify-center font-bold text-sm tracking-tight transition-all ${p.featured ? 'bg-primary text-white glow-primary hover:scale-[1.02]' : 'bg-white/5 text-white hover:bg-white/10'}`}>
+              <Link href="/dashboard" className={`w-full h-14 rounded-sm flex items-center justify-center font-bold text-sm tracking-tight transition-all ${p.featured ? 'bg-primary text-white glow-primary hover:scale-[1.02]' : 'bg-white/5 text-white hover:bg-white/10'}`}>
                 Get Started
               </Link>
             </div>

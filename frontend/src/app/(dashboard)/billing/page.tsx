@@ -123,12 +123,12 @@ function BillingContent() {
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`glass-card border p-6 rounded-3xl flex items-center justify-between shadow-2xl ${
+          className={`glass-card border p-6 rounded-sm flex items-center justify-between  ${
             success ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" : "border-amber-500/30 bg-amber-500/5 text-amber-400"
           }`}
         >
           <div className="flex items-center gap-5">
-            <div className={`p-4 rounded-2xl ${success ? "bg-emerald-500/10 glow-primary" : "bg-amber-500/10"}`}>
+            <div className={`p-4 rounded-sm ${success ? "bg-emerald-500/10 glow-primary" : "bg-amber-500/10"}`}>
               {success ? <PartyPopper className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
             </div>
             <div>
@@ -142,7 +142,7 @@ function BillingContent() {
               </p>
             </div>
           </div>
-          <button onClick={() => setShowStatus(false)} className="p-3 hover:bg-white/5 rounded-xl transition-all">
+          <button onClick={() => setShowStatus(false)} className="p-3 hover:bg-white/5 rounded-sm transition-all">
             <X className="h-5 w-5" />
           </button>
         </motion.div>
@@ -160,10 +160,10 @@ function BillingContent() {
 
       {/* Gateway Toggle */}
       <div className="flex justify-center">
-        <div className="glass-card p-1.5 rounded-2xl flex gap-1.5 border border-white/5 shadow-xl">
+        <div className="glass-card p-1.5 rounded-sm flex gap-1.5 border border-white/5 ">
           <button 
             onClick={() => setGateway("STRIPE")}
-            className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+            className={`flex items-center gap-3 px-8 py-3 rounded-sm text-[11px] font-black uppercase tracking-widest transition-all ${
               gateway === "STRIPE" ? "bg-primary text-white glow-primary" : "text-zinc-500 hover:text-white hover:bg-white/5"
             }`}
           >
@@ -171,7 +171,7 @@ function BillingContent() {
           </button>
           <button 
             onClick={() => setGateway("PAYNOW")}
-            className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+            className={`flex items-center gap-3 px-8 py-3 rounded-sm text-[11px] font-black uppercase tracking-widest transition-all ${
               gateway === "PAYNOW" ? "bg-primary text-white glow-primary" : "text-zinc-500 hover:text-white hover:bg-white/5"
             }`}
           >
@@ -184,12 +184,12 @@ function BillingContent() {
         {tiers.map((tier) => (
           <div 
             key={tier.name} 
-            className={`glass-card rounded-[2rem] p-10 border flex flex-col relative group transition-all duration-500 ${
+            className={`glass-card rounded-sm p-10 border flex flex-col relative group transition-all duration-500 ${
               tier.popular ? "border-primary/40 shadow-[0_0_50px_-12px_rgba(59,130,246,0.15)]" : "border-white/5"
             }`}
           >
             {tier.popular && (
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] glow-primary">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary px-4 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-[0.2em] glow-primary">
                 Peak Efficiency
               </div>
             )}
@@ -202,11 +202,11 @@ function BillingContent() {
             </div>
 
             <div className="space-y-4 mb-10 flex-1">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <div className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.02] border border-white/5">
                 <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0" />
                 <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-widest">{tier.leads}</span>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <div className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.02] border border-white/5">
                 <Zap className="h-5 w-5 text-primary shrink-0 glow-primary" />
                 <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-widest">{tier.campaigns}</span>
               </div>
@@ -223,7 +223,7 @@ function BillingContent() {
             <button 
               onClick={() => handleSubscribe(tier.name)}
               disabled={!!loading}
-              className={`w-full h-14 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3 ${
+              className={`w-full h-14 rounded-sm text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3 ${
                 tier.popular ? "bg-primary text-white hover:scale-[1.02] glow-primary" : "bg-white/5 hover:bg-white/10 text-white"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
@@ -235,8 +235,8 @@ function BillingContent() {
       </div>
 
       {/* Credits Section */}
-      <div className="glass-card rounded-[2.5rem] p-12 mt-12 border border-white/5 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -mr-64 -mt-64 group-hover:bg-primary/10 transition-colors" />
+      <div className="glass-card rounded-sm p-12 mt-12 border border-white/5 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-sm  -mr-64 -mt-64 group-hover:bg-primary/10 transition-colors" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
           <div className="space-y-4 max-w-lg text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-3 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
@@ -256,7 +256,7 @@ function BillingContent() {
             <button 
               onClick={handleBuyCredits}
               disabled={!!loading}
-              className="w-full h-14 px-10 rounded-2xl bg-white text-black text-[11px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-all hover:scale-[1.02] flex items-center justify-center gap-3 disabled:opacity-50"
+              className="w-full h-14 px-10 rounded-sm bg-white text-black text-[11px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-all hover:scale-[1.02] flex items-center justify-center gap-3 disabled:opacity-50"
             >
               {loading === "CREDITS" && <Loader2 className="h-4 w-4 animate-spin text-black" />}
               {loading === "CREDITS" ? "Injecting..." : "Inject Credits"}
@@ -268,13 +268,13 @@ function BillingContent() {
       {/* Transaction History Table */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 text-zinc-300">
-          <div className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-sm bg-white/5 flex items-center justify-center">
             <History className="h-4 w-4 text-primary" />
           </div>
           <h2 className="text-xs font-black uppercase tracking-[0.2em]">Telemetry Logs</h2>
         </div>
         
-        <div className="glass-card rounded-3xl border border-white/5 overflow-hidden">
+        <div className="glass-card rounded-sm border border-white/5 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -311,7 +311,7 @@ function BillingContent() {
                         {new Date(tx.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-8 py-4">
-                        <span className="px-2 py-1 rounded-lg bg-white/5 text-[9px] font-black uppercase tracking-[0.1em] text-zinc-400">
+                        <span className="px-2 py-1 rounded-sm bg-white/5 text-[9px] font-black uppercase tracking-[0.1em] text-zinc-400">
                           {tx.type}
                         </span>
                       </td>
@@ -319,14 +319,14 @@ function BillingContent() {
                         ${tx.amount}
                       </td>
                       <td className="px-8 py-4 text-center">
-                        <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] ${
+                        <span className={`px-2 py-1 rounded-sm text-[9px] font-black uppercase tracking-[0.1em] ${
                           tx.gateway === 'PAYNOW' ? 'bg-amber-500/10 text-amber-500/80' : 'bg-blue-500/10 text-blue-500/80'
                         }`}>
                           {tx.gateway}
                         </span>
                       </td>
                       <td className="px-8 py-4 text-right">
-                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] ${
+                        <span className={`px-3 py-1 rounded-sm text-[9px] font-black uppercase tracking-[0.2em] ${
                           tx.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400' : 
                           tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-400'
                         }`}>

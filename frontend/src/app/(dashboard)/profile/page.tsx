@@ -67,7 +67,7 @@ export default function ProfilePage() {
     <div className="max-w-5xl mx-auto space-y-8 pb-20">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-10">
         <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-white/5 flex items-center justify-center shadow-2xl">
+          <div className="h-14 w-14 rounded-sm    border border-white/5 flex items-center justify-center ">
             <User className="h-6 w-6 text-primary" />
           </div>
           <div className="space-y-0.5">
@@ -76,12 +76,12 @@ export default function ProfilePage() {
           </div>
         </div>
         
-        <div className={`px-4 py-1.5 rounded-full border flex items-center gap-2 ${
+        <div className={`px-4 py-1.5 rounded-sm border flex items-center gap-2 ${
           profile?.paymentStatus === 'active' 
             ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
             : "bg-amber-500/10 border-amber-500/20 text-amber-400"
         }`}>
-          <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${
+          <div className={`h-1.5 w-1.5 rounded-sm animate-pulse ${
             profile?.paymentStatus === 'active' ? "bg-emerald-500" : "bg-amber-500"
           }`} />
           <span className="text-[9px] font-black uppercase tracking-widest">
@@ -92,14 +92,14 @@ export default function ProfilePage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* User Info Card */}
-        <div className="glass p-6 rounded-2xl border border-white/5 space-y-4">
+        <div className="glass p-6 rounded-sm border border-white/5 space-y-4">
           <div className="flex items-center gap-2 text-zinc-300 mb-2">
             <Shield className="h-4 w-4 text-primary" />
             <h2 className="text-[10px] font-black uppercase tracking-widest">Auth Telemetry</h2>
           </div>
           
           <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.01] border border-white/5">
+            <div className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.01] border border-white/5">
               <Mail className="h-3.5 w-3.5 text-zinc-600" />
               <div className="overflow-hidden">
                 <p className="text-[8px] uppercase text-zinc-500 font-black tracking-widest">Primary UID</p>
@@ -107,7 +107,7 @@ export default function ProfilePage() {
               </div>
             </div>
             
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.01] border border-white/5">
+            <div className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.01] border border-white/5">
               <Crown className="h-3.5 w-3.5 text-primary/70" />
               <div>
                 <p className="text-[8px] uppercase text-zinc-500 font-black tracking-widest">Access Node</p>
@@ -117,7 +117,7 @@ export default function ProfilePage() {
               </div>
             </div>
             
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.01] border border-white/5">
+            <div className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.01] border border-white/5">
               <Calendar className="h-3.5 w-3.5 text-zinc-600" />
               <div>
                 <p className="text-[8px] uppercase text-zinc-500 font-black tracking-widest">Initialization</p>
@@ -128,8 +128,8 @@ export default function ProfilePage() {
         </div>
 
         {/* Current Subscription Card */}
-        <div className="md:col-span-2 glass p-6 rounded-2xl border border-white/5 bg-primary/5 relative overflow-hidden group interactive-card">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32" />
+        <div className="md:col-span-2 glass p-6 rounded-sm border border-white/5 bg-primary/5 relative overflow-hidden group interactive-card">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-sm  -mr-32 -mt-32" />
           
           <div className="relative flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
@@ -137,7 +137,7 @@ export default function ProfilePage() {
                 <Zap className="h-4 w-4 text-primary" />
                 <h2 className="text-[10px] font-black uppercase tracking-widest">Active Cluster</h2>
               </div>
-              <span className="text-[8px] font-black bg-primary px-2 py-0.5 rounded-full text-white uppercase tracking-[0.2em]">
+              <span className="text-[8px] font-black bg-primary px-2 py-0.5 rounded-sm text-white uppercase tracking-[0.2em]">
                 {profile?.tier === 'FREE' ? 'RESTRICTED' : 'FULL ACCESS'}
               </span>
             </div>
@@ -155,13 +155,13 @@ export default function ProfilePage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-black/10 border border-white/5">
+                <div className="p-3 rounded-sm bg-black/10 border border-white/5">
                   <p className="text-[8px] text-zinc-600 font-black uppercase tracking-widest">Daily Quota</p>
                   <p className="text-lg font-black tracking-tight text-zinc-400">
                     {profile?.tier === 'FREE' ? '10' : profile?.tier === 'STARTER' ? '50' : '200'} Cycles
                   </p>
                 </div>
-                <div className="p-3 rounded-xl bg-black/10 border border-white/5">
+                <div className="p-3 rounded-sm bg-black/10 border border-white/5">
                   <p className="text-[8px] text-zinc-600 font-black uppercase tracking-widest">Enrichment</p>
                   <p className="text-lg font-black tracking-tight text-emerald-500/70 flex items-center gap-1.5">
                     <CheckCircle2 className="h-3.5 w-3.5" /> Neural
@@ -197,7 +197,7 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        <div className="glass rounded-xl border border-white/5 overflow-hidden">
+        <div className="glass rounded-sm border border-white/5 overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-white/[0.02] border-b border-white/5">
               <tr className="text-[9px] uppercase font-black text-zinc-600 tracking-[0.2em]">

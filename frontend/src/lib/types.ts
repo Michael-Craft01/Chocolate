@@ -23,6 +23,8 @@ export interface Campaign {
 
 export interface Lead {
   id: string;
+  sweepId?: string;
+  sweepDate?: string;
   industry: string;
   painPoint: string;
   suggestedMessage: string;

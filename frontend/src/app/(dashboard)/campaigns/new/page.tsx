@@ -23,7 +23,7 @@ export default function NewCampaignPage() {
     const [loading, setLoading] = useState(false);
     const [fetchingProfile, setFetchingProfile] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const inputClass = "w-full bg-white/5 border border-white/10 rounded-2xl p-4 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/40 text-sm";
+    const inputClass = "w-full bg-white/5 border border-white/10 rounded-sm p-4 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/40 text-sm";
     
     const [campaign, setCampaign] = useState({
         name: "",
@@ -86,7 +86,7 @@ export default function NewCampaignPage() {
                 targetPainPoints: campaign.targetPainPoints.trim() || "General industry efficiency",
                 industries: industries.length ? industries : ["Business"],
                 locations: locations.length ? locations : ["Harare"],
-                outreachTone: campaign.outreachTone,
+                outreachTone: campaign.outreachTone as "PROFESSIONAL" | "DIRECT" | "FRIENDLY" | "EDUCATIONAL",
                 ctaLink: campaign.ctaLink.trim() || undefined,
                 discordWebhook: campaign.discordWebhook.trim() || undefined,
                 targetCountry: "ZW",
@@ -121,7 +121,7 @@ export default function NewCampaignPage() {
                         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                         Back
                     </button>
-                    <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-1.5 rounded-sm bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest">
                         <CheckCircle2 className="h-3.5 w-3.5" /> Identity Synced
                     </div>
                 </div>
@@ -132,19 +132,19 @@ export default function NewCampaignPage() {
                 </div>
 
                 {error && (
-                    <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-4 text-sm text-red-200 flex items-center gap-3">
+                    <div className="rounded-sm border border-red-500/30 bg-red-500/10 px-6 py-4 text-sm text-red-200 flex items-center gap-3">
                         <Zap className="h-5 w-5 text-red-500" /> {error}
                     </div>
                 )}
 
                 <div className="grid grid-cols-1 gap-10">
                     {/* PRODUCT SECTION - HIGHLIGHTED */}
-                    <section className="glass p-8 md:p-10 rounded-[2.5rem] border border-primary/30 bg-primary/5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32" />
+                    <section className="glass p-8 md:p-10 rounded-sm border border-primary/30 bg-primary/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-sm  -mr-32 -mt-32" />
                         
                         <div className="relative space-y-8">
                             <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                                <div className="h-12 w-12 rounded-sm bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
                                     <Target className="h-6 w-6 text-white" />
                                 </div>
                                 <div>
@@ -189,9 +189,9 @@ export default function NewCampaignPage() {
                     </section>
 
                     {/* MARKET & TARGETING */}
-                    <section className="glass p-8 md:p-10 rounded-[2.5rem] border border-white/5 space-y-8">
+                    <section className="glass p-8 md:p-10 rounded-sm border border-white/5 space-y-8">
                         <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
+                            <div className="h-12 w-12 rounded-sm bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
                                 <MapPin className="h-6 w-6" />
                             </div>
                             <div>
@@ -235,10 +235,10 @@ export default function NewCampaignPage() {
                     </section>
 
                     {/* SENDER IDENTITY (SYCED) */}
-                    <section className="glass p-8 md:p-10 rounded-[2.5rem] border border-white/5 bg-white/[0.01] space-y-8">
+                    <section className="glass p-8 md:p-10 rounded-sm border border-white/5 bg-white/[0.01] space-y-8">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
+                                <div className="h-12 w-12 rounded-sm bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
                                     <User className="h-6 w-6" />
                                 </div>
                                 <div>
@@ -286,7 +286,7 @@ export default function NewCampaignPage() {
                         whileTap={{ scale: 0.95 }}
                         onClick={handleSave}
                         disabled={loading}
-                        className="bg-primary hover:bg-primary-hover text-white px-12 py-5 rounded-[2rem] font-black text-xl flex items-center gap-4 shadow-2xl shadow-primary/40 disabled:opacity-50"
+                        className="bg-primary hover:bg-primary-hover text-white px-12 py-5 rounded-sm font-black text-xl flex items-center gap-4  shadow-primary/40 disabled:opacity-50"
                     >
                         {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Zap size={24} className="fill-white" />}
                         {loading ? "INITIALIZING ENGINE..." : "DEPLOY CAMPAIGN"}
