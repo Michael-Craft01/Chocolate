@@ -17,15 +17,17 @@ export interface AuthenticatedRequest extends Request {
 const supabase = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
 
 export const authenticate = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    let token: string | undefined;
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+    } else if (req.query.token && typeof req.query.token === 'string') {
+        token = req.query.token;
     }
 
-    const token = authHeader.split(' ')[1];
     if (!token) {
-        return res.status(401).json({ error: 'Unauthorized', message: 'Missing token' });
+        return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
     }
 
     try {
@@ -34,22 +36,24 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
         let attempts = 0;
 
         while (attempts < 3) {
-        try {
-            const { data, error } = await supabase.auth.getUser(token);
-            user = data.user;
-            authError = error;
-            if (user || (authError && authError.status !== 500)) break;
-        } catch (err) {
-            logger.warn(`Auth attempt ${attempts + 1} failed, retrying...`);
+            try {
+                logger.info({ attempts, url: config.SUPABASE_URL }, 'Supabase auth attempt');
+                const { data, error } = await supabase.auth.getUser(token);
+                user = data.user;
+                authError = error;
+                if (user || (authError && authError.status !== 500)) break;
+                if (authError) logger.warn({ authError }, 'Supabase auth returned error');
+            } catch (err: any) {
+                logger.error({ err: err.message, stack: err.stack }, `Auth attempt ${attempts + 1} thrown error`);
+            }
+            attempts++;
+            if (attempts < 3) await new Promise(r => setTimeout(r, 500));
         }
-        attempts++;
-        if (attempts < 3) await new Promise(r => setTimeout(r, 500));
-    }
 
-    if (authError || !user) {
-        logger.error({ error: authError?.message }, 'Supabase token verification failed');
-        return res.status(401).json({ error: 'Unauthorized', message: authError?.message || 'Invalid token' });
-    }
+        if (authError || !user) {
+            logger.error({ error: authError?.message, status: authError?.status }, 'Supabase token verification failed');
+            return res.status(401).json({ error: 'Unauthorized', message: authError?.message || 'Invalid token' });
+        }
 
         // Sync user to our database
         const dbUser = await prisma.user.upsert({

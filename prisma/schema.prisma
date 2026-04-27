@@ -133,6 +133,7 @@ model Lead {
   status           LeadStatus  @default(NEW)
   dispatchedAt     DateTime?
   sweepDate        DateTime?   // For cycle timestamp
+  sweepId          String?
   createdAt        DateTime    @default(now())
 
   @@unique([campaignId, businessId])

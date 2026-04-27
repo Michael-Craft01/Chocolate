@@ -12,7 +12,8 @@ const CONCURRENCY_LIMIT = 5;
 
 async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweepId?: string, sweepDate?: Date) {
     const cleanName = enrichment.brandName;
-    const message = await messageGenerator.generate(enrichment, campaign.productName);
+    const painPoint = enrichment.painPoint || 'operational friction';
+    const message = messageGenerator.generate(campaign, cleanName, enrichment.industry || 'your industry', painPoint, campaign.productName);
 
     return await prisma.$transaction(async (tx) => {
         let dbBusiness = await tx.business.findFirst({
@@ -118,17 +119,50 @@ export async function triggerEngineCycle() {
     const sweepId = `sweep_${Date.now()}`;
     const sweepDate = new Date();
     const cycleSummary: any[] = [];
+
     try {
         const activeCampaigns = await prisma.campaign.findMany({ where: { status: 'ACTIVE' }, include: { user: true } });
+
         for (const campaign of activeCampaigns) {
-            const queries = await queryGenerator.generateBatchQueries(50, campaign);
+            const user = await prisma.user.findUnique({ where: { id: campaign.userId } });
+            if (!user) continue;
+
+            const target = user.dailyLimit;
             let campaignTotal = 0;
-            for (const query of queries) {
-                const count = await processLeadsForQuery(campaign, query, 15, sweepId, sweepDate);
-                campaignTotal += count;
+            let round = 0;
+            const MAX_ROUNDS = 20; // Safety cap to avoid infinite loops
+
+            logger.info(`🎯 Campaign "${campaign.name}" — targeting ${target} leads (currently at ${user.leadsFoundToday})`);
+
+            while (campaignTotal + user.leadsFoundToday < target && round < MAX_ROUNDS) {
+                round++;
+                const needed = target - (campaignTotal + user.leadsFoundToday);
+                logger.info(`🔄 Round ${round} — need ${needed} more leads for campaign "${campaign.name}"`);
+
+                const queries = await queryGenerator.generateBatchQueries(50, campaign);
+                if (queries.length === 0) {
+                    logger.warn('No new queries available — rotating to next round');
+                    break;
+                }
+
+                for (const query of queries) {
+                    const stillNeeded = target - (campaignTotal + user.leadsFoundToday);
+                    if (stillNeeded <= 0) break;
+
+                    const count = await processLeadsForQuery(campaign, query, Math.min(15, stillNeeded), sweepId, sweepDate);
+                    campaignTotal += count;
+                }
             }
+
+            if (campaignTotal + user.leadsFoundToday >= target) {
+                logger.info(`✅ Campaign "${campaign.name}" hit target! ${campaignTotal} leads secured this cycle.`);
+            } else {
+                logger.warn(`⚠️ Campaign "${campaign.name}" ended at ${campaignTotal} leads after ${round} rounds.`);
+            }
+
             cycleSummary.push({ campaign: campaign.name, count: campaignTotal });
         }
+
         await cleanupDatabase();
         return cycleSummary;
     } catch (error) {
@@ -136,3 +170,4 @@ export async function triggerEngineCycle() {
         throw error;
     }
 }
+

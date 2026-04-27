@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { 
-  User, Mail, Crown, Calendar, Shield, 
+  User, Mail, Crown, Calendar, Shield, ShieldCheck,
   CreditCard, History, Loader2, ArrowRight, 
-  Zap, CheckCircle2, AlertCircle 
+  Zap, CheckCircle2, AlertCircle, Home, Compass
 } from "lucide-react";
 import { authJson } from "@/lib/api";
 
@@ -68,11 +68,11 @@ export default function ProfilePage() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-10">
         <div className="flex items-center gap-4">
           <div className="h-14 w-14 rounded-sm border border-white/5 flex items-center justify-center bg-primary/5">
-            <User className="h-6 w-6 text-primary" />
+            <Home className="h-6 w-6 text-primary" />
           </div>
           <div className="space-y-0.5">
             <h1 className="text-2xl font-black tracking-tighter gradient-text">Your Profile</h1>
-            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Manage your account details and secure access preferences.</p>
+            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Manage your account and settings here.</p>
           </div>
         </div>
         
@@ -85,7 +85,7 @@ export default function ProfilePage() {
             profile?.paymentStatus === 'active' ? "bg-emerald-500" : "bg-amber-500"
           }`} />
           <span className="text-[9px] font-black uppercase tracking-widest">
-            {profile?.paymentStatus === 'active' ? 'Active Membership' : 'Account Limited'}
+            {profile?.paymentStatus === 'active' ? 'Active Plan' : 'Basic Account'}
           </span>
         </div>
       </div>
@@ -108,11 +108,11 @@ export default function ProfilePage() {
             </div>
             
             <div className="flex items-center gap-4 p-4 rounded-sm bg-white/[0.01] border border-white/5">
-              <Crown className="h-4 w-4 text-primary/70" />
+              <Shield className="h-4 w-4 text-primary/70" />
               <div>
-                <p className="text-[8px] uppercase text-zinc-500 font-black tracking-widest">Growth Tier</p>
+                <p className="text-[8px] uppercase text-zinc-500 font-black tracking-widest">Current Plan</p>
                 <p className="text-xs font-black text-primary tracking-widest">
-                  {profile?.tier || 'FREE'} PLAN
+                  {profile?.tier || 'FREE'}
                 </p>
               </div>
             </div>
@@ -145,12 +145,12 @@ export default function ProfilePage() {
             <div className="flex-1 space-y-6">
               <div>
                 <p className="text-3xl font-black tracking-tighter">
-                  {profile?.tier === 'FREE' ? 'Free Discovery' : `${profile?.tier} Membership`}
+                  {profile?.tier === 'FREE' ? 'Free Plan' : `${profile?.tier} Plan`}
                 </p>
                 <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-wide mt-2 leading-relaxed max-w-md">
                   {profile?.tier === 'FREE' 
-                    ? "Upgrade to a professional plan to unlock higher discovery limits and premium targeting tools." 
-                    : "Your account is optimized for high-performance business discovery."}
+                    ? "Upgrade to a professional plan to unlock more leads and tools." 
+                    : "Your account is active and ready to find new leads."}
                 </p>
               </div>
 
@@ -162,9 +162,9 @@ export default function ProfilePage() {
                   </p>
                 </div>
                 <div className="p-4 rounded-sm bg-black/20 border border-white/5">
-                  <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-1">Security</p>
+                  <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-1">Safe</p>
                   <p className="text-xl font-black tracking-tight text-emerald-400/80 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" /> Verified
+                    <CheckCircle2 className="h-4 w-4" /> Yes
                   </p>
                 </div>
               </div>
@@ -175,7 +175,7 @@ export default function ProfilePage() {
                 onClick={() => window.location.href = '/billing'}
                 className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-all group"
               >
-                Go to Growth Settings <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                <Compass className="h-4 w-4" /> Billing Settings <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </div>
@@ -187,13 +187,13 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-zinc-400">
             <History className="h-4 w-4 text-primary" />
-            <h2 className="text-[10px] font-black uppercase tracking-widest">Billing History</h2>
+            <h2 className="text-[10px] font-black uppercase tracking-widest">Past Payments</h2>
           </div>
           <button 
             onClick={fetchData}
             className="text-[9px] font-black text-zinc-600 hover:text-white uppercase tracking-widest transition-colors"
           >
-            Update History
+            Refresh
           </button>
         </div>
 

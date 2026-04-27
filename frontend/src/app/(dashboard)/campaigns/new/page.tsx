@@ -2,16 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { 
-    ArrowLeft, 
-    Save, 
-    Zap, 
-    MapPin, 
-    User, 
-    Link,
     Briefcase,
-    Target,
+    Compass,
     Loader2,
-    CheckCircle2
+    CheckCircle2,
+    Shield,
+    Home,
+    MapPin,
+    Zap,
+    ShieldCheck,
+    ArrowLeft,
+    Save,
+    User,
+    Link,
+    MessageSquare,
+    Target
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -126,9 +131,12 @@ export default function NewCampaignPage() {
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <h1 className="text-5xl font-black tracking-tighter">Launch New Engine</h1>
-                    <p className="text-zinc-400 text-lg">Define your product and let the AI find your future customers.</p>
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
+                        <ShieldCheck className="h-4 w-4 glow-primary" /> Safe & Private
+                    </div>
+                    <h1 className="text-4xl font-black tracking-tightest gradient-text">New Search</h1>
+                    <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Set up a new search to find business leads.</p>
                 </div>
 
                 {error && (
@@ -143,13 +151,27 @@ export default function NewCampaignPage() {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-sm  -mr-32 -mt-32" />
                         
                         <div className="relative space-y-8">
+                            <button
+                                type="submit"
+                                onClick={handleSave}
+                                disabled={loading}
+                                className="w-full h-16 rounded-sm bg-primary text-white font-black text-[12px] uppercase tracking-[0.2em] hover:bg-primary-hover active:scale-[0.98] transition-all flex items-center justify-center gap-3 glow-primary shadow-xl shadow-primary/20"
+                            >
+                                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                                    <>
+                                        <Zap className="h-5 w-5" />
+                                        Start Search
+                                    </>
+                                )}
+                            </button> 
+                            
                             <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-sm bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                                    <Target className="h-6 w-6 text-white" />
+                                    <Shield className="h-6 w-6 text-white" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-bold">The Product Offer</h2>
-                                    <p className="text-zinc-400 text-sm">Tell the AI exactly what you are selling.</p>
+                                    <h2 className="text-2xl font-bold text-white">Your Business Offer</h2>
+                                    <p className="text-zinc-400 text-sm">Explain exactly what you are bringing to the market.</p>
                                 </div>
                             </div>
 
@@ -192,11 +214,11 @@ export default function NewCampaignPage() {
                     <section className="glass p-8 md:p-10 rounded-sm border border-white/5 space-y-8">
                         <div className="flex items-center gap-4">
                             <div className="h-12 w-12 rounded-sm bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
-                                <MapPin className="h-6 w-6" />
+                                <Compass className="h-6 w-6" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold">Target Market</h2>
-                                <p className="text-zinc-400 text-sm">Where should the AI hunt for these specific customers?</p>
+                                <h2 className="text-xl font-black text-white tracking-tight">Search Details</h2>
+                                <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest mt-1">Tell us who you are looking for.</p>
                             </div>
                         </div>
 
@@ -239,11 +261,11 @@ export default function NewCampaignPage() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-sm bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
-                                    <User className="h-6 w-6" />
+                                    <Home className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-bold">Sender Identity</h2>
-                                    <p className="text-zinc-400 text-sm">Synchronized with your Company Profile.</p>
+                                    <h2 className="text-2xl font-bold text-white">Verified Identity</h2>
+                                    <p className="text-zinc-400 text-sm">Your secure sender details, synced from your profile.</p>
                                 </div>
                             </div>
                         </div>
@@ -288,8 +310,8 @@ export default function NewCampaignPage() {
                         disabled={loading}
                         className="bg-primary hover:bg-primary-hover text-white px-12 py-5 rounded-sm font-black text-xl flex items-center gap-4  shadow-primary/40 disabled:opacity-50"
                     >
-                        {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Zap size={24} className="fill-white" />}
-                        {loading ? "INITIALIZING ENGINE..." : "DEPLOY CAMPAIGN"}
+                        {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <ShieldCheck size={24} className="glow-primary" />}
+                        {loading ? "INITIALIZING HUB..." : "DEPLOY DISCOVERY HUB"}
                     </motion.button>
                 </div>
             </div>

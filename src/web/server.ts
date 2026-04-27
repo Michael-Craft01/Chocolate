@@ -355,10 +355,10 @@ app.get('/api/leads/public/:id', async (req, res) => {
     }
 });
 
-// API: Export Leads as CSV (Document)
+// API: Export Leads (Document)
 app.get('/api/leads/export', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
-        const { campaignId } = req.query;
+        const { campaignId, format = 'csv' } = req.query;
         const leads = await prisma.lead.findMany({
             where: { 
                 campaign: { 
@@ -369,27 +369,38 @@ app.get('/api/leads/export', authenticate, async (req: AuthenticatedRequest, res
             include: { business: true }
         });
 
-        // Generate CSV Header
-        let csv = 'Company Name,Industry,Phone,Website,Pain Point,Suggested Message,Captured Date\n';
-        
-        // Add Rows
+        const filename = `leads_${campaignId || 'all'}_${new Date().toISOString().split('T')[0]}`;
+
+        if (format === 'json') {
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Content-Disposition', `attachment; filename=${filename}.json`);
+            return res.json(leads);
+        }
+
+        // CSV / Excel (Basic CSV)
+        let content = 'Company Name,Industry,Phone,Email,Website,Pain Point,Suggested Message,Captured Date\n';
         leads.forEach(l => {
             const row = [
                 `"${l.business.name.replace(/"/g, '""')}"`,
                 `"${l.industry}"`,
                 `"${l.business.phone || ''}"`,
+                `"${l.business.email || ''}"`,
                 `"${l.business.website || ''}"`,
                 `"${l.painPoint.replace(/"/g, '""')}"`,
                 `"${l.suggestedMessage.replace(/"/g, '""')}"`,
                 `"${l.createdAt.toISOString()}"`
             ];
-            csv += row.join(',') + '\n';
+            content += row.join(',') + '\n';
         });
 
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename=leads_${campaignId || 'all'}.csv`);
-        res.send(csv);
+        const contentType = format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv';
+        const extension = format === 'excel' ? 'xls' : 'csv';
+
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}.${extension}`);
+        res.send(content);
     } catch (error) {
+        logger.error({ error }, 'Export failed');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

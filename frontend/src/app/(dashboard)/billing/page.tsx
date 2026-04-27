@@ -2,7 +2,7 @@
 
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Check, Zap, Globe, ShieldCheck, CreditCard, Loader2, PartyPopper, AlertCircle, X, History, Sparkles, Lock, Home } from "lucide-react";
+import { Check, Zap, Compass, ShieldCheck, CreditCard, Loader2, PartyPopper, AlertCircle, X, History, Sparkles, Shield, Home } from "lucide-react";
 import { authJson } from "@/lib/api";
 import { motion } from "framer-motion";
 
@@ -11,7 +11,7 @@ const tiers = [
     name: "Starter",
     price: 20,
     leads: "50 Leads / day",
-    campaigns: "1 Engine",
+    campaigns: "1 Discovery Hub",
     features: ["Magic Link Emails", "Mobile-Ready View", "Standard Search Speed", "CSV Data Export"],
     color: "bg-white/5",
   },
@@ -19,7 +19,7 @@ const tiers = [
     name: "Professional",
     price: 49,
     leads: "200 Leads / day",
-    campaigns: "5 Engines",
+    campaigns: "5 Discovery Hubs",
     features: ["Discord Webhooks", "Magic Link Emails", "High-Speed Sweeps", "Priority AI Support"],
     color: "bg-primary/10 border-primary/20",
     popular: true,
@@ -28,7 +28,7 @@ const tiers = [
     name: "Elite",
     price: 300,
     leads: "1,000 Leads / day",
-    campaigns: "Unlimited Engines",
+    campaigns: "Unlimited Discovery Hubs",
     features: ["Instant WhatsApp Alerts", "Discord Webhooks", "Deep-Dive AI Intelligence", "24/7 Priority Support"],
     color: "bg-white/5",
   },
@@ -133,12 +133,12 @@ function BillingContent() {
             </div>
             <div>
               <p className="font-black text-xl tracking-tight">
-                {success ? "Handshake Successful" : "Access Canceled"}
+                {success ? "Payment Received" : "Payment Canceled"}
               </p>
               <p className="text-[13px] font-medium opacity-70 max-w-md leading-relaxed">
                 {success 
-                  ? "Your account is being updated. Your new capacity will be active in just a few moments." 
-                  : "The process was canceled. No changes were made to your account."}
+                  ? "Your account has been updated and your new plan is now active." 
+                  : "The process was canceled. No charges were made to your account."}
               </p>
             </div>
           </div>
@@ -150,11 +150,11 @@ function BillingContent() {
 
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
-          <ShieldCheck className="h-4 w-4 glow-primary" /> Growth Selection
+          <ShieldCheck className="h-4 w-4 glow-primary" /> Plans
         </div>
-        <h1 className="text-4xl font-black gradient-text tracking-tightest">Your Growth Plan</h1>
+        <h1 className="text-4xl font-black gradient-text tracking-tightest">Billing</h1>
         <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em] max-w-xl mx-auto">
-          Choose the right path for your business discovery needs.
+          Choose a plan that works for you.
         </p>
       </div>
 
@@ -167,7 +167,7 @@ function BillingContent() {
               gateway === "STRIPE" ? "bg-primary text-white glow-primary" : "text-zinc-500 hover:text-white hover:bg-white/5"
             }`}
           >
-            <Globe className="h-4 w-4" /> Global Trust (Credit Card)
+            <CreditCard className="h-4 w-4" /> Pay with Card (Stripe)
           </button>
           <button 
             onClick={() => setGateway("PAYNOW")}
@@ -175,7 +175,7 @@ function BillingContent() {
               gateway === "PAYNOW" ? "bg-primary text-white glow-primary" : "text-zinc-500 hover:text-white hover:bg-white/5"
             }`}
           >
-            <Lock className="h-4 w-4" /> Local Safety (Paynow)
+            <ShieldCheck className="h-4 w-4" /> Pay locally (Paynow)
           </button>
         </div>
       </div>
@@ -193,8 +193,14 @@ function BillingContent() {
                 Best Value
               </div>
             )}
-            <div className="mb-8">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-6">{tier.name}</h3>
+            <div className="mb-8 relative">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">{tier.name}</h3>
+                <div className="flex items-center gap-2 px-2 py-1 rounded-sm bg-white/5 border border-white/10">
+                  {gateway === "STRIPE" ? <Compass className="h-2.5 w-2.5 text-blue-400" /> : <ShieldCheck className="h-2.5 w-2.5 text-amber-400" />}
+                  <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400">{gateway}</span>
+                </div>
+              </div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-5xl font-black tracking-tightest text-white">${tier.price}</span>
                 <span className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest">/month</span>
@@ -203,12 +209,12 @@ function BillingContent() {
 
             <div className="space-y-4 mb-10 flex-1">
               <div className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.02] border border-white/5">
-                <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0" />
+                <Check className="h-5 w-5 text-emerald-400 shrink-0" />
                 <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-widest">{tier.leads}</span>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.02] border border-white/5">
-                <Home className="h-5 w-5 text-primary shrink-0 glow-primary" />
-                <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-widest">{tier.campaigns.replace('Engine', 'Discovery Hub')}</span>
+                <Compass className="h-5 w-5 text-primary shrink-0 glow-primary" />
+                <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-widest">{tier.campaigns.replace('Discovery Hub', 'Search Area')}</span>
               </div>
               <div className="pt-6 space-y-3">
                 {tier.features.map((f) => (
@@ -231,10 +237,10 @@ function BillingContent() {
                 <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Securing...</div>
               ) : (
                 <>
-                  <span>Choose {tier.name}</span>
+                  <span>Select {tier.name}</span>
                   <span className="text-[8px] tracking-[0.2em] opacity-70 normal-case font-bold flex items-center gap-1.5">
-                    <Lock className="h-2 w-2" />
-                    Secured by {gateway === "STRIPE" ? "Stripe" : "Paynow"}
+                    <ShieldCheck className="h-2 w-2" />
+                    Safe payment via {gateway === "STRIPE" ? "Stripe" : "Paynow"}
                   </span>
                 </>
               )}
@@ -249,12 +255,11 @@ function BillingContent() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
           <div className="space-y-4 max-w-lg text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-3 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
-              <CreditCard className="h-4 w-4 glow-primary" /> Quick Boost
+              <CreditCard className="h-4 w-4 glow-primary" /> Add More
             </div>
-            <h2 className="text-3xl font-black tracking-tight text-white">Extra Growth Credits</h2>
+            <h2 className="text-3xl font-black tracking-tight text-white">Extra Credits</h2>
             <p className="text-[13px] text-zinc-500 leading-relaxed font-medium">
-              Need to find more businesses today? Add a quick boost of discovery credits to your account.
-              Available instantly, no expiration.
+              Need to find more business leads today? Add credits to your account instantly.
             </p>
           </div>
           <div className="flex flex-col items-center gap-6 min-w-[240px]">
@@ -280,7 +285,7 @@ function BillingContent() {
           <div className="h-8 w-8 rounded-sm bg-white/5 flex items-center justify-center">
             <History className="h-4 w-4 text-primary" />
           </div>
-          <h2 className="text-xs font-black uppercase tracking-[0.2em]">Billing History</h2>
+          <h2 className="text-xs font-black uppercase tracking-[0.2em]">Past Payments</h2>
         </div>
         
         <div className="glass-card rounded-sm border border-white/5 overflow-hidden">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Command, Target, MessageSquare, Settings, Zap, History, X, User, LayoutDashboard, ChevronRight, SearchX, Heart, Home } from "lucide-react";
+import { Search, Command, Target, MessageSquare, Settings, Zap, History, X, User, LayoutDashboard, ChevronRight, SearchX, Heart, Home, Compass, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { authJson } from "@/lib/api";
@@ -33,8 +33,8 @@ export function CommandPalette() {
     try {
       const data = await authJson<any>(`/api/search?q=${val}`).catch(() => ({ leads: [], campaigns: [] }));
       const formatted = [
-        ...(data.campaigns || []).map((c: any) => ({ ...c, type: 'Discovery Hub', icon: Target })),
-        ...(data.leads || []).map((l: any) => ({ ...l, name: l.business?.name, type: 'Verified Lead', icon: MessageSquare }))
+        ...(data.campaigns || []).map((c: any) => ({ ...c, type: 'Discovery Hub', icon: Compass })),
+        ...(data.leads || []).map((l: any) => ({ ...l, name: l.business?.name, type: 'Lead Collection', icon: Shield }))
       ];
       setResults(formatted.slice(0, 8));
     } finally {
@@ -97,9 +97,9 @@ export function CommandPalette() {
                     <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] px-2">Quick Navigation</p>
                     <div className="grid grid-cols-2 gap-2">
                       {[
-                        { name: "Home Dashboard", href: "/dashboard", icon: LayoutDashboard },
-                        { name: "Discovery Hubs", href: "/campaigns", icon: Target },
-                        { name: "Lead Collection", href: "/leads", icon: Heart },
+                        { name: "Home Dashboard", href: "/dashboard", icon: Home },
+                        { name: "Discovery Hubs", href: "/campaigns", icon: Compass },
+                        { name: "Lead Collection", href: "/leads", icon: Shield },
                         { name: "Growth Plan", href: "/billing", icon: Zap },
                         { name: "My Profile", href: "/profile", icon: User },
                         { name: "Settings", href: "/settings", icon: Settings },

@@ -1,7 +1,5 @@
 import { logger } from '../lib/logger.js';
 import { playwrightScraper } from './playwrightScraper.js';
-import { serperScraper } from './serperScraper.js';
-import { config } from '../config.js';
 import type { ScrapedBusiness } from './playwrightScraper.js';
 
 export type { ScrapedBusiness };
@@ -12,8 +10,7 @@ export interface Scraper {
 
 export class Scraper {
     /**
-     * Scrapes businesses using the most reliable source available.
-     * Prioritizes API-based search to avoid bot detection/throttling.
+     * Scrapes businesses using the Playwright browser sweep.
      */
     async scrape(query: string, country: string = 'ZW', page: number = 1): Promise<ScrapedBusiness[]> {
         // DRY RUN: Return mock data if enabled
@@ -30,23 +27,10 @@ export class Scraper {
             ];
         }
 
-        // Prefer Serper for stability and high-volume cycles
-        if (config.SERPER_API_KEY) {
-            try {
-                const results = await serperScraper.scrape(query, country, page);
-                if (results.length > 0) {
-                    logger.info(`[SCRAPER] Successfully secured ${results.length} leads via high-reliability API.`);
-                    return results;
-                }
-            } catch (error: any) {
-                logger.warn(`[SCRAPER] API search failed, attempting browser sweep: ${error.message}`);
-            }
-        }
-
-        // 2. Fallback to Playwright (Browser Sweep)
+        // 1. Playwright (Browser Sweep)
         logger.info(`[SCRAPER] Launching Playwright browser sweep for: "${query}"...`);
         try {
-            results = await playwrightScraper.scrape(query, country);
+            const results = await playwrightScraper.scrape(query, country, page);
             logger.info(`[SCRAPER] Browser sweep complete. Found ${results.length} leads.`);
             return results;
         } catch (error: any) {

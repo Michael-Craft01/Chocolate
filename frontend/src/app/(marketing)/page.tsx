@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Zap, Target, ArrowRight, Brain, Cpu, MessageSquare, Check, Sparkles, Search, Heart } from "lucide-react";
+import { Zap, ArrowRight, Brain, Cpu, MessageSquare, Check, Sparkles, Search, Heart, Compass, Shield, Home } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
 import Hero from "@/components/landing/Hero";
@@ -20,30 +20,30 @@ export default function LandingPage() {
 
 const features = [
     {
-      title: "We find the leads",
-      desc: "Our engine scans the web to find businesses in your area and industry that actually need your services today.",
-      icon: Search,
-      color: "text-blue-400"
+      title: "Find Local Business",
+      desc: "We scan the web to find local businesses that are active and growing in your city.",
+      icon: Compass,
+      color: "text-primary"
     },
     {
-      title: "We understand them",
-      desc: "Our AI reads their business profiles to figure out their biggest problems, so you know exactly what to offer.",
-      icon: Heart,
-      color: "text-emerald-400"
+      title: "Smart Insights",
+      desc: "We analyze their business data to show you how you can help them grow.",
+      icon: Shield,
+      color: "text-primary"
     },
     {
-      title: "You connect and grow",
-      desc: "We give you their direct contact info and a perfect script to start a conversation and close the deal.",
-      icon: Zap,
+      title: "Direct Contact",
+      desc: "Get their direct contact info and a simple message to start the conversation.",
+      icon: Home,
       color: "text-primary"
     }
   ];
 
   const steps = [
-    { title: "Choose Your Market", desc: "Tell us the industry and city you want to target.", icon: Target },
-    { title: "Run the Search", desc: "We scan thousands of local business listings instantly.", icon: Search },
-    { title: "Get the Details", desc: "See their phone, email, and why they need your help.", icon: Check },
-    { title: "Start Growing", desc: "Reach out and turn leads into happy paying customers.", icon: Sparkles }
+    { title: "Choose Your Market", desc: "Select the industry and city you want to target.", icon: Compass },
+    { title: "Start Search", desc: "We find local businesses for you instantly.", icon: Shield },
+    { title: "Get Information", desc: "See their phone, email, and how you can help.", icon: Check },
+    { title: "Start Growing", desc: "Reach out and turn leads into happy customers.", icon: Sparkles }
   ];
 
   const people = [
@@ -51,6 +51,10 @@ const features = [
     { name: "Michael K.", role: "Sales Director", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&h=200&auto=format&fit=crop" },
     { name: "Elena R.", role: "Marketing Lead", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&h=200&auto=format&fit=crop" },
     { name: "David L.", role: "Business Owner", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&h=200&auto=format&fit=crop" },
+    { name: "Marcus T.", role: "Entrepreneur", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&h=200&auto=format&fit=crop" },
+    { name: "Aisha B.", role: "Creative Director", img: "https://images.unsplash.com/photo-1531123897727-8f129e16fd3c?q=80&w=200&h=200&auto=format&fit=crop" },
+    { name: "James W.", role: "Tech Recruiter", img: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=200&h=200&auto=format&fit=crop" },
+    { name: "Sofia G.", role: "Startup Founder", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&h=200&auto=format&fit=crop" },
   ];
 
   const pricing = [
@@ -58,66 +62,77 @@ const features = [
       name: "Starter", 
       price: "$20", 
       leads: "50 Leads / day", 
-      perks: ["Business Discovery", "Discord Alerts", "1 Discovery Hub", "CSV Data Export"] 
+      perks: ["Business Search", "Email Alerts", "1 Search Area", "CSV Data Export"] 
     },
     { 
       name: "Professional", 
       price: "$49", 
       leads: "200 Leads / day", 
-      perks: ["AI Problem Analysis", "Priority Discovery", "5 Discovery Hubs", "Email Support"], 
+      perks: ["Smart Insights", "Fast Search", "5 Search Areas", "Email Support"], 
       featured: true 
     },
     { 
       name: "Elite", 
       price: "$300", 
       leads: "1,000 Leads / day", 
-      perks: ["WhatsApp Notifications", "Full White-label", "Unlimited Hubs", "Dedicated Strategist"] 
+      perks: ["WhatsApp Alerts", "Full White-label", "Unlimited Searches", "Dedicated Support"] 
     }
   ];
 
   return (
     <div className="relative min-h-screen selection:bg-primary/30 font-sans">
       {/* Navbar */}
-      <nav className="fixed top-8 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl mx-auto px-8 py-4 flex items-center justify-between rounded-sm glass-card border-white/10 shadow-2xl backdrop-blur-2xl">
+      <nav className="fixed top-8 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl mx-auto px-8 py-4 flex items-center justify-between rounded-sm glass border-white/5 shadow-2xl backdrop-blur-3xl">
         <Link href="/" className="flex items-center gap-3 font-black text-xl tracking-tighter">
-          <div className="h-10 w-10 rounded-sm bg-primary flex items-center justify-center glow-primary">
-            <Zap className="h-5 w-5 text-white fill-white" />
+          <div className="h-10 w-10 rounded-sm bg-primary flex items-center justify-center border border-primary/20 orange-glow">
+             <Compass className="h-5 w-5 text-white" />
           </div>
-          <span>HyprLead</span>
+          <span className="text-white">HyprLead</span>
         </Link>
         <div className="hidden md:flex items-center gap-12 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">
-          <Link href="#features" className="hover:text-white transition-colors">How it works</Link>
-          <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
-          <Link href="#community" className="hover:text-white transition-colors">Community</Link>
+          <Link href="#features" className="hover:text-primary transition-colors">How it works</Link>
+          <Link href="#pricing" className="hover:text-primary transition-colors">Pricing</Link>
+          <Link href="#community" className="hover:text-primary transition-colors">Community</Link>
         </div>
-        <Link href={session ? "/dashboard" : "/login"} className="h-12 px-8 rounded-sm bg-white text-black text-[11px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center shadow-xl shadow-white/5">
+        <Link href={session ? "/dashboard" : "/login"} className="h-12 px-8 rounded-sm bg-primary text-white text-[11px] font-black uppercase tracking-widest hover:bg-primary-hover active:scale-[0.98] transition-all flex items-center justify-center shadow-xl shadow-primary/20 orange-glow">
           {session ? 'Dashboard' : 'Sign In'}
         </Link>
       </nav>
 
       <Hero />
 
-      {/* Social Proof Section */}
-      <section id="community" className="max-w-7xl mx-auto px-6 py-32 relative overflow-hidden">
+      {/* Office Lifestyle Section */}
+      <section id="workspace" className="max-w-7xl mx-auto px-6 py-32 relative overflow-hidden">
         <div className="absolute inset-0 -z-10 opacity-20">
           <img src="/images/office.png" className="w-full h-full object-cover" alt="Office Workspace" />
         </div>
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">Built for Growth.</h2>
-          <p className="text-zinc-500 max-w-xl mx-auto text-lg font-medium leading-relaxed">Join thousands of entrepreneurs who are already using HyprLead to scale their business.</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
-          {people.map((p, i) => (
-            <motion.div 
-              key={i}
-              whileHover={{ y: -10 }}
-              className="glass-card p-6 rounded-sm border border-white/5 text-center group"
-            >
-              <img src={p.img} alt={p.name} className="h-24 w-24 rounded-full mx-auto mb-6 object-cover border-2 border-primary/20 group-hover:border-primary transition-colors" />
-              <h4 className="font-black text-white text-lg tracking-tight">{p.name}</h4>
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mt-1">{p.role}</p>
-            </motion.div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+          <div className="space-y-8">
+            <h2 className="text-5xl md:text-7xl font-black tracking-tightest leading-none">
+              A workspace <br />
+              <span className="text-primary">built for clarity.</span>
+            </h2>
+            <p className="text-zinc-500 text-lg font-medium leading-relaxed max-w-lg">
+              HyprLead is a professional search center designed to help you focus on what matters: building real relationships with the right businesses.
+            </p>
+            <div className="flex items-center gap-10 pt-6">
+              <div>
+                <div className="text-4xl font-black text-white tracking-tighter">1,000+</div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mt-1">Users</div>
+              </div>
+              <div className="h-12 w-px bg-white/10" />
+              <div>
+                <div className="text-4xl font-black text-white tracking-tighter">50k+</div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mt-1">Leads Found</div>
+              </div>
+            </div>
+          </div>
+          <div className="relative">
+            <div className="glass-card rounded-sm border border-white/10 overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-700">
+               <img src="/images/entrepreneur.png" className="w-full h-auto object-cover" alt="Entrepreneur working" />
+            </div>
+            <div className="absolute -bottom-10 -left-10 h-32 w-32 bg-primary/20 rounded-full blur-3xl" />
+          </div>
         </div>
       </section>
 
@@ -180,9 +195,9 @@ const features = [
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto">
           {pricing.map((p, i) => (
-            <div key={i} className={`glass-card rounded-sm p-12 relative overflow-hidden flex flex-col ${p.featured ? 'border-primary/30 shadow-[0_0_80px_-12px_rgba(59,130,246,0.3)]' : 'border-white/5'}`}>
+            <div key={i} className={`glass-card rounded-sm p-12 relative overflow-hidden flex flex-col ${p.featured ? 'border-primary/30 shadow-[0_0_80px_-12px_rgba(255,109,41,0.2)]' : 'border-white/5'}`}>
               {p.featured && (
-                <div className="absolute top-0 right-0 px-6 py-2 bg-primary text-[10px] font-black uppercase tracking-[0.25em] text-white">
+                <div className="absolute top-0 right-0 px-6 py-2 bg-primary text-[10px] font-black uppercase tracking-[0.25em] text-white orange-glow">
                   Most Popular
                 </div>
               )}
@@ -194,12 +209,12 @@ const features = [
               <div className="flex flex-col gap-6 mb-14 flex-grow">
                 {p.perks.map((perk, j) => (
                   <div key={j} className="flex items-center gap-4 text-[13px] text-zinc-400 font-bold uppercase tracking-tight">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <Check className="h-4 w-4 text-primary shrink-0" />
                     {perk}
                   </div>
                 ))}
               </div>
-              <Link href="/dashboard" className={`w-full h-16 rounded-sm flex items-center justify-center font-black text-[12px] uppercase tracking-widest transition-all ${p.featured ? 'bg-primary text-white glow-primary hover:scale-[1.02]' : 'bg-white text-black hover:bg-zinc-200 shadow-xl shadow-white/5'}`}>
+              <Link href="/dashboard" className={`w-full h-16 rounded-sm flex items-center justify-center font-black text-[12px] uppercase tracking-widest transition-all ${p.featured ? 'bg-primary text-white glow-primary hover:scale-[1.02] shadow-xl shadow-primary/20' : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'}`}>
                 Get Started
               </Link>
             </div>
@@ -214,7 +229,7 @@ const features = [
              <Zap className="h-6 w-6 text-primary fill-primary" />
              <span>HyprLead</span>
            </div>
-           <div className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.3em]">© 2026 HyprLead Growth Engine. All Rights Reserved.</div>
+           <div className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.3em]">© 2026 HyprLead. All Rights Reserved.</div>
            <div className="flex gap-12">
               <Link href="#" className="text-[10px] text-zinc-600 hover:text-white transition-colors uppercase font-black tracking-[0.3em]">Terms</Link>
               <Link href="#" className="text-[10px] text-zinc-600 hover:text-white transition-colors uppercase font-black tracking-[0.3em]">Privacy</Link>

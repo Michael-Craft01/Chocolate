@@ -14,7 +14,9 @@ import {
   Building2,
   ShieldCheck,
   Webhook,
-  MapPin
+  MapPin,
+  Home,
+  Compass
 } from "lucide-react";
 import { authJson } from "@/lib/api";
 import { motion } from "framer-motion";
@@ -121,7 +123,7 @@ export default function SettingsPage() {
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-primary/5 border border-primary/10 flex items-center justify-center text-primary glow-primary">
-              <Building2 size={20} />
+              <Home size={20} />
             </div>
             <h2 className="text-sm font-black uppercase tracking-widest text-white">Business Profile</h2>
           </div>
@@ -188,7 +190,7 @@ export default function SettingsPage() {
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center text-emerald-400">
-              <Globe size={20} />
+              <Compass size={20} />
             </div>
             <h2 className="text-sm font-black uppercase tracking-widest text-white">Default Targeting</h2>
           </div>

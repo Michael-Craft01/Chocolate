@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Zap, Radar, Shield, Search, ShieldCheck, Heart, Home } from "lucide-react";
+import { Zap, Radar, Shield, Compass, ShieldCheck, Home } from "lucide-react";
 
 export function NeuralPulse() {
   return (
@@ -12,7 +12,7 @@ export function NeuralPulse() {
           key={i}
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ 
-            opacity: [0, 0.2, 0], 
+            opacity: [0, 0.15, 0], 
             scale: [0.8, 1.8],
           }}
           transition={{
@@ -21,7 +21,7 @@ export function NeuralPulse() {
             delay: i * 1.3,
             ease: "easeOut"
           }}
-          className="absolute h-64 w-64 rounded-full border border-primary/20"
+          className="absolute h-64 w-64 rounded-full border border-primary/10"
         />
       ))}
 
@@ -37,49 +37,50 @@ export function NeuralPulse() {
       <motion.div
         animate={{ 
           boxShadow: [
-            "0 0 20px rgba(59,130,246,0.1)",
-            "0 0 40px rgba(59,130,246,0.3)",
-            "0 0 20px rgba(59,130,246,0.1)"
+            "0 0 20px rgba(255, 109, 41, 0.05)",
+            "0 0 40px rgba(255, 109, 41, 0.15)",
+            "0 0 20px rgba(255, 109, 41, 0.05)"
           ]
         }}
         transition={{ duration: 3, repeat: Infinity }}
-        className="relative z-10 h-28 w-28 rounded-3xl glass-card border border-primary/30 flex items-center justify-center group cursor-pointer bg-primary/5"
+        className="relative z-10 h-32 w-32 rounded-[2rem] glass-card border border-primary/20 flex items-center justify-center group cursor-pointer bg-primary/5 shadow-2xl"
       >
-        <Home className="h-12 w-12 text-primary fill-primary/10 group-hover:scale-110 transition-transform glow-primary" />
+        <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-primary/10 to-secondary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <Home className="h-14 w-14 text-primary fill-primary/10 group-hover:scale-110 transition-transform glow-primary orange-glow" />
         
         {/* Floating Intelligence Nodes */}
         <motion.div 
-          animate={{ y: [-12, 12, -12], x: [12, -12, 12] }}
+          animate={{ y: [-15, 15, -15], x: [15, -15, 15] }}
           transition={{ duration: 5, repeat: Infinity }}
-          className="absolute -top-14 -right-10 p-3 rounded-xl glass-card border border-white/10 shadow-xl"
+          className="absolute -top-16 -right-12 p-3.5 rounded-2xl glass-card border border-white/10 shadow-2xl bg-white/[0.02]"
         >
-          <Search className="h-4 w-4 text-primary" />
+          <Compass className="h-5 w-5 text-primary" />
         </motion.div>
         
         <motion.div 
-          animate={{ y: [12, -12, 12], x: [-12, 12, -12] }}
+          animate={{ y: [15, -15, 15], x: [-15, 15, -15] }}
           transition={{ duration: 6, repeat: Infinity }}
-          className="absolute -bottom-12 -left-8 p-3 rounded-xl glass-card border border-white/10 shadow-xl"
+          className="absolute -bottom-14 -left-10 p-3.5 rounded-2xl glass-card border border-white/10 shadow-2xl bg-white/[0.02]"
         >
-          <Heart className="h-4 w-4 text-emerald-400" />
+          <Shield className="h-5 w-5 text-emerald-400" />
         </motion.div>
 
         <motion.div 
-          animate={{ opacity: [0.3, 1, 0.3] }}
+          animate={{ opacity: [0.4, 1, 0.4], scale: [0.8, 1.2, 0.8] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute -top-1 -right-1 h-3 w-3 bg-emerald-500 rounded-full border-2 border-[#050505] shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+          className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-emerald-500 rounded-full border-2 border-background shadow-[0_0_15px_rgba(16,185,129,0.5)]"
         />
       </motion.div>
 
       {/* Status Indicators */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6">
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Discovery Sync: Active</span>
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-8">
+        <div className="flex items-center gap-2.5">
+          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse glow-primary" />
+          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500">Sync: Active</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Response Integrity: 100%</span>
+        <div className="flex items-center gap-2.5">
+          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse orange-glow" />
+          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500">Engine: Online</span>
         </div>
       </div>
     </div>

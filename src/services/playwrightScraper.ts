@@ -41,131 +41,114 @@ export class PlaywrightScraper {
         const context = await this.browser!.newContext({
             locale: 'en-US',
             timezoneId: 'Africa/Harare',
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            extraHTTPHeaders: {
+                'Accept-Language': 'en-US,en;q=0.9',
+            }
         });
         
         const p = await context.newPage();
+        // Hide webdriver flag
+        await p.addInitScript(() => {
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+        });
         const results: ScrapedBusiness[] = [];
         
         try {
             logger.info(`[ENGINE] High-Fidelity Lead Extraction: ${query}...`);
             
-            // --- SOURCE 1: Google (Primary) ---
+            // --- PRIMARY: DuckDuckGo (bot-friendly, no CAPTCHA) ---
             try {
-                // Calculate Google Search pagination offset
                 const startOffset = (page - 1) * 10;
-                const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query + ' ' + country)}&hl=en&gl=ZW&start=${startOffset}`;
+                const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query + ' Zimbabwe')}&s=${startOffset}`;
                 
-                logger.info(`[PLAYWRIGHT] Scraping: ${query} (Page: ${page}, Offset: ${startOffset})`);
-                await p.goto(googleUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-                await p.waitForTimeout(5000); 
+                logger.info(`[PLAYWRIGHT] Scraping DDG: ${query} (Page: ${page}, Offset: ${startOffset})`);
+                await p.goto(ddgUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+                await p.waitForTimeout(2000);
 
-                // DIAGNOSTIC SCREENSHOT
+                // Diagnostic screenshot
                 const diagPath = `c:\\Users\\kudzi\\OneDrive\\Documents\\Chocolate-1\\google_diag.png`;
                 await p.screenshot({ path: diagPath });
                 logger.info(`[DIAG] Search screenshot saved to ${diagPath}`);
 
-                const googleLeads = await p.evaluate((junkDomains) => {
+                const ddgLeads = await p.evaluate((junkDomains) => {
                     const leads: any[] = [];
-                    const textContent = document.body.innerText;
-                    const phones = textContent.match(/(\+263|071|077|078|09)\s?\d[\d\s-]{6,}\d/g) || [];
-                    
                     const JUNK_KEYWORDS = [
-                        'how to', 'best', 'top', 'guide', 'list', 'review', 'blog', 
-                        'tips', 'cheap', 'free', 'online', 'directory', 'companies in',
-                        'news', 'article', 'find', 'buy', 'shop', 'deals', 'discount'
+                        'how to', 'wikipedia', 'quora', 'reddit', 'what is', 'definition',
+                        'government', 'ministry', 'university', 'school', 'college'
                     ];
 
-                    // 1. Organic Results Sweep
-                    document.querySelectorAll('h3').forEach(h3 => {
-                        const linkEl = h3.closest('a') || (h3.parentElement as any)?.querySelector('a');
-                        if (linkEl) {
-                            let rawName = h3.innerText.trim();
-                            let name = rawName
-                                .split(' - ')[0]
-                                .split(' | ')[0]
-                                .split(' : ')[0]
-                                .split(' – ')[0]
-                                .trim();
+                    // DuckDuckGo HTML version uses .result__title > a
+                    const resultLinks = document.querySelectorAll('.result__title a, .result__a, h2 a[href]');
+                    resultLinks.forEach(el => {
+                        let name = (el as HTMLElement).innerText
+                            .split(' - ')[0].split(' | ')[0].split(' : ')[0]
+                            .split(' – ')[0].trim();
 
-                            // JUNK FILTERING
-                            const lowerName = name.toLowerCase();
-                            const isJunkKeyword = JUNK_KEYWORDS.some(k => lowerName.includes(k));
-                            const hasPunctuation = /[:\?\!\n]/.test(name); // Reject titles with questions or multiple lines
-                            
-                            if (isJunkKeyword || hasPunctuation || name.split(/\s+/).length > 8) {
-                                return;
-                            }
-                            if (name.length > 50 || name.length < 3) return;
+                        const lowerName = name.toLowerCase();
+                        const isJunk = JUNK_KEYWORDS.some(k => lowerName.includes(k));
+                        if (isJunk || name.length < 3 || name.length > 70) return;
+                        if (name.split(/\s+/).length > 12) return;
 
-                            const website = linkEl.href;
-                            const isJunkDomain = junkDomains.some((d: string) => website.includes(d));
-                            
-                            if (website && !isJunkDomain && website.startsWith('http')) {
-                                leads.push({ name, website, phone: phones[0] || null });
-                            }
+                        // Get URL from data-href or href
+                        const href = (el as HTMLAnchorElement).href || '';
+                        const isJunkDomain = junkDomains.some((d: string) => href.includes(d));
+                        if (href && !isJunkDomain && (href.startsWith('http') || href.startsWith('/'))) {
+                            const website = href.startsWith('/') ? '' : href;
+                            leads.push({ name, website: website || null });
                         }
                     });
-
-                    // 2. AI Overview / SGE Squeeze (if present)
-                    // Usually bold names in bullet points or carousel cards
-                    document.querySelectorAll('div[data-entityname], b, strong').forEach(el => {
-                        const text = el.innerText.trim();
-                        if (text.length > 3 && text.length < 40 && !text.includes('Google')) {
-                            // Only add if it looks like a brand (Title Case)
-                            if (/^[A-Z][a-z]+(\s[A-Z][a-z]+)*$/.test(text)) {
-                                leads.push({ name: text, category: 'AI Intelligence' });
-                            }
-                        }
-                    });
-
                     return leads;
                 }, JUNK_DOMAINS);
 
-                for (const r of googleLeads) {
-                    if (r.name && !results.some(existing => existing.name === r.name)) {
-                        results.push({ ...r, category: 'Google Intelligence' });
+                for (const r of ddgLeads) {
+                    if (r.name && !results.some(e => e.name === r.name)) {
+                        results.push({ ...r, category: 'DuckDuckGo Intelligence' });
                     }
                 }
-            } catch (e) {
-                logger.warn('⚠️ Google extraction throttled');
+            } catch (e: any) {
+                logger.warn(`⚠️ DuckDuckGo sweep failed: ${e.message}`);
             }
 
-            // --- SOURCE 2: DuckDuckGo (High Privacy / Throttling Resistant) ---
-            if (results.length < 5) {
+            // --- FALLBACK: Bing (if DDG yields nothing) ---
+            if (results.length < 3) {
                 try {
-                    const ddgUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query + ' ' + country)}&kl=zw-en`;
-                    await p.goto(ddgUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
-                    await p.waitForTimeout(3000); 
+                    const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(query + ' Zimbabwe')}&first=${(page - 1) * 10 + 1}`;
+                    await p.goto(bingUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+                    await p.waitForTimeout(2000);
 
-                    const ddgLeads = await p.evaluate((junkDomains) => {
+                    const bingLeads = await p.evaluate((junkDomains) => {
                         const leads: any[] = [];
-                        document.querySelectorAll('h2 a').forEach(el => {
+                        const textContent = document.body.innerText;
+                        const phones = textContent.match(/(\+263|071|077|078|09)\s?\d[\d\s-]{6,}\d/g) || [];
+                        const JUNK_KEYWORDS = [
+                            'how to', 'wikipedia', 'quora', 'reddit', 'what is', 'definition',
+                            'government', 'ministry', 'university', 'school', 'college'
+                        ];
+
+                        document.querySelectorAll('h2 a, .b_algo h2 a').forEach(el => {
                             let name = (el as HTMLElement).innerText
-                                .split(' - ')[0]
-                                .split(' | ')[0]
-                                .split(' : ')[0]
-                                .trim();
+                                .split(' - ')[0].split(' | ')[0].split(' : ')[0].trim();
+                            const lowerName = name.toLowerCase();
+                            const isJunk = JUNK_KEYWORDS.some(k => lowerName.includes(k));
+                            if (isJunk || name.length < 3 || name.length > 70) return;
 
-                            if (name.split(/\s+/).length > 10) return;
-
-                            const website = (el as HTMLAnchorElement).href;
-                            const isJunk = junkDomains.some((d: string) => website.includes(d));
-                            
-                            if (website && !isJunk && website.startsWith('http')) {
-                                leads.push({ name, website });
+                            const href = (el as HTMLAnchorElement).href || '';
+                            const isJunkDomain = junkDomains.some((d: string) => href.includes(d));
+                            if (href && !isJunkDomain && href.startsWith('http')) {
+                                leads.push({ name, website: href, phone: phones[0] || null });
                             }
                         });
                         return leads;
                     }, JUNK_DOMAINS);
 
-                    for (const r of ddgLeads) {
-                        if (r.name && !results.some(existing => existing.name === r.name)) {
-                            results.push({ ...r, category: 'Secondary Sweep' });
+                    for (const r of bingLeads) {
+                        if (r.name && !results.some(e => e.name === r.name)) {
+                            results.push({ ...r, category: 'Bing Intelligence' });
                         }
                     }
                 } catch (e) {
-                    logger.warn('⚠️ Secondary sweep failed');
+                    logger.warn('⚠️ Bing fallback failed');
                 }
             }
             

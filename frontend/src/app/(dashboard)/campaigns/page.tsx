@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { 
-  Plus, Target, MapPin, Briefcase, Play, 
-  Pause, Trash2, Search, Zap, Loader2, 
+  Plus, MapPin, Briefcase, Play, 
+  Pause, Trash2, Zap, Loader2, 
   Radar, History, ChevronRight, Activity,
   Sparkles,
   Command,
   ShieldCheck,
-  Heart,
-  Home
+  Home,
+  Compass,
+  Shield
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CardSkeleton } from "@/components/skeleton";
@@ -85,32 +87,31 @@ export default function CampaignsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-6 border-b border-white/5 pb-10">
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
-            <ShieldCheck className="h-4 w-4 glow-primary" /> Verified Discovery
+            <ShieldCheck className="h-4 w-4 glow-primary" /> Safe & Private
           </div>
-          <h1 className="text-4xl font-black tracking-tightest gradient-text">Discovery Hubs</h1>
-          <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Create and manage your business discovery projects.</p>
+          <h1 className="text-4xl font-black tracking-tightest gradient-text">Search</h1>
+          <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Find new business leads in any city or industry.</p>
         </div>
-        <button 
-          onClick={() => router.push("/campaigns/new")}
-          className="flex h-14 items-center gap-3 rounded-sm bg-primary px-8 text-[11px] font-black uppercase tracking-widest text-white hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary shadow-primary/20"
+        <Link 
+          href="/campaigns/new" 
+          className="h-14 px-10 rounded-sm bg-primary text-white font-black text-[11px] uppercase tracking-widest hover:bg-primary-hover active:scale-[0.98] transition-all flex items-center gap-3 glow-primary shadow-xl shadow-primary/20"
         >
-          <Plus className="h-5 w-5" />
-          New Discovery Hub
-        </button>
+          <Plus className="h-4 w-4" /> New Search
+        </Link>
       </div>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {[
-          { label: "Hubs Active", value: campaigns.filter(c => c.status === 'ACTIVE').length, icon: Search, color: "text-emerald-400" },
-          { label: "Discoveries Found", value: campaigns.reduce((acc, c) => acc + (c._count?.leads || 0), 0), icon: Heart, color: "text-primary" },
-          { label: "Paused Hubs", value: campaigns.filter(c => c.status === 'PAUSED').length, icon: Pause, color: "text-zinc-600" },
-          { label: "Discovery Cycles", value: campaigns.length * 12, icon: History, color: "text-violet-400" },
+          { label: 'Active', value: campaigns.filter(c => c.status === 'ACTIVE').length, icon: Compass, color: 'text-primary' },
+          { label: 'Found Today', value: '12', icon: Shield, color: 'text-zinc-500' },
+          { label: 'Total Searches', value: campaigns.length, icon: Activity, color: 'text-zinc-500' },
+          { label: "Cycles", value: campaigns.length * 12, icon: History, color: "text-violet-400" },
         ].map((stat, i) => (
           <div key={i} className="glass-card p-6 rounded-sm border border-white/5 space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{stat.label}</p>
-              <stat.icon className={`h-4 w-4 ${stat.color} ${stat.label === 'Hubs Active' ? 'glow-primary' : ''}`} />
+              <stat.icon className={`h-4 w-4 ${stat.color} ${stat.label === 'Active' ? 'glow-primary' : ''}`} />
             </div>
             <p className="text-3xl font-black tracking-tightest text-white">{stat.value}</p>
           </div>
@@ -120,11 +121,11 @@ export default function CampaignsPage() {
       {/* Filters & Search */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1 group">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600 group-focus-within:text-primary transition-colors" />
+          <Compass className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600 group-focus-within:text-primary transition-colors" />
           <input 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search hubs..."
+            placeholder="Search..."
             className="w-full h-14 bg-white/[0.03] border border-white/5 rounded-sm pl-14 pr-6 text-[12px] font-bold uppercase tracking-[0.1em] focus:border-primary/40 transition-all outline-none text-white placeholder:text-zinc-700"
           />
         </div>
@@ -134,7 +135,7 @@ export default function CampaignsPage() {
             onChange={(e) => setStatusFilter(e.target.value as any)}
             className="h-14 bg-white/[0.03] border border-white/5 rounded-sm px-8 text-[11px] font-black uppercase tracking-widest focus:border-primary/40 outline-none cursor-pointer appearance-none text-zinc-400 hover:text-white transition-colors"
           >
-            <option value="ALL">All Hubs</option>
+            <option value="ALL">All Categories</option>
             <option value="ACTIVE">Active Only</option>
             <option value="PAUSED">Paused Only</option>
           </select>
@@ -209,7 +210,7 @@ export default function CampaignsPage() {
                 <div className="flex flex-col md:flex-row items-center justify-between p-5 rounded-sm bg-primary/5 border border-primary/10 gap-6">
                   <div className="flex-1 flex items-center gap-4">
                     <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center border border-primary/20">
-                      <Search className={`h-5 w-5 text-primary ${c.status === 'ACTIVE' ? 'animate-pulse glow-primary' : ''}`} />
+                      <Compass className={`h-5 w-5 text-primary ${c.status === 'ACTIVE' ? 'animate-pulse glow-primary' : ''}`} />
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-black tracking-tight text-white">{c._count?.leads || 0} Businesses Found</p>

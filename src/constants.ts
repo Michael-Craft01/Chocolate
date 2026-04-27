@@ -236,21 +236,7 @@ export const QUERY_TEMPLATES = [
     'industrial {industry} {location}',
     '{industry} distribution center {location}',
     '{industry} headquarters {location}',
-    '{industry} regional office {location}',
     'major {industry} players {location}',
-    'enterprise {industry} solutions {location}',
-    
-    // --- CONTACT-OPTIMIZED (FINDING DATA) ---
-    '{industry} {location} contact us',
-    '{industry} {location} "whatsapp"',
-    '{industry} {location} "phone number"',
-    '{industry} {location} "email us"',
-    '{industry} {location} "get a quote"',
-    
-    // --- DIRECTORY & AGGREGATOR BYPASS ---
-    '{industry} {location} "powered by" -directory',
-    '{industry} {location} "copyright 2024" "2025"',
-    '{industry} {location} "about our company"',
     
     // --- HYPER-LOCAL ---
     '{industry} nearby {location}',

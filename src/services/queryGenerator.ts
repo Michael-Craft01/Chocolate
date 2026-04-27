@@ -2,6 +2,7 @@ import prisma from '../lib/prisma.js';
 import { LOCATIONS_ZW, INDUSTRIES, QUERY_TEMPLATES } from '../constants.js';
 import { logger } from '../lib/logger.js';
 import { config } from '../config.js';
+import { aiService } from './aiService.js';
 
 export interface QueryData {
     query: string;
@@ -28,8 +29,8 @@ FORMAT: Respond with a comma-separated list only.
 <start_of_turn>model`;
             const result = await aiService['model'].generateContent(prompt);
             const text = (await result.response).text();
-            const locs = text.split(',').map(l => l.trim()).filter(l => l.length > 0);
-            locs.forEach(l => expanded.add(l));
+            const locs = text.split(',').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+            locs.forEach((l: string) => expanded.add(l));
         } catch (err) {
             logger.error({ err }, 'Location expansion failed');
         }
@@ -42,7 +43,7 @@ FORMAT: Respond with a comma-separated list only.
         try {
             const prompt = `<start_of_turn>user
 SYSTEM: You are a market intelligence strategist.
-TASK: Expand these base industries into 10 highly specific, high-intent sub-niches each.
+TASK: Expand these base industries into 5 broad, commonly searched local business categories.
 BASE INDUSTRIES: ${baseIndustries.join(', ')}
 
 FORMAT: Respond with a comma-separated list of niches only. No other text.
@@ -51,8 +52,8 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
             
             const result = await aiService['model'].generateContent(prompt);
             const text = (await result.response).text();
-            const niches = text.split(',').map(n => n.trim()).filter(n => n.length > 0);
-            niches.forEach(n => expanded.add(n));
+            const niches = text.split(',').map((n: string) => n.trim()).filter((n: string) => n.length > 0);
+            niches.forEach((n: string) => expanded.add(n));
         } catch (err) {
             logger.error({ err }, 'Niche expansion failed, using base industries');
         }
@@ -175,7 +176,7 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
 
     private getRandomItem<T>(array: T[]): T {
         const item = array[Math.floor(Math.random() * array.length)];
-        if (!item) throw new Error('Random item selection failed: array might be empty');
+        if (item === undefined) throw new Error('Random item selection failed: array might be empty');
         return item;
     }
 }
