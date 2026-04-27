@@ -12,7 +12,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/skeleton";
 import { EmptyState } from "@/components/empty-state";
-import { authJson } from "@/lib/api";
+import { authJson, getApiBaseUrl } from "@/lib/api";
+import { createClient } from "@/lib/supabase";
 import type { Lead, PaginationMeta, Campaign } from "@/lib/types";
 import { fetchLeads as fetchLeadList } from "@/lib/services/leads";
 import { fetchCampaigns } from "@/lib/services/campaigns";
@@ -129,10 +130,21 @@ export default function LeadsPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const exportLeads = (format: string) => {
-    const token = localStorage.getItem("token");
+  const exportLeads = async (format: string) => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    
+    if (!token) {
+      alert("Session expired. Please log in again.");
+      return;
+    }
+
     const filter = selectedCampaignId === "ALL" ? "" : `?campaignId=${selectedCampaignId}`;
-    window.open(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005"}/api/leads/export${filter}${filter ? "&" : "?"}token=${token}&format=${format}`, "_blank");
+    const baseUrl = getApiBaseUrl();
+    const url = `${baseUrl}/api/leads/export${filter}${filter ? "&" : "?"}token=${encodeURIComponent(token)}&format=${format}`;
+    
+    window.open(url, "_blank");
     setShowExportOptions(false);
   };
 
@@ -218,9 +230,9 @@ export default function LeadsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: "Total Leads", value: pagination.totalLeads, icon: Users, color: "text-primary" },
-            { label: "Today", value: todayLeads, icon: Zap, color: "text-emerald-400" },
-            { label: "Sweep Cycles", value: totalSweeps, icon: RefreshCw, color: "text-blue-400" },
-            { label: "Days Active", value: dayGroups.length, icon: Calendar, color: "text-violet-400" },
+            { label: "Today", value: todayLeads, icon: Zap, color: "text-white" },
+            { label: "Sweep Cycles", value: totalSweeps, icon: RefreshCw, color: "text-primary" },
+            { label: "Days Active", value: dayGroups.length, icon: Calendar, color: "text-zinc-300" },
           ].map(({ label, value, icon: Icon, color }) => (
             <div key={label} className="glass-card rounded-sm border border-white/5 p-4 flex items-center gap-4">
               <div className={`h-9 w-9 rounded-sm bg-white/[0.03] border border-white/5 flex items-center justify-center ${color}`}>
@@ -292,7 +304,7 @@ export default function LeadsPage() {
                       <span className="text-[11px] font-black uppercase tracking-widest text-white">{formatDay(day.date)}</span>
                       <div className="h-3 w-[1px] bg-white/10" />
                       <span className="text-[10px] font-black text-zinc-500">
-                        <span className="text-primary">{day.total}</span> leads · <span className="text-blue-400">{day.sweeps.length}</span> cycle{day.sweeps.length !== 1 ? "s" : ""}
+                        <span className="text-primary">{day.total}</span> leads · <span className="text-white">{day.sweeps.length}</span> cycle{day.sweeps.length !== 1 ? "s" : ""}
                       </span>
                       {expandedDays.has(day.dayKey) ? <ChevronUp className="h-3 w-3 text-zinc-600" /> : <ChevronDown className="h-3 w-3 text-zinc-600" />}
                     </div>
@@ -414,7 +426,7 @@ function LeadCard({ lead, idx, expanded, copied, onExpand, onCopy, onDelete }: {
               {lead.business.phone && (
                 <>
                   <span className="text-zinc-700">·</span>
-                  <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-1">
+                  <span className="text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-1">
                     <Phone className="h-2.5 w-2.5" /> has phone
                   </span>
                 </>
@@ -490,7 +502,7 @@ function LeadCard({ lead, idx, expanded, copied, onExpand, onCopy, onDelete }: {
                     <button
                       onClick={onCopy}
                       className={`flex-1 h-10 rounded-sm font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                        copied ? "bg-emerald-500 text-white" : "bg-white text-black hover:bg-zinc-100"
+                        copied ? "bg-primary text-white" : "bg-white text-black hover:bg-zinc-100"
                       }`}
                     >
                       {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -506,7 +518,7 @@ function LeadCard({ lead, idx, expanded, copied, onExpand, onCopy, onDelete }: {
                     )}
                     <button
                       onClick={onDelete}
-                      className="h-10 w-10 rounded-sm bg-white/[0.03] border border-white/5 flex items-center justify-center text-zinc-600 hover:text-red-500 hover:border-red-500/20 transition-all"
+                      className="h-10 w-10 rounded-sm bg-white/[0.03] border border-white/5 flex items-center justify-center text-zinc-600 hover:text-primary hover:border-primary/20 transition-all"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

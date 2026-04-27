@@ -105,6 +105,17 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
         const rangeLimit = new Date(now.getTime() - config.ROTATION_PERIOD_DAYS * 24 * 60 * 60 * 1000);
         const queries: QueryData[] = [];
 
+        // 1. Fetch all existing history for this campaign in ONE go to save connections
+        const allHistory = await prisma.queryHistory.findMany({
+            where: { campaignId: campaignId || null as any }
+        });
+
+        // 2. Map it for fast lookup
+        const historyMap = new Map();
+        allHistory.forEach(h => {
+            historyMap.set(`${h.location}:${h.industry}`, h);
+        });
+
         const shuffledLocations = this.shuffle([...locations]);
         const shuffledIndustries = this.shuffle([...industries]);
 
@@ -114,15 +125,7 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
             for (const industry of shuffledIndustries) {
                 if (queries.length >= maxQueries) break;
 
-                const recentHistory = await prisma.queryHistory.findUnique({
-                    where: {
-                        location_industry_campaignId: {
-                            location,
-                            industry,
-                            campaignId: campaignId || null as any
-                        },
-                    },
-                });
+                const recentHistory = historyMap.get(`${location}:${industry}`);
 
                 if (!recentHistory || recentHistory.createdAt < rangeLimit || queries.length < 5) {
                     const template = this.getRandomItem(QUERY_TEMPLATES);
@@ -137,9 +140,9 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
 
                     // Determine current page (cycle depth)
                     const currentPage = (recentHistory?.page || 0) + 1;
-                    const cappedPage = currentPage > 10 ? 1 : currentPage; // Reset after 10 pages of depth
+                    const cappedPage = currentPage > 10 ? 1 : currentPage;
 
-                    // Upsert to history with page increment
+                    // 3. Perform upsert (Still sequential but we saved the 'findUnique' step)
                     await prisma.queryHistory.upsert({
                         where: {
                             location_industry_campaignId: {
@@ -152,14 +155,14 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
                             query, 
                             page: cappedPage,
                             createdAt: new Date() 
-                        },
+                        } as any,
                         create: {
                             location,
                             industry,
                             query,
                             page: cappedPage,
                             campaignId: campaignId || null
-                        },
+                        } as any,
                     });
 
                     queries.push({ query, location, industry, country, page: cappedPage });

@@ -54,21 +54,21 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 pb-8">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
+          <div className="flex items-center gap-2 text-primary text-[11px] font-black uppercase tracking-[0.3em]">
             <ShieldCheck className="h-4 w-4 glow-primary" /> Safe & Private
           </div>
           <h1 className="text-4xl font-black tracking-tightest gradient-text">Overview</h1>
-          <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.1em]">Find and manage high-value business leads with ease.</p>
+          <p className="text-[13px] text-zinc-500 font-bold uppercase tracking-[0.1em]">Find and manage high-value business leads with ease.</p>
         </div>
         
         <div className="flex items-center gap-3">
           <div className="glass-card px-5 py-2.5 rounded-sm flex items-center gap-3">
             <div className="h-2 w-2 rounded-sm bg-emerald-500 glow-primary animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Connection: Active</span>
+            <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Connection: Active</span>
           </div>
           <div className="glass-card px-5 py-2.5 rounded-sm bg-primary/10 border-primary/20 flex items-center gap-2 orange-glow">
             <Home className="h-4 w-4 text-primary fill-primary" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary">{stats?.tier || 'FREE'} PLAN</span>
+            <span className="text-[11px] font-black uppercase tracking-widest text-primary">{stats?.tier || 'FREE'} PLAN</span>
           </div>
         </div>
       </div>
@@ -82,12 +82,12 @@ export default function DashboardPage() {
             <h2 className="text-lg font-black uppercase tracking-widest mb-2 flex items-center gap-2 text-white">
               Search Activity <div className="h-1.5 w-1.5 rounded-sm bg-primary animate-ping" />
             </h2>
-            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Live monitoring</p>
+            <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-widest">Live monitoring</p>
           </div>
           <NeuralPulse />
           <div className="absolute bottom-0 right-0 p-10 z-20 pointer-events-none text-right">
             <p className="text-4xl font-black tracking-tightest text-white glow-text">92%</p>
-            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Match Rate</p>
+            <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Match Rate</p>
           </div>
         </div>
 
@@ -96,7 +96,7 @@ export default function DashboardPage() {
           <div className="flex-1 glass-card rounded-sm p-8 flex flex-col justify-between group">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Businesses Found</p>
+                <p className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Businesses Found</p>
                 <p className="text-4xl font-black tracking-tightest text-white">{stats?.totalLeads || 0}</p>
               </div>
               <div className="p-3 rounded-sm bg-primary/10 text-primary glow-primary">
@@ -104,7 +104,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="flex items-end justify-between mt-8">
-              <div className="text-[10px] text-emerald-400 font-black flex items-center gap-1.5 uppercase tracking-widest">
+              <div className="text-[11px] text-emerald-400 font-black flex items-center gap-1.5 uppercase tracking-widest">
                 <TrendingUp className="h-3.5 w-3.5" /> +12% Success
               </div>
               <Sparkline color="#ff6d29" />
@@ -114,7 +114,7 @@ export default function DashboardPage() {
           <div className="flex-1 glass-card rounded-sm p-8 flex flex-col justify-between group">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Verified Leads</p>
+                <p className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Verified Leads</p>
                 <p className="text-4xl font-black tracking-tightest text-white">{stats?.totalBusinesses || 0}</p>
               </div>
               <div className="p-3 rounded-sm bg-primary/10 text-primary glow-primary">
@@ -122,7 +122,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="flex items-end justify-between mt-8">
-              <div className="text-[10px] text-zinc-500 font-black flex items-center gap-1.5 uppercase tracking-widest">
+              <div className="text-[11px] text-zinc-500 font-black flex items-center gap-1.5 uppercase tracking-widest">
                 <Compass className="h-3.5 w-3.5 text-primary" /> Active Search
               </div>
               <Sparkline color="#ff8a54" />
@@ -139,10 +139,10 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h2 className="text-sm font-black uppercase tracking-widest text-white">Recent Activity</h2>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Latest business leads</p>
+                <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Latest business leads</p>
               </div>
             </div>
-            <button className="text-[10px] font-black text-zinc-500 hover:text-white transition-all uppercase tracking-widest flex items-center gap-2 group/btn">
+            <button className="text-[11px] font-black text-zinc-500 hover:text-white transition-all uppercase tracking-widest flex items-center gap-2 group/btn">
               View Logs <ArrowUpRight className="h-3.5 w-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
             </button>
           </div>
@@ -162,12 +162,12 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm font-black tracking-tight text-white">{lead.business.name}</p>
-                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.1em] mt-0.5">{lead.industry}</p>
+                    <p className="text-[11px] text-zinc-500 font-black uppercase tracking-[0.1em] mt-0.5">{lead.industry}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] glow-text">Good Match</p>
-                  <p className="text-[9px] text-zinc-700 font-bold uppercase tracking-widest mt-1">
+                  <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] glow-text">Good Match</p>
+                  <p className="text-[10px] text-zinc-700 font-bold uppercase tracking-widest mt-1">
                     {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -186,13 +186,13 @@ export default function DashboardPage() {
              <div className="relative z-10 space-y-6">
                 <div className="flex items-center gap-3 text-primary">
                   <ShieldCheck className="h-6 w-6 animate-pulse glow-primary" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Quick Insight</span>
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em]">Quick Insight</span>
                 </div>
                 <h3 className="text-xl font-black leading-snug tracking-tight text-white">
                   Opportunities in <span className="text-primary">your area</span> are growing. 
                   New potential clients found in your sector.
                 </h3>
-                <p className="text-[10px] text-zinc-500 leading-relaxed font-black uppercase tracking-widest">Start a new search to find these leads.</p>
+                <p className="text-[11px] text-zinc-500 leading-relaxed font-black uppercase tracking-widest">Start a new search to find these leads.</p>
              </div>
              <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
                <Database className="h-32 w-32" />
@@ -201,7 +201,7 @@ export default function DashboardPage() {
           
           <div className="glass-card rounded-sm p-8 flex items-center justify-between group border border-white/5">
             <div className="space-y-2">
-              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Daily Progress</p>
+              <p className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Daily Progress</p>
               <p className="text-2xl font-black tracking-tightest text-white">{stats?.quota?.used || 0} / {stats?.quota?.limit || 10}</p>
             </div>
             <div className="relative h-16 w-16 flex items-center justify-center">

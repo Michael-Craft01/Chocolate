@@ -377,21 +377,21 @@ app.get('/api/leads/export', authenticate, async (req: AuthenticatedRequest, res
             return res.json(leads);
         }
 
-        // CSV / Excel (Basic CSV)
-        let content = 'Company Name,Industry,Phone,Email,Website,Pain Point,Suggested Message,Captured Date\n';
-        leads.forEach(l => {
-            const row = [
-                `"${l.business.name.replace(/"/g, '""')}"`,
-                `"${l.industry}"`,
-                `"${l.business.phone || ''}"`,
-                `"${l.business.email || ''}"`,
-                `"${l.business.website || ''}"`,
-                `"${l.painPoint.replace(/"/g, '""')}"`,
-                `"${l.suggestedMessage.replace(/"/g, '""')}"`,
-                `"${l.createdAt.toISOString()}"`
-            ];
-            content += row.join(',') + '\n';
-        });
+        // CSV / Excel (Robust formatting via json2csv)
+        const fields = [
+            { label: 'Company Name', value: 'business.name' },
+            { label: 'Industry', value: 'industry' },
+            { label: 'Phone', value: 'business.phone' },
+            { label: 'Email', value: 'business.email' },
+            { label: 'Website', value: 'business.website' },
+            { label: 'Pain Point', value: 'painPoint' },
+            { label: 'Suggested Message', value: 'suggestedMessage' },
+            { label: 'Captured Date', value: (row: any) => row.createdAt.toISOString() }
+        ];
+
+        const { Parser } = await import('json2csv');
+        const json2csvParser = new Parser({ fields });
+        const content = json2csvParser.parse(leads);
 
         const contentType = format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv';
         const extension = format === 'excel' ? 'xls' : 'csv';

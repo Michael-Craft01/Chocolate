@@ -72,10 +72,12 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
             }
         }
 
+        const user = await prisma.user.findUnique({ where: { id: campaign.userId } });
+        if (!user) return leadsFound;
+
         for (const { business, enrichment: initialEnrichment } of results) {
             try {
-                const user = await prisma.user.findUnique({ where: { id: campaign.userId } });
-                if (!user || (user.leadsFoundToday >= user.dailyLimit && user.creditBalance <= 0)) break;
+                if (user.leadsFoundToday >= user.dailyLimit && user.creditBalance <= 0) break;
 
                 const cleanName = initialEnrichment.brandName;
                 if (cleanName.length < 3) continue;
@@ -101,6 +103,7 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                 const result = await syncLeadToDb(business, enrichment, campaign, sweepId, sweepDate);
                 if (result) {
                     await prisma.user.update({ where: { id: user.id }, data: { leadsFoundToday: { increment: 1 } } });
+                    user.leadsFoundToday++; // Keep local state in sync
                     leadsFound++;
                 }
             } catch (err) {
@@ -151,6 +154,20 @@ export async function triggerEngineCycle() {
 
                     const count = await processLeadsForQuery(campaign, query, Math.min(15, stillNeeded), sweepId, sweepDate);
                     campaignTotal += count;
+
+                    // If we found nothing, reset this query's pagination for next time
+                    if (count === 0) {
+                        await prisma.queryHistory.update({
+                            where: {
+                                location_industry_campaignId: {
+                                    location: query.location,
+                                    industry: query.industry,
+                                    campaignId: campaign.id
+                                }
+                            },
+                            data: { page: 1 } as any
+                        }).catch(() => {});
+                    }
                 }
             }
 
