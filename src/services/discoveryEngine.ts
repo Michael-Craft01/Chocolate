@@ -37,7 +37,7 @@ async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweep
         const existingLead = await tx.lead.findFirst({ where: { businessId: dbBusiness.id, campaignId: campaign.id } });
         if (existingLead) return null;
 
-        return await tx.lead.create({
+        const newLead = await tx.lead.create({
             data: {
                 campaignId: campaign.id,
                 businessId: dbBusiness.id,
@@ -48,6 +48,9 @@ async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweep
                 sweepDate: sweepDate || null
             }
         });
+
+        logger.info(`✅ [SYNC] Lead saved successfully: ${cleanName} for Campaign: ${campaign.name}`);
+        return newLead;
     });
 }
 

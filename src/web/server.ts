@@ -128,7 +128,8 @@ app.get('/api/me', authenticate, async (req: AuthenticatedRequest, res) => {
             email: user.email,
             paymentStatus: user.paymentStatus,
             tier: user.tier,
-            onboardingComplete: user.profile?.onboardingComplete || false
+            onboardingComplete: user.profile?.onboardingComplete || false,
+            createdAt: user.createdAt
         });
     } catch (error) {
         logger.error({ error }, 'Error in /api/me');

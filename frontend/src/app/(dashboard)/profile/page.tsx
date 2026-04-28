@@ -13,6 +13,7 @@ interface UserProfile {
   email: string;
   tier: string;
   paymentStatus: string;
+  createdAt: string;
 }
 
 interface Transaction {
@@ -23,6 +24,8 @@ interface Transaction {
   type: string;
   createdAt: string;
 }
+
+import { BrandedLoader } from "@/components/BrandedLoader";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -55,12 +58,7 @@ export default function ProfilePage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-zinc-500 animate-pulse font-black uppercase tracking-[0.2em] text-[10px]">Loading your profile...</p>
-      </div>
-    );
+    return <BrandedLoader message="Decoding account telemetry..." />;
   }
 
   return (
@@ -117,11 +115,13 @@ export default function ProfilePage() {
               </div>
             </div>
             
-            <div className="flex items-center gap-4 p-4 rounded-sm bg-white/[0.01] border border-white/5">
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
               <Calendar className="h-4 w-4 text-zinc-600" />
               <div>
                 <p className="text-[8px] uppercase text-zinc-500 font-black tracking-widest">Member Since</p>
-                <p className="text-xs font-bold text-zinc-300">April 2024</p>
+                <p className="text-xs font-bold text-zinc-300">
+                  {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'April 2024'}
+                </p>
               </div>
             </div>
           </div>
@@ -155,16 +155,19 @@ export default function ProfilePage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-sm bg-black/20 border border-white/5">
-                  <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-1">Daily Limit</p>
-                  <p className="text-xl font-black tracking-tight text-white">
-                    {profile?.tier === 'FREE' ? '10' : profile?.tier === 'STARTER' ? '50' : '200'} Discoveries
+                <div className="p-5 rounded-xl bg-black/40 border border-white/5 relative overflow-hidden group/quota">
+                  <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/quota:opacity-100 transition-opacity" />
+                  <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-1 relative">Daily Limit</p>
+                  <p className="text-2xl font-black tracking-tight text-white relative">
+                    {profile?.tier === 'FREE' ? '10' : profile?.tier === 'STARTER' ? '100' : profile?.tier === 'PROFESSIONAL' ? '500' : '2,500'}
+                    <span className="text-[10px] text-zinc-500 ml-2 font-bold uppercase tracking-widest">Leads</span>
                   </p>
                 </div>
-                <div className="p-4 rounded-sm bg-black/20 border border-white/5">
-                  <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-1">Safe</p>
-                  <p className="text-xl font-black tracking-tight text-emerald-400/80 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" /> Yes
+                <div className="p-5 rounded-xl bg-black/40 border border-white/5 relative overflow-hidden group/safe">
+                  <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover/safe:opacity-100 transition-opacity" />
+                  <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-1 relative">Account Status</p>
+                  <p className="text-2xl font-black tracking-tight text-emerald-400 flex items-center gap-2 relative">
+                    <ShieldCheck className="h-5 w-5" /> Secured
                   </p>
                 </div>
               </div>

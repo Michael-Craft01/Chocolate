@@ -31,19 +31,19 @@ export const billingSchema = z.object({
 export const settingsSchema = z.object({
   // Profile (Business Identity)
   companyName: z.string().min(2),
-  website: z.string().url().optional().nullable(),
+  website: z.string().url().or(z.literal('')).optional().nullable(),
   industry: z.string().optional().nullable(),
   defaultSenderName: z.string().min(2),
   defaultSenderRole: z.string().min(2),
   
-  // Default Campaign (Targeting Intelligence)
-  productName: z.string().min(2),
-  productDescription: z.string().min(10),
-  targetPainPoints: z.string().min(10),
+  // Default Campaign (Targeting Intelligence) - Optional in global settings
+  productName: z.string().min(2).optional(),
+  productDescription: z.string().min(10).optional(),
+  targetPainPoints: z.string().min(10).optional(),
   targetCountry: z.string().length(2).default('ZW'),
   locations: z.array(z.string()).min(1),
   industries: z.array(z.string()).min(1),
-  discordWebhook: z.string().url().optional().nullable(),
+  discordWebhook: z.string().url().or(z.literal('')).optional().nullable(),
 });
 
 // Validation Middleware

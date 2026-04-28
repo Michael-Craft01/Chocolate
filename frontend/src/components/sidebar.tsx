@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Settings, LogOut, User, ShieldCheck, Home, Shield, Compass, Sparkles, Zap, ChevronRight, X } from "lucide-react";
+import { 
+  LayoutDashboard, Settings, LogOut, User, ShieldCheck, 
+  Home, Shield, Compass, Sparkles, Zap, ChevronRight, X,
+  ArrowRight
+} from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { motion, AnimatePresence } from "framer-motion";
@@ -206,26 +210,16 @@ export function Sidebar() {
         />
       )}
       
-      <div className={cn("flex h-24 items-center transition-all duration-300", isCollapsed ? "justify-center px-0" : "px-8")}>
-        <Link href="/dashboard" className="flex items-center gap-3 font-black text-xl tracking-tighter shrink-0">
-          <img
-            src="/logo.png"
-            alt="HyprLead Logo"
-            className={cn("object-contain transition-all duration-500", isCollapsed ? "h-10 w-10" : "h-16 w-16")}
-            style={{ filter: 'invert(1)' }}
-          />
-          {!isCollapsed && <span className="text-white tracking-tight">HyprLead</span>}
+      <div className={cn("flex h-20 items-center transition-all duration-300", isCollapsed ? "justify-center" : "px-8")}>
+        <Link href="/dashboard" className="flex items-center gap-3 font-black text-lg tracking-tighter">
+          <div className="h-8 w-8 bg-primary rounded flex items-center justify-center shadow-lg shadow-primary/20">
+            <Zap className="h-5 w-5 text-white" />
+          </div>
+          {!isCollapsed && <span className="text-white tracking-tight font-black uppercase text-sm">HyprLead</span>}
         </Link>
       </div>
 
-      <div className={cn("px-4 mb-4 transition-all", isCollapsed ? "px-2" : "px-4")}>
-        <div className={cn("py-2 rounded-sm bg-white/[0.03] border border-white/5 flex items-center glass transition-all", isCollapsed ? "justify-center px-0" : "px-4 gap-2")}>
-          <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-          {!isCollapsed && <span className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">Private Connection</span>}
-        </div>
-      </div>
-
-      <nav className={cn("flex-1 px-4 space-y-1.5 transition-all", isCollapsed ? "px-2" : "px-4")}>
+      <nav className={cn("flex-1 px-4 space-y-1 transition-all mt-4", isCollapsed ? "px-2" : "px-4")}>
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -252,36 +246,39 @@ export function Sidebar() {
 
       <div className={cn("p-4 mt-auto transition-all", isCollapsed ? "p-2" : "p-4")}>
         {!isCollapsed ? (
-          <div className="rounded-sm glass-card p-6 space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="rounded-xl bg-white/[0.03] border border-white/5 p-5 space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 h-16 w-16 bg-primary/10 blur-2xl rounded-full -mr-8 -mt-8" />
+            
+            <div className="flex items-center justify-between relative">
               <div className="space-y-0.5">
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">Current Plan</p>
-                <p className="text-sm font-black tracking-tight text-white">{isFree ? "Free Access" : `${stats?.tier} Plan`}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Subscription</p>
+                <p className="text-xs font-black tracking-tight text-white">{isFree ? "Free Access" : `${stats?.tier} Plan`}</p>
               </div>
               <div className={cn(
-                "h-1.5 w-1.5 rounded-sm",
-                isFree ? "bg-amber-500 animate-pulse" : "bg-primary glow-primary orange-glow"
+                "h-2 w-2 rounded-full",
+                isFree ? "bg-amber-500 animate-pulse" : "bg-primary shadow-[0_0_10px_rgba(255,109,41,0.5)]"
               )} />
             </div>
             
-            <div className="space-y-3">
-              <div className="flex justify-between text-[11px] font-bold text-zinc-500 uppercase tracking-tight">
-                <span>Daily Progress</span>
-                <span className="text-white font-black">{leadUsage} / {dailyLimit}</span>
+            <div className="space-y-2 relative">
+              <div className="flex justify-between text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                <span>Usage</span>
+                <span className="text-white">{leadUsage} / {dailyLimit}</span>
               </div>
               <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${usagePercent}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  className="h-full bg-primary" 
+                  transition={{ duration: 1 }}
+                  className="h-full bg-gradient-to-r from-primary/50 to-primary shadow-[0_0_8px_rgba(255,109,41,0.3)]" 
                 />
               </div>
             </div>
 
             {isFree && (
-              <Link href="/billing" className="flex w-full h-11 items-center justify-center rounded-sm bg-primary text-white text-[12px] font-black uppercase tracking-widest hover:bg-primary-hover transition-all glow-primary shadow-xl shadow-primary/20">
+              <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-lg bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-primary/20 relative group">
                 Upgrade Now
+                <ArrowRight className="h-3 w-3 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
             )}
           </div>
