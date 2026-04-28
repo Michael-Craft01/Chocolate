@@ -1,4 +1,5 @@
 import { logger } from '../lib/logger.js';
+import { aiService } from './aiService.js';
 
 export class MessageGenerator {
     private getOpenings(campaign: any, businessName: string) {
@@ -47,7 +48,17 @@ export class MessageGenerator {
         return arr[Math.floor(Math.random() * arr.length)]!;
     }
 
-    generate(campaign: any, businessName: string, industry: string, painPoint: string, recommendedSolution?: string): string {
+    async generate(campaign: any, businessName: string, industry: string, painPoint: string, recommendedSolution?: string): Promise<string> {
+        try {
+            logger.info(`[GEMMA-4] Generating personalized outreach for ${businessName}`);
+            return await aiService.generatePersonalizedMessage(campaign, businessName, industry, painPoint);
+        } catch (error) {
+            logger.warn({ error, businessName }, 'AI message generation failed, falling back to template');
+            return this.generateFallback(campaign, businessName, industry, painPoint, recommendedSolution);
+        }
+    }
+
+    private generateFallback(campaign: any, businessName: string, industry: string, painPoint: string, recommendedSolution?: string): string {
         const product = campaign.productName || recommendedSolution || 'HyprLead Core';
         const sender = campaign.senderName || 'Michael';
         const company = campaign.companyName || 'HyprLead';
@@ -67,10 +78,7 @@ export class MessageGenerator {
 ${company} | Intelligence & Automation
 ${link}`;
 
-        const message = `${greeting}\n\n${intro}\n\n${interest}\n\n${pain}\n\n${solution}\n\n${cta}`;
-
-        logger.debug(`Generated high-fidelity message for ${businessName} via Campaign: ${campaign.name}`);
-        return message;
+        return `${greeting}\n\n${intro}\n\n${interest}\n\n${pain}\n\n${solution}\n\n${cta}`;
     }
 
     generateWhatsAppGreeting(campaign: any, businessName: string): string {

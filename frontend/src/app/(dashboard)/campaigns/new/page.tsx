@@ -22,6 +22,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { authJson, ApiAuthError, ApiRequestError } from "@/lib/api";
 import { createCampaign } from "@/lib/services/campaigns";
+import { AIAssistButton } from "@/components/AIAssistButton";
 
 export default function NewCampaignPage() {
     const router = useRouter();
@@ -176,8 +177,15 @@ export default function NewCampaignPage() {
                             </div>
 
                             <div className="grid grid-cols-1 gap-6">
-                                <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Product or Service Name</label>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between ml-1">
+                                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Product or Service Name</label>
+                                        <AIAssistButton 
+                                            field="Product Name" 
+                                            currentValue={campaign.productName} 
+                                            onRefined={(val) => setCampaign(prev => ({...prev, productName: val}))} 
+                                        />
+                                    </div>
                                     <input 
                                         type="text"
                                         placeholder="e.g. Solar Power Installation Kit"
@@ -186,8 +194,16 @@ export default function NewCampaignPage() {
                                         className={`${inputClass} !text-lg !font-bold !bg-white/10`}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Value Proposition (What do you do?)</label>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between ml-1">
+                                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Value Proposition (What do you do?)</label>
+                                        <AIAssistButton 
+                                            field="Value Proposition" 
+                                            currentValue={campaign.productDescription} 
+                                            context={{ productName: campaign.productName }}
+                                            onRefined={(val) => setCampaign(prev => ({...prev, productDescription: val}))} 
+                                        />
+                                    </div>
                                     <textarea 
                                         rows={4}
                                         placeholder="Explain the core benefit of your offer. The AI will use this to pitch your leads."
@@ -196,8 +212,16 @@ export default function NewCampaignPage() {
                                         className={`${inputClass} resize-none leading-relaxed`}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Customer Pain Points</label>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between ml-1">
+                                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Customer Pain Points</label>
+                                        <AIAssistButton 
+                                            field="Customer Pain Points" 
+                                            currentValue={campaign.targetPainPoints} 
+                                            context={{ productName: campaign.productName, productDescription: campaign.productDescription }}
+                                            onRefined={(val) => setCampaign(prev => ({...prev, targetPainPoints: val}))} 
+                                        />
+                                    </div>
                                     <input 
                                         type="text"
                                         placeholder="e.g. High electricity bills, frequent power cuts"
@@ -223,8 +247,16 @@ export default function NewCampaignPage() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Campaign Nickname</label>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between ml-1">
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Campaign Nickname</label>
+                                    <AIAssistButton 
+                                        field="Campaign Name" 
+                                        currentValue={campaign.name} 
+                                        context={{ productName: campaign.productName }}
+                                        onRefined={(val) => setCampaign(prev => ({...prev, name: val}))} 
+                                    />
+                                </div>
                                 <input 
                                     type="text"
                                     placeholder="e.g. Winter Promo 2024"
@@ -233,8 +265,16 @@ export default function NewCampaignPage() {
                                     className={inputClass}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 ml-1">Target Industries</label>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between ml-1">
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Target Industries</label>
+                                    <AIAssistButton 
+                                        field="Target Industries" 
+                                        currentValue={campaign.industries} 
+                                        context={{ productName: campaign.productName, productDescription: campaign.productDescription }}
+                                        onRefined={(val) => setCampaign(prev => ({...prev, industries: val}))} 
+                                    />
+                                </div>
                                 <input 
                                     type="text"
                                     placeholder="e.g. Homeowners, Factories"

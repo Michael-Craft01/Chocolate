@@ -13,7 +13,7 @@ const CONCURRENCY_LIMIT = 5;
 async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweepId?: string, sweepDate?: Date) {
     const cleanName = enrichment.brandName;
     const painPoint = enrichment.painPoint || 'operational friction';
-    const message = messageGenerator.generate(campaign, cleanName, enrichment.industry || 'your industry', painPoint, campaign.productName);
+    const message = await messageGenerator.generate(campaign, cleanName, enrichment.industry || 'your industry', painPoint, campaign.productName);
 
     return await prisma.$transaction(async (tx) => {
         let dbBusiness = await tx.business.findFirst({

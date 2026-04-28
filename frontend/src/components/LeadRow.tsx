@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, MapPin, Trash2, Phone, Globe, BrainCircuit,
-  CheckCircle2, Copy, ChevronDown, ChevronUp
+  CheckCircle2, Copy, ChevronDown, ChevronUp, MessageCircle, ExternalLink, Zap
 } from "lucide-react";
 
 export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: any) {
@@ -75,24 +75,55 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
                   <p className="text-[13px] font-bold leading-snug text-zinc-300">{lead.painPoint}</p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Suggested Outreach Message</label>
-                  <p className="text-[12px] text-zinc-400 leading-relaxed font-medium italic p-4 bg-white/[0.02] border border-white/5 rounded-sm">"{lead.suggestedMessage}"</p>
+                <div className="space-y-2 group">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Suggested Outreach Message</label>
+                    <span className="text-[9px] font-black text-primary/40 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">AI Generated</span>
+                  </div>
+                  <div className="relative">
+                    <p className="text-[12px] text-zinc-400 leading-relaxed font-medium italic p-5 bg-white/[0.02] border border-white/5 rounded-sm shadow-inner">
+                      "{lead.suggestedMessage}"
+                    </p>
+                    <div className="absolute -left-1 top-4 h-8 w-1 bg-primary/20 rounded-full" />
+                  </div>
                 </div>
               </div>
 
               <div className="flex-1 lg:max-w-xs space-y-4">
-                 <div className="p-4 rounded-sm bg-primary/5 border border-primary/10">
+                 <div className="p-4 rounded-sm bg-primary/5 border border-primary/10 relative overflow-hidden group/score">
                    <div className="flex items-center justify-between mb-4">
-                     <label className="text-[10px] font-black text-primary uppercase tracking-widest">Match Confidence</label>
-                     <span className="text-[11px] font-black text-primary">High</span>
+                     <div className="flex flex-col gap-0.5">
+                       <label className="text-[10px] font-black text-primary uppercase tracking-widest">Match Confidence</label>
+                       <span className="text-[9px] text-primary/40 font-black uppercase tracking-tighter">AI Verification Logic</span>
+                     </div>
+                     <div className="flex flex-col items-end">
+                        <span className="text-xl font-black text-primary leading-none tracking-tighter">{(lead.score || 8.5).toFixed(1)}</span>
+                        <span className="text-[8px] font-black text-primary/30 uppercase tracking-widest">Score</span>
+                     </div>
                    </div>
                    <div className="h-1.5 w-full bg-primary/10 rounded-sm overflow-hidden">
-                      <div className="h-full bg-primary w-[84%]" />
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(lead.score || 8.5) * 10}%` }}
+                        className="h-full bg-primary" 
+                      />
+                   </div>
+                   <div className="absolute -right-2 -bottom-2 opacity-[0.03] text-primary group-hover/score:scale-110 transition-transform">
+                      <Zap size={48} />
                    </div>
                  </div>
 
-                 <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2">
+                    {lead.business.phone && (
+                      <a
+                        href={`https://wa.me/${lead.business.phone.replace(/\D/g, '')}?text=${encodeURIComponent(lead.suggestedMessage)}`}
+                        target="_blank"
+                        className="h-10 rounded-sm bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center hover:bg-emerald-500/20 transition-all gap-2 group/wa"
+                      >
+                         <MessageCircle className="h-3.5 w-3.5 transition-transform group-hover/wa:scale-110" />
+                         Chat on WhatsApp
+                      </a>
+                    )}
                     <button
                       onClick={() => copyFullIntel(lead)}
                       className={`h-10 rounded-sm font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
@@ -106,9 +137,10 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
                       <a
                         href={lead.business.website}
                         target="_blank"
-                        className="h-10 rounded-sm bg-white/[0.03] border border-white/5 text-zinc-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center hover:bg-white/10 hover:text-white transition-all"
+                        className="h-10 rounded-sm bg-white/[0.03] border border-white/5 text-zinc-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center hover:bg-white/10 hover:text-white transition-all gap-2"
                       >
                          Visit Website
+                         <ExternalLink className="h-3 w-3" />
                       </a>
                     )}
                  </div>

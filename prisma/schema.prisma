@@ -131,6 +131,7 @@ model Lead {
   painPoint        String
   suggestedMessage String
   status           LeadStatus  @default(NEW)
+  score            Float       @default(8.5)
   dispatchedAt     DateTime?
   sweepDate        DateTime?   // For cycle timestamp
   sweepId          String?

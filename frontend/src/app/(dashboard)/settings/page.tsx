@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { authJson } from "@/lib/api";
 import { motion } from "framer-motion";
+import { AIAssistButton } from "@/components/AIAssistButton";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -129,8 +130,15 @@ export default function SettingsPage() {
           </div>
           
           <div className="glass-card p-8 rounded-sm border border-white/5 space-y-6">
-            <div>
-              <label className={labelClass}>Company Name</label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className={labelClass}>Company Name</label>
+                <AIAssistButton 
+                  field="Company Name" 
+                  currentValue={formData.companyName} 
+                  onRefined={(val) => setFormData(prev => ({...prev, companyName: val}))} 
+                />
+              </div>
               <input 
                 type="text" 
                 value={formData.companyName}
@@ -196,8 +204,15 @@ export default function SettingsPage() {
           </div>
 
           <div className="glass-card p-8 rounded-sm border border-white/5 space-y-6">
-            <div>
-              <label className={labelClass}>Core Industry</label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className={labelClass}>Core Industry</label>
+                <AIAssistButton 
+                  field="Industry" 
+                  currentValue={formData.industry} 
+                  onRefined={(val) => setFormData(prev => ({...prev, industry: val}))} 
+                />
+              </div>
               <input 
                 type="text" 
                 value={formData.industry}
@@ -222,8 +237,16 @@ export default function SettingsPage() {
                   <option value="US">United States</option>
                 </select>
               </div>
-              <div>
-                <label className={labelClass}>Default City</label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className={labelClass}>Default City</label>
+                  <AIAssistButton 
+                    field="Target City" 
+                    currentValue={formData.locations[0]} 
+                    context={{ targetCountry: formData.targetCountry }}
+                    onRefined={(val) => setFormData(prev => ({...prev, locations: [val]}))} 
+                  />
+                </div>
                 <input 
                   type="text" 
                   value={formData.locations[0]}

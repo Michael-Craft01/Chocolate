@@ -7,6 +7,7 @@ import { config } from '../config.js';
 import { paymentService } from '../services/paymentService.js';
 import { WebhookHandler } from '../services/webhookHandler.js';
 import { triggerEngineCycle } from '../services/discoveryEngine.js';
+import { aiService } from '../services/aiService.js';
 import { 
     campaignSchema, 
     leadStatusSchema, 
@@ -405,6 +406,20 @@ app.get('/api/leads/export', authenticate, async (req: AuthenticatedRequest, res
     }
 });
 
+// API: AI Refinement (Help fill forms)
+app.post('/api/ai/refine', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+        const { field, value, context } = req.body;
+        if (!field) return res.status(400).json({ error: 'Field name is required' });
+        
+        const refinedText = await aiService.refineInput(field, value, context);
+        res.json({ refined: refinedText });
+    } catch (error) {
+        logger.error({ error, field }, 'AI Refinement failed');
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 // API: Leads (Authenticated)
 app.get('/api/leads', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
@@ -528,7 +543,7 @@ app.use((req, res) => {
     res.status(404).json({ 
         error: 'Not Found', 
         message: `The engine does not recognize ${req.method} ${req.url}`,
-        availableRoutes: ['/api/me', '/api/stats', '/api/settings', '/api/campaigns', '/api/leads', '/api/leads/export', '/api/leads/public/:id']
+        availableRoutes: ['/api/me', '/api/stats', '/api/settings', '/api/campaigns', '/api/leads', '/api/leads/export', '/api/ai/refine']
     });
 });
 

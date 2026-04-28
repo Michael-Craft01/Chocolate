@@ -7,6 +7,7 @@ export interface AIEnrichment {
     industry: string;
     painPoint: string;
     recommendedSolution: string;
+    score: number;
 }
 
 export class AIService {
@@ -22,6 +23,91 @@ export class AIService {
                 topP: 0.95,
                 topK: 40,
             }
+        });
+    }
+
+    async refineInput(field: string, value: string, context?: any): Promise<string> {
+        const prompt = `<start_of_turn>user
+SYSTEM: You are the HyprLead Form Assistant (Gemma-4 Powered).
+GOAL: Refine user input into high-fidelity, professional descriptions optimized for a lead discovery engine.
+
+FIELD: "${field}"
+USER INPUT: "${value || 'None provided'}"
+CONTEXT: ${JSON.stringify(context || {})}
+
+TASK:
+1. If the input is empty or "None provided", provide a high-quality suggestion based on the context (e.g. industry, target market).
+2. If the input is short or lazy, expand it into a professional, punchy, and compelling description.
+3. Optimize the language for lead discovery and business intelligence gathering.
+4. Keep the output under 300 characters for names/industries and under 1000 characters for descriptions.
+
+ONLY return the refined text. No conversational fillers, no "Here is the refined text".
+<end_of_turn>
+<start_of_turn>model
+<thought>
+`;
+
+        return this.retryOperation(async () => {
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            let text = response.text().trim();
+            // Remove any thinking tags or markers if they leak
+            text = text.replace(/<thought>[\s\S]*?<\/thought>/g, '').trim();
+            text = text.replace(/<[^>]*>?/gm, '').trim(); 
+            return text;
+        });
+    }
+
+    async generatePersonalizedMessage(
+        campaign: any,
+        businessName: string,
+        industry: string,
+        painPoint: string
+    ): Promise<string> {
+        const product = campaign.productName || "HyprLead Core";
+        const sender = campaign.senderName || "Michael";
+        const company = campaign.companyName || "HyprLead";
+        const link = campaign.ctaLink || "https://hyprlead.com";
+        const valueProp = campaign.productDescription || "we help businesses eliminate bottlenecks.";
+
+        const prompt = `<start_of_turn>user
+SYSTEM: You are the HyprLead Outreach Specialist (Gemma-4 Powered).
+GOAL: Write a personalized, high-converting cold outreach message.
+
+INPUTS:
+- LEAD BRAND: "${businessName}"
+- SECTOR: "${industry}"
+- DETECTED PAIN POINT: "${painPoint}"
+- MY PRODUCT: "${product}"
+- MY COMPANY: "${company}"
+- MY VALUE PROP: "${valueProp}"
+- SENDER: "${sender}"
+- LINK: "${link}"
+
+TASK:
+1. Write a professional, punchy, and human-sounding message.
+2. ABSOLUTELY AVOID generic robotic phrases like "strategic walkthrough", "protocol", "high-performance framework", "reclaim competitive edge", or "invisible revenue leakage".
+3. Speak like a helpful expert, not a sales bot.
+4. Address the lead's pain point specifically.
+5. Ensure proper capitalization (e.g., "${company}", NOT lowercase).
+6. Keep it under 120 words.
+7. Use a clear, low-friction call-to-action (e.g., "Open to a quick chat?").
+8. Structure the message with line breaks for readability.
+9. If the brand name still sounds like "Scraper Junk", fix it in the message body.
+
+ONLY return the message text. No conversational fillers.
+<end_of_turn>
+<start_of_turn>model
+<thought>
+`;
+
+        return this.retryOperation(async () => {
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            let text = response.text().trim();
+            text = text.replace(/<thought>[\s\S]*?<\/thought>/g, '').trim();
+            text = text.replace(/<[^>]*>?/gm, '').trim(); 
+            return text;
         });
     }
 
@@ -48,7 +134,7 @@ INPUT PACKAGE:
 - CONTEXT: "${context || 'No context available'}"
 
 TASK:
-1. Clean the Brand Name for professional outreach.
+1. Clean the Brand Name for professional outreach. (e.g., Remove "Leads", "Inc", "Limited", "Corp", or location suffixes if they make the name sound robotic).
 2. Identify 3 possible friction points RELEVANT to a "${category || 'SME'}" business.
 3. Select the MOST CRITICAL friction point that "${product}" can actually solve.
 4. If a screenshot is provided, analyze the actual design/business presence, not just the code.
@@ -57,10 +143,11 @@ ${customInstructions}
 
 JSON OUTPUT:
 {
-  "brandName": "Short Clean Name",
+  "brandName": "Short Clean Human Name (e.g. 'Zimbabwe Pharma' instead of 'Zimbabwe Pharma Leads Inc')",
   "industry": "Specific Vertical",
   "painPoint": "Sector-relevant friction point (e.g. 'Inconsistent brand aesthetic' for Fashion, or 'Supply chain opacity' for Logistics)",
-  "recommendedSolution": "${product}"
+  "recommendedSolution": "${product}",
+  "score": 0.0 to 10.0 (Match confidence score based on how well ${product} solves the pain point)
 }
 <end_of_turn>
 <start_of_turn>model
@@ -91,7 +178,8 @@ JSON OUTPUT:
                 brandName: parsed.brandName || businessName,
                 industry: parsed.industry || category || 'SME',
                 painPoint: parsed.painPoint || 'Operational friction detected',
-                recommendedSolution: product
+                recommendedSolution: product,
+                score: parseFloat(parsed.score) || 8.5
             };
         });
     }

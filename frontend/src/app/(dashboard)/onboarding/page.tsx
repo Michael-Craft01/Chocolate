@@ -14,6 +14,7 @@ import {
     ChevronLeft
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AIAssistButton } from "@/components/AIAssistButton";
 
 export default function OnboardingPage() {
     const router = useRouter();
@@ -118,8 +119,15 @@ export default function OnboardingPage() {
                     {/* Step 1: Company */}
                     {step === 1 && (
                         <div className="space-y-6">
-                            <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Company Name</label>
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between ml-1">
+                                    <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest">Company Name</label>
+                                    <AIAssistButton 
+                                        field="Company Name" 
+                                        currentValue={formData.companyName} 
+                                        onRefined={(val) => handleFormUpdate("companyName", val)} 
+                                    />
+                                </div>
                                 <input 
                                     type="text"
                                     placeholder="e.g. LogicHQ"
@@ -176,8 +184,16 @@ export default function OnboardingPage() {
                     {/* Step 3: Product */}
                     {step === 3 && (
                         <div className="space-y-6">
-                            <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Main Product/Service</label>
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between ml-1">
+                                    <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest">Main Product/Service</label>
+                                    <AIAssistButton 
+                                        field="Product Name" 
+                                        currentValue={formData.productName} 
+                                        context={{ companyName: formData.companyName }}
+                                        onRefined={(val) => handleFormUpdate("productName", val)} 
+                                    />
+                                </div>
                                 <input 
                                     type="text"
                                     placeholder="e.g. Takada Mobile POS"
@@ -186,8 +202,16 @@ export default function OnboardingPage() {
                                     className={`${inputBaseClass} font-medium`}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">The "Solution" (Briefly)</label>
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between ml-1">
+                                    <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest">The "Solution" (Briefly)</label>
+                                    <AIAssistButton 
+                                        field="Value Proposition" 
+                                        currentValue={formData.productDescription} 
+                                        context={{ companyName: formData.companyName, productName: formData.productName }}
+                                        onRefined={(val) => handleFormUpdate("productDescription", val)} 
+                                    />
+                                </div>
                                 <textarea 
                                     rows={3}
                                     placeholder="What problem do you solve? (e.g. We build apps that let SMEs manage inventory from their phone.)"
