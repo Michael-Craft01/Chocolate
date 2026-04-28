@@ -11,26 +11,49 @@ export class ContactExtractor {
             const context = await browser.newContext({ userAgent: 'Mozilla/5.0' });
             const page = await context.newPage();
             
-            logger.debug(`[HUNGRY] Diving into ${url} for contact data and visual intel...`);
-            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+            logger.debug(`[HUNGRY] Diving into ${url}...`);
+            await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 });
             
-            const content = await page.content();
-            const text = await page.evaluate(() => document.body.innerText);
+            let email: string | null = null;
+            let phone: string | null = null;
+            let screenshot: Buffer | null = null;
 
-            // Hungry Regex
-            const emailMatch = content.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
-            const phoneMatch = text.match(/(\+263|077|078|071)\s?\d{7,}/g);
-
-            // Visual Intel
-            const screenshot = await page.screenshot({ type: 'png' });
-
-            return {
-                email: emailMatch ? emailMatch[0] : null,
-                phone: phoneMatch ? phoneMatch[0] : null,
-                screenshot
+            const scan = async () => {
+                const content = await page.content();
+                const text = await page.evaluate(() => document.body.innerText);
+                
+                const eMatch = content.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+                const pMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4,6}/g);
+                
+                if (!email && eMatch) email = eMatch[0];
+                if (!phone && pMatch) phone = pMatch[0];
             };
+
+            await scan();
+
+            // If missing phone, try to find a contact page
+            if (!phone) {
+                const contactLink = await page.evaluate(() => {
+                    const links = Array.from(document.querySelectorAll('a'));
+                    const target = links.find(a => {
+                        const t = a.innerText.toLowerCase();
+                        return t.includes('contact') || t.includes('about') || t.includes('us');
+                    });
+                    return target ? target.href : null;
+                });
+
+                if (contactLink && contactLink !== url) {
+                    logger.debug(`[HUNGRY] Checking sub-page: ${contactLink}`);
+                    await page.goto(contactLink, { waitUntil: 'domcontentloaded', timeout: 15000 });
+                    await scan();
+                }
+            }
+
+            screenshot = await page.screenshot({ type: 'png' });
+
+            return { email, phone, screenshot };
         } catch (error) {
-            logger.debug(`[HUNGRY] Failed to dive into ${url}`);
+            logger.debug(`[HUNGRY] Failed to extract from ${url}`);
             return {};
         } finally {
             if (browser) await browser.close();

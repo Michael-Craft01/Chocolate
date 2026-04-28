@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, MapPin, Trash2, Phone, Globe, BrainCircuit,
-  CheckCircle2, Copy, ChevronDown, ChevronUp, MessageCircle, ExternalLink, Zap
+  CheckCircle2, Copy, ChevronDown, ChevronUp, MessageCircle, ExternalLink, Zap, Mail
 } from "lucide-react";
 
 export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: any) {
@@ -31,15 +31,20 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
              <MapPin className="h-3 w-3" /> {lead.industry || 'Unknown'}
           </div>
 
-          <div className="flex items-center gap-4 w-1/4">
+          <div className="flex flex-col gap-1 w-1/3">
             {lead.business.phone && (
-              <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-bold">
-                <Phone className="h-3 w-3 text-primary/50" /> {lead.business.phone}
+              <div className="flex items-center gap-1.5 text-emerald-400 text-[10px] font-black uppercase tracking-tight">
+                <Phone className="h-3 w-3" /> {lead.business.phone}
+              </div>
+            )}
+            {lead.business.email && (
+              <div className="flex items-center gap-1.5 text-blue-400 text-[10px] font-black uppercase tracking-tight">
+                <Mail className="h-3 w-3" /> {lead.business.email}
               </div>
             )}
             {lead.business.website && (
-              <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-bold">
-                <Globe className="h-3 w-3 text-primary/50" /> {lead.business.website.replace(/https?:\/\//, '').split('/')[0]}
+              <div className="flex items-center gap-1.5 text-zinc-500 text-[10px] font-black uppercase tracking-tight">
+                <Globe className="h-3 w-3" /> {lead.business.website.replace(/https?:\/\//, '').split('/')[0]}
               </div>
             )}
           </div>
@@ -118,16 +123,16 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
                       <a
                         href={`https://wa.me/${lead.business.phone.replace(/\D/g, '')}?text=${encodeURIComponent(lead.suggestedMessage)}`}
                         target="_blank"
-                        className="h-10 rounded-sm bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center hover:bg-emerald-500/20 transition-all gap-2 group/wa"
+                        className="h-11 rounded-sm bg-emerald-500 text-black text-[10px] font-black uppercase tracking-widest flex items-center justify-center hover:bg-emerald-400 transition-all gap-2 group/wa shadow-[0_0_20px_rgba(16,185,129,0.2)]"
                       >
-                         <MessageCircle className="h-3.5 w-3.5 transition-transform group-hover/wa:scale-110" />
+                         <MessageCircle className="h-4 w-4 fill-black transition-transform group-hover/wa:scale-110" />
                          Chat on WhatsApp
                       </a>
                     )}
                     <button
                       onClick={() => copyFullIntel(lead)}
-                      className={`h-10 rounded-sm font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                        copiedId === lead.id ? "bg-emerald-500 text-white" : "bg-white text-black hover:bg-zinc-200"
+                      className={`h-11 rounded-sm font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                        copiedId === lead.id ? "bg-blue-500 text-white" : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
                       }`}
                     >
                       {copiedId === lead.id ? <CheckCircle2 className="h-3 w-3" /> : <Copy className="h-3 w-3" />}

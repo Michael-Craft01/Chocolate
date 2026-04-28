@@ -70,10 +70,14 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
         };
 
         next();
-    } catch (err: any) {
-        logger.error({ err: err.message }, 'Auth middleware error');
-        return res.status(401).json({ error: 'Unauthorized', message: err.message });
-    }
+        } catch (err: any) {
+            logger.error({ err: err.message }, 'Auth middleware critical error');
+            const isDbError = err.message.includes('Can\'t reach database server') || err.message.includes('connection');
+            return res.status(503).json({ 
+                error: 'Service Temporarily Unavailable', 
+                message: isDbError ? 'Database connection issue. Retrying...' : err.message 
+            });
+        }
 };
 
 export const requireActiveSubscription = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {

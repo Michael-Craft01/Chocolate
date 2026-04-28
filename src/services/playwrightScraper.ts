@@ -77,22 +77,10 @@ export class PlaywrightScraper {
             
             const searchEngines = [
                 {
-                    name: 'DuckDuckGo Lite',
-                    url: (q: string) => `https://duckduckgo.com/lite/?q=${encodeURIComponent(q + ' Zimbabwe')}&s=${(page - 1) * 30}`,
-                    selector: '.result-link',
-                    timeout: 40000
-                },
-                {
-                    name: 'Bing',
-                    url: (q: string) => `https://www.bing.com/search?q=${encodeURIComponent(q + ' Zimbabwe')}&first=${(page - 1) * 10 + 1}`,
-                    selector: 'h2 a, .b_algo h2 a',
-                    timeout: 30000
-                },
-                {
-                    name: 'Google',
-                    url: (q: string) => `https://www.google.com/search?q=${encodeURIComponent(query + ' Zimbabwe')}`,
-                    selector: 'h3',
-                    timeout: 45000
+                    name: 'Google Maps',
+                    url: (q: string) => `https://www.google.com/maps/search/${encodeURIComponent(q + ' ' + country)}`,
+                    selector: 'div[role="feed"] a, .hfpxzc, [aria-label*="Results for"]',
+                    timeout: 60000
                 }
             ];
 
@@ -110,12 +98,35 @@ export class PlaywrightScraper {
                     if (results.length >= 8) break;
                     
                     try {
+                        // Randomized human delay (10-30 seconds) to avoid Captcha walls
+                        const delay = Math.floor(Math.random() * 20000) + 10000;
+                        logger.info(`[STEALTH] Cooling down for ${Math.round(delay/1000)}s before ${engine.name}...`);
+                        await new Promise(r => setTimeout(r, delay));
+
                         logger.info(`[PLAYWRIGHT] Attempting ${engine.name} for: "${currentQuery}"`);
-                        await p.goto(engine.url(currentQuery), { waitUntil: 'domcontentloaded', timeout: engine.timeout });
+                        
+                        // Optimize Google Maps by blocking images/styles
+                        if (engine.name === 'Google Maps') {
+                            await p.route('**/*.{png,jpg,jpeg,gif,svg,css,woff,woff2}', route => route.abort());
+                        }
+
+                        await p.goto(engine.url(currentQuery), { 
+                            waitUntil: engine.name === 'Google Maps' ? 'domcontentloaded' : 'networkidle', 
+                            timeout: engine.timeout 
+                        });
+                        
+                        // Fake Human Interaction (Scroll)
+                        await p.mouse.wheel(0, 500);
+                        await new Promise(r => setTimeout(r, 1000));
+                        await p.mouse.wheel(0, -200);
+
+                        // DEBUG: See what the scraper sees
+                        await p.screenshot({ path: 'scraper_debug.png' });
+                        logger.debug(`[PLAYWRIGHT] Debug screenshot saved to scraper_debug.png`);
                         
                         // Wait for actual results to render
                         try {
-                            await p.waitForSelector(engine.selector, { timeout: 10000 });
+                            await p.waitForSelector(engine.selector, { timeout: engine.timeout });
                         } catch (e) {
                             logger.warn(`[SCRAPER] Timeout waiting for ${engine.name} results`);
                             continue;
@@ -123,47 +134,53 @@ export class PlaywrightScraper {
 
                         await p.waitForTimeout(1000 + Math.random() * 2000);
 
-                        const engineLeads = await p.evaluate(({ selector, junkDomains }: any) => {
+                        const engineLeads = await p.evaluate(({ selector, junkDomains, engineName }: any) => {
                             const leads: any[] = [];
-                            const JUNK_KEYWORDS = [
-                                'how to', 'wikipedia', 'quora', 'reddit', 'what is', 'definition', 
-                                'government', 'ministry', 'university', 'school', 'college',
-                                'welcome to', 'home page', 'contact us', 'about us', 'privacy policy'
-                            ];
+                            const elements = document.querySelectorAll(selector);
                             
-                            document.querySelectorAll(selector).forEach(el => {
+                            elements.forEach((el: any) => {
+                                // Google Maps Specific Extraction
+                                if (engineName === 'Google Maps') {
+                                    const article = el.closest('div[role="article"]');
+                                    if (!article) return;
+                                    
+                                    const name = article.querySelector('.fontHeadlineSmall')?.textContent?.trim() || el.textContent?.trim();
+                                    const website = article.querySelector('a[aria-label*="Website"]')?.href || '';
+                                    const phone = article.querySelector('[aria-label*="Phone"]')?.textContent?.trim() || '';
+                                    const address = article.querySelector('[aria-label*="Address"]')?.textContent?.trim() || '';
+                                    
+                                    if (name && name.length > 2) {
+                                        leads.push({ name, website, phone, address });
+                                    }
+                                    return;
+                                }
+
+                                // Standard Search Extraction
+                                const name = el.textContent?.trim() || '';
                                 const anchor = (el.tagName === 'A' ? el : el.closest('a')) as HTMLAnchorElement;
-                                if (!anchor) return;
-
-                                const element = el as any;
-                                let name = (element.textContent || element.innerText || '').split(' - ')[0].split(' | ')[0].split(' : ')[0].trim();
-                                const lowerName = name.toLowerCase();
+                                if (!name || name.length < 3 || !anchor) return;
                                 
-                                // Filter junk
-                                const isJunk = JUNK_KEYWORDS.some(k => lowerName.includes(k));
-                                if (isJunk || name.length < 3 || name.length > 70) return;
-
                                 const href = anchor.href || '';
-                                const isJunkDomain = junkDomains.some((d: string) => href.includes(d));
-                                if (href && !isJunkDomain && href.startsWith('http')) {
+                                const isJunk = junkDomains.some((d: string) => href.includes(d));
+                                if (href && !isJunk && href.startsWith('http')) {
                                     leads.push({ name, website: href });
                                 }
                             });
                             return leads;
-                        }, { selector: engine.selector, junkDomains: JUNK_DOMAINS });
+                        }, { selector: engine.selector, junkDomains: JUNK_DOMAINS, engineName: engine.name });
 
                         for (const r of engineLeads) {
                             if (r.name && !results.some(e => e.name === r.name)) {
-                                results.push({ ...r, category: `${engine.name} Intelligence` });
+                                results.push({ ...r, category: r.category || `${engine.name} Listing` });
                             }
                         }
 
                         if (results.length > 0) {
-                            logger.info(`[PLAYWRIGHT] Secured ${results.length} leads from ${engine.name}`);
-                            if (results.length >= 5) break; 
+                            logger.info(`[PLAYWRIGHT] Secured ${results.length} leads from ${engine.name}.`);
+                            break; 
                         }
                     } catch (e: any) {
-                        logger.warn(`ΓÜá∩╕Å ${engine.name} failed for "${currentQuery}": ${e.message}`);
+                        logger.warn(`⚠️ ${engine.name} failed for "${currentQuery}": ${e.message}`);
                     }
                 }
             }

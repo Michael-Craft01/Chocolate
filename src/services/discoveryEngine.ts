@@ -58,31 +58,17 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
         const businesses = await scraper.scrape(queryData.query, queryData.country, queryData.page);
         if (!businesses || businesses.length === 0) return 0;
 
-        const results = [];
-        for (const business of businesses.slice(0, targetCount)) {
-            try {
-                const telemetry = `${business.address || ''} | ${business.website || 'No Site'}`;
-                const enrichment = await aiService.enrichLead(business.name, business.category ?? undefined, {
-                    productDescription: campaign.productDescription,
-                    targetPainPoints: campaign.targetPainPoints
-                }, telemetry);
-                results.push({ business, enrichment });
-            } catch (e) {
-                logger.error({ err: e }, 'Enrichment failed');
-            }
-        }
+        const results = businesses.slice(0, targetCount);
 
         const user = await prisma.user.findUnique({ where: { id: campaign.userId } });
         if (!user) return leadsFound;
 
-        for (const { business, enrichment: initialEnrichment } of results) {
+        for (const business of results) {
             try {
                 if (user.leadsFoundToday >= user.dailyLimit && user.creditBalance <= 0) break;
 
-                const cleanName = initialEnrichment.brandName;
-                if (cleanName.length < 3) continue;
-
                 let visualIntel: Buffer | null = null;
+                // Deep Dive if we are missing contact info
                 if (business.website && (!business.email || !business.phone)) {
                     try {
                         const deepData = await contactExtractor.extract(business.website);
@@ -90,8 +76,14 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                         business.phone = business.phone || deepData.phone;
                         visualIntel = deepData.screenshot || null;
                     } catch (e) {
-                        logger.warn('Contact skip');
+                        logger.warn(`[HUNGRY] Contact extraction failed for ${business.name} at ${business.website}`);
                     }
+                }
+
+                // CRITICAL QUALITY GATE: Only save if we now have a phone number (either from search or deep dive)
+                if (!business.phone) {
+                    logger.debug(`[QUALITY CONTROL] Skipping ${business.name} - No phone number found even after deep dive.`);
+                    continue;
                 }
 
                 const telemetry = `${business.address || ''} | ${business.website || 'No Site'}`;
@@ -103,7 +95,7 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                 const result = await syncLeadToDb(business, enrichment, campaign, sweepId, sweepDate);
                 if (result) {
                     await prisma.user.update({ where: { id: user.id }, data: { leadsFoundToday: { increment: 1 } } });
-                    user.leadsFoundToday++; // Keep local state in sync
+                    user.leadsFoundToday++; 
                     leadsFound++;
                 }
             } catch (err) {

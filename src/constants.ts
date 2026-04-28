@@ -219,28 +219,16 @@ export const INDUSTRIES = [
 export const QUERY_TEMPLATES = [
     // --- CORE INTENT ---
     '{industry} in {location}',
-    '{industry} companies {location}',
-    '{industry} suppliers {location}',
-    '{industry} wholesalers {location}',
-    'list of {industry} in {location}',
-    
-    // --- HIGH-INTENT MODIFIERS ---
-    'best {industry} {location}',
-    'top rated {industry} {location}',
-    'leading {industry} services {location}',
-    'trusted {industry} specialists {location}',
-    'reliable {industry} in {location}',
+    '{industry} {location}',
+    '{industry} shops {location}',
+    '{industry} store {location}',
+    'list of {industry} {location}',
     
     // --- B2B / SCALE MODIFIERS ---
     'commercial {industry} {location}',
     'industrial {industry} {location}',
-    '{industry} distribution center {location}',
-    '{industry} headquarters {location}',
-    'major {industry} players {location}',
-    
-    // --- HYPER-LOCAL ---
-    '{industry} nearby {location}',
-    'local {industry} shops {location}',
-    '{industry} businesses near {location}',
+    '{industry} suppliers {location}',
+    '{industry} wholesalers {location}',
+    '{industry} distribution {location}',
 ];
 

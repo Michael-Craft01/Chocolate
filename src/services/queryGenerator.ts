@@ -129,11 +129,9 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
 
                 if (!recentHistory || recentHistory.createdAt < rangeLimit || queries.length < 5) {
                     const template = this.getRandomItem(QUERY_TEMPLATES);
-                    const powerWords = ['', 'Premium ', 'Established ', 'Leading ', 'High-end ', 'Industrial '];
-                    const powerWord = Math.random() > 0.7 ? this.getRandomItem(powerWords) : '';
                     
                     let query = template
-                        .replace('{industry}', `${powerWord}${industry}`)
+                        .replace('{industry}', industry)
                         .replace('{location}', location);
 
                     if (Math.random() > 0.8) query += ' 2025';
