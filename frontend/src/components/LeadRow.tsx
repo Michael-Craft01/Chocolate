@@ -23,23 +23,23 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
       >
         <div className="flex items-center gap-6 flex-1">
           <div className="flex flex-col gap-1 w-1/4">
-            <span className="text-[10px] font-black uppercase text-primary tracking-widest">{lead.campaign?.name || 'Legacy Sweep'}</span>
-            <h3 className="text-sm font-bold text-white truncate">{lead.business.name}</h3>
+            <span className="text-xs font-semibold uppercase text-primary tracking-normal">{lead.campaign?.name || 'Legacy Sweep'}</span>
+            <h3 className="text-sm font-semibold text-white truncate">{lead.business.name}</h3>
           </div>
 
-          <div className="flex items-center gap-2 w-1/4 text-zinc-500 text-[11px] font-black uppercase tracking-widest">
+          <div className="flex items-center gap-2 w-1/4 text-zinc-500 text-sm font-semibold uppercase tracking-normal">
              <MapPin className="h-3 w-3" /> {lead.industry || 'Unknown'}
           </div>
 
           <div className="flex items-center gap-4 w-1/4">
             {lead.business.phone && (
-              <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-bold">
-                <Phone className="h-3 w-3 text-primary/50" /> {lead.business.phone}
+              <div className="flex items-center gap-1.5 text-zinc-400 text-sm font-semibold">
+                <Phone className="h-3 w-3 text-primary" /> {lead.business.phone}
               </div>
             )}
             {lead.business.website && (
-              <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-bold">
-                <Globe className="h-3 w-3 text-primary/50" /> {lead.business.website.replace(/https?:\/\//, '').split('/')[0]}
+              <div className="flex items-center gap-1.5 text-zinc-400 text-sm font-semibold">
+                <Globe className="h-3 w-3 text-primary" /> {lead.business.website.replace(/https?:\/\//, '').split('/')[0]}
               </div>
             )}
           </div>
@@ -71,21 +71,21 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
 
               <div className="flex-1 space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Target Pain Point</label>
-                  <p className="text-[13px] font-bold leading-snug text-zinc-300">{lead.painPoint}</p>
+                  <label className="text-sm font-semibold text-zinc-600 uppercase tracking-normal">Target Pain Point</label>
+                  <p className="text-sm font-semibold leading-snug text-zinc-300">{lead.painPoint}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Suggested Outreach Message</label>
-                  <p className="text-[12px] text-zinc-400 leading-relaxed font-medium italic p-4 bg-white/[0.02] border border-white/5 rounded-sm">"{lead.suggestedMessage}"</p>
+                  <label className="text-sm font-semibold text-zinc-600 uppercase tracking-normal">Suggested Outreach Message</label>
+                  <p className="text-sm text-zinc-400 leading-relaxed font-medium italic p-4 bg-white/[0.02] border border-white/5 rounded-sm">&quot;{lead.suggestedMessage}&quot;</p>
                 </div>
               </div>
 
               <div className="flex-1 lg:max-w-xs space-y-4">
                  <div className="p-4 rounded-sm bg-primary/5 border border-primary/10">
                    <div className="flex items-center justify-between mb-4">
-                     <label className="text-[10px] font-black text-primary uppercase tracking-widest">Match Confidence</label>
-                     <span className="text-[11px] font-black text-primary">High</span>
+                     <label className="text-sm font-semibold text-primary uppercase tracking-normal">Match Confidence</label>
+                     <span className="text-sm font-semibold text-primary">High</span>
                    </div>
                    <div className="h-1.5 w-full bg-primary/10 rounded-sm overflow-hidden">
                       <div className="h-full bg-primary w-[84%]" />
@@ -95,7 +95,7 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
                  <div className="flex flex-col gap-2">
                     <button
                       onClick={() => copyFullIntel(lead)}
-                      className={`h-10 rounded-sm font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                      className={`h-10 rounded-sm font-semibold text-sm uppercase tracking-normal transition-all flex items-center justify-center gap-2 ${
                         copiedId === lead.id ? "bg-emerald-500 text-white" : "bg-white text-black hover:bg-zinc-200"
                       }`}
                     >
@@ -106,7 +106,7 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
                       <a
                         href={lead.business.website}
                         target="_blank"
-                        className="h-10 rounded-sm bg-white/[0.03] border border-white/5 text-zinc-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center hover:bg-white/10 hover:text-white transition-all"
+                        className="h-10 rounded-sm bg-white/[0.03] border border-white/5 text-zinc-400 text-sm font-semibold uppercase tracking-normal flex items-center justify-center hover:bg-white/10 hover:text-white transition-all"
                       >
                          Visit Website
                       </a>

@@ -137,7 +137,7 @@ export default function LeadsPage() {
                 const filter = selectedCampaignId === "ALL" ? "" : `?campaignId=${selectedCampaignId}`;
                 window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005'}/api/leads/export${filter}${filter ? '&' : '?'}token=${token}`, "_blank");
               }}
-              className="h-12 px-8 rounded-sm bg-white text-black font-black text-[11px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-3  shadow-white/5"
+              className="h-12 px-8 rounded-sm bg-white text-black font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-3 shadow-white/5"
             >
               <FileDown className="h-4 w-4" /> Export Data
             </button>

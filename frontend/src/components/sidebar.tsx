@@ -48,7 +48,7 @@ export function Sidebar() {
   return (
     <div className="flex h-screen w-64 flex-col border-r border-white/5 bg-[#050505]">
       <div className="flex h-24 items-center px-8">
-        <Link href="/dashboard" className="flex items-center gap-3 font-black text-xl tracking-tighter">
+        <Link href="/dashboard" className="flex items-center gap-3 font-semibold text-xl tracking-tighter">
           <div className="h-8 w-8 rounded-sm bg-primary flex items-center justify-center glow-primary">
             <Zap className="h-4 w-4 text-white fill-white" />
           </div>
@@ -59,7 +59,7 @@ export function Sidebar() {
       <div className="px-4 mb-4">
         <div className="px-4 py-2 rounded-sm bg-white/[0.02] border border-white/5 flex items-center gap-2">
           <ShieldCheck className="h-3 w-3 text-primary" />
-          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Security: Active</span>
+          <span className="text-xs font-semibold  tracking-normal text-zinc-500">Security: Active</span>
         </div>
       </div>
 
@@ -73,7 +73,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex items-center gap-3 rounded-sm px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-300",
+                "group flex items-center gap-3 rounded-sm px-4 py-2.5 text-sm font-bold  tracking-[0.15em] transition-all duration-300",
                 isActive 
                   ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgba(59,130,246,0.1)] border border-primary/20"
                   : "text-zinc-500 hover:text-white hover:bg-white/[0.03] border border-transparent"
@@ -90,8 +90,8 @@ export function Sidebar() {
         <div className="rounded-sm glass-card p-5 space-y-5">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Subscription</p>
-              <p className="text-xs font-black tracking-tight text-white">{isFree ? "Free Mode" : `${stats?.tier} Tier`}</p>
+              <p className="text-xs font-semibold  tracking-normal text-zinc-500">Subscription</p>
+              <p className="text-xs font-semibold tracking-tight text-white">{isFree ? "Free Mode" : `${stats?.tier} Tier`}</p>
             </div>
             <div className={cn(
               "h-1.5 w-1.5 rounded-sm",
@@ -100,7 +100,7 @@ export function Sidebar() {
           </div>
           
           <div className="space-y-2.5">
-            <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-tight">
+            <div className="flex justify-between text-sm font-bold text-zinc-500  tracking-tight">
               <span>Quota Used</span>
               <span className="text-white">{leadUsage} / {dailyLimit}</span>
             </div>
@@ -115,13 +115,13 @@ export function Sidebar() {
           </div>
 
           {isFree && (
-            <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-sm bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary">
+            <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-sm bg-primary text-white text-sm font-semibold  tracking-normal hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary">
               Upgrade Engine
             </Link>
           )}
         </div>
 
-        <button className="flex w-full items-center gap-3 rounded-sm px-4 py-3 mt-4 text-[10px] font-bold text-zinc-600 transition-all hover:text-white hover:bg-white/[0.02] uppercase tracking-[0.2em] group">
+        <button className="flex w-full items-center gap-3 rounded-sm px-4 py-3 mt-4 text-sm font-bold text-zinc-600 transition-all hover:text-white hover:bg-white/[0.02]  tracking-normal group">
           <LogOut className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
           Sign Out
         </button>
