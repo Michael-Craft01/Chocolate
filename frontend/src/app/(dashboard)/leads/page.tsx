@@ -123,6 +123,16 @@ export default function LeadsPage() {
     } catch { alert("Failed to remove lead."); }
   };
 
+  const handleDispatch = async (id: string) => {
+    try {
+      const result = await authJson<{ emailSent: boolean, whatsappUrl: string, mailtoUrl: string }>(`/api/leads/${id}/dispatch`, { method: "POST" });
+      setLeads(prev => prev.map(l => l.id === id ? { ...l, status: 'CONTACTED' as any } : l));
+      if (result.whatsappUrl) window.open(result.whatsappUrl, '_blank');
+    } catch (err: any) {
+      alert("Failed to dispatch: " + (err.message || "Unknown error"));
+    }
+  };
+
   const copyIntel = async (lead: Lead) => {
     const text = `Business: ${lead.business.name}\nIndustry: ${lead.industry}\nOpportunity: ${lead.painPoint}\n\nSuggested Message:\n${lead.suggestedMessage}`;
     await navigator.clipboard.writeText(text).catch(() => {});
@@ -346,6 +356,7 @@ export default function LeadsPage() {
                               onExpand={() => setExpandedId(expandedId === lead.id ? null : lead.id)}
                               onCopy={() => copyIntel(lead)}
                               onDelete={() => handleDelete(lead.id)}
+                              onDispatch={() => handleDispatch(lead.id)}
                             />
                           ))}
                         </div>
@@ -367,6 +378,7 @@ export default function LeadsPage() {
                     onExpand={() => setExpandedId(expandedId === lead.id ? null : lead.id)}
                     onCopy={() => copyIntel(lead)}
                     onDelete={() => handleDelete(lead.id)}
+                    onDispatch={() => handleDispatch(lead.id)}
                   />
                 ))}
               </div>
@@ -402,10 +414,15 @@ export default function LeadsPage() {
 }
 
 // ---- Reusable Lead Card ----
-function LeadCard({ lead, idx, expanded, copied, onExpand, onCopy, onDelete }: {
+function LeadCard({ lead, idx, expanded, copied, onExpand, onCopy, onDelete, onDispatch }: {
   lead: Lead; idx: number; expanded: boolean; copied: boolean;
   onExpand: () => void; onCopy: () => void; onDelete: () => void;
+  onDispatch: () => void;
 }) {
+  const isContacted = lead.status === 'CONTACTED';
+  const whatsappUrl = lead.business.phone ? `https://wa.me/${lead.business.phone.replace(/\D/g, '')}?text=${encodeURIComponent(lead.suggestedMessage || '')}` : null;
+  const mailtoUrl = lead.business.email ? `mailto:${lead.business.email}?subject=${encodeURIComponent('Strategic Growth Opportunity')}&body=${encodeURIComponent(lead.suggestedMessage || '')}` : null;
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -8 }}
@@ -413,7 +430,6 @@ function LeadCard({ lead, idx, expanded, copied, onExpand, onCopy, onDelete }: {
       transition={{ delay: idx * 0.02 }}
       className={`glass-card rounded-sm border transition-all duration-300 ${expanded ? "border-primary/30 ring-1 ring-primary/10" : "border-white/5 hover:border-white/10"}`}
     >
-      {/* Row */}
       <div onClick={onExpand} className="flex items-center justify-between p-5 cursor-pointer group">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="h-9 w-9 rounded-sm bg-white/[0.02] border border-white/5 flex items-center justify-center group-hover:border-primary/20 transition-colors flex-shrink-0">
@@ -423,106 +439,77 @@ function LeadCard({ lead, idx, expanded, copied, onExpand, onCopy, onDelete }: {
             <h3 className="text-sm font-black tracking-tight text-white group-hover:text-primary transition-colors truncate">{lead.business.name}</h3>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest truncate">{lead.industry}</span>
-              {lead.business.phone && (
-                <>
-                  <span className="text-zinc-700">·</span>
-                  <span className="text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-1">
-                    <Phone className="h-2.5 w-2.5" /> has phone
-                  </span>
-                </>
+              {isContacted && (
+                <span className="text-[8px] font-black text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full uppercase tracking-tighter ml-2">Contacted</span>
               )}
             </div>
           </div>
         </div>
-
         <div className="flex items-center gap-4 flex-shrink-0">
-          {/* AI score bar */}
           <div className="hidden md:flex flex-col items-end gap-1">
-            <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest">AI Score</span>
+            <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest">Phone Found</span>
             <div className="flex items-center gap-2">
-              <div className="h-1 w-16 bg-white/5 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-primary to-orange-400" style={{ width: "85%" }} />
-              </div>
-              <span className="text-[9px] font-black text-primary">8.5</span>
+              <Phone className={`h-3 w-3 ${lead.business.phone ? 'text-primary' : 'text-zinc-800'}`} />
             </div>
           </div>
           {expanded ? <ChevronUp className="h-4 w-4 text-zinc-600" /> : <ChevronDown className="h-4 w-4 text-zinc-600" />}
         </div>
       </div>
 
-      {/* Expanded Panel */}
       <AnimatePresence>
         {expanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
+            className="overflow-hidden border-t border-white/5 bg-white/[0.01]"
           >
-            <div className="px-5 pb-6 pt-3 border-t border-white/5 space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Left: Intelligence */}
-                <div className="space-y-5">
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
-                      <Target className="h-3 w-3 text-primary" /> Growth Opportunity
-                    </label>
-                    <p className="text-sm text-zinc-300 leading-relaxed font-medium">{lead.painPoint}</p>
+            <div className="p-5 space-y-6">
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest block mb-2">Pain Vector</span>
+                    <p className="text-xs text-white/80 leading-relaxed bg-white/[0.02] p-4 rounded-sm border border-white/5">{lead.painPoint}</p>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
-                      <MessageSquare className="h-3 w-3 text-primary" /> Suggested Outreach
-                    </label>
-                    <p className="text-sm text-zinc-400 italic leading-relaxed font-medium border-l-2 border-primary/20 pl-4">
-                      "{lead.suggestedMessage}"
-                    </p>
-                  </div>
+                  {lead.business.website && (
+                    <a href={lead.business.website} target="_blank" className="inline-flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest hover:underline">
+                      <Globe className="h-3 w-3" /> Visit Website
+                    </a>
+                  )}
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest block mb-2">Suggested Message</span>
+                  <div className="text-xs text-zinc-400 italic bg-white/[0.02] p-4 rounded-sm border border-white/5 min-h-[100px]">{lead.suggestedMessage}</div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/5">
+                <div className="flex flex-wrap items-center gap-2">
+                  {whatsappUrl && (
+                    <a href={whatsappUrl} target="_blank" className="h-9 px-4 rounded-sm bg-green-500/10 border border-green-500/20 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-green-500 hover:bg-green-500/20 transition-all">
+                      <MessageSquare className="h-3.5 w-3.5" /> WhatsApp Lead
+                    </a>
+                  )}
+                  {mailtoUrl && (
+                    <a href={mailtoUrl} className="h-9 px-4 rounded-sm bg-blue-500/10 border border-blue-500/20 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-blue-500 hover:bg-blue-500/20 transition-all">
+                      <ExternalLink className="h-3.5 w-3.5" /> Email Lead
+                    </a>
+                  )}
+                  <button onClick={onCopy} className="h-9 px-4 rounded-sm bg-white/5 border border-white/10 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all">
+                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied ? "Copied" : "Copy Message"}
+                  </button>
                 </div>
 
-                {/* Right: Contact + Actions */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-4 rounded-sm bg-white/[0.02] border border-white/5 space-y-1">
-                      <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-1.5">
-                        <Phone className="h-2.5 w-2.5" /> Phone
-                      </p>
-                      <p className="text-xs font-bold text-zinc-300">{lead.business.phone || "—"}</p>
-                    </div>
-                    <div className="p-4 rounded-sm bg-white/[0.02] border border-white/5 space-y-1">
-                      <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-1.5">
-                        <Globe className="h-2.5 w-2.5" /> Website
-                      </p>
-                      <p className="text-xs font-bold text-zinc-300 truncate">
-                        {lead.business.website?.replace(/https?:\/\//, "") || "—"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={onCopy}
-                      className={`flex-1 h-10 rounded-sm font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                        copied ? "bg-primary text-white" : "bg-white text-black hover:bg-zinc-100"
-                      }`}
-                    >
-                      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                      {copied ? "Copied" : "Copy Intel"}
+                <div className="flex items-center gap-3">
+                  {!isContacted && (
+                    <button onClick={(e) => { e.stopPropagation(); onDispatch(); }} className="h-9 px-6 rounded-sm bg-primary text-[9px] font-black uppercase tracking-widest text-white hover:brightness-110 transition-all">
+                      Mark as Dispatched
                     </button>
-                    {lead.business.website && (
-                      <a
-                        href={lead.business.website} target="_blank" rel="noopener noreferrer"
-                        className="h-10 w-10 rounded-sm bg-white/[0.03] border border-white/5 flex items-center justify-center text-zinc-500 hover:text-primary hover:border-primary/20 transition-all"
-                      >
-                        <ArrowUpRight className="h-4 w-4" />
-                      </a>
-                    )}
-                    <button
-                      onClick={onDelete}
-                      className="h-10 w-10 rounded-sm bg-white/[0.03] border border-white/5 flex items-center justify-center text-zinc-600 hover:text-primary hover:border-primary/20 transition-all"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  )}
+                  <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="h-9 w-9 rounded-sm bg-red-500/5 border border-red-500/10 flex items-center justify-center text-red-500/40 hover:text-red-500 hover:bg-red-500/10 transition-all">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             </div>

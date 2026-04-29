@@ -119,7 +119,7 @@ export async function triggerEngineCycle() {
     logger.info('🚀 Cycle start');
     const sweepId = `sweep_${Date.now()}`;
     const sweepDate = new Date();
-    const cycleSummary: any[] = [];
+    const userResults: Record<string, { campaignName: string, count: number }[]> = {};
 
     try {
         const activeCampaigns = await prisma.campaign.findMany({ where: { status: 'ACTIVE' }, include: { user: true } });
@@ -131,7 +131,7 @@ export async function triggerEngineCycle() {
             const target = user.dailyLimit;
             let campaignTotal = 0;
             let round = 0;
-            const MAX_ROUNDS = 20; // Safety cap to avoid infinite loops
+            const MAX_ROUNDS = 20;
 
             logger.info(`🎯 Campaign "${campaign.name}" — targeting ${target} leads (currently at ${user.leadsFoundToday})`);
 
@@ -141,10 +141,7 @@ export async function triggerEngineCycle() {
                 logger.info(`🔄 Round ${round} — need ${needed} more leads for campaign "${campaign.name}"`);
 
                 const queries = await queryGenerator.generateBatchQueries(50, campaign);
-                if (queries.length === 0) {
-                    logger.warn('No new queries available — rotating to next round');
-                    break;
-                }
+                if (queries.length === 0) break;
 
                 for (const query of queries) {
                     const stillNeeded = target - (campaignTotal + user.leadsFoundToday);
@@ -152,30 +149,19 @@ export async function triggerEngineCycle() {
 
                     const count = await processLeadsForQuery(campaign, query, Math.min(15, stillNeeded), sweepId, sweepDate);
                     campaignTotal += count;
-
-                    // If we found nothing, reset this query's pagination for next time
-                    if (count === 0) {
-                        await prisma.queryHistory.update({
-                            where: {
-                                location_industry_campaignId: {
-                                    location: query.location,
-                                    industry: query.industry,
-                                    campaignId: campaign.id
-                                }
-                            },
-                            data: { page: 1 } as any
-                        }).catch(() => {});
-                    }
                 }
             }
 
-            if (campaignTotal + user.leadsFoundToday >= target) {
-                logger.info(`✅ Campaign "${campaign.name}" hit target! ${campaignTotal} leads secured this cycle.`);
-            } else {
-                logger.warn(`⚠️ Campaign "${campaign.name}" ended at ${campaignTotal} leads after ${round} rounds.`);
-            }
+            // Track results for summary email
+            if (!userResults[campaign.userId]) userResults[campaign.userId] = [];
+            userResults[campaign.userId].push({ campaignName: campaign.name, count: campaignTotal });
 
             cycleSummary.push({ campaign: campaign.name, count: campaignTotal });
+        }
+
+        // Send User Summaries
+        for (const [userId, results] of Object.entries(userResults)) {
+            await dispatchService.sendUserCycleSummary(userId, results).catch(e => logger.error({ err: e.message }, 'Failed to send summary email'));
         }
 
         await cleanupDatabase();

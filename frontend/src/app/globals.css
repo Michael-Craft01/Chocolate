@@ -41,7 +41,12 @@
   }
 
   /* Typography System */
-  .text-display { @apply text-4xl md:text-5xl font-black tracking-tightest gradient-text uppercase; }
+  .text-display { 
+    @apply text-4xl md:text-5xl font-black tracking-tightest uppercase;
+    background: linear-gradient(135deg, #ffffff 0%, #bababa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
   .text-header { @apply text-2xl font-black tracking-tight text-white uppercase; }
   .text-label { @apply text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500; }
   .text-body { @apply text-sm font-medium leading-relaxed text-zinc-400; }

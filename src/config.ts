@@ -49,6 +49,10 @@ const configSchema = z.object({
     ENGINE_TRIGGER_SECRET: z.string().optional().default('dev-engine-trigger'),
     MAX_CAMPAIGNS_PER_SWEEP: z.string().transform(v => parseInt(v, 10)).default('50'),
 
+    // Resend Config
+    RESEND_API_KEY: z.string().optional(),
+    RESEND_FROM_EMAIL: z.string().email().default('onboarding@resend.dev'),
+
     // UI & API Config
     FRONTEND_URL: z.string().url().default('http://localhost:3000'),
     BACKEND_URL: z.string().url().default('http://localhost:3005'),
@@ -75,4 +79,6 @@ export const config = parsedConfig.success ? parsedConfig.data : {
     MAX_CAMPAIGNS_PER_SWEEP: process.env.MAX_CAMPAIGNS_PER_SWEEP ? parseInt(process.env.MAX_CAMPAIGNS_PER_SWEEP, 10) : 50,
     FRONTEND_URL: process.env.FRONTEND_URL ?? 'http://localhost:3000',
     BACKEND_URL: process.env.BACKEND_URL ?? 'http://localhost:3005',
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev',
 };

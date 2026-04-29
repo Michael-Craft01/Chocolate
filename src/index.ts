@@ -4,7 +4,7 @@ import { startServer } from './web/server.js';
 import { triggerEngineCycle } from './services/discoveryEngine.js';
 
 // Configuration
-const CYCLE_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours
+const CYCLE_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours (2 cycles a day)
 
 async function startEngine() {
     logger.info('🚀 Starting Autonomous Lead Generation Engine...');

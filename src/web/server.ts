@@ -421,6 +421,17 @@ app.post('/api/ai/refine', authenticate, async (req: AuthenticatedRequest, res) 
     }
 });
 
+// API: Dispatch Lead (Manual)
+app.post('/api/leads/:id/dispatch', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+        const { id } = req.params;
+        const result = await dispatchService.dispatchLead(id, req.user!.id);
+        res.json(result);
+    } catch (error: any) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
 // API: Leads (Authenticated)
 app.get('/api/leads', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
