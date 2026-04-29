@@ -78,6 +78,9 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                         business.email = business.email || deepData.email;
                         business.phone = business.phone || deepData.phone;
                         visualIntel = deepData.screenshot || null;
+                        if (deepData.phone) {
+                            logger.info(`[HUNGRY] ✅ Found phone for ${business.name}: ${deepData.phone}`);
+                        }
                     } catch (e) {
                         logger.warn(`[HUNGRY] Contact extraction failed for ${business.name} at ${business.website}`);
                     }

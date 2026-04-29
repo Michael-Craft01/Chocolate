@@ -55,28 +55,35 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
             return res.status(401).json({ error: 'Unauthorized', message: authError?.message || 'Invalid token' });
         }
 
-        // Sync user to our database
-        const dbUser = await prisma.user.upsert({
-            where: { id: user.id },
-            update: { email: user.email },
-            create: { id: user.id, email: user.email }
-        });
+        // Sync user to our database (non-blocking — if DB is down, we still serve the request)
+        let dbUserId = user.id;
+        let dbUserTier = 'FREE';
+        let dbUserPaymentStatus = 'free';
+        try {
+            const dbUser = await prisma.user.upsert({
+                where: { id: user.id },
+                update: { email: user.email },
+                create: { id: user.id, email: user.email }
+            });
+            dbUserId = dbUser.id;
+            dbUserTier = dbUser.tier;
+            dbUserPaymentStatus = dbUser.paymentStatus;
+        } catch (dbErr: any) {
+            // DB unavailable — use Supabase identity directly. Log but don't block.
+            logger.warn({ err: dbErr.message }, 'DB sync skipped — serving with Supabase identity');
+        }
 
         req.user = {
-            id: dbUser.id,
-            email: dbUser.email || undefined,
-            paymentStatus: dbUser.paymentStatus,
-            tier: dbUser.tier
+            id: dbUserId,
+            email: user.email || undefined,
+            paymentStatus: dbUserPaymentStatus,
+            tier: dbUserTier,
         };
 
         next();
         } catch (err: any) {
             logger.error({ err: err.message }, 'Auth middleware critical error');
-            const isDbError = err.message.includes('Can\'t reach database server') || err.message.includes('connection');
-            return res.status(503).json({ 
-                error: 'Service Temporarily Unavailable', 
-                message: isDbError ? 'Database connection issue. Retrying...' : err.message 
-            });
+            return res.status(401).json({ error: 'Unauthorized', message: err.message });
         }
 };
 

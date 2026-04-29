@@ -1,26 +1,20 @@
 import prisma from '../src/lib/prisma.js';
 
-async function check() {
-    const leadCount = await prisma.lead.count();
-    const businessCount = await prisma.business.count();
-    const user = await prisma.user.findFirst();
-    const campaigns = await prisma.campaign.findMany({
-        include: {
-            _count: {
-                select: { leads: true }
-            }
-        }
+async function main() {
+    const leads = await prisma.lead.findMany({
+        take: 5,
+        include: { business: true, campaign: { select: { name: true, userId: true } } }
     });
+    console.log('Leads in DB:', leads.length);
+    leads.forEach(l => console.log(` - ${l.business.name} | Campaign: ${l.campaign.name} | userId: ${l.campaign.userId}`));
 
-    console.log(`Leads in DB: ${leadCount}`);
-    console.log(`Businesses in DB: ${businessCount}`);
-    if (user) {
-        console.log(`User leadsFoundToday: ${user.leadsFoundToday}`);
-    }
-    console.log('Campaigns:');
-    campaigns.forEach(c => {
-        console.log(`- ${c.name}: ${c._count.leads} leads (Status: ${c.status})`);
-    });
+    const users = await prisma.user.findMany();
+    console.log('\nUsers in DB:');
+    users.forEach(u => console.log(` - id: ${u.id} | email: ${u.email}`));
+
+    const campaigns = await prisma.campaign.findMany({ select: { id: true, name: true, userId: true } });
+    console.log('\nCampaigns:');
+    campaigns.forEach(c => console.log(` - ${c.name} owned by userId: ${c.userId}`));
 }
 
-check();
+main();
