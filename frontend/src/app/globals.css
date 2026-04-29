@@ -1,60 +1,51 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #161316;
-  --color-foreground: #bababa;
+  --color-background: #050505;
+  --color-foreground: #a1a1aa;
   
-  --color-card: rgba(69, 48, 39, 0.4);
-  --color-card-border: rgba(255, 109, 41, 0.15);
+  --color-card: rgba(22, 22, 24, 0.4);
+  --color-card-border: rgba(255, 109, 41, 0.12);
   
   --color-primary: #ff6d29;
   --color-primary-hover: #ff8a54;
   
-  --color-secondary: #453027;
+  --color-secondary: #1a1513;
   --color-accent: #ffffff;
-  
-  --color-hot: #ff3d00;
-  --color-warm: #ff6d29;
   
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --radius: 2px;
-  --radius-sm: 2px;
-  --radius-md: 2px;
-  --radius-lg: 2px;
-  --radius-xl: 2px;
-  --radius-2xl: 2px;
-  --radius-3xl: 2px;
 }
 
 :root {
-  --background: #161316;
-  --foreground: #bababa;
+  --background: #050505;
+  --foreground: #a1a1aa;
   --primary: #ff6d29;
   --primary-foreground: #ffffff;
-  --secondary: #453027;
-  --secondary-foreground: #ffffff;
-  --accent: #ffffff;
-  --accent-foreground: #161316;
-  --muted: #453027;
-  --muted-foreground: #bababa;
-  --card: rgba(69, 48, 39, 0.3);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --glass: rgba(69, 48, 39, 0.2);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --secondary: #1a1513;
+  --card: rgba(22, 22, 24, 0.3);
+  --card-border: rgba(255, 255, 255, 0.05);
 }
 
 @layer base {
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/30;
     background-image: 
-      radial-gradient(circle at 0% 0%, rgba(255, 109, 41, 0.08) 0%, transparent 40%),
-      radial-gradient(circle at 100% 100%, rgba(69, 48, 39, 0.15) 0%, transparent 40%);
+      radial-gradient(circle at 0% 0%, rgba(255, 109, 41, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(69, 48, 39, 0.1) 0%, transparent 40%);
     background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply tracking-tight font-bold text-white;
+    @apply tracking-tighter font-black text-white uppercase;
   }
+
+  /* Typography System */
+  .text-display { @apply text-4xl md:text-5xl font-black tracking-tightest gradient-text uppercase; }
+  .text-header { @apply text-2xl font-black tracking-tight text-white uppercase; }
+  .text-label { @apply text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500; }
+  .text-body { @apply text-sm font-medium leading-relaxed text-zinc-400; }
+  .text-stat { @apply text-2xl font-black tracking-tighter text-white; }
 }
 
 /* Glassmorphism & Premium Utilities */

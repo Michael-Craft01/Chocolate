@@ -169,11 +169,11 @@ export default function LeadsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pt-6 border-b border-white/5 pb-8">
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
+            <div className="flex items-center gap-2 text-label text-primary">
               <ShieldCheck className="h-4 w-4" /> Intelligence Collection
             </div>
-            <h1 className="text-4xl font-black tracking-tightest gradient-text">Leads</h1>
-            <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em]">
+            <h1 className="text-display">Leads</h1>
+            <p className="text-label text-zinc-500">
               {pagination.totalLeads} total · grouped by sweep cycle
             </p>
           </div>
@@ -239,8 +239,8 @@ export default function LeadsPage() {
                 <Icon className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-zinc-600">{label}</p>
-                <p className={`text-xl font-black ${color}`}>{value}</p>
+                <p className="text-label text-zinc-600">{label}</p>
+                <p className={`text-stat ${color}`}>{value}</p>
               </div>
             </div>
           ))}

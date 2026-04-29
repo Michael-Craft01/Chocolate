@@ -21,6 +21,7 @@ import {
 import { authJson } from "@/lib/api";
 import { motion } from "framer-motion";
 import { AIAssistButton } from "@/components/AIAssistButton";
+import { BrandedLoader } from "@/components/BrandedLoader";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -88,26 +89,21 @@ export default function SettingsPage() {
   };
 
   const inputClass = "w-full bg-white/[0.02] border border-white/5 rounded-sm px-5 py-3 transition-all focus:outline-none focus:border-primary/50 text-xs font-bold text-white placeholder:text-zinc-700";
-  const labelClass = "block text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-3 ml-1";
+  const labelClass = "text-label block mb-3 ml-1";
 
   if (loading) {
-    return (
-      <div className="h-96 flex flex-col items-center justify-center gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 animate-pulse">Loading settings...</p>
-      </div>
-    );
+    return <BrandedLoader message="Syncing configuration..." />;
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 pb-20 font-sans">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-10 border-b border-white/5 pb-10">
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
+          <div className="flex items-center gap-2 text-label text-primary">
             <ShieldCheck className="h-4 w-4 glow-primary" /> Secure Configuration
           </div>
-          <h1 className="text-4xl font-black tracking-tightest gradient-text">Settings</h1>
-          <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Configure your business identity and discovery preferences.</p>
+          <h1 className="text-display">Settings</h1>
+          <p className="text-label text-zinc-500">Configure your business identity and discovery preferences.</p>
         </div>
         <button 
           onClick={handleSave}
@@ -288,7 +284,7 @@ export default function SettingsPage() {
               <Zap className="h-4 w-4 glow-primary" /> Account Synchronization
             </div>
             <h3 className="text-2xl font-black tracking-tight text-white">Update Your Global Identity</h3>
-            <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-widest leading-relaxed">
+            <p className="text-label text-zinc-500">
               Applying these updates ensures all future discovery cycles use the correct branding and target hubs.
             </p>
           </div>

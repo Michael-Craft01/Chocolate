@@ -9,7 +9,7 @@ export default function DashboardLayout({
 }>) {
   return (
     <SubscriptionGuard>
-      <div className="flex h-screen bg-[#020203] text-white selection:bg-primary/30 font-sans">
+      <div className="flex h-screen bg-background text-white selection:bg-primary/30 font-sans">
         <CommandPalette />
         
         <Sidebar />

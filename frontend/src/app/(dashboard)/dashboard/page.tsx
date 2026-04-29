@@ -54,11 +54,11 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 pb-8">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-primary text-[11px] font-black uppercase tracking-[0.3em]">
+          <div className="flex items-center gap-2 text-label text-primary">
             <ShieldCheck className="h-4 w-4 glow-primary" /> Safe & Private
           </div>
-          <h1 className="text-4xl font-black tracking-tightest gradient-text">Overview</h1>
-          <p className="text-[13px] text-zinc-500 font-bold uppercase tracking-[0.1em]">Find and manage high-value business leads with ease.</p>
+          <h1 className="text-display">Overview</h1>
+          <p className="text-label text-zinc-500">Find and manage high-value business leads with ease.</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -96,8 +96,8 @@ export default function DashboardPage() {
           <div className="flex-1 glass-card rounded-sm p-8 flex flex-col justify-between group">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
-                <p className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Businesses Found</p>
-                <p className="text-4xl font-black tracking-tightest text-white">{stats?.totalLeads || 0}</p>
+                <p className="text-label">{label === "Businesses Found" ? "Found" : "Verified"}</p>
+                <p className="text-stat">{stats?.totalLeads || 0}</p>
               </div>
               <div className="p-3 rounded-sm bg-primary/10 text-primary glow-primary">
                 <Shield className="h-6 w-6" />

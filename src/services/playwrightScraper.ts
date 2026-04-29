@@ -146,7 +146,14 @@ export class PlaywrightScraper {
                                     
                                     const name = article.querySelector('.fontHeadlineSmall')?.textContent?.trim() || el.textContent?.trim();
                                     const website = article.querySelector('a[aria-label*="Website"]')?.href || '';
-                                    const phone = article.querySelector('[aria-label*="Phone"]')?.textContent?.trim() || '';
+                                    
+                                    const phoneEl = article.querySelector('[aria-label*="Phone"]');
+                                    let phone = phoneEl?.textContent?.trim() || '';
+                                    if (!phone && phoneEl) {
+                                        const aria = phoneEl.getAttribute('aria-label') || '';
+                                        phone = aria.replace(/Phone:?\s*/i, '').trim();
+                                    }
+                                    
                                     const address = article.querySelector('[aria-label*="Address"]')?.textContent?.trim() || '';
                                     
                                     if (name && name.length > 2) {

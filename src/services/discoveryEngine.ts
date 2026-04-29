@@ -85,7 +85,7 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
 
                 // CRITICAL QUALITY GATE: Only save if we now have a phone number (either from search or deep dive)
                 if (!business.phone) {
-                    logger.debug(`[QUALITY CONTROL] Skipping ${business.name} - No phone number found even after deep dive.`);
+                    logger.warn(`[QUALITY CONTROL] Skipping ${business.name} - No phone number found even after deep dive.`);
                     continue;
                 }
 

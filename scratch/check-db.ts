@@ -1,35 +1,26 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '../src/lib/prisma.js';
 
-async function checkUser() {
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: 1
-  });
-  
-  if (users.length === 0) {
-    console.log("No users found in database.");
-    return;
-  }
+async function check() {
+    const leadCount = await prisma.lead.count();
+    const businessCount = await prisma.business.count();
+    const user = await prisma.user.findFirst();
+    const campaigns = await prisma.campaign.findMany({
+        include: {
+            _count: {
+                select: { leads: true }
+            }
+        }
+    });
 
-  const user = users[0];
-  console.log("\n--- Latest User Status ---");
-  console.log(`Email: ${user.email}`);
-  console.log(`Tier: ${user.tier}`);
-  console.log(`Payment Status: ${user.paymentStatus}`);
-  
-  const transactions = await prisma.transaction.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: 'desc' },
-    take: 3
-  });
-  
-  console.log("\n--- Recent Transactions ---");
-  transactions.forEach(t => {
-    console.log(`[${t.createdAt.toISOString()}] ${t.gateway} | ${t.type} | ${t.amount} | Status: ${t.status}`);
-  });
+    console.log(`Leads in DB: ${leadCount}`);
+    console.log(`Businesses in DB: ${businessCount}`);
+    if (user) {
+        console.log(`User leadsFoundToday: ${user.leadsFoundToday}`);
+    }
+    console.log('Campaigns:');
+    campaigns.forEach(c => {
+        console.log(`- ${c.name}: ${c._count.leads} leads (Status: ${c.status})`);
+    });
 }
 
-checkUser()
-  .catch(e => console.error(e))
-  .finally(() => prisma.$disconnect());
+check();

@@ -158,11 +158,11 @@ function BillingContent() {
       )}
 
       <div className="text-center space-y-4">
-        <div className="flex items-center justify-center gap-2 text-primary text-[11px] font-black uppercase tracking-[0.3em]">
+        <div className="flex items-center justify-center gap-2 text-label text-primary">
           <ShieldCheck className="h-4 w-4 glow-primary" /> Plans
         </div>
-        <h1 className="text-4xl font-black gradient-text tracking-tightest">Billing</h1>
-        <p className="text-[12px] text-zinc-500 font-bold uppercase tracking-[0.15em] max-w-xl mx-auto">
+        <h1 className="text-display">Billing</h1>
+        <p className="text-label text-zinc-500 max-w-xl mx-auto">
           Choose a plan that works for you.
         </p>
       </div>
@@ -211,8 +211,8 @@ function BillingContent() {
                 </div>
               </div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-5xl font-black tracking-tightest text-white">${tier.price}</span>
-                <span className="text-zinc-500 text-[14px] font-bold uppercase tracking-widest">/month</span>
+                <span className="text-stat !text-5xl">{tier.price}</span>
+                <span className="text-label">/month</span>
               </div>
             </div>
 
@@ -372,11 +372,11 @@ function BillingContent() {
   );
 }
 
+import { BrandedLoader } from "@/components/BrandedLoader";
+
 export default function BillingPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>}>
+    <Suspense fallback={<BrandedLoader message="Connecting to secure gateway..." />}>
       <BillingContent />
     </Suspense>
   );

@@ -69,8 +69,8 @@ export default function ProfilePage() {
             <Home className="h-6 w-6 text-primary" />
           </div>
           <div className="space-y-0.5">
-            <h1 className="text-2xl font-black tracking-tighter gradient-text">Your Profile</h1>
-            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Manage your account and settings here.</p>
+            <h1 className="text-display !text-3xl">Your Profile</h1>
+            <p className="text-label">Manage your account and settings here.</p>
           </div>
         </div>
         
@@ -93,7 +93,7 @@ export default function ProfilePage() {
         <div className="glass-card p-8 rounded-sm border border-white/5 space-y-6">
           <div className="flex items-center gap-2 text-zinc-300">
             <ShieldCheck className="h-4 w-4 text-primary" />
-            <h2 className="text-[10px] font-black uppercase tracking-widest">Account Details</h2>
+            <h2 className="text-label">Account Details</h2>
           </div>
           
           <div className="space-y-4">
@@ -158,9 +158,9 @@ export default function ProfilePage() {
                 <div className="p-5 rounded-xl bg-black/40 border border-white/5 relative overflow-hidden group/quota">
                   <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/quota:opacity-100 transition-opacity" />
                   <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-1 relative">Daily Limit</p>
-                  <p className="text-2xl font-black tracking-tight text-white relative">
+                  <p className="text-stat">
                     {profile?.tier === 'FREE' ? '10' : profile?.tier === 'STARTER' ? '100' : profile?.tier === 'PROFESSIONAL' ? '500' : '2,500'}
-                    <span className="text-[10px] text-zinc-500 ml-2 font-bold uppercase tracking-widest">Leads</span>
+                    <span className="text-label ml-2">Leads</span>
                   </p>
                 </div>
                 <div className="p-5 rounded-xl bg-black/40 border border-white/5 relative overflow-hidden group/safe">

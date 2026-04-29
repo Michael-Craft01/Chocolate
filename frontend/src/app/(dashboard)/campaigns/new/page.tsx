@@ -71,11 +71,6 @@ export default function NewCampaignPage() {
     };
 
     const handleSave = async () => {
-        if (!campaign.productName.trim() || !campaign.productDescription.trim()) {
-            setError("Please provide at least a Product Name and Description.");
-            return;
-        }
-
         setLoading(true);
         setError(null);
         try {
@@ -133,11 +128,11 @@ export default function NewCampaignPage() {
                 </div>
 
                 <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
+                    <div className="flex items-center gap-2 text-label text-primary">
                         <ShieldCheck className="h-4 w-4 glow-primary" /> Safe & Private
                     </div>
-                    <h1 className="text-4xl font-black tracking-tightest gradient-text">New Search</h1>
-                    <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Set up a new search to find business leads.</p>
+                    <h1 className="text-display">New Search</h1>
+                    <p className="text-label text-zinc-500">Set up a new search to find business leads.</p>
                 </div>
 
                 {error && (
@@ -179,7 +174,7 @@ export default function NewCampaignPage() {
                             <div className="grid grid-cols-1 gap-6">
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between ml-1">
-                                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Product or Service Name</label>
+                                        <label className="text-label">Product or Service Name</label>
                                         <AIAssistButton 
                                             field="Product Name" 
                                             currentValue={campaign.productName} 
@@ -196,7 +191,7 @@ export default function NewCampaignPage() {
                                 </div>
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between ml-1">
-                                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Value Proposition (What do you do?)</label>
+                                        <label className="text-label">Value Proposition (What do you do?)</label>
                                         <AIAssistButton 
                                             field="Value Proposition" 
                                             currentValue={campaign.productDescription} 
