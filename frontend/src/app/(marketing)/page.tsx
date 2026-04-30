@@ -190,15 +190,58 @@ export default function LandingPage() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-40 relative">
-        <div className="bg-blob bg-blue top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20" />
+      <section className="py-60 relative overflow-hidden">
+        {/* Immersive Neural Aura */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+        
+        {/* Floating Mission Assets */}
+        <div className="absolute inset-0 pointer-events-none opacity-20">
+           <motion.div 
+             animate={{ y: [0, -20, 0], opacity: [0.1, 0.3, 0.1] }} 
+             transition={{ duration: 5, repeat: Infinity }}
+             className="absolute top-20 left-[15%] p-4 glass-panel border-white/10 rounded-2xl"
+           >
+              <div className="h-2 w-12 bg-primary/40 rounded-full mb-2" />
+              <div className="h-2 w-20 bg-zinc-800 rounded-full" />
+           </motion.div>
+           <motion.div 
+             animate={{ y: [0, 20, 0], opacity: [0.1, 0.3, 0.1] }} 
+             transition={{ duration: 7, repeat: Infinity, delay: 1 }}
+             className="absolute bottom-20 right-[15%] p-4 glass-panel border-white/10 rounded-2xl"
+           >
+              <div className="h-2 w-20 bg-primary/40 rounded-full mb-2" />
+              <div className="h-2 w-12 bg-zinc-800 rounded-full" />
+           </motion.div>
+        </div>
+
         <div className="max-w-4xl mx-auto px-6 text-center space-y-12 relative z-10">
-           <h2 className="text-6xl md:text-8xl font-bold tracking-[-0.06em] text-white leading-none">Ready to <span className="text-primary">grow?</span></h2>
-           <p className="readable max-w-xl mx-auto">Join the high-performance revenue teams using HyprLead to automate their pipeline discovery.</p>
-           <div className="flex justify-center">
-              <Link href="/signup" className="btn-pill-white h-16 px-12 text-lg">
-                 Get Started Today
+           <div className="space-y-6">
+              <h2 className="text-7xl md:text-9xl font-bold tracking-[-0.06em] text-white leading-none">
+                Ready to <span className="animate-text-shimmer bg-clip-text text-transparent bg-gradient-to-r from-primary via-emerald-400 to-primary">grow?</span>
+              </h2>
+              <p className="text-zinc-500 text-lg md:text-xl font-medium max-w-xl mx-auto leading-relaxed">
+                Join the high-performance revenue teams using HyprLead to automate their pipeline discovery.
+              </p>
+           </div>
+
+           <div className="flex flex-col items-center gap-8">
+              <Link href="/signup" className="btn-pill-white h-20 px-16 text-xl relative group overflow-hidden">
+                 <div className="absolute inset-0 bg-primary/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                 <span className="relative z-10 flex items-center gap-3">
+                    Launch Mission <ArrowRight className="h-6 w-6 group-hover:translate-x-2 transition-transform" />
+                 </span>
               </Link>
+              
+              <div className="flex items-center gap-8">
+                 <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">Next Sweep: 04:12:00</span>
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">Verified Leads: 12.8k</span>
+                 </div>
+              </div>
            </div>
         </div>
       </section>
