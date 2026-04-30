@@ -38,7 +38,7 @@ export default function LoginPage() {
 
       if (signInError) {
         if (signInError.message.includes("Email not confirmed")) {
-          throw new Error("Terminal not verified. Please check your inbox for the initialization link.");
+          throw new Error("Account not verified. Please check your inbox for the verification link.");
         }
         throw signInError;
       }
@@ -48,7 +48,7 @@ export default function LoginPage() {
         router.refresh();
       }
     } catch (err: any) {
-      setError(err.message || "Authentication failed. Check your terminal credentials.");
+      setError(err.message || "Authentication failed. Check your account credentials.");
     } finally {
       setLoading(false);
     }
@@ -71,50 +71,52 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 selection:bg-primary/30">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,109,41,0.05),transparent_70%)]" />
+    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-primary/30 relative overflow-hidden">
+      <div className="bg-blob bg-orange top-0 right-0 opacity-10" />
+      <div className="bg-blob bg-primary bottom-0 left-0 opacity-10" />
       
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md relative"
+        className="w-full max-w-md relative z-10"
       >
-        <div className="text-center mb-12 space-y-4">
-          <Link href="/" className="inline-flex items-center gap-2 group mb-6">
-            <div className="h-10 w-10 rounded-sm bg-primary flex items-center justify-center group-hover:scale-105 transition-transform">
-               <Shield className="h-5 w-5 text-white" />
+        <div className="text-center mb-12 space-y-6">
+          <Link href="/" className="inline-flex items-center gap-3 group">
+            <div className="h-12 w-12 rounded-2xl bg-white flex items-center justify-center group-hover:scale-105 transition-transform">
+               <Shield className="h-6 w-6 text-black" />
             </div>
-            <span className="text-xl font-black text-white tracking-tightest uppercase">HyprLead</span>
+            <span className="text-2xl font-bold text-white tracking-tight">HyprLead</span>
           </Link>
-          <h1 className="text-4xl font-black text-white uppercase tracking-tightest">Control <span className="text-primary">Center.</span></h1>
-          <p className="tertiary">Secure Account Login</p>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold text-white tracking-tight">Welcome back.</h1>
+            <p className="text-zinc-500 font-medium">Continue your discovery mission.</p>
+          </div>
         </div>
 
-        <div className="p-8 rounded-sm border border-white/5 bg-white/[0.02] shadow-2xl space-y-8">
+        <div className="p-10 rounded-[2.5rem] glass-morphism border-white/10 shadow-2xl space-y-8">
           {error && (
             <motion.div 
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="p-4 rounded-sm bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-500 text-[11px] font-bold uppercase"
+              className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-500 text-xs font-bold"
             >
               <AlertCircle className="h-4 w-4 shrink-0" />
               {error}
             </motion.div>
           )}
 
-          {/* Social Auth Section */}
           <div className="grid grid-cols-1 gap-4">
              <button 
                onClick={() => handleSocialLogin('google')}
                disabled={socialLoading || loading}
-               className="h-14 w-full rounded-sm border border-white/10 bg-white/5 hover:bg-white/10 text-white font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-4 group disabled:opacity-50"
+               className="btn-pill-glass w-full h-14 gap-3"
              >
                 {socialLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <>
-                    <Globe className="h-5 w-5 text-zinc-400 group-hover:text-white transition-colors" />
-                    Authenticate with Google
+                    <Globe className="h-5 w-5" />
+                    Sign in with Google
                   </>
                 )}
              </button>
@@ -122,69 +124,67 @@ export default function LoginPage() {
 
           <div className="relative">
              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
-             <div className="relative flex justify-center text-[8px] font-black uppercase tracking-widest">
-                <span className="bg-[#050505] px-4 text-zinc-700">Or use terminal ID</span>
+             <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-[0.2em]">
+                <span className="bg-black/20 backdrop-blur-md px-4 text-zinc-600">Or sign in with email</span>
              </div>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-1">Email Address</label>
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-zinc-500 ml-1">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
+                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-600" />
                 <input 
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@hyprlead.com"
-                  className="w-full h-14 bg-[#0a0a0a] border border-white/5 rounded-sm pl-12 pr-4 text-white text-sm focus:border-primary/50 focus:ring-0 transition-all placeholder:text-zinc-800"
+                  placeholder="name@company.com"
+                  className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl pl-14 pr-6 text-white text-sm focus:border-primary/50 focus:ring-0 transition-all placeholder:text-zinc-700"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between items-center ml-1">
-                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Password</label>
-              </div>
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-zinc-500 ml-1">Password</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-600" />
                 <input 
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full h-14 bg-[#0a0a0a] border border-white/5 rounded-sm pl-12 pr-4 text-white text-sm focus:border-primary/50 focus:ring-0 transition-all placeholder:text-zinc-800"
+                  className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl pl-14 pr-6 text-white text-sm focus:border-primary/50 focus:ring-0 transition-all placeholder:text-zinc-700"
                 />
               </div>
             </div>
 
             <button 
               disabled={loading || socialLoading}
-              className="w-full h-14 bg-primary hover:bg-primary-hover text-white font-black text-[11px] uppercase tracking-[0.2em] rounded-sm transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed group"
+              className="btn-pill-white w-full h-14"
             >
               {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <>
                   Sign In
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="h-5 w-5" />
                 </>
               )}
             </button>
           </form>
 
           <div className="pt-6 text-center border-t border-white/5">
-            <p className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">
+            <p className="text-zinc-600 text-sm font-medium">
               New to the platform?{" "}
-              <Link href="/signup" className="text-primary hover:underline underline-offset-4">Create Account</Link>
+              <Link href="/signup" className="text-primary font-bold hover:underline">Create Account</Link>
             </p>
           </div>
         </div>
 
         <div className="mt-12 text-center">
-           <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Encrypted Session Endpoint: 0xHYPR_AUTH_V4</p>
+           <p className="text-[10px] font-bold text-zinc-800 uppercase tracking-[0.4em]">Secure Session Active</p>
         </div>
       </motion.div>
     </div>
