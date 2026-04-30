@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import prisma from './lib/prisma.js';
 import { logger } from './lib/logger.js';
 import { startServer } from './web/server.js';
 import { triggerEngineCycle } from './services/discoveryEngine.js';
@@ -12,9 +12,15 @@ async function startEngine() {
     // 1. Start Web UI/API
     startServer();
 
-    // 2. Initial Hunt
-    logger.info('Performing initial lead sweep...');
-    await triggerEngineCycle().catch(err => logger.error({ err }, 'Initial sweep failed'));
+    // 2. Initial Hunt (Only if active campaigns exist)
+    const activeCount = await prisma.campaign.count({ where: { status: 'ACTIVE' } });
+    
+    if (activeCount > 0) {
+        logger.info(`Found ${activeCount} active campaigns. Performing initial lead sweep...`);
+        await triggerEngineCycle().catch(err => logger.error({ err }, 'Initial sweep failed'));
+    } else {
+        logger.info('Engine Standby: No active campaigns found. Waiting for user to launch a mission.');
+    }
 
     // 3. Schedule Recurring Hunts
     setInterval(async () => {

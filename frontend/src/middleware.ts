@@ -44,11 +44,11 @@ export async function middleware(request: NextRequest) {
     url.pathname.startsWith('/leads') || 
     url.pathname.startsWith('/billing') || 
     url.pathname.startsWith('/settings') ||
+    url.pathname.startsWith('/profile') ||
     url.pathname.startsWith('/onboarding')
 
   if (isInternalPath && !user) {
-    url.pathname = '/login'
-    url.searchParams.set('next', request.nextUrl.pathname)
+    url.pathname = '/' // Redirect to home page as requested
     return NextResponse.redirect(url)
   }
 

@@ -30,12 +30,63 @@ export default function LandingPage() {
 
       <Hero />
 
-      {/* Social Proof Bar (Image 3 Style) */}
-      <section className="py-20 border-y border-white/5 bg-black/50 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center gap-12 md:gap-24 opacity-30">
-          {logos.map((logo, i) => (
-            <span key={i} className="text-sm font-black tracking-widest text-white uppercase">{logo}</span>
-          ))}
+      {/* Testimonials Section (High-Fidelity Social Proof) */}
+      <section className="py-32 border-y border-white/5 bg-black/50 backdrop-blur-md relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid opacity-10" />
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                <Heart className="h-3 w-3 text-primary" />
+                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">User Sentiment</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-white">Loved by <span className="text-primary">revenue leaders</span></h2>
+            </div>
+            <p className="text-zinc-500 text-sm font-medium max-w-xs text-left md:text-right">Join 500+ high-growth teams automating their outbound pipeline discovery.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                text: "HyprLead turned our manual 4-hour lead research process into a 10-minute automated sweep. The quality of personalization is unmatched.",
+                author: "Sarah Chen",
+                role: "Head of Growth",
+                company: "ScaleFlow AI"
+              },
+              {
+                text: "The 'Mission Control' dashboard gives us total visibility into our pipeline value. We found 300+ qualified leads in our first week.",
+                author: "Jameson Reed",
+                role: "VP of Sales",
+                company: "NexGen Systems"
+              },
+              {
+                text: "Finally, a lead engine that actually understands business pain points. The outreach it generates feels human, not robotic.",
+                author: "Elena Rodriguez",
+                role: "Founder",
+                company: "Stellar Outbound"
+              }
+            ].map((t, i) => (
+              <motion.div 
+                key={i}
+                whileHover={{ y: -5 }}
+                className="p-8 rounded-[24px] bg-white/[0.02] border border-white/5 flex flex-col justify-between group hover:border-primary/20 transition-all duration-500"
+              >
+                <div className="space-y-6">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                  </div>
+                  <p className="text-zinc-300 text-sm leading-relaxed font-medium italic">"{t.text}"</p>
+                </div>
+                <div className="mt-8 pt-6 border-t border-white/5 flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-full bg-zinc-800 border border-white/10" />
+                  <div>
+                    <p className="text-xs font-bold text-white">{t.author}</p>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t.role} @ {t.company}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 

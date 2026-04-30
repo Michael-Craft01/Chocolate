@@ -14,12 +14,13 @@ const resolveApiBaseUrl = () => {
     return envUrl.replace(/\/$/, "");
   }
   
-  // Support both localhost and 127.0.0.1
-  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    return "http://localhost:3005";
+  // Dynamic resolver: hit port 3005 on whatever host we are currently on
+  if (typeof window !== 'undefined') {
+    const { hostname, protocol } = window.location;
+    return `${protocol}//${hostname}:3005`;
   }
 
-  return (envUrl || "").replace(/\/$/, "");
+  return "http://localhost:3005";
 };
 
 const apiBaseUrl = resolveApiBaseUrl();

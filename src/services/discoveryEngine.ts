@@ -7,6 +7,7 @@ import { messageGenerator } from './messageGenerator.js';
 import { dispatchService } from './dispatchService.js';
 import { cleanupDatabase } from './databaseCleanup.js';
 import { contactExtractor } from './contactExtractor.js';
+import { withRetry, sleep } from '../lib/utils.js';
 
 const CONCURRENCY_LIMIT = 5;
 
@@ -58,7 +59,13 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
     let leadsFound = 0;
     try {
         if (!campaign || campaign.status !== 'ACTIVE') return 0;
-        const businesses = await scraper.scrape(queryData.query, queryData.country, queryData.page);
+        
+        // Industrial Retry for Scraper
+        const businesses = await withRetry(
+            () => scraper.scrape(queryData.query, queryData.country, queryData.page),
+            { retries: 3, delay: 2000, factor: 2, taskName: `Scrape: ${queryData.query}` }
+        ).catch(() => []);
+
         if (!businesses || businesses.length === 0) return 0;
 
         const results = businesses.slice(0, targetCount);
@@ -71,32 +78,48 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                 if (user.leadsFoundToday >= user.dailyLimit && user.creditBalance <= 0) break;
 
                 let visualIntel: Buffer | null = null;
-                // Deep Dive if we are missing contact info
+                
+                // Deep Dive with retry
                 if (business.website && (!business.email || !business.phone)) {
                     try {
-                        const deepData = await contactExtractor.extract(business.website);
+                        const deepData = await withRetry(
+                            () => contactExtractor.extract(business.website),
+                            { retries: 2, delay: 1000, factor: 1.5, taskName: `Extract: ${business.name}` }
+                        );
                         business.email = business.email || deepData.email;
                         business.phone = business.phone || deepData.phone;
                         visualIntel = deepData.screenshot || null;
-                        if (deepData.phone) {
-                            logger.info(`[HUNGRY] ✅ Found phone for ${business.name}: ${deepData.phone}`);
-                        }
                     } catch (e) {
-                        logger.warn(`[HUNGRY] Contact extraction failed for ${business.name} at ${business.website}`);
+                        logger.warn(`[HUNGRY] Contact extraction failed for ${business.name} after retries.`);
                     }
                 }
 
-                // CRITICAL QUALITY GATE: Only save if we now have a phone number (either from search or deep dive)
+                // CRITICAL QUALITY GATE: Only save if we now have a phone number
                 if (!business.phone) {
-                    logger.warn(`[QUALITY CONTROL] Skipping ${business.name} - No phone number found even after deep dive.`);
+                    logger.warn(`[QUALITY CONTROL] Skipping ${business.name} - No phone number found.`);
                     continue;
                 }
 
                 const telemetry = `${business.address || ''} | ${business.website || 'No Site'}`;
-                const enrichment = await aiService.enrichLead(business.name, business.category ?? undefined, {
-                    productDescription: campaign.productDescription,
-                    targetPainPoints: campaign.targetPainPoints
-                }, telemetry, visualIntel);
+                
+                // AI Enrichment with Fallback
+                let enrichment;
+                try {
+                    enrichment = await withRetry(
+                        () => aiService.enrichLead(business.name, business.category ?? undefined, {
+                            productDescription: campaign.productDescription,
+                            targetPainPoints: campaign.targetPainPoints
+                        }, telemetry, visualIntel),
+                        { retries: 2, delay: 1000, factor: 2, taskName: `AI Enrich: ${business.name}` }
+                    );
+                } catch (e) {
+                    logger.warn(`[FALLBACK] AI Enrichment failed for ${business.name}. Using raw data.`);
+                    enrichment = {
+                        brandName: business.name,
+                        industry: business.category || 'General',
+                        painPoint: 'efficiency'
+                    };
+                }
 
                 const result = await syncLeadToDb(business, enrichment, campaign, sweepId, sweepDate);
                 if (result) {
@@ -104,13 +127,16 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                     user.leadsFoundToday++; 
                     leadsFound++;
                 }
+
+                // Stealth Delay to prevent detection
+                await sleep(500);
             } catch (err) {
-                logger.error({ err }, 'Sync failed');
+                logger.error({ err }, 'Individual lead processing failed. Continuing batch.');
             }
         }
         return leadsFound;
     } catch (error) {
-        logger.error({ error }, 'Process failed');
+        logger.error({ error }, 'Query processing cycle failed');
         return leadsFound;
     }
 }
@@ -140,33 +166,61 @@ export async function triggerEngineCycle() {
     const userResults: Record<string, { campaignName: string, count: number }[]> = {};
 
     try {
-        const activeCampaigns = await prisma.campaign.findMany({ where: { status: 'ACTIVE' }, include: { user: true } });
+        const activeCampaigns = await prisma.campaign.findMany({ 
+            where: { status: 'ACTIVE' }, 
+            include: { user: true } 
+        });
 
         for (const campaign of activeCampaigns) {
+            // ── PRE-FLIGHT IDENTITY CHECK ──
+            const isIdentityComplete = 
+                campaign.productDescription?.length > 10 && 
+                campaign.targetPainPoints?.length > 5 &&
+                campaign.locations.length > 0 &&
+                campaign.industries.length > 0;
+
+            if (!isIdentityComplete) {
+                logger.warn(`⚠️ [QUALITY GUARD] Campaign "${campaign.name}" skipped: User identity/persona details incomplete.`);
+                continue;
+            }
+
             const user = await prisma.user.findUnique({ where: { id: campaign.userId } });
             if (!user) continue;
 
-            const target = user.dailyLimit;
+            // ── 50% CYCLE TARGET LOGIC ──
+            // We aim for 50% of daily limit per cycle (since we run twice a day)
+            const cycleTarget = Math.ceil(user.dailyLimit * 0.5);
+            const dailyRemaining = user.dailyLimit - user.leadsFoundToday;
+            const target = Math.max(0, Math.min(cycleTarget, dailyRemaining));
+
+            if (target <= 0) {
+                logger.info(`⏹️ [QUOTA] Campaign "${campaign.name}" already hit cycle target or daily limit (${user.leadsFoundToday}/${user.dailyLimit}).`);
+                continue;
+            }
+
             let campaignTotal = 0;
             let round = 0;
-            const MAX_ROUNDS = 20;
+            const MAX_ROUNDS = 10;
 
-            logger.info(`🎯 Campaign "${campaign.name}" — targeting ${target} leads (currently at ${user.leadsFoundToday})`);
+            logger.info(`🎯 Campaign "${campaign.name}" — Cycle Target: ${target} leads (Daily: ${user.leadsFoundToday}/${user.dailyLimit})`);
 
-            while (campaignTotal + user.leadsFoundToday < target && round < MAX_ROUNDS) {
+            while (campaignTotal < target && round < MAX_ROUNDS) {
                 round++;
-                const needed = target - (campaignTotal + user.leadsFoundToday);
-                logger.info(`🔄 Round ${round} — need ${needed} more leads for campaign "${campaign.name}"`);
+                const needed = target - campaignTotal;
+                logger.info(`🔄 Round ${round} — need ${needed} more leads for cycle goal on "${campaign.name}"`);
 
-                const queries = await queryGenerator.generateBatchQueries(50, campaign);
+                const queries = await queryGenerator.generateBatchQueries(20, campaign);
                 if (queries.length === 0) break;
 
                 for (const query of queries) {
-                    const stillNeeded = target - (campaignTotal + user.leadsFoundToday);
+                    const stillNeeded = target - campaignTotal;
                     if (stillNeeded <= 0) break;
 
-                    const count = await processLeadsForQuery(campaign, query, Math.min(15, stillNeeded), sweepId, sweepDate);
+                    const count = await processLeadsForQuery(campaign, query, Math.min(10, stillNeeded), sweepId, sweepDate);
                     campaignTotal += count;
+                    
+                    // Don't hammer the APIs
+                    await sleep(1000);
                 }
             }
 

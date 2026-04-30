@@ -38,16 +38,23 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
         while (attempts < 3) {
             try {
                 logger.info({ attempts, url: config.SUPABASE_URL }, 'Supabase auth attempt');
-                const { data, error } = await supabase.auth.getUser(token);
-                user = data.user;
+                
+                // Add a strict timeout to the Supabase call to prevent "Failed to fetch" hangs
+                const authPromise = supabase.auth.getUser(token);
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Auth Timeout')), 8000)
+                );
+
+                const { data, error } = await Promise.race([authPromise, timeoutPromise]) as any;
+                
+                user = data?.user;
                 authError = error;
                 if (user || (authError && authError.status !== 500)) break;
-                if (authError) logger.warn({ authError }, 'Supabase auth returned error');
             } catch (err: any) {
-                logger.error({ err: err.message, stack: err.stack }, `Auth attempt ${attempts + 1} thrown error`);
+                logger.error({ err: err.message }, `Auth attempt ${attempts + 1} failed`);
             }
             attempts++;
-            if (attempts < 3) await new Promise(r => setTimeout(r, 500));
+            if (attempts < 3) await new Promise(r => setTimeout(r, 1000));
         }
 
         if (authError || !user) {
