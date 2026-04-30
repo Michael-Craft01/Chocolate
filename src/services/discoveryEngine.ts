@@ -117,6 +117,21 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
 
 export async function triggerEngineCycle() {
     logger.info('🚀 Cycle start');
+    
+    // ── QUOTA RESET PROTOCOL ──
+    try {
+        const now = new Date();
+        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        
+        await prisma.user.updateMany({
+            where: { lastQuotaReset: { lt: yesterday } },
+            data: { leadsFoundToday: 0, lastQuotaReset: now }
+        });
+        logger.info('🔄 Daily quotas reset successfully');
+    } catch (e: any) {
+        logger.error({ err: e.message }, 'Quota reset failed');
+    }
+
     const sweepId = `sweep_${Date.now()}`;
     const sweepDate = new Date();
     const userResults: Record<string, { campaignName: string, count: number }[]> = {};

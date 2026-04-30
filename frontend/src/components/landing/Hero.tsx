@@ -1,239 +1,196 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Zap, Target, ArrowRight, Brain, Cpu, Shield, Globe, Sparkles, Search, Compass, MessageSquare, CheckCircle2, TrendingUp, Users, Layout, ChevronRight, BarChart3, Clock, MoreVertical, Bell, Plus } from "lucide-react";
+import { Zap, Target, ArrowRight, Brain, Cpu, Shield, Globe, Sparkles, Search, Compass, MessageSquare, CheckCircle2, TrendingUp, Users, Layout, ChevronRight, BarChart3, Clock, MoreVertical, Bell, Plus, LayoutDashboard, SearchCode, Database } from "lucide-react";
 import Link from "next/link";
-import { AuroraBackground } from "@/components/ui/aurora-background";
 
 export default function Hero() {
-  const messages = [
-    { name: "Sarah J.", text: "Needs local SEO audit", time: "2m", color: "bg-emerald-500" },
-    { name: "Michael K.", text: "Revenue leakage detected", time: "15m", color: "bg-primary" },
-    { name: "Elena R.", text: "New campaign target", time: "1h", color: "bg-blue-500" },
+  const activity = [
+    { name: "Global Retail", text: "52 New Leads Found", time: "2m", color: "bg-emerald-500" },
+    { name: "Tech Services", text: "Analysis Complete", time: "15m", color: "bg-primary" },
+    { name: "Marketing Hub", text: "Message Generated", time: "1h", color: "bg-blue-500" },
   ];
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-[#050505]">
-      <AuroraBackground className="!h-auto pt-48 pb-32">
-        <div className="max-w-7xl mx-auto px-6 text-center z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex flex-col items-center"
+    <section className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center pt-20">
+      {/* Dynamic Background Atmosphere */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] animate-pulse-slow" />
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[140px] animate-pulse-slow" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="flex flex-col items-center"
+        >
+          {/* Elite Badge */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.03] border border-white/10 mb-10 shadow-2xl backdrop-blur-xl"
           >
-            {/* Pill Badge with Pulse */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 mb-10 shadow-[0_0_20px_rgba(0,0,0,0.5)] backdrop-blur-xl"
-            >
-              <div className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-300">
-                System Status: <span className="text-primary">Operational v2.4.1</span>
-              </span>
-            </motion.div>
-
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tightest leading-[0.8] text-white max-w-5xl mb-8 uppercase">
-              The <span className="gradient-text">Infinite</span> <br />
-              <span className="text-zinc-600">Lead Engine</span>
-            </h1>
-            
-            <p className="max-w-2xl mx-auto text-base md:text-lg text-zinc-500 leading-relaxed font-medium mb-12">
-              Autonomous discovery meet neural analysis. We scan the web, identify pain points, <br className="hidden md:block" />
-              and generate the perfect outreach. Scale your revenue without lifting a finger.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
-              <Link href="/dashboard" className="h-14 px-10 rounded-sm bg-primary text-white font-black text-[11px] uppercase tracking-[0.2em] hover:bg-primary-hover active:scale-[0.98] transition-all flex items-center gap-3 shadow-[0_10px_40px_rgba(255,109,41,0.3)] orange-glow">
-                Initialize Discovery
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="#demo" className="h-14 px-10 rounded-sm bg-white/[0.03] border border-white/5 font-black text-[11px] uppercase tracking-[0.2em] transition-all inline-flex items-center hover:bg-white/10 text-white gap-2 backdrop-blur-md">
-                Watch Neural Scan
-              </Link>
-            </div>
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300">
+              Trusted by 500+ High-Performance Teams
+            </span>
           </motion.div>
 
-          {/* High Fidelity Dashboard Mockup */}
-          <motion.div
-            initial={{ opacity: 0, y: 100, rotateX: 10 }}
-            animate={{ opacity: 1, y: 0, rotateX: 0 }}
-            transition={{ duration: 1.2, delay: 0.4, ease: "circOut" }}
-            className="mt-28 relative max-w-6xl mx-auto group [perspective:1000px]"
-          >
-            {/* The Aurora Glow */}
-            <div className="absolute -inset-2 bg-gradient-to-r from-primary via-orange-400 to-primary rounded-sm blur-3xl opacity-20 group-hover:opacity-50 transition-opacity duration-1000" />
-            
-            <div className="relative glass rounded-sm border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.9)] overflow-hidden bg-black/60 backdrop-blur-3xl">
-               <div className="flex h-[600px]">
-                  {/* Sidebar */}
-                  <div className="w-20 border-r border-white/5 bg-white/[0.01] flex flex-col items-center py-8 gap-8">
-                    <div className="h-10 w-10 rounded-sm bg-primary/20 border border-primary/30 flex items-center justify-center orange-glow">
-                      <Zap className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex flex-col gap-6 mt-8">
-                      {[Layout, Users, Target, Search, MessageSquare, BarChart3, Settings2].map((Icon, i) => (
-                        <div key={i} className={`h-10 w-10 rounded-sm flex items-center justify-center transition-all ${i === 0 ? 'bg-white/5 text-primary border border-white/5' : 'text-zinc-600 hover:text-white hover:bg-white/5'}`}>
-                          <Icon className="h-5 w-5" />
+          <h1 className="text-display mb-8">
+            Scale your <span className="text-white">revenue</span> <br /> 
+            with <span className="text-primary">precision</span> leads.
+          </h1>
+          
+          <p className="max-w-2xl mx-auto readable mb-12 text-lg md:text-xl">
+            Autonomous discovery for business owners who value speed. We identify, verify, and analyze high-value prospects so you can focus on closing deals.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <Link href="/signup" className="button-premium button-primary h-14 px-10 text-base">
+              Start Your Free Scan
+              <ArrowRight className="h-5 w-5" />
+            </Link>
+            <Link href="#how-it-works" className="button-premium button-secondary h-14 px-10 text-base">
+              Explore the Engine
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Billion Dollar Mockup Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.3 }}
+          className="mt-32 relative max-w-6xl mx-auto"
+        >
+          {/* Outer Glow */}
+          <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-secondary/20 to-primary/20 rounded-[2.5rem] blur-3xl opacity-50" />
+          
+          <div className="relative glass-panel rounded-[2rem] overflow-hidden border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)]">
+             <div className="flex flex-col md:flex-row h-[600px]">
+                {/* Visual Sidebar */}
+                <div className="w-full md:w-20 border-b md:border-b-0 md:border-r border-white/5 bg-white/[0.02] flex md:flex-col items-center justify-around md:justify-start md:py-8 gap-8">
+                   <div className="h-10 w-10 rounded-2xl bg-white flex items-center justify-center">
+                      <Zap className="h-5 w-5 text-black" />
+                   </div>
+                   <div className="flex md:flex-col gap-6">
+                      {[LayoutDashboard, SearchCode, Users, Database, BarChart3, Bell].map((Icon, i) => (
+                        <div key={i} className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all ${i === 1 ? 'bg-primary/10 text-primary' : 'text-zinc-600 hover:text-white'}`}>
+                           <Icon className="h-5 w-5" />
                         </div>
                       ))}
-                    </div>
-                  </div>
-                  
-                  {/* Main Panel */}
-                  <div className="flex-1 flex flex-col">
-                     {/* Window Header */}
-                     <div className="h-14 border-b border-white/5 bg-white/[0.02] flex items-center px-8 justify-between">
-                        <div className="flex items-center gap-6">
-                           <h3 className="text-[10px] font-black text-white uppercase tracking-widest">Ongoing Analysis</h3>
-                           <div className="h-4 w-px bg-white/10" />
-                           <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">8 Active Cycles</span>
-                           </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                           <div className="h-8 w-8 rounded-full bg-white/5 border border-white/5 flex items-center justify-center">
-                              <Bell className="h-4 w-4 text-zinc-500" />
-                           </div>
-                           <div className="h-8 w-8 rounded-full bg-primary/20 border border-primary/20 flex items-center justify-center">
-                              <Plus className="h-4 w-4 text-primary" />
-                           </div>
-                        </div>
-                     </div>
+                   </div>
+                </div>
 
-                     <div className="flex-1 p-8 grid grid-cols-12 gap-6 overflow-hidden">
-                        {/* Center Column */}
-                        <div className="col-span-8 space-y-6">
-                           <div className="grid grid-cols-2 gap-6">
-                              <div className="p-6 rounded-sm bg-white/[0.02] border border-white/5 space-y-4">
-                                 <div className="flex justify-between items-center">
-                                    <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Discovery Progress</p>
-                                    <span className="text-[9px] font-black text-primary">72%</span>
-                                 </div>
-                                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                    <motion.div initial={{ width: 0 }} animate={{ width: '72%' }} transition={{ duration: 2 }} className="h-full bg-primary" />
-                                 </div>
-                                 <div className="flex gap-2">
-                                    <div className="h-8 w-24 rounded-sm bg-white/5 border border-white/5" />
-                                    <div className="h-8 w-24 rounded-sm bg-white/5 border border-white/5" />
-                                 </div>
-                              </div>
-                              <div className="p-6 rounded-sm bg-white/[0.02] border border-white/5 space-y-4">
-                                 <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Market Density</p>
-                                 <div className="flex items-end gap-1 h-12">
-                                    {[...Array(20)].map((_, i) => (
-                                       <motion.div key={i} animate={{ height: [10, Math.random() * 40 + 10, 10] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.05 }} className="flex-1 bg-primary/20 rounded-t-sm" />
-                                    ))}
-                                 </div>
-                              </div>
-                           </div>
+                {/* Content Area */}
+                <div className="flex-1 flex flex-col bg-black/40">
+                   {/* Interface Header */}
+                   <div className="h-16 border-b border-white/5 flex items-center px-8 justify-between">
+                      <div className="flex items-center gap-4">
+                         <h3 className="text-sm font-bold text-white tracking-tight">Active Search Monitor</h3>
+                         <div className="px-2 py-1 rounded-md bg-emerald-500/10 text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Running</div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                         <div className="h-8 w-8 rounded-full bg-white/5 border border-white/5 flex items-center justify-center">
+                            <Plus className="h-4 w-4 text-zinc-500" />
+                         </div>
+                         <div className="h-8 w-24 rounded-lg bg-white/10 border border-white/10" />
+                      </div>
+                   </div>
 
-                           <div className="p-8 rounded-sm bg-[#050505] border border-white/5 relative overflow-hidden group/card">
-                              <div className="absolute top-0 right-0 p-4">
-                                 <BarChart3 className="h-5 w-5 text-primary opacity-20" />
-                              </div>
-                              <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-6">Revenue Projections</h4>
-                              <div className="flex items-baseline gap-2 mb-8">
-                                 <span className="text-4xl font-black text-white tracking-tighter">$1.2M</span>
-                                 <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">+12.4%</span>
-                              </div>
-                              <div className="h-32 w-full">
-                                 <svg className="w-full h-full" viewBox="0 0 500 100">
-                                    <motion.path 
-                                      d="M0,80 Q50,60 100,70 T200,40 T300,50 T400,20 T500,10" 
-                                      fill="none" 
-                                      stroke="#ff6d29" 
-                                      strokeWidth="3"
-                                      initial={{ pathLength: 0 }}
-                                      animate={{ pathLength: 1 }}
-                                      transition={{ duration: 4, repeat: Infinity }}
-                                    />
-                                    <path d="M0,80 Q50,60 100,70 T200,40 T300,50 T400,20 T500,10" fill="url(#area-gradient)" opacity="0.1" />
-                                    <defs>
-                                       <linearGradient id="area-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                          <stop offset="0%" stopColor="#ff6d29" />
-                                          <stop offset="100%" stopColor="transparent" />
-                                       </linearGradient>
-                                    </defs>
-                                 </svg>
-                              </div>
-                           </div>
-                        </div>
+                   <div className="flex-1 p-8 grid grid-cols-12 gap-8 overflow-hidden">
+                      {/* Analytics Column */}
+                      <div className="col-span-12 md:col-span-8 space-y-8">
+                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="glow-card p-6 rounded-2xl space-y-4">
+                               <p className="tertiary">Discovery Depth</p>
+                               <div className="flex items-end justify-between">
+                                  <h4 className="text-4xl font-bold">84%</h4>
+                                  <div className="h-10 w-24">
+                                     <Sparkline color="#ff6d29" />
+                                  </div>
+                               </div>
+                               <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                  <motion.div initial={{ width: 0 }} animate={{ width: '84%' }} transition={{ duration: 2 }} className="h-full bg-primary shadow-[0_0_10px_rgba(255,109,41,0.5)]" />
+                               </div>
+                            </div>
+                            <div className="glow-card p-6 rounded-2xl space-y-4">
+                               <p className="tertiary">Success Rate</p>
+                               <div className="flex items-end justify-between">
+                                  <h4 className="text-4xl font-bold">92.4%</h4>
+                                  <TrendingUp className="h-6 w-6 text-emerald-500" />
+                               </div>
+                               <p className="text-[10px] text-zinc-500 font-medium">+5.2% from last cycle</p>
+                            </div>
+                         </div>
 
-                        {/* Right Column: Feed/Messages */}
-                        <div className="col-span-4 border-l border-white/5 pl-6 space-y-6">
-                           <div className="flex items-center justify-between">
-                              <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Neural Feed</p>
-                              <MoreVertical className="h-4 w-4 text-zinc-700" />
-                           </div>
-                           <div className="space-y-4">
-                              {messages.map((m, i) => (
-                                 <motion.div 
-                                    key={i}
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 1.2 + i * 0.1 }}
-                                    className="p-4 rounded-sm bg-white/[0.02] border border-white/5 space-y-2 group/msg hover:bg-white/[0.04] transition-all"
-                                 >
-                                    <div className="flex items-center justify-between">
-                                       <div className="flex items-center gap-2">
-                                          <div className={`h-2 w-2 rounded-full ${m.color}`} />
-                                          <span className="text-[10px] font-black text-white uppercase tracking-tight">{m.name}</span>
-                                       </div>
-                                       <span className="text-[8px] font-bold text-zinc-600">{m.time} ago</span>
-                                    </div>
-                                    <p className="text-[11px] text-zinc-400 leading-relaxed">{m.text}</p>
-                                 </motion.div>
-                              ))}
-                           </div>
-                           
-                           <div className="pt-6 border-t border-white/5">
-                              <div className="flex items-center justify-between mb-4">
-                                 <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Quick Actions</p>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2">
-                                 <div className="h-10 rounded-sm bg-white/5 border border-white/5 flex items-center justify-center text-[8px] font-black text-zinc-500 uppercase tracking-widest hover:text-white hover:bg-primary/10 transition-all cursor-pointer">Dispatch</div>
-                                 <div className="h-10 rounded-sm bg-white/5 border border-white/5 flex items-center justify-center text-[8px] font-black text-zinc-500 uppercase tracking-widest hover:text-white hover:bg-primary/10 transition-all cursor-pointer">Analyze</div>
-                              </div>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-            </div>
+                         {/* Main Chart Card */}
+                         <div className="glow-card p-8 rounded-[2rem] h-64 relative overflow-hidden group">
+                            <div className="relative z-10">
+                               <h4 className="tertiary mb-6">Revenue Potential</h4>
+                               <div className="flex items-baseline gap-2 mb-8">
+                                  <span className="text-5xl font-bold text-white">$2.4M</span>
+                                  <span className="text-sm font-bold text-primary">Target Value</span>
+                               </div>
+                            </div>
+                            {/* Decorative Grid */}
+                            <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+                         </div>
+                      </div>
 
-            {/* Decorative Floating Elements */}
-            <div className="absolute -top-12 -right-12 h-64 w-64 bg-primary/10 rounded-full blur-[100px] -z-10" />
-            <div className="absolute -bottom-24 -left-24 h-96 w-96 bg-blue-500/5 rounded-full blur-[120px] -z-10" />
-          </motion.div>
-        </div>
-      </AuroraBackground>
+                      {/* Live Feed Column */}
+                      <div className="hidden md:block col-span-4 space-y-6">
+                         <p className="tertiary">Activity Feed</p>
+                         <div className="space-y-4">
+                            {activity.map((item, i) => (
+                               <motion.div 
+                                  key={i}
+                                  initial={{ opacity: 0, x: 20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.8 + i * 0.1 }}
+                                  className="p-4 rounded-xl glass-panel border-white/5 space-y-2 hover:bg-white/[0.04] transition-all cursor-default"
+                                >
+                                  <div className="flex items-center justify-between">
+                                     <div className="flex items-center gap-2">
+                                        <div className={`h-1.5 w-1.5 rounded-full ${item.color}`} />
+                                        <span className="text-[11px] font-bold text-white">{item.name}</span>
+                                     </div>
+                                     <span className="text-[9px] text-zinc-600">{item.time}</span>
+                                  </div>
+                                  <p className="text-xs text-zinc-400 font-medium">{item.text}</p>
+                               </motion.div>
+                            ))}
+                         </div>
+                         <div className="pt-6 border-t border-white/5">
+                            <button className="w-full h-12 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/20 transition-all">
+                               Export All Data
+                            </button>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+        </motion.div>
+      </div>
     </section>
   );
 }
 
-function Settings2(props: any) {
+function Sparkline({ color }: { color: string }) {
   return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-      <circle cx="12" cy="12" r="3" />
+    <svg className="w-full h-full" viewBox="0 0 100 40">
+      <motion.path
+        d="M0,30 Q10,10 20,25 T40,15 T60,30 T80,10 T100,20"
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 3, repeat: Infinity }}
+      />
     </svg>
   );
 }

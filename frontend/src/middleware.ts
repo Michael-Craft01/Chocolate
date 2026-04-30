@@ -27,28 +27,36 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Fetch session
+  // IMPORTANT: Avoid writing any logic between createServerClient and
+  // getUser(). A simple mistake could make it very hard to debug
+  // issues with users being randomly logged out.
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   const url = request.nextUrl.clone()
-  
-  // Protect dashboard routes
-  if (url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/billing') || url.pathname.startsWith('/campaigns') || url.pathname.startsWith('/settings')) {
-    if (!user) {
-      // Unauthenticated, push to landing page (or login when we have it)
-      url.pathname = '/' 
-      return NextResponse.redirect(url)
-    }
+
+  // 1. Protect Dashboard & Internal Routes
+  const isInternalPath = 
+    url.pathname.startsWith('/dashboard') || 
+    url.pathname.startsWith('/campaigns') || 
+    url.pathname.startsWith('/leads') || 
+    url.pathname.startsWith('/billing') || 
+    url.pathname.startsWith('/settings') ||
+    url.pathname.startsWith('/onboarding')
+
+  if (isInternalPath && !user) {
+    url.pathname = '/login'
+    url.searchParams.set('next', request.nextUrl.pathname)
+    return NextResponse.redirect(url)
   }
 
-  // If already authenticated and hitting landing page, push to dashboard
-  if (url.pathname === '/') {
-    if (user) {
-      url.pathname = '/dashboard'
-      return NextResponse.redirect(url)
-    }
+  // 2. Redirect Authenticated users away from Auth pages
+  const isAuthPath = url.pathname === '/login' || url.pathname === '/signup'
+  if (isAuthPath && user) {
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
   }
 
   return supabaseResponse
@@ -58,10 +66,10 @@ export const config = {
   matcher: [
     /*
      * Match all request paths EXCEPT:
-     * - api routes (these go directly to the backend on port 3005)
+     * - api routes (directly to backend)
      * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, and common static file extensions
+     * - _next/image (image optimization)
+     * - favicon.ico, and common images
      */
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],

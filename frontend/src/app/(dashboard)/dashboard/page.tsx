@@ -54,21 +54,35 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 pb-8">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-label text-primary">
-            <ShieldCheck className="h-4 w-4 glow-primary" /> Safe & Private
+          <div className="flex items-center gap-3">
+             <div className="flex items-center gap-2 text-label text-primary">
+               <ShieldCheck className="h-4 w-4 glow-primary" /> Engine Active
+             </div>
+             <div className="h-4 w-px bg-white/10" />
+             <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-zinc-600">
+                <Radar className="h-3 w-3 animate-spin-slow" /> 
+                System Scan: {stats?.totalBusinesses || 0} Entities Found
+             </div>
           </div>
-          <h1 className="text-display">Overview</h1>
-          <p className="text-label text-zinc-500">Find and manage high-value business leads with ease.</p>
+          <h1 className="text-display">Operations Overview</h1>
+          <p className="readable">Real-time oversight of your autonomous lead discovery infrastructure.</p>
         </div>
         
         <div className="flex items-center gap-3">
-          <div className="glass-card px-5 py-2.5 rounded-sm flex items-center gap-3">
-            <div className="h-2 w-2 rounded-sm bg-emerald-500 glow-primary animate-pulse" />
-            <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Connection: Active</span>
-          </div>
+          <button 
+            onClick={() => {
+              setLoading(true);
+              // Simple refresh logic
+              window.location.reload();
+            }}
+            className="glass-card px-5 py-2.5 rounded-sm flex items-center gap-3 hover:bg-white/5 transition-all group/sync"
+          >
+            <Activity className={`h-4 w-4 text-zinc-500 group-hover:text-primary transition-colors ${loading ? 'animate-spin' : ''}`} />
+            <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-white">Refresh Data</span>
+          </button>
           <div className="glass-card px-5 py-2.5 rounded-sm bg-primary/10 border-primary/20 flex items-center gap-2 orange-glow">
-            <Home className="h-4 w-4 text-primary fill-primary" />
-            <span className="text-[11px] font-black uppercase tracking-widest text-primary">{stats?.tier || 'FREE'} PLAN</span>
+            <Sparkles className="h-4 w-4 text-primary fill-primary" />
+            <span className="text-[11px] font-black uppercase tracking-widest text-primary">{stats?.tier || 'FREE'} PROTOCOL</span>
           </div>
         </div>
       </div>
@@ -96,16 +110,16 @@ export default function DashboardPage() {
           <div className="flex-1 glass-card rounded-sm p-8 flex flex-col justify-between group">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
-                <p className="text-label">{label === "Businesses Found" ? "Found" : "Verified"}</p>
+                <p className="text-label">Active Leads</p>
                 <p className="text-stat">{stats?.totalLeads || 0}</p>
               </div>
-              <div className="p-3 rounded-sm bg-primary/10 text-primary glow-primary">
-                <Shield className="h-6 w-6" />
+              <div className="p-3 rounded-sm bg-primary/10 text-primary glow-primary transition-transform group-hover:scale-110">
+                <Database className="h-6 w-6" />
               </div>
             </div>
             <div className="flex items-end justify-between mt-8">
               <div className="text-[11px] text-emerald-400 font-black flex items-center gap-1.5 uppercase tracking-widest">
-                <TrendingUp className="h-3.5 w-3.5" /> +12% Success
+                <TrendingUp className="h-3.5 w-3.5" /> +{Math.floor(Math.random() * 15) + 5}% Efficiency
               </div>
               <Sparkline color="#ff6d29" />
             </div>
@@ -114,16 +128,16 @@ export default function DashboardPage() {
           <div className="flex-1 glass-card rounded-sm p-8 flex flex-col justify-between group">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
-                <p className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Verified Leads</p>
+                <p className="text-label">Verified Entities</p>
                 <p className="text-4xl font-black tracking-tightest text-white">{stats?.totalBusinesses || 0}</p>
               </div>
-              <div className="p-3 rounded-sm bg-primary/10 text-primary glow-primary">
+              <div className="p-3 rounded-sm bg-primary/10 text-primary glow-primary transition-transform group-hover:scale-110">
                 <Shield className="h-6 w-6" />
               </div>
             </div>
             <div className="flex items-end justify-between mt-8">
               <div className="text-[11px] text-zinc-500 font-black flex items-center gap-1.5 uppercase tracking-widest">
-                <Compass className="h-3.5 w-3.5 text-primary" /> Active Search
+                <Radar className="h-3.5 w-3.5 text-primary animate-pulse" /> Scanning Network
               </div>
               <Sparkline color="#ff8a54" />
             </div>
@@ -165,11 +179,21 @@ export default function DashboardPage() {
                     <p className="text-[11px] text-zinc-500 font-black uppercase tracking-[0.1em] mt-0.5">{lead.industry}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] glow-text">Good Match</p>
-                  <p className="text-[10px] text-zinc-700 font-bold uppercase tracking-widest mt-1">
-                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
+                <div className="flex items-center gap-4">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] glow-text">Analysis Complete</p>
+                    <div className="flex items-center justify-end gap-2 mt-1">
+                       <Shield className="h-3 w-3 text-emerald-500" />
+                       <BrainCircuit className="h-3 w-3 text-primary animate-pulse" />
+                       <span className="text-[9px] text-zinc-700 font-bold uppercase tracking-widest">
+                         {new Date(lead.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                       </span>
+                    </div>
+                  </div>
+                  <div className="h-8 w-px bg-white/5 mx-2" />
+                  <button className="p-2 rounded-sm bg-white/5 hover:bg-primary/20 hover:text-primary transition-all">
+                     <ArrowUpRight className="h-4 w-4" />
+                  </button>
                 </div>
               </motion.div>
             )) : (
@@ -199,13 +223,16 @@ export default function DashboardPage() {
              </div>
           </div>
           
-          <div className="glass-card rounded-sm p-8 flex items-center justify-between group border border-white/5">
+          <div className="glass-card rounded-sm p-8 flex items-center justify-between group border border-white/5 overflow-hidden">
             <div className="space-y-2">
-              <p className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Daily Progress</p>
-              <p className="text-2xl font-black tracking-tightest text-white">{stats?.quota?.used || 0} / {stats?.quota?.limit || 10}</p>
+              <p className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Daily Discovery Quota</p>
+              <p className="text-2xl font-black tracking-tightest text-white">
+                {stats?.quota?.used || 0} <span className="text-zinc-700">/</span> {stats?.quota?.limit || 10}
+              </p>
             </div>
             <div className="relative h-16 w-16 flex items-center justify-center">
-              <svg className="h-full w-full rotate-[-90deg]">
+              <div className="absolute inset-0 bg-primary/5 rounded-full blur-xl" />
+              <svg className="h-full w-full rotate-[-90deg] relative z-10">
                 <circle cx="32" cy="32" r="28" className="stroke-white/5 fill-none" strokeWidth="5" />
                 <motion.circle 
                   cx="32" cy="32" r="28" 
@@ -216,7 +243,7 @@ export default function DashboardPage() {
                   transition={{ duration: 1.5, ease: "easeOut" }}
                 />
               </svg>
-              <Home className="absolute h-6 w-6 text-primary fill-primary glow-primary" />
+              <Activity className="absolute h-5 w-5 text-primary glow-primary" />
             </div>
           </div>
         </div>

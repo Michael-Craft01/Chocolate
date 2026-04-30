@@ -1,125 +1,147 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #050505;
+  --color-background: #030303;
   --color-foreground: #a1a1aa;
   
-  --color-card: rgba(22, 22, 24, 0.4);
-  --color-card-border: rgba(255, 109, 41, 0.12);
+  --color-card: rgba(10, 10, 12, 0.4);
+  --color-card-border: rgba(255, 255, 255, 0.05);
   
   --color-primary: #ff6d29;
   --color-primary-hover: #ff8a54;
-  
-  --color-secondary: #1a1513;
+  --color-secondary: #6366f1;
   --color-accent: #ffffff;
   
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --radius: 2px;
-  --tracking-tightest: -0.05em;
-  --animate-spin-slow: spin 8s linear infinite;
-  --animate-aurora: aurora 60s linear infinite;
-
-  @keyframes aurora {
-    from {
-      background-position: 50% 50%, 50% 50%;
-    }
-    to {
-      background-position: 350% 50%, 350% 50%;
-    }
-  }
+  --radius: 8px; /* Increased for premium feel */
+  --tracking-tightest: -0.06em;
+  --animate-spin-slow: spin 12s linear infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 :root {
-  --background: #050505;
-  --foreground: #a1a1aa;
+  --background: #030303;
+  --foreground: #f4f4f5;
   --primary: #ff6d29;
-  --primary-foreground: #ffffff;
-  --secondary: #1a1513;
-  --card: rgba(22, 22, 24, 0.3);
-  --card-border: rgba(255, 255, 255, 0.05);
+  --secondary: #6366f1;
+  --card: rgba(10, 10, 12, 0.6);
+  --card-border: rgba(255, 255, 255, 0.08);
 }
 
 @layer base {
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/30;
+    /* Atmospheric depth background */
     background-image: 
-      radial-gradient(circle at 0% 0%, rgba(255, 109, 41, 0.05) 0%, transparent 40%),
-      radial-gradient(circle at 100% 100%, rgba(69, 48, 39, 0.1) 0%, transparent 40%);
+      radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(255, 109, 41, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(10, 10, 12, 1) 0%, transparent 100%);
     background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply tracking-tighter font-black text-white uppercase;
+    @apply tracking-tightest font-bold text-white;
   }
 
-  /* Typography System */
+  /* Billion-Dollar SaaS Typography */
   .text-display { 
-    @apply text-4xl md:text-5xl font-black tracking-tightest uppercase;
-    background: linear-gradient(135deg, #ffffff 0%, #bababa 100%);
+    @apply text-5xl md:text-8xl font-bold tracking-tightest leading-[0.95];
+    background: linear-gradient(to bottom right, #ffffff 30%, rgba(255, 255, 255, 0.4) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  .text-header { @apply text-2xl font-black tracking-tight text-white uppercase; }
-  .text-label { @apply text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500; }
-  .text-body { @apply text-sm font-medium leading-relaxed text-zinc-400; }
-  .text-stat { @apply text-2xl font-black tracking-tighter text-white; }
+
+  .text-gradient {
+    @apply bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-fill-transparent;
+  }
+
+  .readable {
+    @apply text-zinc-400 font-medium leading-relaxed tracking-tight;
+    font-size: 16px;
+  }
+
+  .tertiary {
+    @apply text-zinc-600 font-semibold uppercase tracking-[0.3em];
+    font-size: 10px;
+  }
 }
 
-/* Glassmorphism & Premium Utilities */
+/* Premium Component Classes */
 
-.glass, .glass-card {
-  background: var(--card);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--card-border);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+.glass-panel {
+  @apply bg-card backdrop-blur-3xl border border-card-border shadow-2xl;
 }
 
-.glass-card:hover {
-  border-color: rgba(255, 109, 41, 0.3);
-  background: rgba(69, 48, 39, 0.4);
-  transform: translateY(-2px);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+.premium-border {
+  position: relative;
+  border-radius: inherit;
 }
 
-.gradient-text {
-  background: linear-gradient(135deg, #ffffff 0%, #bababa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.premium-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(to bottom right, rgba(255,255,255,0.1), transparent, rgba(255,109,41,0.1));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
-.gradient-primary {
-  background: linear-gradient(135deg, #ff6d29 0%, #ff8a54 100%);
+.glow-card {
+  @apply glass-panel transition-all duration-500 hover:border-white/20 hover:bg-white/[0.04];
+  box-shadow: 0 0 0 0 rgba(255, 109, 41, 0);
 }
 
-.glow-primary {
-  box-shadow: 0 0 20px -5px rgba(255, 109, 41, 0.5);
+.glow-card:hover {
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.5), 0 0 20px -10px rgba(255, 109, 41, 0.1);
+  transform: translateY(-4px);
 }
 
-.glow-text {
-  text-shadow: 0 0 15px rgba(255, 109, 41, 0.3);
+.button-premium {
+  @apply h-12 px-8 rounded-full font-bold text-sm tracking-tight transition-all duration-300 flex items-center justify-center gap-2;
+}
+
+.button-primary {
+  @apply bg-white text-black hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.1)];
+}
+
+.button-secondary {
+  @apply bg-white/5 border border-white/10 text-white hover:bg-white/10;
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #161316;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #453027;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ff6d29;
+  background: rgba(255, 109, 41, 0.4);
 }
 
-.chocolate-gradient {
-  background: linear-gradient(180deg, #161316 0%, #453027 100%);
+/* Animation Utilities */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 .orange-glow {
-  filter: drop-shadow(0 0 10px rgba(255, 109, 41, 0.4));
+  filter: drop-shadow(0 0 15px rgba(255, 109, 41, 0.2));
 }
 
+.violet-glow {
+  filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.2));
+}

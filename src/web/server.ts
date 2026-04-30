@@ -225,6 +225,11 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: Au
             }
         });
         
+        // ── TIERED LIMIT ENFORCEMENT ──
+        const tier = req.user!.tier || 'FREE';
+        const locationLimits: Record<string, number> = { 'FREE': 1, 'STARTER': 1, 'PROFESSIONAL': 5, 'ELITE': 100 };
+        const allowedLocations = data.locations ? data.locations.slice(0, locationLimits[tier] || 1) : [];
+
         // 2. Update the "Main Engine" Campaign (Market Sync only)
         const existingCampaign = await prisma.campaign.findFirst({ where: { userId, name: 'Main Engine' } });
         
@@ -242,7 +247,7 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: Au
                 productDescription: 'Our primary offering as defined in the company profile.',
                 targetPainPoints: 'Various industry challenges.',
                 targetCountry: data.targetCountry || 'ZW',
-                locations: data.locations || [],
+                locations: allowedLocations,
                 industries: data.industries || [],
                 discordWebhook: data.discordWebhook,
                 status: 'ACTIVE'
@@ -252,13 +257,13 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: Au
                 senderRole: data.defaultSenderRole,
                 companyName: data.companyName,
                 targetCountry: data.targetCountry,
-                locations: data.locations,
+                locations: allowedLocations,
                 industries: data.industries,
                 discordWebhook: data.discordWebhook
             }
         });
         
-        res.json({ success: true, profile, campaign: mainCampaign });
+        res.json({ success: true, profile, campaign: mainCampaign, limited: allowedLocations.length < (data.locations?.length || 0) });
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
