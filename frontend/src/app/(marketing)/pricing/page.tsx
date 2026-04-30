@@ -71,7 +71,7 @@ export default function PricingPage() {
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-7xl md:text-9xl font-bold tracking-tightest text-white leading-none"
+              className="text-7xl md:text-9xl font-bold tracking-[-0.06em] text-white leading-none"
             >
               Pricing
             </motion.h1>

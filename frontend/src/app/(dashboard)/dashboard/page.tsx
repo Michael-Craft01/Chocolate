@@ -100,7 +100,7 @@ export default function DashboardPage() {
           </div>
           <DiscoveryMonitor />
           <div className="absolute bottom-0 right-0 p-10 z-20 text-right">
-            <p className="text-5xl font-bold text-white tracking-tightest">92%</p>
+            <p className="text-5xl font-bold text-white tracking-[-0.06em]">92%</p>
             <p className="tertiary !text-zinc-500 mt-1">Pipeline Match</p>
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function DashboardPage() {
             <div className="flex justify-between items-start">
               <div className="space-y-3">
                 <p className="tertiary">Active Leads</p>
-                <p className="text-5xl font-bold tracking-tightest text-white">{stats?.totalLeads || 0}</p>
+                <p className="text-5xl font-bold tracking-[-0.06em] text-white">{stats?.totalLeads || 0}</p>
               </div>
               <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                 <Target className="h-6 w-6" />
@@ -131,7 +131,7 @@ export default function DashboardPage() {
             <div className="flex justify-between items-start">
               <div className="space-y-3">
                 <p className="tertiary">Verified Businesses</p>
-                <p className="text-5xl font-bold tracking-tightest text-white">{stats?.totalBusinesses || 0}</p>
+                <p className="text-5xl font-bold tracking-[-0.06em] text-white">{stats?.totalBusinesses || 0}</p>
               </div>
               <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 group-hover:scale-110 transition-transform">
                 <Shield className="h-6 w-6" />
@@ -224,7 +224,7 @@ export default function DashboardPage() {
            <div className="bento-card p-8 flex items-center justify-between group">
               <div className="space-y-2">
                  <p className="tertiary">Daily Discovery Quota</p>
-                 <p className="text-4xl font-bold text-white tracking-tightest">
+                 <p className="text-4xl font-bold text-white tracking-[-0.06em]">
                     {stats?.quota?.used || 0} <span className="text-zinc-800">/</span> {stats?.quota?.limit || 10}
                  </p>
               </div>

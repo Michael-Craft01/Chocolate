@@ -23,7 +23,7 @@ export default function Hero() {
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">v2.0 Infrastructure Live</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tightest leading-[1.05] mb-8">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-[-0.06em] leading-[1.05] mb-8">
             Build your <span className="text-primary">revenue pipeline</span> <br />
             regardless of market conditions
           </h1>
@@ -99,14 +99,14 @@ export default function Hero() {
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="space-y-2">
                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Total Pipeline Value</p>
-                       <h4 className="text-4xl font-bold tracking-tightest">$84,503<span className="text-zinc-600">.00</span></h4>
+                       <h4 className="text-4xl font-bold tracking-[-0.06em]">$84,503<span className="text-zinc-600">.00</span></h4>
                        <div className="flex items-center gap-2 text-emerald-500 text-[10px] font-bold">
                           <TrendingUp className="h-3 w-3" /> +12.4% vs last month
                        </div>
                     </div>
                     <div className="space-y-2">
                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Active Verification</p>
-                       <h4 className="text-4xl font-bold tracking-tightest">98.2%</h4>
+                       <h4 className="text-4xl font-bold tracking-[-0.06em]">98.2%</h4>
                        <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Real-time validation</p>
                     </div>
                     <div className="space-y-2">

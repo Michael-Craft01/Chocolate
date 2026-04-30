@@ -89,7 +89,7 @@ export default function CampaignsPage() {
           <div className="flex items-center gap-2 text-primary text-[11px] font-black uppercase tracking-[0.3em]">
             <ShieldCheck className="h-4 w-4 glow-primary" /> Safe & Private
           </div>
-          <h1 className="text-4xl font-black tracking-tightest gradient-text">Search</h1>
+          <h1 className="text-4xl font-black tracking-[-0.06em] gradient-text">Search</h1>
           <p className="text-[13px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Find new business leads in any city or industry.</p>
         </div>
         <Link 
@@ -113,7 +113,7 @@ export default function CampaignsPage() {
               <p className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">{stat.label}</p>
               <stat.icon className={`h-4 w-4 ${stat.color} ${stat.label === 'Active' ? 'glow-primary' : ''}`} />
             </div>
-            <p className="text-3xl font-black tracking-tightest text-white">{stat.value}</p>
+            <p className="text-3xl font-black tracking-[-0.06em] text-white">{stat.value}</p>
           </div>
         ))}
       </div>
@@ -174,7 +174,7 @@ export default function CampaignsPage() {
                       <Home className="h-7 w-7 text-primary relative z-10 glow-primary orange-glow" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-xl font-black tracking-tightest text-white group-hover:text-primary transition-colors uppercase truncate">{c.name}</h3>
+                      <h3 className="text-xl font-black tracking-[-0.06em] text-white group-hover:text-primary transition-colors uppercase truncate">{c.name}</h3>
                       <div className="flex items-center gap-2 mt-1">
                         <div className={`h-2 w-2 rounded-sm ${c.status === 'ACTIVE' ? 'bg-primary glow-primary shadow-[0_0_10px_rgba(255,109,41,0.8)] animate-pulse' : 'bg-zinc-800'}`} />
                         <span className={`text-[11px] font-black uppercase tracking-[0.25em] ${c.status === 'ACTIVE' ? 'text-primary' : 'text-zinc-600'}`}>

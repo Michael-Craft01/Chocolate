@@ -277,7 +277,7 @@ function BillingContent() {
           </div>
           <div className="flex flex-col items-center gap-6 min-w-[240px]">
             <div className="text-center">
-              <span className="text-5xl font-black tracking-tightest text-white">$10</span>
+              <span className="text-5xl font-black tracking-[-0.06em] text-white">$10</span>
               <p className="text-[11px] text-zinc-500 font-black uppercase tracking-[0.3em] mt-2">100 DISCOVERIES</p>
             </div>
             <button 

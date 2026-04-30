@@ -42,7 +42,7 @@ export default function LandingPage() {
       {/* The Bento Grid Feature Section (Image 3 Inspiration) */}
       <section id="features" className="py-40 max-w-7xl mx-auto px-6">
         <div className="text-center mb-24 space-y-4">
-           <h2 className="text-5xl md:text-7xl font-bold tracking-tightest text-white">Access to the <span className="text-primary">future of sales</span></h2>
+           <h2 className="text-5xl md:text-7xl font-bold tracking-[-0.06em] text-white">Access to the <span className="text-primary">future of sales</span></h2>
            <p className="max-w-2xl mx-auto text-zinc-500 font-medium">Experience AI-driven lead discovery: intelligent automation, seamless verification, and real-time revenue insights for high-performance teams.</p>
         </div>
 
@@ -115,7 +115,7 @@ export default function LandingPage() {
                   />
                 ))}
              </div>
-             <h4 className="text-7xl font-bold text-white tracking-tightest">90%</h4>
+             <h4 className="text-7xl font-bold text-white tracking-[-0.06em]">90%</h4>
              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em]">Discovery Efficiency</p>
           </motion.div>
 
@@ -142,7 +142,7 @@ export default function LandingPage() {
       <section className="py-40 relative">
         <div className="bg-blob bg-blue top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20" />
         <div className="max-w-4xl mx-auto px-6 text-center space-y-12 relative z-10">
-           <h2 className="text-6xl md:text-8xl font-bold tracking-tightest text-white leading-none">Ready to <span className="text-primary">grow?</span></h2>
+           <h2 className="text-6xl md:text-8xl font-bold tracking-[-0.06em] text-white leading-none">Ready to <span className="text-primary">grow?</span></h2>
            <p className="readable max-w-xl mx-auto">Join the high-performance revenue teams using HyprLead to automate their pipeline discovery.</p>
            <div className="flex justify-center">
               <Link href="/signup" className="btn-pill-white h-16 px-12 text-lg">
