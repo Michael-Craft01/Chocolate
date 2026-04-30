@@ -15,6 +15,24 @@ export class WebhookHandler {
             return;
         }
 
+        // --- IDENTITY RESILIENCE ---
+        let targetUserId = userId;
+        const userExists = await prisma.user.findUnique({ where: { id: userId } });
+        
+        if (!userExists) {
+            logger.warn({ userId }, '⚠️ Webhook received for non-existent ID. Attempting recovery.');
+            
+            // 1. Try to find user by email (most robust)
+            const emailFromMetadata = (event.data.object as any).metadata?.email;
+            if (emailFromMetadata) {
+                const userByEmail = await prisma.user.findUnique({ where: { email: emailFromMetadata } });
+                if (userByEmail) {
+                    logger.info({ oldId: userId, newId: userByEmail.id, email: emailFromMetadata }, '🛡️ Identity recovery successful via email.');
+                    targetUserId = userByEmail.id;
+                }
+            }
+        }
+
         const dailyLimit = tier === 'STARTER' ? 100 : tier === 'PROFESSIONAL' ? 500 : 2500;
         const maxCampaigns = tier === 'ELITE' ? 999 : tier === 'PROFESSIONAL' ? 20 : 5;
         const price = tier === 'STARTER' ? 20 : tier === 'PROFESSIONAL' ? 49 : 300;
@@ -22,7 +40,7 @@ export class WebhookHandler {
         await prisma.$transaction([
             // Update User
             prisma.user.update({
-                where: { id: userId },
+                where: { id: targetUserId },
                 data: {
                     tier: tier as any,
                     dailyLimit,
@@ -30,12 +48,12 @@ export class WebhookHandler {
                     paymentStatus: 'active',
                 }
             }),
-            // Upsert Transaction (handle both Stripe's new-on-success and Paynow's update-existing)
+            // Upsert Transaction
             prisma.transaction.upsert({
                 where: { gatewayRef },
-                update: { status: 'SUCCESS' },
+                update: { status: 'SUCCESS', userId: targetUserId },
                 create: {
-                    userId,
+                    userId: targetUserId,
                     amount: price,
                     gateway,
                     type: 'SUBSCRIPTION',
@@ -45,7 +63,7 @@ export class WebhookHandler {
             })
         ]);
 
-        logger.info({ userId, tier }, 'Subscription provisioned successfully');
+        logger.info({ userId: targetUserId, tier }, 'Subscription provisioned successfully');
     }
 
     static async handleCreditTopup(userId: string, amount: number, gatewayRef: string, gateway: 'STRIPE' | 'PAYNOW') {

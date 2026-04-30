@@ -6,6 +6,7 @@ import { logger } from '../lib/logger.js';
 import { config } from '../config.js';
 import { paymentService } from '../services/paymentService.js';
 import { WebhookHandler } from '../services/webhookHandler.js';
+import { PaymentSyncService } from '../services/paymentSyncService.js';
 import { triggerEngineCycle } from '../services/discoveryEngine.js';
 import { aiService } from '../services/aiService.js';
 import { 
@@ -62,7 +63,8 @@ app.get('/api/health', (_req, res) => {
 });
 
 // Stripe Webhook (needs raw body)
-app.post('/api/payments/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+// Supporting both common path conventions to avoid 404s in CLI listeners
+app.post(['/api/payments/stripe/webhook', '/api/webhooks/stripe'], express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
     if (!stripe || !config.STRIPE_WEBHOOK_SECRET) return res.status(500).send('Stripe Config Missing');
 
@@ -105,12 +107,15 @@ app.use(express.json());
 app.get('/api/me', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
         const userId = req.user!.id;
+        const email = req.user!.email;
         
+        logger.info({ userId, email, idLength: userId?.length }, '👤 [API/ME] Fetching user context');
+
         // Auto-sync any pending payments from Paynow
         await paymentService.syncPendingPayments(userId);
         
         // Fetch fresh data after sync
-        const user = await prisma.user.findUnique({
+        let user = await prisma.user.findUnique({
             where: { id: userId },
             include: {
                 profile: true,
@@ -121,7 +126,52 @@ app.get('/api/me', authenticate, async (req: AuthenticatedRequest, res) => {
             }
         });
 
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        // SAFETY NET: If middleware failed to upsert but token is valid, do it here
+        if (!user) {
+            logger.warn({ userId, email }, '⚠️ [API/ME] User missing in DB despite valid token. Attempting emergency sync.');
+            
+            // Check for identity collision (email exists under different ID)
+            if (email) {
+                const collision = await prisma.user.findUnique({ where: { email } });
+                if (collision && collision.id !== userId) {
+                    logger.warn({ oldId: collision.id, newId: userId }, '🚨 [API/ME] Identity collision in safety net. Migrating records.');
+                    
+                    await prisma.$transaction([
+                        prisma.campaign.updateMany({
+                            where: { userId: collision.id },
+                            data: { userId: userId }
+                        }),
+                        prisma.transaction.updateMany({
+                            where: { userId: collision.id },
+                            data: { userId: userId }
+                        }),
+                        prisma.profile.updateMany({
+                            where: { userId: collision.id },
+                            data: { userId: userId }
+                        }),
+                        prisma.user.delete({ where: { id: collision.id } })
+                    ]);
+                }
+            }
+
+            user = await prisma.user.upsert({
+                where: { id: userId },
+                update: { email: email },
+                create: { id: userId, email: email },
+                include: {
+                    profile: true,
+                    campaigns: {
+                        where: { name: 'Main Engine' },
+                        take: 1
+                    }
+                }
+            });
+        }
+
+        if (!user) {
+            logger.error({ userId }, '❌ [API/ME] Critical: User still not found after emergency sync');
+            return res.status(404).json({ error: 'User not found' });
+        }
 
         res.json({
             id: user.id,
@@ -535,6 +585,16 @@ app.post('/api/payments/paynow/result', express.urlencoded({ extended: true }), 
         res.sendStatus(200);
     } catch (error) {
         res.sendStatus(500);
+    }
+});
+
+// API: Manual Sync Fallback (The "Robust" Way)
+app.post('/api/payments/stripe/sync', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+        const result = await PaymentSyncService.syncStripeSubscription(req.user!.id);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 

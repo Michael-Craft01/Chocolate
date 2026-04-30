@@ -60,17 +60,58 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
         let dbUserTier = 'FREE';
         let dbUserPaymentStatus = 'free';
         try {
-            const dbUser = await prisma.user.upsert({
+            logger.info({ userId: user.id, email: user.email }, '🔄 [AUTH SYNC] Attempting database upsert');
+            
+            // 1. Try standard upsert (match by ID)
+            let dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+            
+            if (!dbUser && user.email) {
+                // 2. ID mismatch? Check if email exists under a different ID (Identity Collision)
+                const existingByEmail = await prisma.user.findUnique({ where: { email: user.email } });
+                
+                if (existingByEmail) {
+                    logger.warn({ oldId: existingByEmail.id, newId: user.id, email: user.email }, '⚠️ [AUTH SYNC] Identity collision detected. Migrating records to new ID.');
+                    
+                    // Transfer all related records to the new ID before deleting the old user
+                    await prisma.$transaction([
+                        prisma.campaign.updateMany({
+                            where: { userId: existingByEmail.id },
+                            data: { userId: user.id }
+                        }),
+                        prisma.transaction.updateMany({
+                            where: { userId: existingByEmail.id },
+                            data: { userId: user.id }
+                        }),
+                        prisma.profile.updateMany({
+                            where: { userId: existingByEmail.id },
+                            data: { userId: user.id }
+                        }),
+                        prisma.user.delete({ where: { id: existingByEmail.id } })
+                    ]);
+                    
+                    logger.info({ email: user.email }, '✅ [AUTH SYNC] Account migration complete. Fresh identity established.');
+                }
+            }
+
+            dbUser = await prisma.user.upsert({
                 where: { id: user.id },
                 update: { email: user.email },
                 create: { id: user.id, email: user.email }
             });
+
+            logger.info({ userId: dbUser.id, tier: dbUser.tier }, '✅ [AUTH SYNC] Database synchronization successful');
             dbUserId = dbUser.id;
             dbUserTier = dbUser.tier;
             dbUserPaymentStatus = dbUser.paymentStatus;
         } catch (dbErr: any) {
             // DB unavailable — use Supabase identity directly. Log but don't block.
-            logger.warn({ err: dbErr.message }, 'DB sync skipped — serving with Supabase identity');
+            logger.error({ 
+                err: dbErr.message, 
+                stack: dbErr.stack,
+                userId: user.id,
+                email: user.email 
+            }, '❌ DB sync CRITICAL FAILURE — user record not created/updated');
+            logger.warn('Serving request with Supabase identity only. Downstream DB calls may fail.');
         }
 
         req.user = {

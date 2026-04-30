@@ -52,6 +52,7 @@ function BillingContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [userTier, setUserTier] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const success = searchParams.get("success") === "true";
   const canceled = searchParams.get("canceled") === "true";
@@ -65,7 +66,10 @@ function BillingContent() {
     try {
       const data = await authJson<{ tier: string }>("/api/me");
       setUserTier(data.tier);
-    } catch (err) {}
+    } catch (err: any) {
+      console.error("Profile status error:", err);
+      setError("Unable to sync account status.");
+    }
   };
 
   const fetchTransactions = async () => {
@@ -165,6 +169,32 @@ function BillingContent() {
         <p className="text-label text-zinc-500 max-w-xl mx-auto">
           Choose a plan that works for you.
         </p>
+        {userTier === null && (
+          <div className="p-3 rounded-sm bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-black uppercase tracking-widest inline-block mx-auto">
+            Account Sync Delayed - Reconnecting...
+          </div>
+        )}
+        <div className="pt-2">
+            <button 
+              onClick={async () => {
+                try {
+                  setLoading('SYNC');
+                  await authJson('/api/payments/stripe/sync', { method: 'POST' });
+                  await fetchUserStatus();
+                  alert("Account status updated successfully!");
+                } catch (e) {
+                  alert("Sync failed. If you just paid, please wait 30 seconds and try again.");
+                } finally {
+                  setLoading(null);
+                }
+              }}
+              disabled={loading === 'SYNC'}
+              className="px-6 py-2 rounded-sm bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2 mx-auto"
+            >
+              {loading === 'SYNC' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              {loading === 'SYNC' ? "Verifying..." : "Update Account Status"}
+            </button>
+        </div>
       </div>
 
       {/* Gateway Toggle */}

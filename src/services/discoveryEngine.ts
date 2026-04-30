@@ -117,9 +117,11 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
 
 export async function triggerEngineCycle() {
     logger.info('🚀 Cycle start');
+    const cycleSummary: { campaign: string, count: number }[] = [];
     
     // ── QUOTA RESET PROTOCOL ──
     try {
+        // Wait a tiny bit for DB to be warm if this is a fresh start
         const now = new Date();
         const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         
@@ -129,7 +131,8 @@ export async function triggerEngineCycle() {
         });
         logger.info('🔄 Daily quotas reset successfully');
     } catch (e: any) {
-        logger.error({ err: e.message }, 'Quota reset failed');
+        logger.error({ err: e.message }, 'Quota reset failed (likely connection pool burst)');
+        // Continue anyway, it will retry next cycle
     }
 
     const sweepId = `sweep_${Date.now()}`;

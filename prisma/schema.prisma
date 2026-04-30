@@ -56,7 +56,7 @@ model Profile {
 model Campaign {
   id                 String         @id @default(cuid())
   userId             String
-  user               User           @relation(fields: [userId], references: [id])
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   name               String
   status             CampaignStatus @default(ACTIVE)
   
@@ -125,7 +125,7 @@ enum LeadStatus {
 model Lead {
   id               String      @id @default(cuid())
   campaignId       String
-  campaign         Campaign    @relation(fields: [campaignId], references: [id])
+  campaign         Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   businessId       String
   business         Business    @relation(fields: [businessId], references: [id])
   industry         String
@@ -143,7 +143,7 @@ model Lead {
 model Transaction {
   id          String            @id @default(cuid())
   userId      String
-  user        User              @relation(fields: [userId], references: [id])
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   amount      Float
   currency    String            @default("USD")
   status      TransactionStatus @default(PENDING)

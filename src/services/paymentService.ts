@@ -40,17 +40,19 @@ class PaymentService {
     async createStripeCheckout(options: CheckoutOptions) {
         if (!this.stripe) throw new Error('Stripe is not configured');
 
-        const price = this.getTierPrice(options.tier);
-        
+        const price = options.amount || this.getTierPrice(options.tier);
+        const user = await prisma.user.findUnique({ where: { id: options.userId } });
+        const email = user?.email || 'unknown';
+
         const session = await this.stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            customer_email: (await prisma.user.findUnique({ where: { id: options.userId } }))?.email || undefined,
             line_items: [
                 {
                     price_data: {
                         currency: 'usd',
                         product_data: {
-                            name: `HyprLead Lead Engine - ${options.tier} Plan`,
+                            name: options.tier === 'CREDIT' ? 'Discovery Credits' : `HyprLead Lead Engine - ${options.tier} Plan`,
+                            description: options.tier === 'CREDIT' ? `Top up ${options.amount} credits` : `Monthly subscription to ${options.tier} tier`,
                         },
                         unit_amount: price * 100,
                         recurring: options.tier !== 'CREDIT' ? { interval: 'month' } : undefined,
@@ -63,6 +65,7 @@ class PaymentService {
             cancel_url: `${config.FRONTEND_URL}/billing?canceled=true`,
             metadata: {
                 userId: options.userId,
+                email: email,
                 tier: options.tier,
             },
         });

@@ -47,7 +47,7 @@ export default function ProfilePage() {
       setTransactions(txData);
     } catch (err: any) {
       console.error("Profile fetch error:", err);
-      setError("Failed to load profile details. Please refresh.");
+      setError(err.message || "Failed to load profile details. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -61,6 +61,25 @@ export default function ProfilePage() {
     return <BrandedLoader message="Decoding account telemetry..." />;
   }
 
+  if (error || !profile) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center px-6">
+        <div className="h-20 w-20 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+           <AlertCircle className="h-10 w-10 text-red-500" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-white tracking-tight">Access Error</h2>
+          <p className="text-zinc-500 max-w-sm mx-auto">{error || "Your account profile could not be retrieved. Try signing in again."}</p>
+        </div>
+        <button 
+          onClick={fetchData}
+          className="btn-pill-white h-12 px-8"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-20">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-10">
@@ -159,7 +178,7 @@ export default function ProfilePage() {
                   <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/quota:opacity-100 transition-opacity" />
                   <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-1 relative">Daily Limit</p>
                   <p className="text-stat">
-                    {profile?.tier === 'FREE' ? '10' : profile?.tier === 'STARTER' ? '100' : profile?.tier === 'PROFESSIONAL' ? '500' : '2,500'}
+                    {profile.tier === 'FREE' ? '10' : profile.tier === 'STARTER' ? '100' : profile.tier === 'PROFESSIONAL' ? '500' : '2,500'}
                     <span className="text-label ml-2">Leads</span>
                   </p>
                 </div>
