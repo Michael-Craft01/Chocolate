@@ -107,3 +107,11 @@
   @apply text-5xl font-bold tracking-[-0.06em];
   font-feature-settings: "tnum";
 }
+
+@keyframes background-position-spin {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 200%; }
+}
+.animate-background-position-spin {
+  animation: background-position-spin 3s linear infinite;
+}
