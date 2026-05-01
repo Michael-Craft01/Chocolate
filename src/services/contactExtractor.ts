@@ -47,7 +47,7 @@ export class ContactExtractor {
                     for (const a of waLinks) {
                         const href = (a as HTMLAnchorElement).href;
                         const m = href.match(/wa\.me\/(\+?\d+)/);
-                        if (m) return '+' + m[1].replace(/^\+/, '');
+                        if (m && m[1]) return '+' + m[1].replace(/^\+/, '');
                     }
 
                     // ── S3: JSON-LD structured data (schema.org) ──
@@ -109,7 +109,8 @@ export class ContactExtractor {
                     // S1: mailto: links
                     const mailLink = document.querySelector('a[href^="mailto:"]');
                     if (mailLink) {
-                        const raw = (mailLink as HTMLAnchorElement).href.replace('mailto:', '').split('?')[0].trim();
+                        const href = (mailLink as HTMLAnchorElement).href;
+                        const raw = href.replace('mailto:', '').split('?')[0].trim();
                         if (raw.includes('@') && !raw.includes('example') && !raw.includes('sentry')) return raw;
                     }
 

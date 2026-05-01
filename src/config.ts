@@ -47,7 +47,7 @@ const configSchema = z.object({
     // Scaling & Engine Config
     GEMINI_MODEL: z.string().default('gemma-3-27b-it'),
     ENGINE_TRIGGER_SECRET: z.string().optional().default('dev-engine-trigger'),
-    MAX_CAMPAIGNS_PER_SWEEP: z.string().transform(v => parseInt(v, 10)).default('50'),
+    MAX_CAMPAIGNS_PER_SWEEP: z.string().default('50').transform(v => parseInt(v, 10)),
 
     // Resend Config
     RESEND_API_KEY: z.string().optional(),

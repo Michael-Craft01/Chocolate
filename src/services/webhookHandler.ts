@@ -20,17 +20,7 @@ export class WebhookHandler {
         const userExists = await prisma.user.findUnique({ where: { id: userId } });
         
         if (!userExists) {
-            logger.warn({ userId }, '⚠️ Webhook received for non-existent ID. Attempting recovery.');
-            
-            // 1. Try to find user by email (most robust)
-            const emailFromMetadata = (event.data.object as any).metadata?.email;
-            if (emailFromMetadata) {
-                const userByEmail = await prisma.user.findUnique({ where: { email: emailFromMetadata } });
-                if (userByEmail) {
-                    logger.info({ oldId: userId, newId: userByEmail.id, email: emailFromMetadata }, '🛡️ Identity recovery successful via email.');
-                    targetUserId = userByEmail.id;
-                }
-            }
+            logger.warn({ userId }, '⚠️ Webhook received for non-existent ID. No recovery path available without event context.');
         }
 
         const dailyLimit = tier === 'STARTER' ? 100 : tier === 'PROFESSIONAL' ? 500 : 2500;

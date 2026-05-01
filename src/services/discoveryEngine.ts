@@ -90,7 +90,7 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                 if (business.website && (!business.email || !business.phone)) {
                     try {
                         const deepData = await withRetry(
-                            () => contactExtractor.extract(business.website),
+                            () => contactExtractor.extract(business.website!),
                             { retries: 2, delay: 1000, factor: 1.5, taskName: `Extract: ${business.name}` }
                         );
                         business.email = business.email || deepData.email;
@@ -241,7 +241,7 @@ export async function triggerEngineCycle() {
 
             // Track results for summary email
             if (!userResults[campaign.userId]) userResults[campaign.userId] = [];
-            userResults[campaign.userId].push({ campaignName: campaign.name, count: campaignTotal });
+            userResults[campaign.userId]!.push({ campaignName: campaign.name, count: campaignTotal });
 
             cycleSummary.push({ campaign: campaign.name, count: campaignTotal });
         }

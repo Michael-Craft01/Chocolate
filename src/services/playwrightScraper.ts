@@ -148,7 +148,7 @@ export class PlaywrightScraper {
                             for (const el of allItems) {
                                 const id = el.getAttribute('data-item-id') || '';
                                 const m = id.match(/phone:tel:(.+)/i);
-                                if (m) { phone = decodeURIComponent(m[1]); break; }
+                                if (m && m[1]) { phone = decodeURIComponent(m[1]); break; }
                             }
                         }
 
@@ -157,7 +157,7 @@ export class PlaywrightScraper {
                             const wa = document.querySelector('a[href*="wa.me/"]');
                             if (wa) {
                                 const m = (wa as HTMLAnchorElement).href.match(/wa\.me\/(\+?\d+)/);
-                                if (m) phone = '+' + m[1].replace(/^\+/, '');
+                                if (m && m[1]) phone = '+' + m[1].replace(/^\+/, '');
                             }
                         }
 
