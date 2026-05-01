@@ -20,7 +20,7 @@ const resolveApiBaseUrl = () => {
     return `${protocol}//${hostname}:3005`;
   }
 
-  return "http://localhost:3005";
+  return "";
 };
 
 const apiBaseUrl = resolveApiBaseUrl();
