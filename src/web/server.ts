@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Response } from 'express';
 import cors from 'cors';
 import Stripe from 'stripe';
 import prisma from '../lib/prisma.js';
@@ -352,7 +352,7 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: Au
 app.post('/api/campaigns/:id/trigger', authenticate, requireActiveSubscription, async (req: AuthenticatedRequest, res: Response) => {
     try {
         const userId = req.user!.id;
-        const campaignId = req.params.id;
+        const campaignId = String(req.params.id);
         logger.info(`[COMMAND CENTER] 🚀 Manual sweep request received for campaign: ${campaignId}`);
         const campaign = await prisma.campaign.findFirst({ where: { id: campaignId, userId }, include: { user: true } });
         if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
@@ -481,7 +481,7 @@ app.patch('/api/campaigns/:id', authenticate, requireActiveSubscription, validat
 
 app.patch('/api/campaigns/:id/status', authenticate, requireActiveSubscription, validate(campaignStatusSchema), async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = String(req.params.id);
         const { status } = req.body;
         await prisma.campaign.updateMany({ where: { id, userId: req.user!.id }, data: { status } });
         res.json({ status });
@@ -610,14 +610,15 @@ app.post('/api/leads/:id/dispatch', authenticate, async (req: AuthenticatedReque
 // API: Leads (Authenticated)
 app.get('/api/leads', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
-        const { campaignId, page = 1, limit = 50 } = req.query;
+        const campaignId = req.query.campaignId ? String(req.query.campaignId) : undefined;
+        const { page = 1, limit = 50 } = req.query;
         const p = Math.max(1, parseInt(String(page)));
         const l = Math.min(500, Math.max(1, parseInt(String(limit))));
 
         const where = { 
             campaign: { 
                 userId: req.user!.id,
-                id: campaignId ? String(campaignId) : undefined
+                id: campaignId
             } 
         };
 

@@ -34,6 +34,7 @@ export interface Lead {
     name: string;
     website?: string;
     phone?: string;
+    email?: string;
   };
 }
 
