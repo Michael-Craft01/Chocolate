@@ -13,9 +13,9 @@ export async function GET(req: NextRequest) {
       include: { _count: { select: { leads: true } } }
     });
     return NextResponse.json(campaigns);
-  } catch (error) {
+  } catch (error: any) {
     console.error('API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 
@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
       data: { ...body, userId: user.id }
     });
     return NextResponse.json(campaign, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

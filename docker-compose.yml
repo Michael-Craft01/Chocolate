@@ -25,6 +25,8 @@ services:
         - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     container_name: hyprlead-frontend
     restart: always
+    env_file:
+      - .env
     ports:
       - "3000:3000"
     environment:
