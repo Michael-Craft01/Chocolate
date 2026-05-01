@@ -1,7 +1,7 @@
-import prisma from './lib/prisma';
-import { logger } from './lib/logger';
-import { startServer } from './web/server';
-import { triggerEngineCycle } from './services/discoveryEngine';
+import prisma from './lib/prisma.js';
+import { logger } from './lib/logger.js';
+import { startServer } from './web/server.js';
+import { triggerEngineCycle } from './services/discoveryEngine.js';
 
 // Configuration
 const CYCLE_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours (2 cycles a day)
@@ -17,7 +17,7 @@ async function startEngine() {
     
     if (activeCount > 0) {
         logger.info(`Found ${activeCount} active campaigns. Performing initial lead sweep...`);
-        await triggerEngineCycle().catch(err => logger.error({ err }, 'Initial sweep failed'));
+        await triggerEngineCycle().catch((err: any) => logger.error({ err }, 'Initial sweep failed'));
     } else {
         logger.info('Engine Standby: No active campaigns found. Waiting for user to launch a mission.');
     }
@@ -26,7 +26,7 @@ async function startEngine() {
     setInterval(async () => {
         try {
             await triggerEngineCycle();
-        } catch (error) {
+        } catch (error: any) {
             logger.error({ err: error }, 'Scheduled sweep failed');
         }
     }, CYCLE_INTERVAL);
@@ -39,7 +39,7 @@ process.on('unhandledRejection', (reason, promise) => {
     logger.error({ reason, promise }, 'Unhandled Rejection at Promise');
 });
 
-startEngine().catch(err => {
+startEngine().catch((err: any) => {
     logger.error({ err }, 'Engine failed to start');
     process.exit(1);
 });
