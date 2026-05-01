@@ -35,9 +35,6 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Push database schema
-        run: npx prisma db push
-
       - name: Install Playwright Chromium
         run: npx playwright install chromium --with-deps
 
