@@ -9,12 +9,10 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=file:/app/data/dev.db
       - PORT=3005
+      - NODE_ENV=production
     ports:
       - "3005:3005"
-    volumes:
-      - ./data:/app/data
 
   # --- MISSION CONTROL DASHBOARD (FRONTEND) ---
   frontend:
@@ -23,6 +21,8 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_BASE_URL=http://localhost:3005
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     container_name: hyprlead-frontend
     restart: always
     ports:
