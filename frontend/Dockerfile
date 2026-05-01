@@ -12,7 +12,7 @@ COPY . .
 
 # Set build-time environment variables
 # Note: NEXT_PUBLIC_ variables must be available at build time
-ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:3005
+ARG NEXT_PUBLIC_API_BASE_URL=
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 

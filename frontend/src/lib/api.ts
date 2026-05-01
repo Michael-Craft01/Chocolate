@@ -11,11 +11,13 @@ const resolveApiBaseUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   
   if (envUrl && envUrl.startsWith('http')) {
+    // Legacy fix: If a production domain has port 3005 attached, strip it
+    if (envUrl.includes('vercel.app:3005')) {
+      return envUrl.replace(':3005', '');
+    }
     return envUrl.replace(/\/$/, "");
   }
   
-  // Default to relative paths (empty string) for serverless compatibility
-  // This ensures fetch("/api/...") hits the same origin/port as the frontend
   return "";
 };
 
