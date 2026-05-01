@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { 
   LayoutDashboard, Settings, LogOut, User, ShieldCheck, 
   Home, Shield, Compass, Sparkles, Zap, ChevronRight, X,
@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { authJson } from "@/lib/api";
 import type { Stats } from "@/lib/types";
+import { createClient } from "@/lib/supabase";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -29,7 +30,9 @@ const navItems = [
 ];
 
 export function Sidebar() {
+  const router = useRouter();
   const pathname = usePathname();
+  const supabase = createClient();
   const [stats, setStats] = useState<Stats | null>(null);
   const [width, setWidth] = useState(256); // Default 64 (256px)
   const [isResizing, setIsResizing] = useState(false);
@@ -43,6 +46,16 @@ export function Sidebar() {
     const savedCollapsed = localStorage.getItem("sidebarCollapsed");
     if (savedCollapsed === "true") setIsCollapsed(true);
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      console.error("Sign out failed:", err);
+    }
+  };
 
   const toggleCollapse = () => {
     const next = !isCollapsed;
@@ -143,8 +156,8 @@ export function Sidebar() {
                <div className="flex flex-col h-full">
                   <div className="flex h-24 items-center justify-between px-8 border-b border-white/5">
                     <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 font-black text-xl tracking-tighter">
-                      <img src="/logo.png" alt="" className="h-12 w-12 invert" />
-                      <span className="text-white">HyprLead</span>
+                      <Zap className="h-8 w-8 text-primary" />
+                      <span className="text-white uppercase tracking-tight font-black">HyprLead</span>
                     </Link>
                     <button onClick={() => setMobileOpen(false)} className="p-2 text-zinc-500">
                       <X className="h-6 w-6" />
@@ -173,7 +186,10 @@ export function Sidebar() {
                   </nav>
 
                   <div className="p-6 border-t border-white/5">
-                    <button className="flex w-full items-center gap-4 px-6 py-4 text-zinc-500 text-[14px] font-bold uppercase tracking-widest">
+                    <button 
+                      onClick={handleSignOut}
+                      className="flex w-full items-center gap-4 px-6 py-4 text-zinc-500 text-[14px] font-bold uppercase tracking-widest hover:text-white transition-colors"
+                    >
                       <LogOut className="h-5 w-5" />
                       Sign Out
                     </button>
@@ -291,7 +307,10 @@ export function Sidebar() {
           </div>
         )}
 
-        <button className={cn("flex items-center rounded-sm transition-all hover:text-white hover:bg-white/[0.02] uppercase tracking-[0.2em] group", isCollapsed ? "justify-center h-12 w-12 mx-auto mt-2" : "gap-3 px-4 py-4 mt-4 text-[12px] font-bold text-zinc-600")}>
+        <button 
+          onClick={handleSignOut}
+          className={cn("flex items-center rounded-sm transition-all hover:text-white hover:bg-white/[0.02] uppercase tracking-[0.2em] group", isCollapsed ? "justify-center h-12 w-12 mx-auto mt-2" : "gap-3 px-4 py-4 mt-4 text-[12px] font-bold text-zinc-600")}
+        >
           <LogOut className="h-4.5 w-4.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
           {!isCollapsed && "Sign Out"}
         </button>

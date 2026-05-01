@@ -27,18 +27,22 @@ export default function SignupPage() {
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
       });
 
       if (authError) throw authError;
 
-      if (data.session) {
-        router.push("/dashboard");
-        router.refresh();
-      } else if (data.user) {
-        setSuccess(true);
+      // Ensure session is established. If signUp didn't return a session, 
+      // we perform an explicit login to force cookie creation.
+      if (!data.session && data.user) {
+        await supabase.auth.signInWithPassword({ email, password });
+      }
+
+      if (data.session || data.user) {
+        // Delay to let cookies settle and avoid middleware race condition
+        setTimeout(() => {
+          router.refresh();
+          router.push("/dashboard");
+        }, 1000); // Slightly longer delay for safety
       }
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.");
@@ -62,66 +66,6 @@ export default function SignupPage() {
       setSocialLoading(false);
     }
   };
-
-  const [resending, setResending] = useState(false);
-  const [resendMessage, setResendMessage] = useState<string | null>(null);
-
-  const handleResend = async () => {
-    setResending(true);
-    setResendMessage(null);
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) throw error;
-      setResendMessage("Verification link sent successfully.");
-    } catch (err: any) {
-      setResendMessage("Send failed: " + err.message);
-    } finally {
-      setResending(false);
-    }
-  };
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-primary/30 relative overflow-hidden">
-        <div className="bg-blob bg-primary top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20" />
-        
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md p-12 rounded-[2.5rem] glass-morphism border-white/10 text-center space-y-8 relative z-10"
-        >
-          <div className="h-20 w-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto">
-            <CheckCircle2 className="h-10 w-10 text-primary" />
-          </div>
-          <div className="space-y-4">
-            <h2 className="text-4xl font-bold text-white tracking-tight">Verify Email</h2>
-            <p className="text-zinc-500 font-medium leading-relaxed">We've sent a secure verification link to <span className="text-white font-bold">{email}</span>. Please check your inbox to continue.</p>
-          </div>
-          
-          <div className="space-y-4">
-            <button 
-              onClick={handleResend}
-              disabled={resending}
-              className="btn-pill-glass w-full h-14"
-            >
-              {resending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Resend Link"}
-            </button>
-            {resendMessage && <p className="text-[10px] font-bold text-primary uppercase tracking-widest">{resendMessage}</p>}
-          </div>
-
-          <div className="pt-8 border-t border-white/5">
-             <Link href="/login" className="text-sm font-bold text-zinc-500 hover:text-white transition-colors">Return to Sign In</Link>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-primary/30 relative overflow-hidden">
