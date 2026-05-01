@@ -1,47 +1,42 @@
-# Build Stage
-FROM node:20-bookworm-slim AS builder
+# --- STAGE 1: BUILD ---
+FROM node:20-slim AS builder
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Install OpenSSL for Prisma
-RUN apt-get update -y && apt-get install -y openssl
+# Install build dependencies
+RUN apt-get update && apt-get install -y openssl
 
-# Set dummy DATABASE_URL for build step (Prisma validation)
-ENV DATABASE_URL="file:./data/dev.db"
-
+# Copy manifests
 COPY package*.json ./
-RUN npm ci
-
 COPY prisma ./prisma/
-COPY prisma.config.ts ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source
+COPY . .
+
+# Generate Prisma Client & Build TypeScript
 RUN npx prisma generate
+RUN npm run build
 
-COPY src ./src/
-COPY tsconfig.json ./
-RUN npx tsc
+# --- STAGE 2: RUNTIME ---
+# Use the official Playwright image which includes all browser dependencies
+FROM mcr.microsoft.com/playwright:v1.43.0-jammy
 
-# Production Stage
-FROM mcr.microsoft.com/playwright:v1.58.0-noble
+WORKDIR /app
 
-WORKDIR /usr/src/app
+# Copy built artifacts and necessary files
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
 
-# Copy package files for production install
-COPY package*.json ./
+# Expose Mission Control Port
+EXPOSE 3001
 
-# Copy Prisma schema (Required for db push)
-COPY prisma ./prisma/
+# Set Environment to Production
+ENV NODE_ENV=production
 
-# Install only production dependencies
-RUN npm ci --only=production && \
-    npm cache clean --force
-
-# Copy verified artifacts from builder
-COPY --from=builder /usr/src/app/dist ./dist
-COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /usr/src/app/node_modules/@prisma ./node_modules/@prisma
-
-# Create data directory
-RUN mkdir -p data
-
-# Run database migrations then start the app
-CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
+# Start the Engine
+CMD ["node", "dist/index.js"]
