@@ -14,8 +14,20 @@ export interface Campaign {
   id: string;
   name: string;
   status: "ACTIVE" | "PAUSED" | "EXHAUSTED";
-  industries: string[];
+  senderName: string;
+  senderRole: string;
+  companyName: string;
+  targetCountry: string;
   locations: string[];
+  industries: string[];
+  productName: string;
+  productDescription: string;
+  targetPainPoints: string;
+  outreachTone: "PROFESSIONAL" | "DIRECT" | "FRIENDLY" | "EDUCATIONAL";
+  ctaLink?: string;
+  discordWebhook?: string;
+  createdAt: string;
+  updatedAt: string;
   _count?: {
     leads: number;
   };

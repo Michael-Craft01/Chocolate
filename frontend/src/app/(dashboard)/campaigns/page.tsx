@@ -148,7 +148,8 @@ export default function CampaignsPage() {
         }
       },
       cancel: {
-        label: "Cancel"
+        label: "Cancel",
+        onClick: () => {}
       }
     });
   };

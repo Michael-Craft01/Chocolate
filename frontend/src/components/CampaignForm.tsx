@@ -69,8 +69,8 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
         setError(null);
         
         const savePromise = (async () => {
-            const industries = campaign.industries.split(",").map(i => i.trim()).filter(i => i);
-            const locations = campaign.locations.split(",").map(l => l.trim()).filter(l => l);
+            const industries = campaign.industries.split(",").map((i: string) => i.trim()).filter((i: string) => i);
+            const locations = campaign.locations.split(",").map((l: string) => l.trim()).filter((l: string) => l);
 
             const payload: any = {
                 name: campaign.name.trim() || `${campaign.productName} Launch`,
