@@ -94,8 +94,8 @@ export default function LeadsPage() {
       // Auto-expand the most recent day
       const groups = groupLeadsByDayAndSweep(leadsData.leads || []);
       if (groups.length > 0) setExpandedDays(new Set([groups[0].dayKey]));
-    } catch (err) {
-      setError("Unable to connect to your collection.");
+    } catch (err: any) {
+      setError(err.message || "Unable to connect to your collection.");
     } finally {
       setLoading(false);
       setRefreshing(false);

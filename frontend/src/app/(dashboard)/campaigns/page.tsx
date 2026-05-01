@@ -88,10 +88,10 @@ export default function CampaignsPage() {
       setStats(statsData);
       setLoading(false);
       setRefreshing(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch data", err);
       toast.error("Connection Error", {
-        description: "Failed to retrieve campaign data hubs."
+        description: err.message || "Failed to retrieve campaign data hubs."
       });
       setLoading(false);
     }

@@ -1,0 +1,185 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Tier {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ELITE
+}
+
+model User {
+  id                   String         @id // Map to Supabase auth.uid()
+  email                String?        @unique
+  tier                 Tier           @default(FREE)
+  dailyLimit           Int            @default(10)
+  maxCampaigns         Int            @default(1)
+  leadsFoundToday      Int            @default(0)
+  creditBalance        Int            @default(0)
+  lastQuotaReset       DateTime       @default(now())
+  stripeCustomerId     String?        @unique
+  stripeSubscriptionId String?        @unique
+  paymentStatus        String         @default("free") // active, free, past_due, canceled, incomplete
+  profile              Profile?
+  campaigns            Campaign[]
+  transactions         Transaction[]
+  createdAt            DateTime       @default(now())
+}
+
+model Profile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id])
+  companyName        String?
+  industry           String?
+  website            String?
+  defaultSenderName  String?
+  defaultSenderRole  String?
+  onboardingComplete Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Campaign {
+  id                 String         @id @default(cuid())
+  userId             String
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name               String
+  status             CampaignStatus @default(ACTIVE)
+  
+  // Identity (Per-Campaign)
+  senderName         String
+  senderRole         String
+  companyName        String
+  
+  // Search Context
+  targetCountry      String         @default("ZW")
+  locations          String[]
+  industries         String[]
+  
+  // Product & Outreach IQ
+  productName        String
+  productDescription String         @db.Text
+  targetPainPoints   String         @db.Text
+  outreachTone       OutreachTone   @default(PROFESSIONAL)
+  ctaLink            String?
+  
+  discordWebhook     String?
+  leads              Lead[]
+  queryHistory       QueryHistory[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+enum OutreachTone {
+  PROFESSIONAL
+  DIRECT
+  FRIENDLY
+  EDUCATIONAL
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  EXHAUSTED
+}
+
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  category    String?
+  website     String?
+  phone       String?
+  email       String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  leads       Lead[]
+
+  @@index([name])
+  @@index([phone])
+  @@index([website])
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  REJECTED
+}
+
+model Lead {
+  id               String      @id @default(cuid())
+  campaignId       String
+  campaign         Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  businessId       String
+  business         Business    @relation(fields: [businessId], references: [id])
+  industry         String
+  painPoint        String
+  suggestedMessage String
+  status           LeadStatus  @default(NEW)
+  dispatchedAt     DateTime?
+  sweepDate        DateTime?   // For cycle timestamp
+  sweepId          String?
+  createdAt        DateTime    @default(now())
+
+  @@unique([campaignId, businessId])
+  @@index([campaignId])
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Float
+  currency    String            @default("USD")
+  status      TransactionStatus @default(PENDING)
+  gateway     PaymentGateway
+  type        TransactionType
+  tier        Tier?             // Added to store what the user is buying
+  gatewayRef  String?           @unique // Stripe Session ID or Paynow Poll URL
+  createdAt   DateTime          @default(now())
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum PaymentGateway {
+  STRIPE
+  PAYNOW
+}
+
+enum TransactionType {
+  SUBSCRIPTION
+  CREDIT_TOPUP
+}
+
+model QueryHistory {
+  id         String    @id @default(cuid())
+  campaignId String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  location   String
+  industry   String
+  query      String
+  page       Int       @default(1)
+  createdAt  DateTime  @default(now())
+
+  @@unique([location, industry, campaignId])
+}
