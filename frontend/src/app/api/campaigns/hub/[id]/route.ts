@@ -4,7 +4,7 @@ import { getAuthUser, authError } from '@/lib/api-auth';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getAuthUser(req);
   if (!user) return authError();

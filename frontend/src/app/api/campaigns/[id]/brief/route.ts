@@ -5,7 +5,7 @@ import { aiService } from '@/lib/ai-service';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getAuthUser(req);
   if (!user) return authError();
