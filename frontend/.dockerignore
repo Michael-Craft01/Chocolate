@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+build
+dist
+.env*.local
+.vercel
+.turbo
+README.md
+*.log

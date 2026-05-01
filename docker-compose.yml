@@ -1,11 +1,37 @@
 version: '3.8'
+
 services:
-  hyprlead-engine:
+  # --- MISSION CONTROL ENGINE (BACKEND) ---
+  backend:
     build: .
+    container_name: hyprlead-backend
     restart: always
     env_file:
       - .env
     environment:
-      - DATABASE_URL=file:/usr/src/app/data/dev.db
+      - DATABASE_URL=file:/app/data/dev.db
+      - PORT=3005
+    ports:
+      - "3005:3005"
     volumes:
-      - ./data:/usr/src/app/data # This keeps your SQLite DB safe even if the container restarts
+      - ./data:/app/data
+
+  # --- MISSION CONTROL DASHBOARD (FRONTEND) ---
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_BASE_URL=http://localhost:3005
+    container_name: hyprlead-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+
+networks:
+  default:
+    name: hyprlead-network

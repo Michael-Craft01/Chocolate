@@ -33,7 +33,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 
 # Expose Mission Control Port
-EXPOSE 3001
+EXPOSE 3005
 
 # Set Environment to Production
 ENV NODE_ENV=production
