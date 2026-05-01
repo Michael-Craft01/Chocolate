@@ -110,7 +110,7 @@ export class ContactExtractor {
                     const mailLink = document.querySelector('a[href^="mailto:"]');
                     if (mailLink) {
                         const href = (mailLink as HTMLAnchorElement).href;
-                        const raw = href.replace('mailto:', '').split('?')[0].trim();
+                        const raw = href.replace('mailto:', '').split('?')[0]!.trim();
                         if (raw.includes('@') && !raw.includes('example') && !raw.includes('sentry')) return raw;
                     }
 
