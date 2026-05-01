@@ -100,44 +100,36 @@ app.post(['/api/payments/stripe/webhook', '/api/webhooks/stripe'], express.raw({
     }
 });
 
-// --- AUTHORITATIVE PROTOCOL INTERCEPTORS ---
-app.use(async (req: any, res: any, next) => {
-    if (req.method === 'DELETE' && req.url.startsWith('/api/campaigns/')) {
-        const id = req.url.split('/').pop();
-        if (id && id !== 'campaigns' && !id.includes('?')) {
-            const timestamp = new Date().toLocaleTimeString();
-            console.log(`[LIFECYCLE] ${timestamp} | 🛑 FORCE-DROP TRIGGERED: ${id}`);
-            
-            try {
-                // Auth Verification
-                const authHeader = req.headers.authorization;
-                if (!authHeader) return res.status(401).json({ error: 'Auth required' });
-                const token = authHeader.split(' ')[1];
-                const { data: { user }, error } = await (await import('../lib/supabase.js')).createClient().auth.getUser(token);
-                if (error || !user) return res.status(401).json({ error: 'Invalid session' });
-
-                // Verify Ownership
-                const campaign = await prisma.campaign.findFirst({ where: { id, userId: user.id } });
-                if (!campaign) return res.status(404).json({ error: 'Hub not found' });
-
-                // RAW SQL FORCE-PURGE (Nuclear Option)
-                await prisma.$executeRawUnsafe(`DELETE FROM "Lead" WHERE "campaignId" = '${id}'`);
-                await prisma.$executeRawUnsafe(`DELETE FROM "QueryHistory" WHERE "campaignId" = '${id}'`);
-                await prisma.$executeRawUnsafe(`DELETE FROM "Campaign" WHERE "id" = '${id}'`);
-
-                console.log(`[LIFECYCLE] ${timestamp} | ✅ FORCE-DROP COMPLETE: ${id}`);
-                return res.json({ success: true, message: 'Hub dropped.' });
-            } catch (err: any) {
-                console.error(`[LIFECYCLE] ❌ FORCE-DROP FAILED:`, err.message);
-                return res.status(500).json({ error: 'Force-drop failed', details: err.message });
-            }
-        }
-    }
-    next();
-});
-
-// Auth routes
+// JSON parsing for all other routes
 app.use(express.json());
+
+// --- AUTHORITATIVE DECOMMISSIONING PROTOCOL ---
+app.delete('/api/campaigns/:id', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+    const userId = req.user!.id;
+    const timestamp = new Date().toLocaleTimeString();
+
+    console.log(`[LIFECYCLE] ${timestamp} | 🛑 AUTHORITATIVE DROP: ${id}`);
+
+    try {
+        // Verify Ownership (Double Check)
+        const campaign = await prisma.campaign.findFirst({ where: { id, userId } });
+        if (!campaign) return res.status(404).json({ error: 'Search Hub not found' });
+
+        // EXECUTE FORCE-DROP (Transaction for Atomicity)
+        await prisma.$transaction([
+            prisma.$executeRawUnsafe(`DELETE FROM "Lead" WHERE "campaignId" = '${id}'`),
+            prisma.$executeRawUnsafe(`DELETE FROM "QueryHistory" WHERE "campaignId" = '${id}'`),
+            prisma.$executeRawUnsafe(`DELETE FROM "Campaign" WHERE "id" = '${id}'`)
+        ]);
+
+        console.log(`[LIFECYCLE] ${timestamp} | ✅ DROP COMPLETE: ${id}`);
+        res.json({ success: true, message: 'Hub decommissioned' });
+    } catch (err: any) {
+        console.error(`[LIFECYCLE] ❌ DROP FAILED:`, err.message);
+        res.status(500).json({ error: 'Decommission failed', details: err.message });
+    }
+});
 
 // API: Current User Context
 app.get('/api/me', authenticate, async (req: AuthenticatedRequest, res) => {
@@ -411,6 +403,22 @@ app.get('/api/campaigns', authenticate, async (req: AuthenticatedRequest, res) =
         res.json(campaigns);
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// 2. Mission Intelligence Brief (AI Powered)
+app.get('/api/campaigns/:id/brief', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user!.id;
+        
+        const campaign = await prisma.campaign.findFirst({ where: { id, userId } });
+        if (!campaign) return res.status(404).json({ error: 'Search Hub not found' });
+        
+        const brief = await aiService.generateMissionBrief(campaign);
+        res.json({ brief });
+    } catch (error: any) {
+        res.status(500).json({ error: 'Brief generation failed', message: error.message });
     }
 });
 

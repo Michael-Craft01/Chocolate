@@ -35,10 +35,10 @@ export default function DashboardPage() {
       try {
         const [statsData, leadsData] = await Promise.all([
           authJson<Stats>("/api/stats"),
-          authJson<{leads: Lead[]}>("/api/leads?limit=5")
+          authJson<Lead[]>("/api/leads?limit=5")
         ]);
         setStats(statsData);
-        setRecentLeads(leadsData?.leads || []);
+        setRecentLeads(Array.isArray(leadsData) ? leadsData : []);
       } catch (err) {
         console.error("Dashboard sync failed", err);
       } finally {

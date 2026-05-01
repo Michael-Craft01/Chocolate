@@ -39,10 +39,12 @@ export class ApiAuthError extends Error {
 
 export class ApiRequestError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  details?: any[];
+  constructor(status: number, message: string, details?: any[]) {
     super(message);
     this.name = "ApiRequestError";
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -84,7 +86,8 @@ export async function authJson<T>(path: string, init: RequestInit = {}): Promise
 
   if (!response.ok) {
     const message = payload?.message || payload?.error || `Request failed (${response.status})`;
-    throw new ApiRequestError(response.status, message);
+    const details = payload?.details;
+    throw new ApiRequestError(response.status, message, details);
   }
 
   return (payload ?? {}) as T;

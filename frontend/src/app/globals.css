@@ -29,6 +29,67 @@
     background: #000;
   }
 
+  /* --- NEURAL BRANDING --- */
+  @keyframes neural-pulse {
+    0% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(59, 130, 246, 0)); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 0 25px rgba(139, 92, 246, 0.5)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(59, 130, 246, 0)); }
+  }
+
+  .animate-neural {
+    animation: neural-pulse 6s ease-in-out infinite;
+  }
+
+  /* --- NEURAL IMMERSION --- */
+  .neural-aura {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw;
+    height: 100vh;
+    background: url('/logo.png') no-repeat center center;
+    background-size: cover;
+    filter: blur(100px) saturate(250%);
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: -1;
+    animation: aura-sway 40s ease-in-out infinite alternate;
+  }
+
+  @keyframes aura-sway {
+    0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+    100% { transform: translate(-45%, -55%) rotate(5deg) scale(1.1); }
+  }
+
+  .glow-boundary-neural {
+    position: relative;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.1), inset 0 0 20px rgba(59, 130, 246, 0.05);
+    background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.03), transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  .prism-border {
+    position: relative;
+  }
+
+  .prism-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.4), rgba(139, 92, 246, 0.4), transparent);
+    background-size: 200% 200%;
+    z-index: -1;
+    border-radius: inherit;
+    animation: prism-shimmer 4s linear infinite;
+  }
+
+  @keyframes prism-shimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tight text-white;
   }
@@ -143,7 +204,7 @@
     radial-gradient(at 0% 100%, rgba(255, 109, 41, 0.05) 0px, transparent 50%);
   filter: blur(80px);
   animation: neural-float 20s ease-in-out infinite alternate;
-  z-index: -2;
+  z-index: -3;
 }
 
 .hero-glow {
@@ -155,7 +216,7 @@
   height: 60vh;
   background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
   filter: blur(120px);
-  z-index: -1;
+  z-index: -2;
   pointer-events: none;
 }
 

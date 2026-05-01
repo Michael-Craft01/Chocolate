@@ -25,8 +25,12 @@ export default function Navbar() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'h-20 bg-black/60 border-b border-white/5' : 'h-24 bg-transparent'} backdrop-blur-md`}>
       <div className="max-w-7xl mx-auto h-full px-8 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)] group-hover:scale-105 transition-all duration-300">
-             <Zap className="h-5 w-5 text-black fill-black" />
+          <div className="h-16 w-16 relative">
+             <img 
+               src="/logo.png" 
+               alt="HyprLead Oracle" 
+               className="h-full w-full object-contain animate-neural drop-shadow-[0_0_20px_rgba(59,130,246,0.4)]"
+             />
           </div>
           <span className="text-white font-bold text-xl tracking-[-0.04em]">HyprLead</span>
         </Link>

@@ -156,7 +156,13 @@ export function Sidebar() {
                <div className="flex flex-col h-full">
                   <div className="flex h-24 items-center justify-between px-8 border-b border-white/5">
                     <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 font-black text-xl tracking-tighter">
-                      <Zap className="h-8 w-8 text-primary" />
+                      <div className="h-14 w-14 relative">
+                        <img 
+                          src="/logo.png" 
+                          alt="HyprLead Oracle" 
+                          className="h-full w-full object-contain animate-neural drop-shadow-[0_0_25px_rgba(59,130,246,0.4)]"
+                        />
+                      </div>
                       <span className="text-white uppercase tracking-tight font-black">HyprLead</span>
                     </Link>
                     <button onClick={() => setMobileOpen(false)} className="p-2 text-zinc-500">
@@ -228,8 +234,12 @@ export function Sidebar() {
       
       <div className={cn("flex h-20 items-center transition-all duration-300", isCollapsed ? "justify-center" : "px-8")}>
         <Link href="/dashboard" className="flex items-center gap-3 font-black text-lg tracking-tighter">
-          <div className="h-8 w-8 bg-primary rounded flex items-center justify-center shadow-lg shadow-primary/20">
-            <Zap className="h-5 w-5 text-white" />
+          <div className={cn("relative transition-all duration-500", isCollapsed ? "h-12 w-12" : "h-11 w-11")}>
+            <img 
+              src="/logo.png" 
+              alt="HyprLead Oracle" 
+              className="h-full w-full object-contain animate-neural drop-shadow-[0_0_20px_rgba(59,130,246,0.4)]"
+            />
           </div>
           {!isCollapsed && <span className="text-white tracking-tight font-black uppercase text-sm">HyprLead</span>}
         </Link>

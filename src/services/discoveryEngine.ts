@@ -35,6 +35,13 @@ async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweep
             });
         }
 
+        // Vital Check: Ensure campaign still exists (prevents Ghost Loop errors after Nuclear Purge)
+        const campaignExists = await tx.campaign.findUnique({ where: { id: campaign.id } });
+        if (!campaignExists) {
+            logger.warn(`⚠️ [GHOST] Aborting sync. Campaign ${campaign.id} no longer exists.`);
+            return null;
+        }
+
         const existingLead = await tx.lead.findFirst({ where: { businessId: dbBusiness.id, campaignId: campaign.id } });
         if (existingLead) return null;
 

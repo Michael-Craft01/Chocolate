@@ -22,6 +22,8 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { authJson, ApiAuthError, ApiRequestError } from "@/lib/api";
 import { createCampaign } from "@/lib/services/campaigns";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { AIAssistButton } from "@/components/AIAssistButton";
 
 export default function NewCampaignPage() {
@@ -89,12 +91,38 @@ export default function NewCampaignPage() {
 
     const handleSave = async () => {
         if (stats && stats.count >= stats.limit) {
-            setError(`Hub quota reached. Your ${stats.limit === 1 ? 'Starter' : stats.limit === 5 ? 'Professional' : 'Elite'} plan allows for ${stats.limit} search hub.`);
+            toast.error("Hub quota reached", {
+                description: `Your ${stats.limit === 1 ? 'Starter' : stats.limit === 5 ? 'Professional' : 'Elite'} plan allows for ${stats.limit} search hub.`
+            });
             return;
         }
+
+        // --- PRE-FLIGHT VALIDATION ---
+        if (!campaign.productName.trim()) {
+            toast.error("Offer Title required", { description: "Please define what you are offering." });
+            return;
+        }
+
+        if (!campaign.senderName.trim() || !campaign.senderRole.trim() || !campaign.companyName.trim()) {
+            toast.error("Identity incomplete", { description: "Please provide your name, role, and company to personalize outreach." });
+            return;
+        }
+
+        const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+        if (campaign.ctaLink.trim() && !urlRegex.test(campaign.ctaLink.trim())) {
+            toast.error("Invalid Call-to-Action Link", { description: "Please enter a valid URL." });
+            return;
+        }
+
+        if (campaign.discordWebhook.trim() && !urlRegex.test(campaign.discordWebhook.trim())) {
+            toast.error("Invalid Discord Webhook", { description: "Please enter a valid URL." });
+            return;
+        }
+
         setLoading(true);
         setError(null);
-        try {
+        
+        const savePromise = (async () => {
             const industries = campaign.industries.split(",").map(i => i.trim()).filter(i => i);
             const locations = campaign.locations.split(",").map(l => l.trim()).filter(l => l);
 
@@ -116,8 +144,27 @@ export default function NewCampaignPage() {
 
             await createCampaign(payload);
             router.push("/campaigns");
+        })();
+
+        toast.promise(savePromise, {
+            loading: 'Initializing Search Hub...',
+            success: 'Search Hub Active. AI is now hunting for leads.',
+            error: (err: any) => {
+                if (err instanceof ApiRequestError && err.details) {
+                    return `Validation: ${err.details.map(d => `${d.path.join('.')}: ${d.message}`).join(', ')}`;
+                }
+                return err.message || 'Failed to initialize hub.';
+            }
+        });
+
+        try {
+            await savePromise;
         } catch (err: any) {
-            setError(err.message || "Failed to launch campaign.");
+            let errorMsg = err.message || "Failed to launch campaign.";
+            if (err instanceof ApiRequestError && err.details) {
+                errorMsg = `Validation failed: ${err.details.map(d => `${d.path.join('.')}: ${d.message}`).join(', ')}`;
+            }
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -342,18 +389,33 @@ export default function NewCampaignPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 opacity-60">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 ml-1">Sender Name</label>
-                                <input readOnly value={campaign.senderName} className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-zinc-400 outline-none" />
+                                <input 
+                                    value={campaign.senderName} 
+                                    onChange={(e) => setCampaign({...campaign, senderName: e.target.value})}
+                                    placeholder="Your Name"
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white outline-none focus:border-primary/40 transition-all" 
+                                />
                             </div>
                             <div>
                                 <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 ml-1">Role</label>
-                                <input readOnly value={campaign.senderRole} className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-zinc-400 outline-none" />
+                                <input 
+                                    value={campaign.senderRole} 
+                                    onChange={(e) => setCampaign({...campaign, senderRole: e.target.value})}
+                                    placeholder="e.g. Founder"
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white outline-none focus:border-primary/40 transition-all" 
+                                />
                             </div>
                             <div>
                                 <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 ml-1">Company</label>
-                                <input readOnly value={campaign.companyName} className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-zinc-400 outline-none" />
+                                <input 
+                                    value={campaign.companyName} 
+                                    onChange={(e) => setCampaign({...campaign, companyName: e.target.value})}
+                                    placeholder="Business Name"
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white outline-none focus:border-primary/40 transition-all" 
+                                />
                             </div>
                         </div>
                     </section>
@@ -376,10 +438,6 @@ export default function NewCampaignPage() {
                         {loading ? "INITIALIZING..." : isLimitReached ? "CAPACITY REACHED" : "DEPLOY DISCOVERY HUB"}
                     </motion.button>
                 </div>
-            </div>
-        </div>
-    );
-}
             </div>
         </div>
     );

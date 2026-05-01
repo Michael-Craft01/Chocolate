@@ -83,10 +83,14 @@ export default function LoginPage() {
       >
         <div className="text-center mb-10 space-y-6">
           <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)] group-hover:scale-105 transition-all duration-300">
-               <Zap className="h-6 w-6 text-black fill-black" />
+            <div className="h-32 w-32 relative">
+               <img 
+                 src="/logo.png" 
+                 alt="HyprLead Oracle" 
+                 className="h-full w-full object-contain animate-neural drop-shadow-[0_0_50px_rgba(59,130,246,0.6)]"
+               />
             </div>
-            <span className="text-2xl font-bold text-white tracking-tight">HyprLead</span>
+            <span className="text-4xl font-black text-white tracking-tighter">HyprLead</span>
           </Link>
           <div className="space-y-2">
             <h1 className="text-4xl font-bold text-white tracking-tight">Welcome back.</h1>

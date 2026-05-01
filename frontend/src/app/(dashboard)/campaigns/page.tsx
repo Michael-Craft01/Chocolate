@@ -11,7 +11,8 @@ import {
   ShieldCheck,
   Home,
   Compass,
-  Shield
+  Shield,
+  Info
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CardSkeleton } from "@/components/skeleton";
@@ -29,6 +30,15 @@ function cn(...inputs: ClassValue[]) {
 }
 
 import { toast } from "sonner";
+import { 
+  Sheet, 
+  SheetTrigger, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription 
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 export default function CampaignsPage() {
   const router = useRouter();
@@ -36,6 +46,21 @@ export default function CampaignsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyCampaignId, setBusyCampaignId] = useState<string | null>(null);
+  const [briefs, setBriefs] = useState<Record<string, string>>({});
+  const [loadingBrief, setLoadingBrief] = useState<string | null>(null);
+
+  const fetchBrief = async (id: string) => {
+    if (briefs[id] || loadingBrief === id) return;
+    setLoadingBrief(id);
+    try {
+      const { brief } = await authJson<{ brief: string }>(`/api/campaigns/${id}/brief`);
+      setBriefs(prev => ({ ...prev, [id]: brief }));
+    } catch (err) {
+      console.error("Failed to fetch mission brief:", err);
+    } finally {
+      setLoadingBrief(null);
+    }
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | Campaign["status"]>("ALL");
   const [triggering, setTriggering] = useState<string | null>(null);
@@ -360,6 +385,135 @@ export default function CampaignsPage() {
                     {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Radar className="h-4 w-4 text-primary" />}
                     Start Lead Scan
                   </button>
+
+                  {/* Actions Area */}
+                  <div className="flex items-center gap-3 pt-6 border-t border-border/40">
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => fetchBrief(c.id)}
+                          className="flex-1 h-9 bg-background/50 hover:bg-background border-border/50 text-xs font-medium tracking-wide transition-all duration-300"
+                        >
+                          <Info className="h-3.5 w-3.5 mr-2 opacity-60" />
+                          Intelligence
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent className="w-full sm:max-w-md border-l border-border/50 bg-background/95 backdrop-blur-xl p-0">
+                        <div className="h-full flex flex-col font-sans">
+                          {/* Panel Header */}
+                          <div className="p-8 border-b border-border/40 bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="p-2 bg-primary/10 rounded-sm">
+                                <Search className="h-4 w-4 text-primary" />
+                              </div>
+                              <h3 className="text-xl font-semibold tracking-tight text-foreground/90">{c.name}</h3>
+                            </div>
+                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.2em] opacity-60">Search Hub Intelligence</p>
+                          </div>
+
+                          <ScrollArea className="flex-1 p-8">
+                            <div className="space-y-10">
+                              {/* Mission DNA Section */}
+                              <section className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                  <Zap className="h-4 w-4 text-primary opacity-60" />
+                                  <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Mission DNA</h4>
+                                </div>
+                                <div className="grid gap-4 bg-muted/30 p-5 rounded-sm border border-border/40">
+                                  <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1 block">Operational Product</label>
+                                    <p className="text-sm font-medium text-foreground/90">{c.productName}</p>
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1 block">Regional Targets</label>
+                                    <div className="flex flex-wrap gap-1.5 mt-1">
+                                      {c.locations.map(loc => (
+                                        <span key={loc} className="px-2 py-0.5 bg-background border border-border/60 rounded-sm text-[10px] font-medium">{loc}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1 block">Target Sectors</label>
+                                    <div className="flex flex-wrap gap-1.5 mt-1">
+                                      {c.industries.map(ind => (
+                                        <span key={ind} className="px-2 py-0.5 bg-primary/5 border border-primary/20 text-primary/80 rounded-sm text-[10px] font-medium">{ind}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </section>
+
+                              {/* AI Explanation Section */}
+                              <section className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                  <Sparkles className="h-4 w-4 text-primary opacity-60" />
+                                  <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Gemma Insight</h4>
+                                </div>
+                                <div className="relative group">
+                                  <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-transparent blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                  <div className="relative bg-background border border-border/60 p-6 rounded-sm">
+                                    <div className="flex items-start gap-4">
+                                      <div className="min-w-0 flex-1">
+                                        {loadingBrief === c.id ? (
+                                          <div className="space-y-2 py-2">
+                                            <div className="h-3 w-full bg-muted/60 animate-pulse rounded-full" />
+                                            <div className="h-3 w-[90%] bg-muted/60 animate-pulse rounded-full" />
+                                            <div className="h-3 w-[40%] bg-muted/60 animate-pulse rounded-full" />
+                                          </div>
+                                        ) : (
+                                          <p className="text-sm leading-relaxed text-muted-foreground/90 italic">
+                                            {briefs[c.id] || "No intelligence briefing generated yet."}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </section>
+
+                              {/* Strategic Pain Points */}
+                              <section className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                  <Target className="h-4 w-4 text-primary opacity-60" />
+                                  <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Pain Point Matrix</h4>
+                                </div>
+                                <div className="p-5 bg-muted/20 border border-dashed border-border/60 rounded-sm">
+                                  <p className="text-sm text-muted-foreground leading-relaxed">{c.targetPainPoints}</p>
+                                </div>
+                              </section>
+                            </div>
+                          </ScrollArea>
+
+                          {/* Panel Footer */}
+                          <div className="p-8 border-t border-border/40 bg-muted/10">
+                            <Button 
+                              variant="ghost" 
+                              className="w-full text-xs font-medium uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+                              onClick={() => { /* Potential: Copy Brief to Clipboard */ }}
+                            >
+                              Copy Intelligence Brief
+                            </Button>
+                          </div>
+                        </div>
+                      </SheetContent>
+                    </Sheet>
+
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      disabled={busyCampaignId === c.id}
+                      onClick={() => handleDelete(c.id, c.name)}
+                      className="w-12 h-9 border-border/40 bg-muted/5 text-muted-foreground/40 hover:text-destructive hover:border-destructive/40 transition-all duration-300"
+                    >
+                      {busyCampaignId === c.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </motion.div>

@@ -63,6 +63,7 @@ export default function Hero() {
       <div className="bg-animated-mesh" />
       <div className="bg-grid absolute inset-0 opacity-20 -z-10" />
       <div className="hero-glow" />
+      <div className="neural-aura" />
       
       {/* Telemetry Corner Accents */}
       <div className="absolute top-40 left-10 telemetry-label flex flex-col gap-1">
@@ -81,13 +82,35 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
+          className="flex flex-col items-center"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-md">
-            <Sparkles className="h-3 w-3 text-primary animate-pulse" />
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Next-Gen Revenue Discovery</span>
+          {/* Realigned Badge */}
+          <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/5 border border-white/10 mb-12 backdrop-blur-md">
+            <div className="h-10 w-10 relative">
+              <img 
+                src="/logo.png" 
+                alt="HyprLead Oracle" 
+                className="h-full w-full object-contain animate-neural drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+              />
+            </div>
+            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">Next-Gen Revenue Discovery</span>
           </div>
+
+          {/* The Hero Monolith (The "Big" Brand) */}
+          <motion.div 
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            className="h-48 w-48 relative mb-12"
+          >
+             <img 
+               src="/logo.png" 
+               alt="HyprLead Oracle" 
+               className="h-full w-full object-contain animate-neural drop-shadow-[0_0_80px_rgba(59,130,246,0.6)]"
+             />
+             <div className="absolute inset-0 bg-primary/10 blur-[100px] rounded-full -z-10" />
+          </motion.div>
           
-          <h1 className="text-display mb-8">
+          <h1 className="text-display mb-10">
             Infinite Revenue. <br />
             <span className="animate-text-shimmer bg-clip-text">Zero Friction.</span>
           </h1>
@@ -121,14 +144,20 @@ export default function Hero() {
           <div className="absolute -top-20 -left-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-[100px] opacity-30" />
           <div className="absolute -top-20 -right-20 w-80 h-80 bg-primary/10 rounded-full blur-[100px] opacity-30" />
           
-          <div className="relative glass-morphism rounded-[24px] overflow-hidden border border-white/10 group/mockup">
+          <div className="relative glow-boundary-neural prism-border rounded-[24px] overflow-hidden group/mockup">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover/mockup:opacity-100 transition-opacity" />
             
             <div className="flex flex-col md:flex-row h-[500px]">
               {/* Sidebar */}
               <div className="w-64 border-r border-white/5 bg-black/20 p-6 hidden md:block">
                  <div className="flex items-center gap-2 mb-10">
-                   <Zap className="h-5 w-5 text-primary" />
+                   <div className="h-6 w-6 relative">
+                     <img 
+                       src="/logo.png" 
+                       alt="HyprLead Oracle" 
+                       className="h-full w-full object-contain animate-neural"
+                     />
+                   </div>
                    <span className="font-bold text-sm tracking-tight text-white">HyprLead</span>
                  </div>
                  <div className="space-y-6">

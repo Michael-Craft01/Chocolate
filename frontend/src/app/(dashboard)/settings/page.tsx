@@ -22,6 +22,7 @@ import { authJson } from "@/lib/api";
 import { motion } from "framer-motion";
 import { AIAssistButton } from "@/components/AIAssistButton";
 import { BrandedLoader } from "@/components/BrandedLoader";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -69,20 +70,28 @@ export default function SettingsPage() {
     loadSettings();
   }, []);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setSaving(true);
     setSuccess(false);
+
+    const savePromise = authJson("/api/settings", {
+      method: "POST",
+      body: JSON.stringify(formData),
+    });
+
+    toast.promise(savePromise, {
+      loading: 'Deploying global settings...',
+      success: 'Configuration active. Identity and targeting synced.',
+      error: (err) => err.message || 'Failed to save settings.'
+    });
+
     try {
-      await authJson("/api/settings", {
-        method: "POST",
-        body: JSON.stringify(formData),
-      });
+      await savePromise;
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
       console.error("Failed to save settings:", error);
-      alert("Failed to save settings. Please check your inputs.");
     } finally {
       setSaving(false);
     }
