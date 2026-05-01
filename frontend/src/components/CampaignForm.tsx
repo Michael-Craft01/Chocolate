@@ -20,6 +20,7 @@ import { createCampaign, updateCampaign, type CreateCampaignPayload } from "@/li
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { AIAssistButton } from "@/components/AIAssistButton";
+import { NeuralDropdown } from "@/components/NeuralDropdown";
 
 interface CampaignFormProps {
     initialData?: any;
@@ -275,6 +276,48 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                             placeholder="Business Name"
                             className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white outline-none focus:border-primary/40 transition-all" 
                         />
+                    </div>
+                </div>
+            </section>
+
+            {/* OUTREACH INTELLIGENCE */}
+            <section className="bg-white/[0.01] p-8 md:p-10 rounded-[2px] border border-white/5 space-y-8">
+                <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
+                        <Zap className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-white tracking-tight">Outreach Intelligence</h2>
+                        <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mt-1">Configure AI engagement parameters.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Outreach Tone</label>
+                        <NeuralDropdown 
+                            options={[
+                                { value: "PROFESSIONAL", label: "Professional & Polished" },
+                                { value: "DIRECT", label: "Direct & Concise" },
+                                { value: "FRIENDLY", label: "Friendly & Warm" },
+                                { value: "EDUCATIONAL", label: "Educational & Insightful" }
+                            ]}
+                            value={campaign.outreachTone}
+                            onChange={(val) => setCampaign({...campaign, outreachTone: val as any})}
+                            className="w-full"
+                        />
+                        <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider ml-1">This governs how the AI crafts the outreach messages.</p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Discord Webhook (Optional)</label>
+                        <input 
+                            value={campaign.discordWebhook} 
+                            onChange={(e) => setCampaign({...campaign, discordWebhook: e.target.value})}
+                            placeholder="https://discord.com/api/webhooks/..."
+                            className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white outline-none focus:border-primary/40 transition-all" 
+                        />
+                        <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider ml-1">Real-time alerts for newly discovered leads.</p>
                     </div>
                 </div>
             </section>

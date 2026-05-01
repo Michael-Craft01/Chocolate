@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
+import { NeuralDropdown } from "@/components/NeuralDropdown";
 import { authJson, getApiBaseUrl } from "@/lib/api";
 import { createClient } from "@/lib/supabase";
 import type { Lead, PaginationMeta, Campaign } from "@/lib/types";
@@ -212,17 +213,15 @@ export default function LeadsPage() {
             </button>
 
             {/* Campaign filter */}
-            <div className="h-10 px-4 rounded-sm bg-white/[0.03] border border-white/5 flex items-center gap-2 hover:border-primary/20 transition-all glass">
-              <Filter className="h-3.5 w-3.5 text-zinc-500" />
-              <select
-                value={selectedCampaignId}
-                onChange={e => { setSelectedCampaignId(e.target.value); setPage(1); }}
-                className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer text-zinc-400 hover:text-white transition-colors"
-              >
-                <option value="ALL">All Campaigns</option>
-                {campaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
+            <NeuralDropdown
+              icon={<Filter className="h-3.5 w-3.5" />}
+              options={[
+                { value: "ALL", label: "All Campaigns" },
+                ...campaigns.map(c => ({ value: c.id, label: c.name }))
+              ]}
+              value={selectedCampaignId}
+              onChange={val => { setSelectedCampaignId(val); setPage(1); }}
+            />
 
             {/* Export */}
             <div className="relative">

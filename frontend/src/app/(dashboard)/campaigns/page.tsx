@@ -153,29 +153,6 @@ export default function CampaignsPage() {
       }
     });
   };
-
-  const triggerSweep = async (id: string) => {
-    const promise = authJson(`/api/campaigns/${id}/trigger`, { method: 'POST' });
-    
-    toast.promise(promise, {
-      loading: 'Starting lead scan...',
-      success: () => {
-        router.push("/leads");
-        return 'Scan initiated';
-      },
-      error: 'Failed to start scan',
-    });
-
-    try {
-      setTriggering(id);
-      await promise;
-    } catch (err) {
-      console.error("Trigger failed", err);
-    } finally {
-      setTriggering(null);
-    }
-  };
-
   const filteredCampaigns = campaigns.filter((campaign) => {
     const query = searchQuery.toLowerCase().trim();
     const searchMatch = !query || campaign.name.toLowerCase().includes(query);
@@ -399,14 +376,6 @@ export default function CampaignsPage() {
                     </div>
                   </div>
 
-                  <button 
-                    onClick={() => triggerSweep(c.id)}
-                    disabled={triggering === c.id || c.status !== 'ACTIVE'}
-                    className="h-14 px-10 rounded-[2px] bg-white/5 border border-white/10 hover:border-primary/40 hover:bg-primary/5 text-white text-[13px] font-bold transition-all flex items-center gap-3"
-                  >
-                    {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Radar className="h-4 w-4 text-primary" />}
-                    Start Lead Scan
-                  </button>
 
                   {/* Actions Area */}
                   <div className="flex items-center gap-3 pt-6 border-t border-border/40">

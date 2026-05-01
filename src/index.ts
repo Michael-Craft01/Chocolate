@@ -1,7 +1,7 @@
-import prisma from './lib/prisma.js';
-import { logger } from './lib/logger.js';
-import { startServer } from './web/server.js';
-import { triggerEngineCycle } from './services/discoveryEngine.js';
+import prisma from './lib/prisma';
+import { logger } from './lib/logger';
+import { startServer } from './web/server';
+import { triggerEngineCycle } from './services/discoveryEngine';
 
 // Configuration
 const CYCLE_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours (2 cycles a day)
