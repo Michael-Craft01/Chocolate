@@ -231,17 +231,6 @@ export default function LandingPage() {
                     Launch Mission <ArrowRight className="h-6 w-6 group-hover:translate-x-2 transition-transform" />
                  </span>
               </Link>
-              
-              <div className="flex items-center gap-8">
-                 <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">Next Sweep: 04:12:00</span>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">Verified Leads: 12.8k</span>
-                 </div>
-              </div>
            </div>
         </div>
       </section>

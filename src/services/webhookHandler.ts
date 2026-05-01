@@ -34,7 +34,7 @@ export class WebhookHandler {
         }
 
         const dailyLimit = tier === 'STARTER' ? 100 : tier === 'PROFESSIONAL' ? 500 : 2500;
-        const maxCampaigns = tier === 'ELITE' ? 999 : tier === 'PROFESSIONAL' ? 20 : 5;
+        const maxCampaigns = tier === 'ELITE' ? 10 : tier === 'PROFESSIONAL' ? 5 : 1;
         const price = tier === 'STARTER' ? 20 : tier === 'PROFESSIONAL' ? 49 : 300;
 
         await prisma.$transaction([

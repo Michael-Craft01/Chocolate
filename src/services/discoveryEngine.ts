@@ -171,6 +171,8 @@ export async function triggerEngineCycle() {
             include: { user: true } 
         });
 
+        if (activeCampaigns.length === 0) return [];
+
         for (const campaign of activeCampaigns) {
             // ── PRE-FLIGHT IDENTITY CHECK ──
             const isIdentityComplete = 
@@ -187,14 +189,20 @@ export async function triggerEngineCycle() {
             const user = await prisma.user.findUnique({ where: { id: campaign.userId } });
             if (!user) continue;
 
-            // ── 50% CYCLE TARGET LOGIC ──
-            // We aim for 50% of daily limit per cycle (since we run twice a day)
-            const cycleTarget = Math.ceil(user.dailyLimit * 0.5);
+            // ── FAIR SHARE QUOTA SPLITTING ──
+            // Get all active campaigns for THIS specific user to split their quota fairly
+            const userActiveCampaigns = activeCampaigns.filter(c => c.userId === user.id);
             const dailyRemaining = user.dailyLimit - user.leadsFoundToday;
-            const target = Math.max(0, Math.min(cycleTarget, dailyRemaining));
+            
+            // Aim for 50% of daily limit per cycle total, split across active campaigns
+            const totalCycleTarget = Math.ceil(user.dailyLimit * 0.5);
+            const cycleTargetForUser = Math.min(totalCycleTarget, dailyRemaining);
+            
+            // Each campaign gets a fair slice of the current cycle's target
+            const target = Math.max(1, Math.floor(cycleTargetForUser / userActiveCampaigns.length));
 
-            if (target <= 0) {
-                logger.info(`⏹️ [QUOTA] Campaign "${campaign.name}" already hit cycle target or daily limit (${user.leadsFoundToday}/${user.dailyLimit}).`);
+            if (target <= 0 || dailyRemaining <= 0) {
+                logger.info(`⏹️ [QUOTA] Campaign "${campaign.name}" skipped: User daily limit reached (${user.leadsFoundToday}/${user.dailyLimit}).`);
                 continue;
             }
 

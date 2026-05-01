@@ -34,3 +34,9 @@ export async function updateCampaignStatus(id: string, status: "ACTIVE" | "PAUSE
     body: JSON.stringify({ status }),
   });
 }
+
+export async function deleteCampaign(id: string) {
+  return authJson<{ success: boolean }>(`/api/campaigns/${id}`, {
+    method: "DELETE",
+  });
+}

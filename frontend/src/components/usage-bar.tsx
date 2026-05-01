@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Zap } from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { ApiAuthError } from "@/lib/api";
 import { fetchDashboardStats } from "@/lib/services/dashboard";
 
@@ -27,28 +29,29 @@ export function UsageBar() {
   }, []);
 
   const percentage = Math.min((usage.used / usage.limit) * 100, 100);
-  const color = percentage > 90 ? "bg-hot" : percentage > 70 ? "bg-warm" : "bg-primary";
+  const color = percentage > 90 ? "bg-red-500" : percentage > 70 ? "bg-amber-500" : "bg-primary";
 
   return (
-    <div className="px-4 py-4 space-y-3">
-      <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+    <div className="px-5 py-6 space-y-4 bg-white/[0.02] border-t border-white/5">
+      <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
         <span>Daily Quota</span>
-        <span className="text-zinc-300">{usage.used} / {usage.limit}</span>
+        <span className="text-white">{usage.used} / {usage.limit}</span>
       </div>
       
-      <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={usage.limit} aria-valuenow={usage.used}>
-        <div 
-          className={`h-full transition-all duration-1000 ${color}`} 
-          style={{ width: `${percentage}%` }}
+      <div className="h-2 w-full bg-white/5 rounded-[2px] overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={usage.limit} aria-valuenow={usage.used}>
+        <motion.div 
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          className={cn("h-full transition-all duration-500 shadow-[0_0_10px_rgba(0,0,0,0.5)]", color)} 
         />
       </div>
 
       <div className="flex items-center justify-between pt-1">
-        <div className="flex items-center gap-1.5 text-[11px] font-bold text-warm bg-warm/10 px-2 py-0.5 rounded-full">
-           <Zap className="h-3 w-3 fill-warm" />
+        <div className="flex items-center gap-1.5 text-[10px] font-black text-primary bg-primary/10 px-3 py-1 rounded-[2px] border border-primary/20 uppercase tracking-widest">
+           <Zap className="h-3 w-3 fill-primary" />
            {usage.credits} Credits
         </div>
-        <button className="rounded px-1.5 py-1 text-[10px] font-bold text-primary transition-colors hover:bg-primary/10 hover:text-blue-300">Top Up</button>
+        <button className="text-[10px] font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors">Top Up</button>
       </div>
     </div>
   );

@@ -192,44 +192,6 @@ export default function EnginePage() {
                </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-               {[
-                 { icon: Database, label: "Lead Vault", tech: "Uptime: 99.99%", log: "> sync: encrypted" },
-                 { icon: Network, label: "Proxy Mesh", tech: "Latency: <12ms", log: "> node: global" },
-                 { icon: Fingerprint, label: "Bypass Core", tech: "Success: 100%", log: "> auth: stealth" },
-                 { icon: Command, label: "Command UI", tech: "Refresh: 24hz", log: "> ui: reactive" },
-                 { icon: Shield, label: "Security Layer", tech: "AES-256-GCM", log: "> vault: locked" },
-                 { icon: Globe, label: "Geo-Matrix", tech: "Coverage: Global", log: "> region: all" }
-               ].map((module, i) => (
-                  <motion.div 
-                    key={i} 
-                    whileHover={{ scale: 1.02 }}
-                    className="aspect-square rounded-[2rem] bg-white/[0.01] border border-white/5 p-8 flex flex-col items-center justify-center gap-6 group hover:border-primary/20 transition-all relative overflow-hidden"
-                  >
-                     {/* Background Glow */}
-                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                     
-                     <module.icon className="h-10 w-10 text-zinc-800 group-hover:text-primary transition-all duration-500 group-hover:scale-110" />
-                     
-                     <div className="text-center space-y-1 relative z-10">
-                        <span className="text-[10px] font-black text-zinc-700 uppercase tracking-widest block group-hover:text-primary transition-colors">Module {i + 101}</span>
-                        <span className="text-[9px] font-black text-white uppercase tracking-widest block">{module.label}</span>
-                     </div>
-
-                     {/* Technical Specs (Always visible) */}
-                     <div className="text-[8px] font-black text-zinc-800 uppercase tracking-[0.2em] mt-2 group-hover:text-zinc-600 transition-colors">
-                        {module.tech}
-                     </div>
-
-                     {/* Terminal Log (Reveal on hover) */}
-                     <div className="absolute bottom-4 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
-                        <span className="text-[7px] font-mono text-primary/60 font-bold tracking-tighter">
-                           {module.log}
-                        </span>
-                     </div>
-                  </motion.div>
-               ))}
-            </div>
          </div>
       </section>
 

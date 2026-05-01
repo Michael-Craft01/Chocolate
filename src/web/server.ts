@@ -100,7 +100,43 @@ app.post(['/api/payments/stripe/webhook', '/api/webhooks/stripe'], express.raw({
     }
 });
 
-// JSON parsing for all other routes
+// --- AUTHORITATIVE PROTOCOL INTERCEPTORS ---
+app.use(async (req: any, res: any, next) => {
+    if (req.method === 'DELETE' && req.url.startsWith('/api/campaigns/')) {
+        const id = req.url.split('/').pop();
+        if (id && id !== 'campaigns' && !id.includes('?')) {
+            const timestamp = new Date().toLocaleTimeString();
+            console.log(`[LIFECYCLE] ${timestamp} | 🛑 FORCE-DROP TRIGGERED: ${id}`);
+            
+            try {
+                // Auth Verification
+                const authHeader = req.headers.authorization;
+                if (!authHeader) return res.status(401).json({ error: 'Auth required' });
+                const token = authHeader.split(' ')[1];
+                const { data: { user }, error } = await (await import('../lib/supabase.js')).createClient().auth.getUser(token);
+                if (error || !user) return res.status(401).json({ error: 'Invalid session' });
+
+                // Verify Ownership
+                const campaign = await prisma.campaign.findFirst({ where: { id, userId: user.id } });
+                if (!campaign) return res.status(404).json({ error: 'Hub not found' });
+
+                // RAW SQL FORCE-PURGE (Nuclear Option)
+                await prisma.$executeRawUnsafe(`DELETE FROM "Lead" WHERE "campaignId" = '${id}'`);
+                await prisma.$executeRawUnsafe(`DELETE FROM "QueryHistory" WHERE "campaignId" = '${id}'`);
+                await prisma.$executeRawUnsafe(`DELETE FROM "Campaign" WHERE "id" = '${id}'`);
+
+                console.log(`[LIFECYCLE] ${timestamp} | ✅ FORCE-DROP COMPLETE: ${id}`);
+                return res.json({ success: true, message: 'Hub dropped.' });
+            } catch (err: any) {
+                console.error(`[LIFECYCLE] ❌ FORCE-DROP FAILED:`, err.message);
+                return res.status(500).json({ error: 'Force-drop failed', details: err.message });
+            }
+        }
+    }
+    next();
+});
+
+// Auth routes
 app.use(express.json());
 
 // API: Current User Context
@@ -277,7 +313,7 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: Au
         
         // ── TIERED LIMIT ENFORCEMENT ──
         const tier = req.user!.tier || 'FREE';
-        const locationLimits: Record<string, number> = { 'FREE': 1, 'STARTER': 1, 'PROFESSIONAL': 5, 'ELITE': 100 };
+        const locationLimits: Record<string, number> = { 'FREE': 1, 'STARTER': 1, 'PROFESSIONAL': 5, 'ELITE': 10 };
         const allowedLocations = data.locations ? data.locations.slice(0, locationLimits[tier] || 1) : [];
 
         // 2. Update the "Main Engine" Campaign (Market Sync only)
@@ -335,6 +371,35 @@ app.post('/api/campaigns/:id/trigger', authenticate, requireActiveSubscription, 
     }
 });
 
+// --- CAMPAIGN HUB OPERATIONS (PRIORITY) ---
+
+// 1. Authoritative Hard Purge (Regex Match)
+app.delete(/^\/api\/campaigns\/([a-zA-Z0-9]+)\/?$/, authenticate, async (req: AuthenticatedRequest, res: Response) => {
+    const id = req.params[0]; // Capture from regex group
+    const userId = req.user!.id;
+
+    logger.info({ id, userId }, '🛑 [PURGE] Regex Omni-Route Intercepted.');
+
+    try {
+        // Verify ownership
+        const campaign = await prisma.campaign.findFirst({ where: { id, userId } });
+        if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+
+        // Hard Purge Transaction
+        await prisma.$transaction([
+            prisma.lead.deleteMany({ where: { campaignId: id } }),
+            prisma.queryHistory.deleteMany({ where: { campaignId: id } }),
+            prisma.campaign.delete({ where: { id } })
+        ]);
+
+        logger.info({ id }, '✅ [PURGE] Decommission successful.');
+        res.json({ success: true, message: 'Campaign decommissioned successfully' });
+    } catch (error: any) {
+        logger.error({ error: error.message, id }, '❌ [PURGE] Decommission failed');
+        res.status(500).json({ error: 'Purge failed', message: error.message });
+    }
+});
+
 app.get('/api/campaigns', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
         const userId = req.user!.id;
@@ -351,8 +416,24 @@ app.get('/api/campaigns', authenticate, async (req: AuthenticatedRequest, res) =
 
 app.post('/api/campaigns', authenticate, requireActiveSubscription, validate(campaignSchema), async (req: AuthenticatedRequest, res) => {
     try {
+        const userId = req.user!.id;
+        
+        // ── QUOTA ENFORCEMENT ──
+        const [user, campaignCount] = await Promise.all([
+            prisma.user.findUnique({ where: { id: userId } }),
+            prisma.campaign.count({ where: { userId } })
+        ]);
+
+        if (user && campaignCount >= user.maxCampaigns) {
+            logger.warn({ userId, count: campaignCount, limit: user.maxCampaigns }, '🚫 [QUOTA] Campaign creation blocked: Limit reached');
+            return res.status(403).json({ 
+                error: 'Campaign quota exceeded', 
+                message: `Your current plan allows for a maximum of ${user.maxCampaigns} search hubs. Please upgrade to increase your capacity.`
+            });
+        }
+
         const campaign = await prisma.campaign.create({
-            data: { ...req.body, userId: req.user!.id }
+            data: { ...req.body, userId }
         });
         res.status(201).json(campaign);
     } catch (error) {
@@ -360,7 +441,7 @@ app.post('/api/campaigns', authenticate, requireActiveSubscription, validate(cam
     }
 });
 
-app.patch('/api/campaigns/:id/status', authenticate, requireActiveSubscription, validate(campaignStatusSchema), async (req: AuthenticatedRequest, res) => {
+app.patch('/api/campaigns/:id/status', authenticate, requireActiveSubscription, validate(campaignStatusSchema), async (req: AuthenticatedRequest, res: Response) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
@@ -370,6 +451,7 @@ app.patch('/api/campaigns/:id/status', authenticate, requireActiveSubscription, 
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
 
 
 

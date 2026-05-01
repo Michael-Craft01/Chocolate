@@ -18,9 +18,17 @@ import { CardSkeleton } from "@/components/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { useRouter } from "next/navigation";
 import { authJson } from "@/lib/api";
-import { fetchCampaigns as fetchCampaignList, updateCampaignStatus } from "@/lib/services/campaigns";
+import { fetchCampaigns as fetchCampaignList, updateCampaignStatus, deleteCampaign } from "@/lib/services/campaigns";
 import type { Campaign } from "@/lib/types";
 import { Sparkline } from "@/components/Sparkline";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+import { toast } from "sonner";
 
 export default function CampaignsPage() {
   const router = useRouter();
@@ -32,43 +40,99 @@ export default function CampaignsPage() {
   const [statusFilter, setStatusFilter] = useState<"ALL" | Campaign["status"]>("ALL");
   const [triggering, setTriggering] = useState<string | null>(null);
 
+  const [stats, setStats] = useState<any>(null);
+
   const fetchCampaigns = async () => {
     try {
-      const data = await fetchCampaignList();
-      setCampaigns(data || []);
+      const [campaignData, statsData] = await Promise.all([
+        fetchCampaignList(),
+        authJson<any>("/api/stats")
+      ]);
+      setCampaigns(campaignData || []);
+      setStats(statsData);
       setLoading(false);
     } catch (err) {
-      console.error("Failed to fetch campaigns", err);
-      setError("Could not load discovery hubs. Please try again.");
+      console.error("Failed to fetch data", err);
+      toast.error("Connection Error", {
+        description: "Failed to retrieve campaign data hubs."
+      });
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchCampaigns();
-    const interval = setInterval(fetchCampaigns, 30000); // Au every 30s
+    const interval = setInterval(fetchCampaigns, 30000);
     return () => clearInterval(interval);
   }, []);
 
   const toggleStatus = async (id: string, currentStatus: string) => {
     const nextStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
     setBusyCampaignId(id);
+    
+    const promise = updateCampaignStatus(id, nextStatus as any);
+    
+    toast.promise(promise, {
+      loading: `${nextStatus === 'PAUSED' ? 'Pausing' : 'Resuming'} campaign...`,
+      success: () => {
+        fetchCampaigns();
+        return `Campaign ${nextStatus === 'PAUSED' ? 'paused' : 'resumed'}`;
+      },
+      error: 'Failed to update campaign status',
+    });
+
     try {
-      await updateCampaignStatus(id, nextStatus);
-      await fetchCampaigns();
+      await promise;
     } finally {
       setBusyCampaignId(null);
     }
   };
 
+  const handleDelete = (id: string, name: string) => {
+    toast.warning(`Delete campaign: ${name}?`, {
+      description: "All lead data for this search hub will be permanently removed.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          setBusyCampaignId(id);
+          try {
+            await deleteCampaign(id);
+            fetchCampaigns();
+            toast.success("Campaign deleted", {
+              description: "The campaign and its leads have been removed."
+            });
+          } catch (err: any) {
+            toast.error("Failed to delete campaign", {
+              description: err.response?.data?.message || err.message || "Decommission protocol failed."
+            });
+          } finally {
+            setBusyCampaignId(null);
+          }
+        }
+      },
+      cancel: {
+        label: "Cancel"
+      }
+    });
+  };
+
   const triggerSweep = async (id: string) => {
+    const promise = authJson(`/api/campaigns/${id}/trigger`, { method: 'POST' });
+    
+    toast.promise(promise, {
+      loading: 'Starting lead scan...',
+      success: () => {
+        router.push("/leads");
+        return 'Scan initiated';
+      },
+      error: 'Failed to start scan',
+    });
+
     try {
       setTriggering(id);
-      await authJson(`/api/campaigns/${id}/trigger`, { method: 'POST' });
-      router.push("/leads");
+      await promise;
     } catch (err) {
       console.error("Trigger failed", err);
-      setError("Failed to start scan. Please check your connection.");
     } finally {
       setTriggering(null);
     }
@@ -82,184 +146,221 @@ export default function CampaignsPage() {
   });
 
   return (
-    <div className="w-full space-y-10 pb-20 font-sans">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-6 border-b border-white/5 pb-10">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-primary text-[11px] font-black uppercase tracking-[0.3em]">
-            <ShieldCheck className="h-4 w-4 glow-primary" /> Safe & Private
-          </div>
-          <h1 className="text-4xl font-black tracking-[-0.06em] gradient-text">Search</h1>
-          <p className="text-[13px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Find new business leads in any city or industry.</p>
-        </div>
-        <Link 
-          href="/campaigns/new" 
-          className="h-14 px-10 rounded-sm bg-primary text-white font-black text-[14px] uppercase tracking-widest hover:bg-primary-hover active:scale-[0.98] transition-all flex items-center gap-3 glow-primary shadow-xl shadow-primary/20"
-        >
-          <Plus className="h-4 w-4" /> New Search
-        </Link>
-      </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {[
-          { label: 'Active', value: campaigns.filter(c => c.status === 'ACTIVE').length, icon: Compass, color: 'text-primary' },
-          { label: 'Found Today', value: '12', icon: Shield, color: 'text-zinc-500' },
-          { label: 'Total Searches', value: campaigns.length, icon: Activity, color: 'text-zinc-500' },
-          { label: "Cycles", value: campaigns.length * 12, icon: History, color: "text-violet-400" },
-        ].map((stat, i) => (
-          <div key={i} className="glass-card p-6 rounded-sm border border-white/5 space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">{stat.label}</p>
-              <stat.icon className={`h-4 w-4 ${stat.color} ${stat.label === 'Active' ? 'glow-primary' : ''}`} />
+    <div className="w-full space-y-10 pb-32 font-sans selection:bg-primary/20">
+      {/* Professional Header & Global Stats */}
+      <div className="pt-10 space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/5 pb-10">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
+              <ShieldCheck className="h-4 w-4 text-emerald-500" /> Secure Data Discovery
             </div>
-            <p className="text-3xl font-black tracking-[-0.06em] text-white">{stat.value}</p>
+            <h1 className="text-4xl font-black tracking-tight text-white">
+              Search <span className="text-primary">Hubs</span>
+            </h1>
+            <p className="text-[13px] text-zinc-500 font-medium max-w-2xl leading-relaxed">
+              Manage your autonomous lead generation campaigns. Monitor discovery performance and targeting accuracy in real-time.
+            </p>
           </div>
-        ))}
+
+          <div className="flex gap-4">
+            <Link 
+              href="/campaigns/new" 
+              className="h-14 px-8 rounded-[2px] bg-primary text-white font-bold text-[14px] hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center gap-3 shadow-lg shadow-primary/10"
+            >
+              <Plus className="h-4 w-4" /> 
+              New Campaign
+            </Link>
+          </div>
+        </div>
+
+        {/* Global Performance Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'Active Campaigns', value: campaigns.filter(c => c.status === 'ACTIVE').length, icon: Activity, detail: 'Operational' },
+            { label: 'Leads Found Today', value: stats?.leadsToday || '0', icon: Shield, detail: `${stats?.dailyLimit || 2500} Daily Limit` },
+            { label: 'Average Accuracy', value: '98.4%', icon: Sparkles, detail: 'AI Verified' },
+            { label: 'System Status', value: 'Optimal', icon: Compass, detail: 'Global Edge' },
+          ].map((stat, i) => (
+            <div key={i} className="bg-white/[0.02] border border-white/5 rounded-[2px] p-6 hover:bg-white/[0.04] transition-all">
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-2 rounded-[2px] bg-white/5 border border-white/10 text-zinc-500">
+                  <stat.icon className="h-4 w-4" />
+                </div>
+                <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">{stat.detail}</span>
+              </div>
+              <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-1">{stat.label}</p>
+              <p className="text-3xl font-bold tracking-tight text-white">{stat.value}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Filters & Search */}
-      <div className="flex flex-col md:flex-row gap-4">
+      {/* Filter & Search Controls */}
+      <div className="flex flex-col lg:flex-row gap-4">
         <div className="relative flex-1 group">
-          <Compass className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600 group-focus-within:text-primary transition-colors" />
+          <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+            <Compass className="h-4 w-4 text-zinc-600" />
+          </div>
           <input 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search..."
-            className="w-full h-14 bg-white/[0.03] border border-white/5 rounded-sm pl-14 pr-6 text-[14px] font-bold uppercase tracking-[0.1em] focus:border-primary/40 transition-all outline-none text-white placeholder:text-zinc-700"
+            placeholder="Search campaigns..."
+            className="w-full h-14 bg-white/[0.02] border border-white/5 rounded-[2px] pl-14 pr-6 text-[14px] focus:border-primary/40 focus:bg-white/[0.04] transition-all outline-none text-white placeholder:text-zinc-700"
           />
         </div>
-        <div className="relative">
-          <select 
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="h-14 bg-white/[0.03] border border-white/5 rounded-sm px-8 text-[12px] font-black uppercase tracking-widest focus:border-primary/40 outline-none cursor-pointer appearance-none text-zinc-400 hover:text-white transition-colors"
-          >
-            <option value="ALL">All Categories</option>
-            <option value="ACTIVE">Active Only</option>
-            <option value="PAUSED">Paused Only</option>
-          </select>
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-600">
-            <ChevronRight className="h-4 w-4 rotate-90" />
-          </div>
+        
+        <div className="flex gap-2 p-1 bg-white/[0.02] border border-white/5 rounded-[2px]">
+          {["ALL", "ACTIVE", "PAUSED"].map((status) => (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status as any)}
+              className={cn(
+                "h-12 px-6 rounded-[2px] text-[11px] font-bold uppercase tracking-wider transition-all",
+                statusFilter === status 
+                  ? "bg-white/10 text-white shadow-sm" 
+                  : "text-zinc-600 hover:text-zinc-400"
+              )}
+            >
+              {status}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Campaigns Grid */}
-      <div className="grid grid-cols-1 gap-10">
+      {/* Campaigns Data Grid */}
+      <div className="grid grid-cols-1 gap-8">
         <AnimatePresence mode="popLayout">
           {loading ? (
-            [1, 2, 3, 4].map(i => <CardSkeleton key={i} />)
+            [1, 2, 3].map(i => <CardSkeleton key={i} />)
           ) : filteredCampaigns.length === 0 ? (
-            <div className="md:col-span-2">
-              <EmptyState title="No Hubs Found" description="Create your first discovery hub to start finding leads." onAction={() => router.push("/campaigns/new")} actionText="New Hub" />
-            </div>
+            <EmptyState title="No Campaigns Found" description="Create your first campaign to start finding leads." onAction={() => router.push("/campaigns/new")} actionText="New Campaign" />
           ) : filteredCampaigns.map((c, idx) => (
             <motion.div 
               layout
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ delay: idx * 0.05 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.3, delay: idx * 0.05 }}
               key={c.id} 
-              className="glass-card rounded-sm border border-white/5 overflow-hidden group"
+              className="bg-white/[0.01] border border-white/5 rounded-[2px] overflow-hidden hover:border-white/10 transition-all group"
             >
-              <div className="p-8 space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start gap-6">
-                  <div className="flex items-center gap-5">
-                    <div className="h-16 w-16 rounded-sm bg-primary/5 border border-primary/10 flex items-center justify-center relative overflow-hidden group-hover:border-primary/30 transition-all shadow-2xl shadow-primary/5 shrink-0">
-                      {c.status === 'ACTIVE' && (
-                        <div className="absolute inset-0 bg-primary/10 animate-pulse" />
-                      )}
-                      <Home className="h-7 w-7 text-primary relative z-10 glow-primary orange-glow" />
+              <div className="p-8 lg:p-10 space-y-10">
+                {/* Header Row */}
+                <div className="flex flex-col lg:flex-row justify-between items-start gap-8">
+                  <div className="flex items-center gap-6">
+                    <div className="h-16 w-16 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                      <Briefcase className={cn(
+                        "h-6 w-6 transition-colors",
+                        c.status === 'ACTIVE' ? "text-primary" : "text-zinc-700"
+                      )} />
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="text-xl font-black tracking-[-0.06em] text-white group-hover:text-primary transition-colors uppercase truncate">{c.name}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className={`h-2 w-2 rounded-sm ${c.status === 'ACTIVE' ? 'bg-primary glow-primary shadow-[0_0_10px_rgba(255,109,41,0.8)] animate-pulse' : 'bg-zinc-800'}`} />
-                        <span className={`text-[11px] font-black uppercase tracking-[0.25em] ${c.status === 'ACTIVE' ? 'text-primary' : 'text-zinc-600'}`}>
-                          {c.status} MODE
-                        </span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-xl font-bold text-white tracking-tight">{c.name}</h3>
+                        <div className={cn(
+                          "px-2.5 py-0.5 rounded-[2px] text-[9px] font-black uppercase tracking-widest border",
+                          c.status === 'ACTIVE' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-zinc-800 border-white/5 text-zinc-500"
+                        )}>
+                          {c.status}
+                        </div>
                       </div>
+                      <p className="text-[11px] font-medium text-zinc-600 uppercase tracking-widest">Initialized {new Date(c.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  
-                  <div className="flex gap-2 w-full sm:w-auto sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-500 sm:-translate-y-2 sm:group-hover:translate-y-0">
+
+                  {/* Actions Column */}
+                  <div className="flex gap-2 w-full lg:w-auto">
                     <button 
                       onClick={() => toggleStatus(c.id, c.status)}
                       disabled={busyCampaignId === c.id}
-                      className="flex-1 sm:flex-none p-3.5 rounded-sm bg-white/[0.03] border border-white/5 hover:border-primary/30 text-zinc-500 hover:text-primary transition-all disabled:opacity-50 glass flex items-center justify-center"
+                      className={cn(
+                        "flex-1 lg:flex-none h-12 px-6 rounded-[2px] text-[11px] font-bold uppercase tracking-wider transition-all border flex items-center justify-center gap-2",
+                        c.status === 'ACTIVE' 
+                          ? "bg-white/5 border-white/10 text-zinc-400 hover:text-white" 
+                          : "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+                      )}
                     >
-                      {c.status === 'ACTIVE' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                      {busyCampaignId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (c.status === 'ACTIVE' ? <><Pause className="h-3.5 w-3.5" /> Pause</> : <><Play className="h-3.5 w-3.5" /> Resume</>)}
                     </button>
-                    <button className="flex-1 sm:flex-none p-3.5 rounded-sm bg-white/[0.03] border border-white/5 hover:border-red-500/30 text-zinc-500 hover:text-red-500 transition-all glass flex items-center justify-center">
+                    <button 
+                      onClick={() => handleDelete(c.id, c.name)}
+                      disabled={busyCampaignId === c.id}
+                      className="h-12 w-12 rounded-[2px] bg-white/5 border border-white/10 text-zinc-500 hover:text-red-500 hover:border-red-500/30 transition-all flex items-center justify-center"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-5 rounded-sm bg-white/[0.01] border border-white/5 space-y-2 hover:bg-white/[0.03] transition-colors group/hub">
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="h-3 w-3 text-zinc-600 group-hover/hub:text-primary transition-colors" />
-                      <p className="text-[11px] font-black text-zinc-600 uppercase tracking-[0.2em] group-hover/hub:text-zinc-500 transition-colors">Target Industry</p>
+                {/* Info Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="bg-white/5 p-6 rounded-[2px] space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Radar className="h-4 w-4 text-primary/60" />
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Industry Targets</span>
                     </div>
-                    <p className="text-[13px] font-bold text-zinc-400 truncate">{c.industries.join(", ") || 'All Industries'}</p>
-                  </div>
-                  <div className="p-5 rounded-sm bg-white/[0.01] border border-white/5 space-y-2 hover:bg-white/[0.03] transition-colors group/hub">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-3 w-3 text-zinc-600 group-hover/hub:text-primary transition-colors" />
-                      <p className="text-[11px] font-black text-zinc-600 uppercase tracking-[0.2em] group-hover/hub:text-zinc-500 transition-colors">Target Location</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {c.industries.map((ind, i) => (
+                        <span key={i} className="px-2 py-1 rounded-[2px] bg-white/5 text-[10px] font-medium text-zinc-400">{ind}</span>
+                      ))}
+                      {c.industries.length === 0 && <span className="text-[10px] text-zinc-600">All Industries</span>}
                     </div>
-                    <p className="text-[13px] font-bold text-zinc-400 truncate">{c.locations.join(", ") || 'All Locations'}</p>
                   </div>
-                </div>
 
-                <div className="relative p-6 rounded-sm bg-primary/[0.03] border border-primary/10 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                  
-                  <div className="flex-1 flex items-center gap-5 relative z-10">
-                    <div className="h-12 w-12 rounded-sm bg-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5">
-                      <Radar className={`h-6 w-6 text-primary ${c.status === 'ACTIVE' ? 'animate-pulse' : ''}`} />
+                  <div className="bg-white/5 p-6 rounded-[2px] space-y-4">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="h-4 w-4 text-primary/60" />
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Target Locations</span>
                     </div>
-                    <div className="space-y-1.5">
-                      <p className="text-sm font-black tracking-tight text-white uppercase">{c._count?.leads || 0} Businesses Found</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {c.locations.map((loc, i) => (
+                        <span key={i} className="px-2 py-1 rounded-[2px] bg-white/5 text-[10px] font-medium text-zinc-400">{loc}</span>
+                      ))}
+                      {c.locations.length === 0 && <span className="text-[10px] text-zinc-600">Global Coverage</span>}
+                    </div>
+                  </div>
+
+                  <div className="bg-white/5 p-6 rounded-[2px] space-y-4">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="h-1.5 w-24 bg-primary/10 rounded-sm overflow-hidden">
-                          <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: '85%' }}
-                            className="h-full bg-gradient-to-r from-primary to-primary-hover shadow-[0_0_10px_rgba(255,109,41,0.5)]" 
-                          />
-                        </div>
-                        <span className="text-[11px] text-primary font-black uppercase tracking-widest">85% SCORE</span>
+                        <Activity className="h-4 w-4 text-primary/60" />
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Campaign Performance</span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest">Accuracy Score</span>
+                        <span className="text-[10px] font-black text-white">94%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-white/5 rounded-[2px] overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: '94%' }} className="h-full bg-primary" />
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  <div className="hidden md:block px-6 opacity-80 group-hover:opacity-100 transition-opacity">
-                    <Sparkline color="#ff6d29" />
+                {/* Footer Metrics & Trigger */}
+                <div className="flex flex-col md:flex-row items-center gap-8 pt-8 border-t border-white/5">
+                  <div className="flex-1 flex gap-10">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Total Leads</p>
+                      <p className="text-3xl font-bold text-white">{c._count?.leads || 0}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Discovery Rate</p>
+                      <p className="text-3xl font-bold text-white">12.4<span className="text-sm text-zinc-600">/hr</span></p>
+                    </div>
                   </div>
 
                   <button 
                     onClick={() => triggerSweep(c.id)}
                     disabled={triggering === c.id || c.status !== 'ACTIVE'}
-                    className="h-12 px-8 rounded-sm bg-primary text-white text-[14px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 glow-primary shadow-xl shadow-primary/20 relative z-10"
+                    className="h-14 px-10 rounded-[2px] bg-white/5 border border-white/10 hover:border-primary/40 hover:bg-primary/5 text-white text-[13px] font-bold transition-all flex items-center gap-3"
                   >
-                    {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Scan for Leads"}
+                    {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Radar className="h-4 w-4 text-primary" />}
+                    Start Lead Scan
                   </button>
                 </div>
-              </div>
-
-              {/* Footer Actions */}
-              <div className="bg-white/[0.02] px-8 py-5 flex justify-between items-center border-t border-white/5">
-                <button className="text-[11px] font-black text-zinc-500 hover:text-white transition-all flex items-center gap-3 uppercase tracking-[0.25em] group/act">
-                  <Activity className="h-3.5 w-3.5 text-primary/50 group-hover/act:text-primary transition-colors" />
-                  Discovery Logs <ChevronRight className="h-3 w-3 group-hover/act:translate-x-1 transition-transform" />
-                </button>
-                <button className="text-[11px] font-black text-zinc-500 hover:text-white transition-all flex items-center gap-3 uppercase tracking-[0.25em] group/act">
-                   Targeting Setup <Command className="h-3.5 w-3.5 text-zinc-600 group-hover/act:text-white transition-colors" />
-                </button>
               </div>
             </motion.div>
           ))}
