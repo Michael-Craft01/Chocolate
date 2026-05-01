@@ -62,7 +62,7 @@ export class MessageGenerator {
         const product = campaign.productName || recommendedSolution || 'HyprLead Core';
         const sender = campaign.senderName || 'Michael';
         const company = campaign.companyName || 'HyprLead';
-        const link = campaign.ctaLink || 'https://hyprlead.com';
+        const link = campaign.ctaLink || campaign.user?.profile?.website || 'https://hyprlead.com';
 
         const greeting = this.getRandomItem(this.getOpenings(campaign, businessName));
         const intro = this.getRandomItem(this.getIntros(campaign));
@@ -84,7 +84,7 @@ ${link}`;
     generateWhatsAppGreeting(campaign: any, businessName: string): string {
         const sender = campaign.senderName || 'Michael';
         const company = campaign.companyName || 'HyprLead';
-        const link = campaign.ctaLink || 'https://hyprlead.com';
+        const link = campaign.ctaLink || campaign.user?.profile?.website || 'https://hyprlead.com';
 
         const greetings = [
             `Hi! I'm ${sender} from ${company}. I've identified a growth bottleneck at ${businessName} and wanted to share our optimization protocol (${link}). Interested in a brief brief?`,

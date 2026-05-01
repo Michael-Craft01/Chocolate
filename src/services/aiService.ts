@@ -67,7 +67,7 @@ ONLY return the refined text. No conversational fillers, no "Here is the refined
         const product = campaign.productName || "HyprLead Core";
         const sender = campaign.senderName || "Michael";
         const company = campaign.companyName || "HyprLead";
-        const link = campaign.ctaLink || "https://hyprlead.com";
+        const link = campaign.ctaLink || campaign.user?.profile?.website || "https://hyprlead.com";
         const valueProp = campaign.productDescription || "we help businesses eliminate bottlenecks.";
 
         const prompt = `<start_of_turn>user
@@ -94,6 +94,7 @@ TASK:
 7. Use a clear, low-friction call-to-action (e.g., "Open to a quick chat?").
 8. Structure the message with line breaks for readability.
 9. If the brand name still sounds like "Scraper Junk", fix it in the message body.
+10. MANDATORY: USE THE LINK PROVIDED IN THE INPUTS ("${link}"). DO NOT INVENT OR USE ANY OTHER URL. THIS IS THE AUTHORITATIVE DESTINATION.
 
 ONLY return the message text. No conversational fillers.
 <end_of_turn>

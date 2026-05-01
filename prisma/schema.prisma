@@ -138,6 +138,7 @@ model Lead {
   createdAt        DateTime    @default(now())
 
   @@unique([campaignId, businessId])
+  @@index([campaignId])
 }
 
 model Transaction {

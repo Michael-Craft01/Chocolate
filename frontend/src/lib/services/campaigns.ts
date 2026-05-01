@@ -17,13 +17,26 @@ export interface CreateCampaignPayload {
   targetCountry: string;
 }
 
+export interface UpdateCampaignPayload extends Partial<CreateCampaignPayload> {}
+
 export async function fetchCampaigns() {
   return authJson<Campaign[]>("/api/campaigns");
+}
+
+export async function fetchCampaign(id: string) {
+  return authJson<Campaign>(`/api/campaigns/hub/${id}`);
 }
 
 export async function createCampaign(payload: CreateCampaignPayload) {
   return authJson<Campaign>("/api/campaigns", {
     method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateCampaign(id: string, payload: UpdateCampaignPayload) {
+  return authJson<Campaign>(`/api/campaigns/${id}`, {
+    method: "PATCH",
     body: JSON.stringify(payload),
   });
 }

@@ -8,15 +8,14 @@ export interface LeadsResponse {
 
 export async function fetchLeads(page: number = 1, limit: number = 20, campaignId?: string) {
   const url = `/api/leads?page=${page}&limit=${limit}${campaignId ? `&campaignId=${campaignId}` : ''}`;
-  const leads = await authJson<Lead[]>(url);
+  const response = await authJson<LeadsResponse>(url);
   
-  // Return in the expected format for the frontend
   return {
-    leads: leads || [],
-    pagination: {
+    leads: response.leads || [],
+    pagination: response.pagination || {
       page,
-      totalPages: 1, // Simplified for now
-      totalLeads: leads?.length || 0
+      totalPages: 1,
+      totalLeads: response.leads?.length || 0
     }
   };
 }

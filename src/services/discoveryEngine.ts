@@ -156,10 +156,10 @@ export async function triggerEngineCycle() {
     try {
         // Wait a tiny bit for DB to be warm if this is a fresh start
         const now = new Date();
-        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const threshold = new Date(now.getTime() - 23 * 60 * 60 * 1000); // 23h tolerance for 2-cycle refresh
         
         await prisma.user.updateMany({
-            where: { lastQuotaReset: { lt: yesterday } },
+            where: { lastQuotaReset: { lt: threshold } },
             data: { leadsFoundToday: 0, lastQuotaReset: now }
         });
         logger.info('🔄 Daily quotas reset successfully');

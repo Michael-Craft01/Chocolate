@@ -11,6 +11,7 @@ import { triggerEngineCycle } from '../services/discoveryEngine.js';
 import { aiService } from '../services/aiService.js';
 import { 
     campaignSchema, 
+    updateCampaignSchema,
     leadStatusSchema, 
     campaignStatusSchema, 
     billingSchema, 
@@ -401,10 +402,16 @@ app.get('/api/campaigns', authenticate, async (req: AuthenticatedRequest, res) =
             include: { _count: { select: { leads: true } } }
         });
         res.json(campaigns);
-    } catch (error) {
+    } catch (error: any) {
+        logger.error({ 
+            err: error.message, 
+            stack: error.stack,
+            userId: req.user?.id 
+        }, 'Failed to fetch campaigns');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
 
 // 2. Mission Intelligence Brief (AI Powered)
 app.get('/api/campaigns/:id/brief', authenticate, async (req: AuthenticatedRequest, res: Response) => {
@@ -421,6 +428,7 @@ app.get('/api/campaigns/:id/brief', authenticate, async (req: AuthenticatedReque
         res.status(500).json({ error: 'Brief generation failed', message: error.message });
     }
 });
+
 
 app.post('/api/campaigns', authenticate, requireActiveSubscription, validate(campaignSchema), async (req: AuthenticatedRequest, res) => {
     try {
@@ -445,6 +453,28 @@ app.post('/api/campaigns', authenticate, requireActiveSubscription, validate(cam
         });
         res.status(201).json(campaign);
     } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+app.patch('/api/campaigns/:id', authenticate, requireActiveSubscription, validate(updateCampaignSchema), async (req: AuthenticatedRequest, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user!.id;
+
+        const campaign = await prisma.campaign.findUnique({ where: { id } });
+        if (!campaign || campaign.userId !== userId) {
+            return res.status(404).json({ error: 'Hub not found' });
+        }
+
+        const updated = await prisma.campaign.update({
+            where: { id },
+            data: req.body
+        });
+
+        logger.info({ userId, hubId: id }, '✅ [UPDATE] Discovery Hub refined successfully');
+        res.json(updated);
+    } catch (error) {
+        logger.error({ error, hubId: req.params.id }, 'Failed to update discovery hub');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
@@ -580,20 +610,39 @@ app.post('/api/leads/:id/dispatch', authenticate, async (req: AuthenticatedReque
 // API: Leads (Authenticated)
 app.get('/api/leads', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
-        const { campaignId } = req.query;
-        const leads = await prisma.lead.findMany({
-            where: { 
-                campaign: { 
-                    userId: req.user!.id,
-                    id: campaignId ? String(campaignId) : undefined
-                } 
-            },
-            orderBy: { createdAt: 'desc' },
-            take: 50,
-            include: { business: true, campaign: { select: { name: true } } }
+        const { campaignId, page = 1, limit = 50 } = req.query;
+        const p = Math.max(1, parseInt(String(page)));
+        const l = Math.min(500, Math.max(1, parseInt(String(limit))));
+
+        const where = { 
+            campaign: { 
+                userId: req.user!.id,
+                id: campaignId ? String(campaignId) : undefined
+            } 
+        };
+
+        const [leads, totalLeads] = await Promise.all([
+            prisma.lead.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip: (p - 1) * l,
+                take: l,
+                include: { business: true, campaign: { select: { name: true } } }
+            }),
+            prisma.lead.count({ where })
+        ]);
+
+        res.json({
+            leads,
+            pagination: {
+                page: p,
+                limit: l,
+                totalPages: Math.ceil(totalLeads / l),
+                totalLeads
+            }
         });
-        res.json(leads);
     } catch (error) {
+        logger.error({ error }, 'Failed to fetch leads');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
@@ -699,6 +748,32 @@ app.post('/api/billing/create-checkout', authenticate, validate(billingSchema), 
         if (!url) return res.status(500).json({ error: 'Checkout error' });
         res.json({ url });
     } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Hub Intelligence Retrieval
+app.get('/api/campaigns/hub/:id', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user!.id;
+
+        const campaign = await prisma.campaign.findUnique({
+            where: { id },
+            include: {
+                _count: {
+                    select: { leads: true }
+                }
+            }
+        });
+
+        if (!campaign || campaign.userId !== userId) {
+            return res.status(404).json({ error: 'Hub not found' });
+        }
+
+        res.json(campaign);
+    } catch (error) {
+        logger.error({ error, id: req.params.id }, 'Failed to fetch hub intelligence');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

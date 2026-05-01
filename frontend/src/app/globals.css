@@ -242,3 +242,23 @@
 .telemetry-label {
   @apply text-[8px] font-black uppercase tracking-[0.3em] text-zinc-700 select-none pointer-events-none;
 }
+
+/* --- NEURAL SCROLLBAR --- */
+.scrollbar-neural::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-neural::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-neural::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.scrollbar-neural:hover::-webkit-scrollbar-thumb {
+  background: #10b981; /* Primary Emerald */
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}

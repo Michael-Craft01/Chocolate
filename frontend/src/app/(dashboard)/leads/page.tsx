@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { authJson, getApiBaseUrl } from "@/lib/api";
 import { createClient } from "@/lib/supabase";
 import type { Lead, PaginationMeta, Campaign } from "@/lib/types";
@@ -72,6 +73,7 @@ export default function LeadsPage() {
   const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, totalPages: 1, totalLeads: 0 });
   const [showExportOptions, setShowExportOptions] = useState(false);
   const [activeTab, setActiveTab] = useState<"timeline" | "all">("timeline");
+  const [stats, setStats] = useState<any>(null);
 
   const fetchData = async (silent = false) => {
     try {
@@ -79,12 +81,14 @@ export default function LeadsPage() {
       else setRefreshing(true);
       setError(null);
       const campaignFilter = selectedCampaignId === "ALL" ? undefined : selectedCampaignId;
-      const [leadsData, campaignsData] = await Promise.all([
+      const [leadsData, campaignsData, statsData] = await Promise.all([
         fetchLeadList(page, 200, campaignFilter),
-        fetchCampaigns()
+        fetchCampaigns(),
+        authJson<any>("/api/stats")
       ]);
       setLeads(leadsData.leads || []);
       setCampaigns(campaignsData || []);
+      setStats(statsData);
       setPagination(leadsData.pagination || { page: 1, totalPages: 1, totalLeads: 0 });
       // Auto-expand the most recent day
       const groups = groupLeadsByDayAndSweep(leadsData.leads || []);
@@ -97,7 +101,17 @@ export default function LeadsPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, [page, selectedCampaignId]);
+  useEffect(() => {
+    fetchData();
+
+    // --- AUTONOMOUS DISCOVERY SYNC ---
+    // Automatically poll for new leads every 30 seconds
+    const interval = setInterval(() => {
+      fetchData(true); // Silent refresh to keep the UI smooth
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [page, selectedCampaignId]);
 
   const filteredLeads = useMemo(() => {
     if (!searchQuery) return leads;
@@ -240,7 +254,7 @@ export default function LeadsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: "Total Leads", value: pagination.totalLeads, icon: Users, color: "text-primary" },
-            { label: "Today", value: todayLeads, icon: Zap, color: "text-white" },
+            { label: "Today", value: stats?.leadsToday || 0, icon: Zap, color: "text-white" },
             { label: "Sweep Cycles", value: totalSweeps, icon: RefreshCw, color: "text-primary" },
             { label: "Days Active", value: dayGroups.length, icon: Calendar, color: "text-zinc-300" },
           ].map(({ label, value, icon: Icon, color }) => (
@@ -250,7 +264,9 @@ export default function LeadsPage() {
               </div>
               <div>
                 <p className="text-label text-zinc-600">{label}</p>
-                <p className={`text-stat ${color}`}>{value}</p>
+                <div className={`text-stat ${color}`}>
+                  <AnimatedNumber value={value} />
+                </div>
               </div>
             </div>
           ))}

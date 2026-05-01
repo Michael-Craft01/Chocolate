@@ -17,6 +17,7 @@ export const campaignSchema = z.object({
   ctaLink: z.string().url().or(z.literal('')).optional().nullable(),
   discordWebhook: z.string().url().or(z.literal('')).optional().nullable(),
 });
+export const updateCampaignSchema = campaignSchema.partial();
 
 // Lead Status Update Schema
 export const leadStatusSchema = z.object({

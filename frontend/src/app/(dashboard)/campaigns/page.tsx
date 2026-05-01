@@ -6,17 +6,24 @@ import {
   Plus, MapPin, Briefcase, Play, 
   Pause, Trash2, Zap, Loader2, 
   Radar, History, ChevronRight, Activity,
-  Sparkles,
   Command,
   ShieldCheck,
   Home,
   Compass,
   Shield,
-  Info
+  Info,
+  Search,
+  Target,
+  Globe,
+  Sparkles,
+  ClipboardCheck,
+  Settings,
+  RefreshCw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CardSkeleton } from "@/components/skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { useRouter } from "next/navigation";
 import { authJson } from "@/lib/api";
 import { fetchCampaigns as fetchCampaignList, updateCampaignStatus, deleteCampaign } from "@/lib/services/campaigns";
@@ -39,6 +46,7 @@ import {
   SheetDescription 
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function CampaignsPage() {
   const router = useRouter();
@@ -48,6 +56,7 @@ export default function CampaignsPage() {
   const [busyCampaignId, setBusyCampaignId] = useState<string | null>(null);
   const [briefs, setBriefs] = useState<Record<string, string>>({});
   const [loadingBrief, setLoadingBrief] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchBrief = async (id: string) => {
     if (briefs[id] || loadingBrief === id) return;
@@ -67,8 +76,10 @@ export default function CampaignsPage() {
 
   const [stats, setStats] = useState<any>(null);
 
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = async (silent = false) => {
     try {
+      if (!silent) setLoading(true);
+      else setRefreshing(true);
       const [campaignData, statsData] = await Promise.all([
         fetchCampaignList(),
         authJson<any>("/api/stats")
@@ -76,6 +87,7 @@ export default function CampaignsPage() {
       setCampaigns(campaignData || []);
       setStats(statsData);
       setLoading(false);
+      setRefreshing(false);
     } catch (err) {
       console.error("Failed to fetch data", err);
       toast.error("Connection Error", {
@@ -87,7 +99,7 @@ export default function CampaignsPage() {
 
   useEffect(() => {
     fetchCampaigns();
-    const interval = setInterval(fetchCampaigns, 30000);
+    const interval = setInterval(() => fetchCampaigns(true), 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -188,6 +200,12 @@ export default function CampaignsPage() {
           </div>
 
           <div className="flex gap-4">
+            <button
+              onClick={() => fetchCampaigns(true)}
+              className="h-14 w-14 rounded-[2px] bg-white/[0.03] border border-white/5 flex items-center justify-center hover:border-primary/20 hover:text-primary text-zinc-500 transition-all"
+            >
+              <RefreshCw className={`h-5 w-5 ${refreshing ? "animate-spin text-primary" : ""}`} />
+            </button>
             <Link 
               href="/campaigns/new" 
               className="h-14 px-8 rounded-[2px] bg-primary text-white font-bold text-[14px] hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center gap-3 shadow-lg shadow-primary/10"
@@ -214,7 +232,10 @@ export default function CampaignsPage() {
                 <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">{stat.detail}</span>
               </div>
               <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-1">{stat.label}</p>
-              <p className="text-3xl font-bold tracking-tight text-white">{stat.value}</p>
+              <div className="text-3xl font-bold tracking-tight text-white">
+                <AnimatedNumber value={typeof stat.value === 'string' ? parseFloat(stat.value.replace(/[^\d.]/g, '')) || 0 : stat.value} />
+                {typeof stat.value === 'string' && stat.value.includes('%') && '%'}
+              </div>
             </div>
           ))}
         </div>
@@ -388,6 +409,16 @@ export default function CampaignsPage() {
 
                   {/* Actions Area */}
                   <div className="flex items-center gap-3 pt-6 border-t border-border/40">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => router.push(`/campaigns/${c.id}/edit`)}
+                      className="flex-1 h-9 bg-background/50 hover:bg-background border-border/50 text-xs font-medium tracking-wide transition-all duration-300"
+                    >
+                      <Settings className="h-3.5 w-3.5 mr-2 opacity-60" />
+                      Edit Hub
+                    </Button>
+
                     <Sheet>
                       <SheetTrigger asChild>
                         <Button 
@@ -400,100 +431,155 @@ export default function CampaignsPage() {
                           Intelligence
                         </Button>
                       </SheetTrigger>
-                      <SheetContent className="w-full sm:max-w-md border-l border-border/50 bg-background/95 backdrop-blur-xl p-0">
-                        <div className="h-full flex flex-col font-sans">
+                      <SheetContent className="w-full sm:max-w-lg border-l border-white/5 bg-[#050505] p-0 overflow-hidden shadow-2xl shadow-primary/10">
+                        <div className="h-full flex flex-col font-sans relative">
+                          {/* Atmospheric Background */}
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.05),transparent_50%)] pointer-events-none" />
+                          <div className="absolute inset-0 bg-neural-aura opacity-30 pointer-events-none" />
+
                           {/* Panel Header */}
-                          <div className="p-8 border-b border-border/40 bg-gradient-to-br from-primary/5 via-transparent to-transparent">
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className="p-2 bg-primary/10 rounded-sm">
-                                <Search className="h-4 w-4 text-primary" />
+                          <div className="relative p-10 border-b border-white/5 bg-white/[0.02] backdrop-blur-md">
+                            <div className="flex items-center gap-4 mb-4">
+                              <div className="h-14 w-14 rounded-[2px] bg-primary/10 border border-primary/20 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                                <Search className="h-6 w-6 text-primary animate-pulse" />
                               </div>
-                              <h3 className="text-xl font-semibold tracking-tight text-foreground/90">{c.name}</h3>
+                              <div>
+                                <h3 className="text-2xl font-black tracking-tight text-white">{c.name}</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+                                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.3em]">Neural Hub Intelligence</p>
+                                </div>
+                              </div>
                             </div>
-                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.2em] opacity-60">Search Hub Intelligence</p>
                           </div>
 
-                          <ScrollArea className="flex-1 p-8">
-                            <div className="space-y-10">
+                          <ScrollArea className="flex-1 px-10 py-12">
+                            <motion.div 
+                              initial="hidden"
+                              animate="visible"
+                              variants={{
+                                hidden: { opacity: 0 },
+                                visible: { 
+                                  opacity: 1,
+                                  transition: { staggerChildren: 0.1 }
+                                }
+                              }}
+                              className="space-y-12 pb-10"
+                            >
                               {/* Mission DNA Section */}
-                              <section className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                  <Zap className="h-4 w-4 text-primary opacity-60" />
-                                  <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Mission DNA</h4>
-                                </div>
-                                <div className="grid gap-4 bg-muted/30 p-5 rounded-sm border border-border/40">
-                                  <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1 block">Operational Product</label>
-                                    <p className="text-sm font-medium text-foreground/90">{c.productName}</p>
+                              <motion.section 
+                                variants={{
+                                  hidden: { x: 20, opacity: 0 },
+                                  visible: { x: 0, opacity: 1 }
+                                }}
+                                className="space-y-6"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center">
+                                    <Activity className="h-4 w-4 text-primary/60" />
                                   </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1 block">Regional Targets</label>
-                                    <div className="flex flex-wrap gap-1.5 mt-1">
-                                      {c.locations.map(loc => (
-                                        <span key={loc} className="px-2 py-0.5 bg-background border border-border/60 rounded-sm text-[10px] font-medium">{loc}</span>
-                                      ))}
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Mission DNA</h4>
+                                </div>
+                                
+                                <div className="grid gap-6 bg-white/[0.03] p-8 rounded-[2px] border border-white/5 relative overflow-hidden group">
+                                  <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                                  
+                                  <div className="grid grid-cols-2 gap-8">
+                                    <div className="col-span-2">
+                                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-2 block">Operational Product</label>
+                                      <p className="text-lg font-bold text-white tracking-tight">{c.productName}</p>
                                     </div>
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-1 block">Target Sectors</label>
-                                    <div className="flex flex-wrap gap-1.5 mt-1">
-                                      {c.industries.map(ind => (
-                                        <span key={ind} className="px-2 py-0.5 bg-primary/5 border border-primary/20 text-primary/80 rounded-sm text-[10px] font-medium">{ind}</span>
-                                      ))}
+                                    
+                                    <div>
+                                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-3 block">Regional Targets</label>
+                                      <div className="flex flex-wrap gap-2">
+                                        {c.locations.map(loc => (
+                                          <span key={loc} className="px-3 py-1 bg-white/5 border border-white/10 rounded-[2px] text-[10px] font-black text-zinc-400 uppercase tracking-wider">{loc}</span>
+                                        ))}
+                                      </div>
                                     </div>
-                                  </div>
-                                </div>
-                              </section>
-
-                              {/* AI Explanation Section */}
-                              <section className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                  <Sparkles className="h-4 w-4 text-primary opacity-60" />
-                                  <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Gemma Insight</h4>
-                                </div>
-                                <div className="relative group">
-                                  <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-transparent blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                  <div className="relative bg-background border border-border/60 p-6 rounded-sm">
-                                    <div className="flex items-start gap-4">
-                                      <div className="min-w-0 flex-1">
-                                        {loadingBrief === c.id ? (
-                                          <div className="space-y-2 py-2">
-                                            <div className="h-3 w-full bg-muted/60 animate-pulse rounded-full" />
-                                            <div className="h-3 w-[90%] bg-muted/60 animate-pulse rounded-full" />
-                                            <div className="h-3 w-[40%] bg-muted/60 animate-pulse rounded-full" />
-                                          </div>
-                                        ) : (
-                                          <p className="text-sm leading-relaxed text-muted-foreground/90 italic">
-                                            {briefs[c.id] || "No intelligence briefing generated yet."}
-                                          </p>
-                                        )}
+                                    
+                                    <div>
+                                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-3 block">Target Sectors</label>
+                                      <div className="flex flex-wrap gap-2">
+                                        {c.industries.map(ind => (
+                                          <span key={ind} className="px-3 py-1 bg-primary/5 border border-primary/20 text-primary rounded-[2px] text-[10px] font-black uppercase tracking-wider shadow-[0_0_10px_rgba(16,185,129,0.1)]">{ind}</span>
+                                        ))}
                                       </div>
                                     </div>
                                   </div>
                                 </div>
-                              </section>
+                              </motion.section>
+
+                              {/* AI Explanation Section */}
+                              <motion.section 
+                                variants={{
+                                  hidden: { x: 20, opacity: 0 },
+                                  visible: { x: 0, opacity: 1 }
+                                }}
+                                className="space-y-6"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center">
+                                    <Sparkles className="h-4 w-4 text-primary/60" />
+                                  </div>
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Gemma Synthesis</h4>
+                                </div>
+                                
+                                <div className="relative group">
+                                  <div className="absolute -inset-[1px] bg-gradient-to-r from-primary/30 via-emerald-500/30 to-primary/30 rounded-[2px] blur-sm opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
+                                  <div className="relative bg-[#080808] border border-white/10 p-8 rounded-[2px] min-h-[160px] flex items-center shadow-2xl">
+                                    {loadingBrief === c.id ? (
+                                      <div className="w-full space-y-4">
+                                        <div className="h-2 w-full bg-white/5 animate-pulse rounded-full" />
+                                        <div className="h-2 w-[90%] bg-white/5 animate-pulse rounded-full" />
+                                        <div className="h-2 w-[40%] bg-white/5 animate-pulse rounded-full" />
+                                      </div>
+                                    ) : (
+                                      <p className="text-base leading-relaxed text-zinc-300 font-medium italic selection:bg-primary/30">
+                                        "{briefs[c.id] || "Analyzing mission parameters for strategic synthesis..."}"
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </motion.section>
 
                               {/* Strategic Pain Points */}
-                              <section className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                  <Target className="h-4 w-4 text-primary opacity-60" />
-                                  <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Pain Point Matrix</h4>
+                              <motion.section 
+                                variants={{
+                                  hidden: { x: 20, opacity: 0 },
+                                  visible: { x: 0, opacity: 1 }
+                                }}
+                                className="space-y-6"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center">
+                                    <Target className="h-4 w-4 text-primary/60" />
+                                  </div>
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Pain Point Matrix</h4>
                                 </div>
-                                <div className="p-5 bg-muted/20 border border-dashed border-border/60 rounded-sm">
-                                  <p className="text-sm text-muted-foreground leading-relaxed">{c.targetPainPoints}</p>
+                                <div className="p-8 bg-white/[0.02] border border-dashed border-white/10 rounded-[2px] relative group">
+                                  <div className="absolute top-4 right-4 text-[8px] font-black text-zinc-700 uppercase tracking-widest group-hover:text-primary/40 transition-colors">Strategic Filter</div>
+                                  <p className="text-sm text-zinc-400 leading-relaxed font-medium">{c.targetPainPoints}</p>
                                 </div>
-                              </section>
-                            </div>
+                              </motion.section>
+                            </motion.div>
                           </ScrollArea>
 
                           {/* Panel Footer */}
-                          <div className="p-8 border-t border-border/40 bg-muted/10">
+                          <div className="p-10 border-t border-white/5 bg-white/[0.01] backdrop-blur-md">
                             <Button 
-                              variant="ghost" 
-                              className="w-full text-xs font-medium uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
-                              onClick={() => { /* Potential: Copy Brief to Clipboard */ }}
+                              variant="secondary" 
+                              className="w-full h-14 bg-white/5 hover:bg-primary hover:text-white border-white/5 transition-all duration-500 flex items-center justify-center gap-3 group"
+                              onClick={() => {
+                                if (briefs[c.id]) {
+                                  navigator.clipboard.writeText(briefs[c.id]);
+                                  toast.success("Intelligence Copied", { description: "Mission brief saved to clipboard." });
+                                }
+                              }}
                             >
-                              Copy Intelligence Brief
+                              <ClipboardCheck className="h-4 w-4 opacity-40 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                              <span className="text-[11px] font-black uppercase tracking-[0.2em]">Copy Intelligence Brief</span>
                             </Button>
                           </div>
                         </div>
