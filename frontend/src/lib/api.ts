@@ -14,12 +14,8 @@ const resolveApiBaseUrl = () => {
     return envUrl.replace(/\/$/, "");
   }
   
-  // Dynamic resolver: hit port 3005 on whatever host we are currently on
-  if (typeof window !== 'undefined') {
-    const { hostname, protocol } = window.location;
-    return `${protocol}//${hostname}:3005`;
-  }
-
+  // Default to relative paths (empty string) for serverless compatibility
+  // This ensures fetch("/api/...") hits the same origin/port as the frontend
   return "";
 };
 

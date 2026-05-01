@@ -28,9 +28,23 @@ export async function getAuthUser(req: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  
+  // Try cookie-based auth first
+  const { data: { user: cookieUser } } = await supabase.auth.getUser();
+  user = cookieUser;
+
+  // Fallback to token query param or Authorization header
+  if (!user) {
+    const authHeader = req.headers.get('Authorization');
+    const tokenParam = req.nextUrl.searchParams.get('token');
+    const token = tokenParam || authHeader?.replace('Bearer ', '');
+    
+    if (token) {
+      const { data: { user: tokenUser } } = await supabase.auth.getUser(token);
+      user = tokenUser;
+    }
+  }
 
   return user;
 }
