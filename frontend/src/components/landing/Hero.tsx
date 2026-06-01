@@ -120,13 +120,13 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24">
-            <Link href="/signup" className="btn-pill-white relative group h-14 px-10 cursor-pointer shadow-md">
+            <Link href="/signup" className="h-14 px-10 rounded-full bg-primary hover:bg-primary-hover text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all relative group">
                <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
-               <span className="relative z-10 flex items-center gap-2 text-white">
+               <span className="relative z-10 flex items-center gap-2">
                  Start Free Discovery <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                </span>
             </Link>
-            <a href="#demo-prospector" className="btn-pill-glass h-14 px-10 flex items-center gap-2 group border border-card-border hover:bg-card-border/50 text-foreground cursor-pointer">
+            <a href="#demo-prospector" className="h-14 px-10 rounded-full border border-card-border bg-foreground/[0.03] hover:bg-foreground/[0.06] text-foreground font-semibold text-xs flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all group cursor-pointer shadow-sm">
               <Play className="h-3 w-3 fill-foreground group-hover:scale-110 transition-transform" /> Watch Demo Sim
             </a>
           </div>

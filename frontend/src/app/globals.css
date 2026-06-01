@@ -48,6 +48,10 @@ html.dark {
   --card-hover-border: #3f3f46;
 }
 
+footer {
+  --foreground: #ffffff !important;
+}
+
 @layer base {
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/30 overflow-x-hidden;

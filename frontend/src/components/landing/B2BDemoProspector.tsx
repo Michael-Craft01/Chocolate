@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Brain, Shield, Mail, CheckCircle2, Play, Users, MapPin, Sparkles, Phone, ArrowRight, RotateCcw } from "lucide-react";
+import { Search, Brain, Shield, Mail, CheckCircle2, Play, Users, MapPin, Sparkles, Phone, ArrowRight, RotateCcw, Building2, ShoppingCart, Laptop } from "lucide-react";
 
 interface NicheData {
   industry: string;
-  emoji: string;
+  icon: any;
   companyName: string;
   location: string;
   details: string;
@@ -20,7 +20,7 @@ interface NicheData {
 const NICHES: NicheData[] = [
   {
     industry: "Industrial & Wholesale",
-    emoji: "🏭",
+    icon: Building2,
     companyName: "Atlas Ironworks LLC",
     location: "Detroit, MI",
     details: "12 local branches. Missing local Google Maps presence. Non-mobile procurement funnel.",
@@ -32,7 +32,7 @@ const NICHES: NicheData[] = [
   },
   {
     industry: "Gourmet & Retail Grocery",
-    emoji: "🛒",
+    icon: ShoppingCart,
     companyName: "Wildwood Organic Roasters",
     location: "Portland, OR",
     details: "Boutique coffee roastery. Strong social presence, but website uses broken Shopify forms. No automated wholesale channel.",
@@ -44,7 +44,7 @@ const NICHES: NicheData[] = [
   },
   {
     industry: "B2B SaaS & Tech Startups",
-    emoji: "💻",
+    icon: Laptop,
     companyName: "LogiFlow Systems",
     location: "San Francisco, CA",
     details: "Enterprise logistics middleware. Fast product growth, but outbound pipeline is entirely manual with high email bounce rates.",
@@ -151,7 +151,9 @@ export default function B2BDemoProspector() {
                   : "bg-background border-card-border hover:border-primary/30 text-foreground"
               }`}
             >
-              <span className="text-2xl">{niche.emoji}</span>
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 text-primary">
+                <niche.icon className="h-5 w-5" />
+              </div>
               <div>
                 <p className="text-xs font-black uppercase tracking-wider text-primary">Target Vertical</p>
                 <p className="text-sm font-bold text-foreground truncate">{niche.industry}</p>
@@ -330,10 +332,10 @@ export default function B2BDemoProspector() {
                       <p className="text-xs font-medium text-foreground/80 leading-relaxed bg-card p-3 rounded-xl border border-card-border">{activeNiche.details}</p>
                     </div>
 
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Target Industry Focus</p>
-                      <p className="text-sm font-bold text-foreground">{activeNiche.emoji} {activeNiche.industry}</p>
-                    </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <activeNiche.icon className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-bold text-foreground">{activeNiche.industry}</span>
+                      </div>
                   </div>
                 </div>
 

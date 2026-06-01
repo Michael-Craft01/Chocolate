@@ -46,7 +46,7 @@ export default function Navbar() {
             Features
             <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary group-hover/link:w-full transition-all duration-300" />
           </Link>
-          <Link href="/#demo-prospector" className="hover:text-primary transition-all relative group/link">
+          <Link href="/how-it-works" className="hover:text-primary transition-all relative group/link">
             How it works
             <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary group-hover/link:w-full transition-all duration-300" />
           </Link>

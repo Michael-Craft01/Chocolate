@@ -178,7 +178,7 @@ export function Sidebar() {
                           className="h-full w-full object-contain"
                         />
                       </div>
-                      <span className="text-foreground uppercase tracking-tight font-black">HyprLead</span>
+                      <span className="text-foreground tracking-tight font-black">HyprLead</span>
                     </Link>
                     <button onClick={() => setMobileOpen(false)} className="p-2 text-foreground">
                       <X className="h-6 w-6" />
@@ -195,7 +195,7 @@ export function Sidebar() {
                           href={item.href}
                           onClick={() => setMobileOpen(false)}
                           className={cn(
-                            "flex items-center gap-4 px-6 py-3.5 rounded-full text-[12px] font-bold uppercase tracking-widest transition-all",
+                            "flex items-center gap-4 px-6 py-3 rounded-full text-sm font-semibold transition-all",
                             isActive 
                               ? "bg-primary text-white shadow-md shadow-primary/10 border border-primary/20" 
                               : "text-foreground hover:bg-card hover:border-card-border border border-transparent"
@@ -211,7 +211,7 @@ export function Sidebar() {
                   <div className="p-6 border-t border-card-border">
                     <button 
                       onClick={handleSignOut}
-                      className="flex w-full items-center gap-4 px-6 py-4 text-foreground text-[14px] font-bold uppercase tracking-widest hover:bg-card rounded-full border border-transparent hover:border-card-border transition-colors"
+                      className="flex w-full items-center gap-4 px-6 py-3 text-foreground text-sm font-semibold hover:bg-card rounded-full border border-transparent hover:border-card-border transition-colors"
                     >
                       <LogOut className="h-5 w-5" />
                       Sign Out
@@ -258,7 +258,7 @@ export function Sidebar() {
               className="h-full w-full object-contain"
             />
           </div>
-          {!isCollapsed && <span className="text-foreground tracking-tight font-black uppercase text-sm">HyprLead</span>}
+          {!isCollapsed && <span className="text-foreground tracking-tight font-black text-sm">HyprLead</span>}
         </Link>
       </div>
 
@@ -276,7 +276,7 @@ export function Sidebar() {
                 "group flex items-center transition-all duration-300",
                 isCollapsed 
                   ? "justify-center h-10 w-10 mx-auto px-0 rounded-full" 
-                  : "gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.15em] rounded-full",
+                  : "gap-3 px-4 py-2 text-xs font-semibold rounded-full",
                 isActive 
                   ? "bg-primary text-white shadow-md shadow-primary/10 border border-primary/20"
                   : "text-foreground hover:bg-card hover:border-card-border border border-transparent"
@@ -294,8 +294,8 @@ export function Sidebar() {
           <div className="rounded-card bg-card border border-card-border p-5 space-y-4 relative overflow-hidden shadow-sm">
             <div className="flex items-center justify-between relative">
               <div className="space-y-0.5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-foreground opacity-60">Subscription</p>
-                <p className="text-xs font-black tracking-tight text-foreground">{isFree ? "Free Access" : `${stats?.tier} Plan`}</p>
+                <p className="text-xs font-semibold text-foreground opacity-60">Subscription</p>
+                <p className="text-xs font-bold tracking-tight text-foreground">{isFree ? "Free Access" : `${stats?.tier} Plan`}</p>
               </div>
               <div className={cn(
                 "h-2 w-2 rounded-full",
@@ -304,9 +304,9 @@ export function Sidebar() {
             </div>
             
             <div className="space-y-2 relative">
-              <div className="flex justify-between text-[10px] font-bold text-foreground opacity-60 uppercase tracking-widest">
+              <div className="flex justify-between text-xs font-semibold text-foreground opacity-60">
                 <span>Usage</span>
-                <span className="text-foreground font-black">{leadUsage} / {dailyLimit}</span>
+                <span className="text-foreground font-bold">{leadUsage} / {dailyLimit}</span>
               </div>
               <div className="h-1.5 w-full bg-border-muted rounded-full overflow-hidden">
                 <motion.div 
@@ -319,7 +319,7 @@ export function Sidebar() {
             </div>
 
             {isFree && (
-              <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all relative group shadow-md shadow-primary/10">
+              <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-full bg-primary text-white text-xs font-bold hover:brightness-110 transition-all relative group shadow-md shadow-primary/10">
                 Upgrade Now
                 <ArrowRight className="h-3 w-3 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -337,10 +337,10 @@ export function Sidebar() {
         <button 
           onClick={toggleTheme}
           className={cn(
-            "flex items-center rounded-full transition-all hover:bg-card border border-transparent hover:border-card-border uppercase tracking-[0.15em] group text-foreground w-full",
+            "flex items-center rounded-full transition-all hover:bg-card border border-transparent hover:border-card-border group text-foreground w-full",
             isCollapsed 
               ? "justify-center h-10 w-10 mx-auto mt-2" 
-              : "gap-3 px-4 py-2.5 mt-2 text-[10px] font-black"
+              : "gap-3 px-4 py-2 mt-2 text-xs font-semibold"
           )}
         >
           {theme === "dark" ? (
@@ -354,10 +354,10 @@ export function Sidebar() {
         <button 
           onClick={handleSignOut}
           className={cn(
-            "flex items-center rounded-full transition-all hover:bg-card border border-transparent hover:border-card-border uppercase tracking-[0.2em] group text-foreground w-full", 
+            "flex items-center rounded-full transition-all hover:bg-card border border-transparent hover:border-card-border group text-foreground w-full", 
             isCollapsed 
               ? "justify-center h-10 w-10 mx-auto mt-2" 
-              : "gap-3 px-4 py-2.5 mt-1 text-[10px] font-black"
+              : "gap-3 px-4 py-2 mt-1 text-xs font-semibold"
           )}
         >
           <LogOut className="h-4 w-4 group-hover:translate-x-0.5 transition-transform shrink-0" />
