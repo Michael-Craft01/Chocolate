@@ -50,7 +50,7 @@ export class MessageGenerator {
 
     async generate(campaign: any, businessName: string, industry: string, painPoint: string, recommendedSolution?: string): Promise<string> {
         try {
-            logger.info(`[GEMMA-4] Generating personalized outreach for ${businessName}`);
+            logger.info(`[HyprLead AI] Generating personalized outreach for ${businessName}`);
             return await aiService.generatePersonalizedMessage(campaign, businessName, industry, painPoint);
         } catch (error) {
             logger.warn({ error, businessName }, 'AI message generation failed, falling back to template');

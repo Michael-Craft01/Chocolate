@@ -153,6 +153,7 @@ export default function CampaignsPage() {
       }
     });
   };
+
   const filteredCampaigns = campaigns.filter((campaign) => {
     const query = searchQuery.toLowerCase().trim();
     const searchMatch = !query || campaign.name.toLowerCase().includes(query);
@@ -164,15 +165,15 @@ export default function CampaignsPage() {
     <div className="w-full space-y-10 pb-32 font-sans selection:bg-primary/20">
       {/* Professional Header & Global Stats */}
       <div className="pt-10 space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/5 pb-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-card-border pb-10">
           <div className="space-y-3">
-            <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
+            <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-foreground opacity-60">
               <ShieldCheck className="h-4 w-4 text-emerald-500" /> Secure Data Discovery
             </div>
-            <h1 className="text-4xl font-black tracking-tight text-white">
+            <h1 className="text-4xl font-black tracking-tight text-foreground">
               Search <span className="text-primary">Hubs</span>
             </h1>
-            <p className="text-[13px] text-zinc-500 font-medium max-w-2xl leading-relaxed">
+            <p className="text-[13px] text-foreground opacity-60 font-medium max-w-2xl leading-relaxed">
               Manage your autonomous lead generation campaigns. Monitor discovery performance and targeting accuracy in real-time.
             </p>
           </div>
@@ -180,13 +181,13 @@ export default function CampaignsPage() {
           <div className="flex gap-4">
             <button
               onClick={() => fetchCampaigns(true)}
-              className="h-14 w-14 rounded-[2px] bg-white/[0.03] border border-white/5 flex items-center justify-center hover:border-primary/20 hover:text-primary text-zinc-500 transition-all"
+              className="h-14 w-14 rounded-full bg-card border border-card-border flex items-center justify-center hover:border-primary/20 hover:text-primary text-foreground transition-all"
             >
               <RefreshCw className={`h-5 w-5 ${refreshing ? "animate-spin text-primary" : ""}`} />
             </button>
             <Link 
               href="/campaigns/new" 
-              className="h-14 px-8 rounded-[2px] bg-primary text-white font-bold text-[14px] hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center gap-3 shadow-lg shadow-primary/10"
+              className="h-14 px-8 rounded-full bg-primary text-white font-bold text-[14px] hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-3 shadow-lg shadow-primary/10"
             >
               <Plus className="h-4 w-4" /> 
               New Campaign
@@ -202,15 +203,15 @@ export default function CampaignsPage() {
             { label: 'Average Accuracy', value: '98.4%', icon: Sparkles, detail: 'AI Verified' },
             { label: 'System Status', value: 'Optimal', icon: Compass, detail: 'Global Edge' },
           ].map((stat, i) => (
-            <div key={i} className="bg-white/[0.02] border border-white/5 rounded-[2px] p-6 hover:bg-white/[0.04] transition-all">
+            <div key={i} className="bento-card p-6">
               <div className="flex justify-between items-start mb-4">
-                <div className="p-2 rounded-[2px] bg-white/5 border border-white/10 text-zinc-500">
+                <div className="p-2 rounded-full bg-card border border-card-border text-foreground opacity-60">
                   <stat.icon className="h-4 w-4" />
                 </div>
-                <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">{stat.detail}</span>
+                <span className="text-[10px] font-bold text-foreground opacity-40 uppercase tracking-wider">{stat.detail}</span>
               </div>
-              <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-1">{stat.label}</p>
-              <div className="text-3xl font-bold tracking-tight text-white">
+              <p className="text-[11px] font-bold text-foreground opacity-60 uppercase tracking-widest mb-1">{stat.label}</p>
+              <div className="text-3xl font-bold tracking-tight text-foreground">
                 <AnimatedNumber value={typeof stat.value === 'string' ? parseFloat(stat.value.replace(/[^\d.]/g, '')) || 0 : stat.value} />
                 {typeof stat.value === 'string' && stat.value.includes('%') && '%'}
               </div>
@@ -223,26 +224,26 @@ export default function CampaignsPage() {
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="relative flex-1 group">
           <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-            <Compass className="h-4 w-4 text-zinc-600" />
+            <Compass className="h-4 w-4 text-foreground opacity-40" />
           </div>
           <input 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search campaigns..."
-            className="w-full h-14 bg-white/[0.02] border border-white/5 rounded-[2px] pl-14 pr-6 text-[14px] focus:border-primary/40 focus:bg-white/[0.04] transition-all outline-none text-white placeholder:text-zinc-700"
+            className="w-full h-14 bg-card border border-card-border rounded-full pl-14 pr-6 text-[14px] transition-all outline-none text-foreground placeholder:text-foreground/40"
           />
         </div>
         
-        <div className="flex gap-2 p-1 bg-white/[0.02] border border-white/5 rounded-[2px]">
+        <div className="flex gap-2 p-1 bg-card border border-card-border rounded-full">
           {["ALL", "ACTIVE", "PAUSED"].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status as any)}
               className={cn(
-                "h-12 px-6 rounded-[2px] text-[11px] font-bold uppercase tracking-wider transition-all",
+                "h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all",
                 statusFilter === status 
-                  ? "bg-white/10 text-white shadow-sm" 
-                  : "text-zinc-600 hover:text-zinc-400"
+                  ? "bg-primary text-white shadow-md shadow-primary/10 border border-primary/20" 
+                  : "text-foreground hover:bg-card/50"
               )}
             >
               {status}
@@ -266,29 +267,29 @@ export default function CampaignsPage() {
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.3, delay: idx * 0.05 }}
               key={c.id} 
-              className="bg-white/[0.01] border border-white/5 rounded-[2px] overflow-hidden hover:border-white/10 transition-all group"
+              className="bento-card overflow-hidden group"
             >
               <div className="p-8 lg:p-10 space-y-10">
                 {/* Header Row */}
                 <div className="flex flex-col lg:flex-row justify-between items-start gap-8">
                   <div className="flex items-center gap-6">
-                    <div className="h-16 w-16 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                    <div className="h-16 w-16 rounded-full bg-card border border-card-border flex items-center justify-center shrink-0">
                       <Briefcase className={cn(
                         "h-6 w-6 transition-colors",
-                        c.status === 'ACTIVE' ? "text-primary" : "text-zinc-700"
+                        c.status === 'ACTIVE' ? "text-primary" : "text-foreground opacity-40"
                       )} />
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-3">
-                        <h3 className="text-xl font-bold text-white tracking-tight">{c.name}</h3>
+                        <h3 className="text-xl font-bold text-foreground tracking-tight">{c.name}</h3>
                         <div className={cn(
-                          "px-2.5 py-0.5 rounded-[2px] text-[9px] font-black uppercase tracking-widest border",
-                          c.status === 'ACTIVE' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-zinc-800 border-white/5 text-zinc-500"
+                          "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                          c.status === 'ACTIVE' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-card border-card-border text-foreground"
                         )}>
                           {c.status}
                         </div>
                       </div>
-                      <p className="text-[11px] font-medium text-zinc-600 uppercase tracking-widest">Initialized {new Date(c.createdAt).toLocaleDateString()}</p>
+                      <p className="text-[11px] font-medium text-foreground opacity-60 uppercase tracking-widest">Initialized {new Date(c.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
 
@@ -298,10 +299,10 @@ export default function CampaignsPage() {
                       onClick={() => toggleStatus(c.id, c.status)}
                       disabled={busyCampaignId === c.id}
                       className={cn(
-                        "flex-1 lg:flex-none h-12 px-6 rounded-[2px] text-[11px] font-bold uppercase tracking-wider transition-all border flex items-center justify-center gap-2",
+                        "flex-1 lg:flex-none h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all border flex items-center justify-center gap-2",
                         c.status === 'ACTIVE' 
-                          ? "bg-white/5 border-white/10 text-zinc-400 hover:text-white" 
-                          : "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+                          ? "bg-card border-card-border text-foreground hover:bg-card/80" 
+                          : "bg-primary text-white border-primary hover:brightness-110 shadow-md shadow-primary/10"
                       )}
                     >
                       {busyCampaignId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (c.status === 'ACTIVE' ? <><Pause className="h-3.5 w-3.5" /> Pause</> : <><Play className="h-3.5 w-3.5" /> Resume</>)}
@@ -309,7 +310,7 @@ export default function CampaignsPage() {
                     <button 
                       onClick={() => handleDelete(c.id, c.name)}
                       disabled={busyCampaignId === c.id}
-                      className="h-12 w-12 rounded-[2px] bg-white/5 border border-white/10 text-zinc-500 hover:text-red-500 hover:border-red-500/30 transition-all flex items-center justify-center"
+                      className="h-12 w-12 rounded-full bg-card border border-card-border text-foreground hover:text-red-500 hover:border-red-500/30 transition-all flex items-center justify-center"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -318,45 +319,45 @@ export default function CampaignsPage() {
 
                 {/* Info Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-white/5 p-6 rounded-[2px] space-y-4">
+                  <div className="bg-card/50 border border-card-border p-6 rounded-card space-y-4 shadow-sm">
                     <div className="flex items-center gap-3">
                       <Radar className="h-4 w-4 text-primary/60" />
-                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Industry Targets</span>
+                      <span className="text-[10px] font-bold text-foreground opacity-60 uppercase tracking-widest">Industry Targets</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {c.industries.map((ind, i) => (
-                        <span key={i} className="px-2 py-1 rounded-[2px] bg-white/5 text-[10px] font-medium text-zinc-400">{ind}</span>
+                        <span key={i} className="px-3 py-1 rounded-full bg-card border border-card-border text-[10px] font-medium text-foreground">{ind}</span>
                       ))}
-                      {c.industries.length === 0 && <span className="text-[10px] text-zinc-600">All Industries</span>}
+                      {c.industries.length === 0 && <span className="text-[10px] text-foreground opacity-40">All Industries</span>}
                     </div>
                   </div>
 
-                  <div className="bg-white/5 p-6 rounded-[2px] space-y-4">
+                  <div className="bg-card/50 border border-card-border p-6 rounded-card space-y-4 shadow-sm">
                     <div className="flex items-center gap-3">
                       <MapPin className="h-4 w-4 text-primary/60" />
-                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Target Locations</span>
+                      <span className="text-[10px] font-bold text-foreground opacity-60 uppercase tracking-widest">Target Locations</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {c.locations.map((loc, i) => (
-                        <span key={i} className="px-2 py-1 rounded-[2px] bg-white/5 text-[10px] font-medium text-zinc-400">{loc}</span>
+                        <span key={i} className="px-3 py-1 rounded-full bg-card border border-card-border text-[10px] font-medium text-foreground">{loc}</span>
                       ))}
-                      {c.locations.length === 0 && <span className="text-[10px] text-zinc-600">Global Coverage</span>}
+                      {c.locations.length === 0 && <span className="text-[10px] text-foreground opacity-40">Global Coverage</span>}
                     </div>
                   </div>
 
-                  <div className="bg-white/5 p-6 rounded-[2px] space-y-4">
+                  <div className="bg-card/50 border border-card-border p-6 rounded-card space-y-4 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Activity className="h-4 w-4 text-primary/60" />
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Campaign Performance</span>
+                        <span className="text-[10px] font-bold text-foreground opacity-60 uppercase tracking-widest">Campaign Performance</span>
                       </div>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest">Accuracy Score</span>
-                        <span className="text-[10px] font-black text-white">94%</span>
+                        <span className="text-[10px] font-medium text-foreground opacity-60 uppercase tracking-widest">Accuracy Score</span>
+                        <span className="text-[10px] font-black text-foreground">94%</span>
                       </div>
-                      <div className="h-1.5 w-full bg-white/5 rounded-[2px] overflow-hidden">
+                      <div className="h-1.5 w-full bg-border-muted rounded-full overflow-hidden">
                         <motion.div initial={{ width: 0 }} animate={{ width: '94%' }} className="h-full bg-primary" />
                       </div>
                     </div>
@@ -364,26 +365,25 @@ export default function CampaignsPage() {
                 </div>
 
                 {/* Footer Metrics & Trigger */}
-                <div className="flex flex-col md:flex-row items-center gap-8 pt-8 border-t border-white/5">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-8 border-t border-card-border">
                   <div className="flex-1 flex gap-10">
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Total Leads</p>
-                      <p className="text-3xl font-bold text-white">{c._count?.leads || 0}</p>
+                      <p className="text-[10px] font-bold text-foreground opacity-40 uppercase tracking-widest">Total Leads</p>
+                      <p className="text-3xl font-bold text-foreground">{c._count?.leads || 0}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Discovery Rate</p>
-                      <p className="text-3xl font-bold text-white">12.4<span className="text-sm text-zinc-600">/hr</span></p>
+                      <p className="text-[10px] font-bold text-foreground opacity-40 uppercase tracking-widest">Discovery Rate</p>
+                      <p className="text-3xl font-bold text-foreground">12.4<span className="text-sm text-foreground opacity-40">/hr</span></p>
                     </div>
                   </div>
 
-
                   {/* Actions Area */}
-                  <div className="flex items-center gap-3 pt-6 border-t border-border/40">
+                  <div className="flex items-center gap-3">
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={() => router.push(`/campaigns/${c.id}/edit`)}
-                      className="flex-1 h-9 bg-background/50 hover:bg-background border-border/50 text-xs font-medium tracking-wide transition-all duration-300"
+                      className="h-10 px-5 bg-card hover:bg-card border border-card-border rounded-full text-xs font-bold uppercase tracking-widest transition-all text-foreground"
                     >
                       <Settings className="h-3.5 w-3.5 mr-2 opacity-60" />
                       Edit Hub
@@ -395,29 +395,28 @@ export default function CampaignsPage() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => fetchBrief(c.id)}
-                          className="flex-1 h-9 bg-background/50 hover:bg-background border-border/50 text-xs font-medium tracking-wide transition-all duration-300"
+                          className="h-10 px-5 bg-card hover:bg-card border border-card-border rounded-full text-xs font-bold uppercase tracking-widest transition-all text-foreground"
                         >
                           <Info className="h-3.5 w-3.5 mr-2 opacity-60" />
                           Intelligence
                         </Button>
                       </SheetTrigger>
-                      <SheetContent className="w-full sm:max-w-lg border-l border-white/5 bg-[#050505] p-0 overflow-hidden shadow-2xl shadow-primary/10">
+                      <SheetContent className="w-full sm:max-w-lg border-l border-card-border bg-sidebar p-0 overflow-hidden shadow-2xl shadow-primary/10">
                         <div className="h-full flex flex-col font-sans relative">
                           {/* Atmospheric Background */}
                           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.05),transparent_50%)] pointer-events-none" />
-                          <div className="absolute inset-0 bg-neural-aura opacity-30 pointer-events-none" />
 
                           {/* Panel Header */}
-                          <div className="relative p-10 border-b border-white/5 bg-white/[0.02] backdrop-blur-md">
+                          <div className="relative p-10 border-b border-card-border bg-card/40 backdrop-blur-md">
                             <div className="flex items-center gap-4 mb-4">
-                              <div className="h-14 w-14 rounded-[2px] bg-primary/10 border border-primary/20 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                              <div className="h-14 w-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
                                 <Search className="h-6 w-6 text-primary animate-pulse" />
                               </div>
                               <div>
-                                <h3 className="text-2xl font-black tracking-tight text-white">{c.name}</h3>
+                                <h3 className="text-2xl font-black tracking-tight text-foreground">{c.name}</h3>
                                 <div className="flex items-center gap-2 mt-1">
                                   <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
-                                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.3em]">Neural Hub Intelligence</p>
+                                  <p className="text-[10px] text-foreground opacity-60 font-bold uppercase tracking-[0.3em]">Neural Hub Intelligence</p>
                                 </div>
                               </div>
                             </div>
@@ -445,35 +444,35 @@ export default function CampaignsPage() {
                                 className="space-y-6"
                               >
                                 <div className="flex items-center gap-3">
-                                  <div className="h-8 w-8 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center">
+                                  <div className="h-8 w-8 rounded-full bg-card border border-card-border flex items-center justify-center">
                                     <Activity className="h-4 w-4 text-primary/60" />
                                   </div>
-                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Mission DNA</h4>
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground opacity-60">Mission DNA</h4>
                                 </div>
                                 
-                                <div className="grid gap-6 bg-white/[0.03] p-8 rounded-[2px] border border-white/5 relative overflow-hidden group">
+                                <div className="grid gap-6 bg-card p-8 rounded-card border border-card-border relative overflow-hidden group">
                                   <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
                                   
                                   <div className="grid grid-cols-2 gap-8">
                                     <div className="col-span-2">
-                                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-2 block">Operational Product</label>
-                                      <p className="text-lg font-bold text-white tracking-tight">{c.productName}</p>
+                                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground opacity-40 mb-2 block">Operational Product</label>
+                                      <p className="text-lg font-bold text-foreground tracking-tight">{c.productName}</p>
                                     </div>
                                     
                                     <div>
-                                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-3 block">Regional Targets</label>
+                                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground opacity-40 mb-3 block">Regional Targets</label>
                                       <div className="flex flex-wrap gap-2">
                                         {c.locations.map(loc => (
-                                          <span key={loc} className="px-3 py-1 bg-white/5 border border-white/10 rounded-[2px] text-[10px] font-black text-zinc-400 uppercase tracking-wider">{loc}</span>
+                                          <span key={loc} className="px-3 py-1 bg-card border border-card-border rounded-full text-[10px] font-black text-foreground uppercase tracking-wider">{loc}</span>
                                         ))}
                                       </div>
                                     </div>
                                     
                                     <div>
-                                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-3 block">Target Sectors</label>
+                                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground opacity-40 mb-3 block">Target Sectors</label>
                                       <div className="flex flex-wrap gap-2">
                                         {c.industries.map(ind => (
-                                          <span key={ind} className="px-3 py-1 bg-primary/5 border border-primary/20 text-primary rounded-[2px] text-[10px] font-black uppercase tracking-wider shadow-[0_0_10px_rgba(16,185,129,0.1)]">{ind}</span>
+                                          <span key={ind} className="px-3 py-1 bg-primary/5 border border-primary/20 text-primary rounded-full text-[10px] font-black uppercase tracking-wider">{ind}</span>
                                         ))}
                                       </div>
                                     </div>
@@ -490,23 +489,23 @@ export default function CampaignsPage() {
                                 className="space-y-6"
                               >
                                 <div className="flex items-center gap-3">
-                                  <div className="h-8 w-8 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center">
+                                  <div className="h-8 w-8 rounded-full bg-card border border-card-border flex items-center justify-center">
                                     <Sparkles className="h-4 w-4 text-primary/60" />
                                   </div>
-                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Gemma Synthesis</h4>
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground opacity-60">AI Synthesis</h4>
                                 </div>
                                 
                                 <div className="relative group">
-                                  <div className="absolute -inset-[1px] bg-gradient-to-r from-primary/30 via-emerald-500/30 to-primary/30 rounded-[2px] blur-sm opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
-                                  <div className="relative bg-[#080808] border border-white/10 p-8 rounded-[2px] min-h-[160px] flex items-center shadow-2xl">
+                                  <div className="absolute -inset-[1px] bg-gradient-to-r from-primary/30 via-emerald-500/30 to-primary/30 rounded-card blur-sm opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
+                                  <div className="relative bg-card border border-card-border p-8 rounded-card min-h-[160px] flex items-center shadow-2xl">
                                     {loadingBrief === c.id ? (
                                       <div className="w-full space-y-4">
-                                        <div className="h-2 w-full bg-white/5 animate-pulse rounded-full" />
-                                        <div className="h-2 w-[90%] bg-white/5 animate-pulse rounded-full" />
-                                        <div className="h-2 w-[40%] bg-white/5 animate-pulse rounded-full" />
+                                        <div className="h-2 w-full bg-border-muted animate-pulse rounded-full" />
+                                        <div className="h-2 w-[90%] bg-border-muted animate-pulse rounded-full" />
+                                        <div className="h-2 w-[40%] bg-border-muted animate-pulse rounded-full" />
                                       </div>
                                     ) : (
-                                      <p className="text-base leading-relaxed text-zinc-300 font-medium italic selection:bg-primary/30">
+                                      <p className="text-base leading-relaxed text-foreground font-medium italic selection:bg-primary/30">
                                         "{briefs[c.id] || "Analyzing mission parameters for strategic synthesis..."}"
                                       </p>
                                     )}
@@ -523,29 +522,29 @@ export default function CampaignsPage() {
                                 className="space-y-6"
                               >
                                 <div className="flex items-center gap-3">
-                                  <div className="h-8 w-8 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center">
+                                  <div className="h-8 w-8 rounded-full bg-card border border-card-border flex items-center justify-center">
                                     <Target className="h-4 w-4 text-primary/60" />
                                   </div>
-                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Pain Point Matrix</h4>
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground opacity-60">Pain Point Matrix</h4>
                                 </div>
-                                <div className="p-8 bg-white/[0.02] border border-dashed border-white/10 rounded-[2px] relative group">
-                                  <div className="absolute top-4 right-4 text-[8px] font-black text-zinc-700 uppercase tracking-widest group-hover:text-primary/40 transition-colors">Strategic Filter</div>
-                                  <p className="text-sm text-zinc-400 leading-relaxed font-medium">{c.targetPainPoints}</p>
+                                <div className="p-8 bg-card/50 border border-dashed border-card-border rounded-card relative group">
+                                  <div className="absolute top-4 right-4 text-[8px] font-black text-foreground opacity-40 uppercase tracking-widest group-hover:text-primary/40 transition-colors">Strategic Filter</div>
+                                  <p className="text-sm text-foreground leading-relaxed font-medium">{c.targetPainPoints}</p>
                                 </div>
                               </motion.section>
                             </motion.div>
                           </ScrollArea>
 
                           {/* Panel Footer */}
-                          <div className="p-10 border-t border-white/5 bg-white/[0.01] backdrop-blur-md">
+                          <div className="p-10 border-t border-card-border bg-card/20 backdrop-blur-md">
                             <Button 
                               variant="secondary" 
-                              className="w-full h-14 bg-white/5 hover:bg-primary hover:text-white border-white/5 transition-all duration-500 flex items-center justify-center gap-3 group"
+                              className="w-full h-14 bg-card hover:bg-primary hover:text-white border border-card-border rounded-full transition-all duration-500 flex items-center justify-center gap-3 group"
                               onClick={() => {
-                                if (briefs[c.id]) {
-                                  navigator.clipboard.writeText(briefs[c.id]);
-                                  toast.success("Intelligence Copied", { description: "Mission brief saved to clipboard." });
-                                }
+                                  if (briefs[c.id]) {
+                                    navigator.clipboard.writeText(briefs[c.id]);
+                                    toast.success("Intelligence Copied", { description: "Mission brief saved to clipboard." });
+                                  }
                               }}
                             >
                               <ClipboardCheck className="h-4 w-4 opacity-40 group-hover:opacity-100 group-hover:scale-110 transition-all" />
@@ -561,7 +560,7 @@ export default function CampaignsPage() {
                       size="sm" 
                       disabled={busyCampaignId === c.id}
                       onClick={() => handleDelete(c.id, c.name)}
-                      className="w-12 h-9 border-border/40 bg-muted/5 text-muted-foreground/40 hover:text-destructive hover:border-destructive/40 transition-all duration-300"
+                      className="w-12 h-9 border border-card-border bg-card text-foreground hover:text-destructive hover:border-destructive/40 transition-all duration-300 rounded-full flex items-center justify-center"
                     >
                       {busyCampaignId === c.id ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />

@@ -7,7 +7,7 @@ export class AIService {
     constructor() {
         this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
         this.model = this.genAI.getGenerativeModel({
-            model: process.env.GEMINI_MODEL || 'gemma-3-27b-it',
+            model: process.env.GEMINI_MODEL || 'gemini-1.5-pro',
             generationConfig: {
                 temperature: 0.9,
                 topP: 0.95,
@@ -18,7 +18,7 @@ export class AIService {
 
     async generateMissionBrief(campaign: any): Promise<string> {
         const prompt = `<start_of_turn>user
-SYSTEM: You are the HyprLead Mission Strategist (Gemma-4 Powered).
+SYSTEM: You are the HyprLead Mission Strategist (HyprLead AI Powered).
 GOAL: Explain the current operational mission of a Search Hub in professional, non-technical language.
 
 CAMPAIGN DNA:

@@ -2,21 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Briefcase, 
-  User, 
-  Target, 
   Check, 
   Save, 
-  Globe, 
   Zap, 
   MessageSquare, 
   Loader2,
   Building2,
   ShieldCheck,
-  Webhook,
   MapPin,
-  Home,
-  Compass
+  Target,
+  Sparkles
 } from "lucide-react";
 import { authJson } from "@/lib/api";
 import { motion } from "framer-motion";
@@ -97,51 +92,58 @@ export default function SettingsPage() {
     }
   };
 
-  const inputClass = "w-full bg-white/[0.02] border border-white/5 rounded-sm px-5 py-3 transition-all focus:outline-none focus:border-primary/50 text-xs font-bold text-white placeholder:text-zinc-700";
-  const labelClass = "text-label block mb-3 ml-1";
+  const inputClass = "w-full bg-foreground/[0.03] hover:bg-foreground/[0.05] focus:bg-background border border-foreground/10 focus:border-primary rounded-full px-6 py-3.5 transition-all text-sm font-medium text-foreground placeholder:text-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary";
+  const labelClass = "text-xs font-bold uppercase tracking-wider text-foreground/80 block mb-2 ml-1";
 
   if (loading) {
     return <BrandedLoader message="Syncing configuration..." />;
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10 pb-20 font-sans">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-10 border-b border-white/5 pb-10">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-label text-primary">
-            <ShieldCheck className="h-4 w-4 glow-primary" /> Secure Configuration
+    <div className="max-w-5xl mx-auto space-y-10 pb-20 font-sans px-4">
+      {/* Header Deck */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-10 border-b border-foreground/5 pb-10">
+        <div className="space-y-2 text-left">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary">
+            <ShieldCheck className="h-4 w-4" /> Secure Configuration
           </div>
-          <h1 className="text-display">Settings</h1>
-          <p className="text-label text-zinc-500">Configure your business identity and discovery preferences.</p>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">Settings</h1>
+          <p className="text-sm text-foreground/60">Configure your business identity and discovery preferences for HyprLead AI.</p>
         </div>
         <button 
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center justify-center gap-3 h-14 px-10 bg-primary text-white rounded-sm text-[11px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all glow-primary shadow-primary/20 disabled:opacity-50 min-w-[180px]"
+          className="flex items-center justify-center gap-3 h-12 px-8 bg-primary hover:bg-emerald-600 text-white rounded-full text-xs font-bold transition-all shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-50 min-w-[160px] shrink-0 cursor-pointer"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : success ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
           {saving ? "Saving..." : success ? "Changes Saved" : "Save Settings"}
         </button>
       </div>
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Section 1: Business Profile */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-primary/5 border border-primary/10 flex items-center justify-center text-primary glow-primary">
-              <Home size={20} />
+      {/* Main Settings Form */}
+      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        {/* Section 1: Business Profile Bento Card */}
+        <div className="bento-card space-y-6">
+          <div className="flex items-center gap-4 border-b border-foreground/5 pb-6">
+            <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Building2 size={22} />
             </div>
-            <h2 className="text-sm font-black uppercase tracking-widest text-white">Business Profile</h2>
+            <div className="text-left">
+              <h2 className="text-lg font-bold text-foreground">Business Identity</h2>
+              <p className="text-xs text-foreground/60">Configure your company persona and outreach credentials</p>
+            </div>
           </div>
           
-          <div className="glass-card p-8 rounded-sm border border-white/5 space-y-6">
-            <div className="space-y-2">
+          <div className="space-y-5">
+            <div className="space-y-2 text-left">
               <div className="flex items-center justify-between">
                 <label className={labelClass}>Company Name</label>
                 <AIAssistButton 
                   field="Company Name" 
                   currentValue={formData.companyName} 
                   onRefined={(val) => setFormData(prev => ({...prev, companyName: val}))} 
+                  className="rounded-full"
                 />
               </div>
               <input 
@@ -154,7 +156,7 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div>
+            <div className="space-y-2 text-left">
               <label className={labelClass}>Business Website</label>
               <input 
                 type="url" 
@@ -165,8 +167,8 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 text-left">
                 <label className={labelClass}>Your Full Name</label>
                 <input 
                   type="text" 
@@ -177,7 +179,7 @@ export default function SettingsPage() {
                   required
                 />
               </div>
-              <div>
+              <div className="space-y-2 text-left">
                 <label className={labelClass}>Your Position</label>
                 <input 
                   type="text" 
@@ -190,32 +192,39 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-sm bg-primary/5 border border-primary/10 flex gap-3 items-start">
-              <MessageSquare size={16} className="text-primary mt-0.5 shrink-0" />
-              <p className="text-[10px] text-zinc-500 leading-relaxed font-bold uppercase tracking-tight">
-                This information is used to personalize discovery reports and verify your business identity.
+            {/* Premium Callout Info Box */}
+            <div className="flex gap-4 items-start p-5 rounded-[24px] bg-primary/5 border border-primary/10 text-left mt-4">
+              <div className="p-2 rounded-full bg-primary/10 text-primary shrink-0">
+                <MessageSquare size={16} />
+              </div>
+              <p className="text-xs text-foreground/80 leading-relaxed font-semibold">
+                This identity profile is used by HyprLead AI to write highly personalized outbound outreach drafts and verify your credentials.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Section 2: Global Market Target */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center text-emerald-400">
-              <Compass size={20} />
+        {/* Section 2: Default Targeting Bento Card */}
+        <div className="bento-card space-y-6">
+          <div className="flex items-center gap-4 border-b border-foreground/5 pb-6">
+            <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Target size={22} />
             </div>
-            <h2 className="text-sm font-black uppercase tracking-widest text-white">Default Targeting</h2>
+            <div className="text-left">
+              <h2 className="text-lg font-bold text-foreground">Discovery Targeting</h2>
+              <p className="text-xs text-foreground/60">Configure your default search scopes and vertical markets</p>
+            </div>
           </div>
 
-          <div className="glass-card p-8 rounded-sm border border-white/5 space-y-6">
-            <div className="space-y-2">
+          <div className="space-y-5">
+            <div className="space-y-2 text-left">
               <div className="flex items-center justify-between">
                 <label className={labelClass}>Core Industry</label>
                 <AIAssistButton 
                   field="Industry" 
                   currentValue={formData.industry} 
                   onRefined={(val) => setFormData(prev => ({...prev, industry: val}))} 
+                  className="rounded-full"
                 />
               </div>
               <input 
@@ -228,13 +237,13 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 text-left">
                 <label className={labelClass}>Default Region</label>
                 <select 
                   value={formData.targetCountry}
                   onChange={e => setFormData({...formData, targetCountry: e.target.value})}
-                  className={inputClass}
+                  className={`${inputClass} appearance-none`}
                 >
                   <option value="ZW">Zimbabwe</option>
                   <option value="SA">South Africa</option>
@@ -242,7 +251,7 @@ export default function SettingsPage() {
                   <option value="US">United States</option>
                 </select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 text-left">
                 <div className="flex items-center justify-between">
                   <label className={labelClass}>Default City</label>
                   <AIAssistButton 
@@ -250,6 +259,7 @@ export default function SettingsPage() {
                     currentValue={formData.locations[0]} 
                     context={{ targetCountry: formData.targetCountry }}
                     onRefined={(val) => setFormData(prev => ({...prev, locations: [val]}))} 
+                    className="rounded-full"
                   />
                 </div>
                 <input 
@@ -263,7 +273,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div>
+            <div className="space-y-2 text-left">
               <label className={labelClass}>Integration Hook (Discord)</label>
               <input 
                 type="url" 
@@ -274,10 +284,13 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="p-4 rounded-sm bg-emerald-500/5 border border-emerald-500/10 flex gap-3 items-start">
-              <MapPin size={16} className="text-emerald-400 mt-0.5 shrink-0" />
-              <p className="text-[10px] text-zinc-500 leading-relaxed font-bold uppercase tracking-tight">
-                These location settings help our discovery engine find leads in your target area by default.
+            {/* Premium Callout Info Box */}
+            <div className="flex gap-4 items-start p-5 rounded-[24px] bg-primary/5 border border-primary/10 text-left mt-4">
+              <div className="p-2 rounded-full bg-primary/10 text-primary shrink-0">
+                <MapPin size={16} />
+              </div>
+              <p className="text-xs text-foreground/80 leading-relaxed font-semibold">
+                These location rules determine the standard sweep radius for the HyprLead AI discovery engine during automatic targeting.
               </p>
             </div>
           </div>
@@ -285,23 +298,25 @@ export default function SettingsPage() {
       </form>
 
       {/* Sync Card */}
-      <div className="glass-card rounded-sm p-10 border border-white/5 relative overflow-hidden group interactive-card">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full -mr-64 -mt-64 group-hover:bg-primary/10 transition-colors blur-3xl" />
-        <div className="flex flex-col md:flex-row items-center justify-between gap-10 relative z-10">
-          <div className="space-y-2 max-w-lg">
-            <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.3em]">
-              <Zap className="h-4 w-4 glow-primary" /> Account Synchronization
+      <div className="bento-card p-10 relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent opacity-50 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full -mr-48 -mt-48 group-hover:bg-primary/15 transition-all duration-700 blur-3xl pointer-events-none" />
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+          <div className="space-y-3 max-w-xl text-left">
+            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
+              <Zap className="h-4 w-4 animate-pulse" /> Account Synchronization
             </div>
-            <h3 className="text-2xl font-black tracking-tight text-white">Update Your Global Identity</h3>
-            <p className="text-label text-zinc-500">
-              Applying these updates ensures all future discovery cycles use the correct branding and target hubs.
+            <h3 className="text-2xl font-bold tracking-tight text-foreground">Sync Campaign Identity</h3>
+            <p className="text-sm text-foreground/75 leading-relaxed">
+              Syncing these settings immediately propagates your core industry profile and region targets to the HyprLead AI discovery engine.
             </p>
           </div>
           <button 
             onClick={handleSave}
-            className="h-14 px-10 bg-white text-black text-[11px] font-black uppercase tracking-widest rounded-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-3 shadow-xl shadow-white/5"
+            disabled={saving}
+            className="h-12 px-8 bg-foreground text-background hover:bg-foreground/90 text-xs font-bold uppercase tracking-wider rounded-full transition-all flex items-center gap-2 shadow-xl shadow-foreground/5 hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
           >
-            Deploy Settings <ShieldCheck className="h-5 w-5" />
+            Deploy Settings <ShieldCheck className="h-4 w-4" />
           </button>
         </div>
       </div>

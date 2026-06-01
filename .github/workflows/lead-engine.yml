@@ -48,14 +48,14 @@ jobs:
         if: steps.engine.outcome == 'success'
         run: |
           curl -H "Content-Type: application/json" \
-            -d '{"embeds":[{"title":"✅ Lead Engine Complete","description":"Lead engine cycle completed successfully!","color":5763719,"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}' \
+            -d '{"embeds":[{"title":"Lead Engine Complete","description":"Lead engine cycle completed successfully!","color":5763719,"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}' \
             ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Notify Discord on Failure
         if: steps.engine.outcome == 'failure'
         run: |
           curl -H "Content-Type: application/json" \
-            -d '{"embeds":[{"title":"❌ Lead Engine Failed","description":"Lead engine cycle failed. Check GitHub Actions logs.","color":15548997,"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}' \
+            -d '{"embeds":[{"title":"Lead Engine Failed","description":"Lead engine cycle failed. Check GitHub Actions logs.","color":15548997,"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}' \
             ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Fail the workflow if engine failed

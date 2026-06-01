@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { 
-  User, Mail, Crown, Calendar, Shield, ShieldCheck,
-  CreditCard, History, Loader2, ArrowRight, 
-  Zap, CheckCircle2, AlertCircle, Home, Compass
+  Mail, Crown, Calendar, ShieldCheck, CreditCard, History, ArrowRight, 
+  Zap, AlertCircle, Shield, Building, Award, Target, Activity
 } from "lucide-react";
 import { authJson } from "@/lib/api";
+import { motion, AnimatePresence } from "framer-motion";
+import { BrandedLoader } from "@/components/BrandedLoader";
 
 interface UserProfile {
   id: string;
@@ -25,11 +26,10 @@ interface Transaction {
   createdAt: string;
 }
 
-import { BrandedLoader } from "@/components/BrandedLoader";
-
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,13 +38,15 @@ export default function ProfilePage() {
       setLoading(true);
       setError(null);
       
-      const [userData, txData] = await Promise.all([
+      const [userData, txData, statsData] = await Promise.all([
         authJson<UserProfile>("/api/me"),
-        authJson<Transaction[]>("/api/billing/transactions").catch(() => [])
+        authJson<Transaction[]>("/api/billing/transactions").catch(() => []),
+        authJson<any>("/api/stats").catch(() => null)
       ]);
 
       setProfile(userData);
       setTransactions(txData);
+      setStats(statsData);
     } catch (err: any) {
       console.error("Profile fetch error:", err);
       setError(err.message || "Failed to load profile details. Please check your connection.");
@@ -58,212 +60,256 @@ export default function ProfilePage() {
   }, []);
 
   if (loading) {
-    return <BrandedLoader message="Decoding account telemetry..." />;
+    return <BrandedLoader message="Decoding agent credentials..." />;
   }
 
   if (error || !profile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center px-6">
         <div className="h-20 w-20 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-           <AlertCircle className="h-10 w-10 text-red-500" />
+           <AlertCircle className="h-10 w-10 text-red-550" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-white tracking-tight">Access Error</h2>
-          <p className="text-zinc-500 max-w-sm mx-auto">{error || "Your account profile could not be retrieved. Try signing in again."}</p>
+          <h2 className="text-2xl font-extrabold text-foreground tracking-tight">Access Error</h2>
+          <p className="text-foreground/60 max-w-sm mx-auto font-semibold">{error || "Your account profile could not be retrieved. Try signing in again."}</p>
         </div>
         <button 
           onClick={fetchData}
-          className="btn-pill-white h-12 px-8"
+          className="btn-pill-white !bg-primary !text-white hover:!bg-primary-hover h-12 px-8 cursor-pointer"
         >
           Try Again
         </button>
       </div>
     );
   }
+
+  const initial = profile.email ? profile.email.charAt(0).toUpperCase() : "A";
+  const memberSince = profile.createdAt 
+    ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) 
+    : 'April 2024';
+
+  const dailyLimit = profile.tier === 'FREE' ? 10 : profile.tier === 'STARTER' ? 100 : profile.tier === 'PROFESSIONAL' ? 500 : 2500;
+  const leadsScrapedToday = stats?.leadsToday || 0;
+  const quotaPercent = Math.min(100, Math.max(0, (leadsScrapedToday / dailyLimit) * 100));
+
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-20">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-10">
-        <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-sm border border-white/5 flex items-center justify-center bg-primary/5">
-            <Home className="h-6 w-6 text-primary" />
+    <div className="max-w-6xl mx-auto space-y-6 pb-24 font-sans selection:bg-primary/20">
+      
+      {/* Sales Agent Dossier Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-6 border-b border-card-border pb-6">
+        <div className="flex items-center gap-5">
+          <div className="h-16 w-16 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black text-2xl shadow-sm shadow-primary/20 select-none animate-pulse shrink-0">
+            {initial}
           </div>
-          <div className="space-y-0.5">
-            <h1 className="text-display !text-3xl">Your Profile</h1>
-            <p className="text-label">Manage your account and settings here.</p>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-primary/15 border border-primary/20 text-primary text-[8px] font-black uppercase tracking-widest">
+                Growth Agent
+              </span>
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">{profile.email.split('@')[0]}</h1>
+            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Sales Intelligence Dossier</p>
           </div>
         </div>
-        
-        <div className={`px-4 py-1.5 rounded-sm border flex items-center gap-2 ${
-          profile?.paymentStatus === 'active' 
-            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
-            : "bg-amber-500/10 border-amber-500/20 text-amber-400"
-        }`}>
-          <div className={`h-1.5 w-1.5 rounded-sm animate-pulse ${
-            profile?.paymentStatus === 'active' ? "bg-emerald-500" : "bg-amber-500"
-          }`} />
-          <span className="text-[9px] font-black uppercase tracking-widest">
-            {profile?.paymentStatus === 'active' ? 'Active Plan' : 'Basic Account'}
-          </span>
+
+        <div className="flex items-center gap-3">
+          <div className={`px-4 py-2 rounded-full border flex items-center gap-2 shadow-sm ${
+            profile.paymentStatus === 'active' 
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" 
+              : "bg-amber-500/10 border-amber-500/20 text-amber-500"
+          }`}>
+            <ShieldCheck className="h-4 w-4 shrink-0" />
+            <span className="text-[10px] font-black uppercase tracking-widest">
+              {profile.paymentStatus === 'active' ? 'Active Enterprise' : 'Basic Account'}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Account Info Card */}
-        <div className="glass-card p-8 rounded-sm border border-white/5 space-y-6">
-          <div className="flex items-center gap-2 text-zinc-300">
-            <ShieldCheck className="h-4 w-4 text-primary" />
-            <h2 className="text-label">Account Details</h2>
+      {/* Grid Dashboard Options */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        {/* Left Side: Agent Credentials (4 columns) */}
+        <div className="lg:col-span-4 bento-card flex flex-col justify-between p-8 border border-card-border">
+          <div className="space-y-6">
+            <div className="flex items-center gap-2.5 text-foreground/80 border-b border-card-border pb-3">
+              <Award className="h-4.5 w-4.5 text-primary" />
+              <h2 className="text-[10px] font-black uppercase tracking-widest">Credentials Profile</h2>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="p-4 rounded-2xl bg-background border border-card-border flex items-center gap-3.5 shadow-sm">
+                <Mail className="h-4 w-4 text-primary shrink-0" />
+                <div className="overflow-hidden">
+                  <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Corporate Mail</p>
+                  <p className="text-xs font-bold text-foreground truncate">{profile.email}</p>
+                </div>
+              </div>
+              
+              <div className="p-4 rounded-2xl bg-background border border-card-border flex items-center gap-3.5 shadow-sm">
+                <Crown className="h-4 w-4 text-primary shrink-0" />
+                <div>
+                  <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Active Tier</p>
+                  <p className="text-xs font-black text-primary tracking-widest uppercase">{profile.tier} Plan</p>
+                </div>
+              </div>
+              
+              <div className="p-4 rounded-2xl bg-background border border-card-border flex items-center gap-3.5 shadow-sm">
+                <Calendar className="h-4 w-4 text-primary shrink-0" />
+                <div>
+                  <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Enrollment</p>
+                  <p className="text-xs font-bold text-foreground">{memberSince}</p>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 p-4 rounded-sm bg-white/[0.01] border border-white/5">
-              <Mail className="h-4 w-4 text-zinc-600" />
-              <div className="overflow-hidden">
-                <p className="text-[8px] uppercase text-zinc-500 font-black tracking-widest">Email Address</p>
-                <p className="text-xs font-bold text-zinc-300 truncate">{profile?.email}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4 p-4 rounded-sm bg-white/[0.01] border border-white/5">
-              <Shield className="h-4 w-4 text-primary/70" />
-              <div>
-                <p className="text-[8px] uppercase text-zinc-500 font-black tracking-widest">Current Plan</p>
-                <p className="text-xs font-black text-primary tracking-widest">
-                  {profile?.tier || 'FREE'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-              <Calendar className="h-4 w-4 text-zinc-600" />
-              <div>
-                <p className="text-[8px] uppercase text-zinc-500 font-black tracking-widest">Member Since</p>
-                <p className="text-xs font-bold text-zinc-300">
-                  {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'April 2024'}
-                </p>
-              </div>
-            </div>
+
+          <div className="pt-6 text-center text-[9px] font-black text-foreground/40 uppercase tracking-widest">
+            Profile secure · ID: {profile.id.substring(0, 8)}
           </div>
         </div>
 
-        {/* Plan Overview Card */}
-        <div className="md:col-span-2 glass-card p-8 rounded-sm border border-white/5 bg-primary/5 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full -mr-40 -mt-40 blur-3xl" />
+        {/* Right Side: Quota & Performance Command Deck (8 columns) */}
+        <div className="lg:col-span-8 bento-card p-8 bg-primary/5 border border-primary/10 flex flex-col justify-between relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full -mr-20 -mt-20 blur-3xl pointer-events-none" />
           
-          <div className="relative flex flex-col h-full">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-2 text-zinc-100">
-                <Home className="h-4 w-4 text-primary" />
-                <h2 className="text-[10px] font-black uppercase tracking-widest">Active Plan</h2>
-              </div>
-              <span className="text-[8px] font-black bg-primary px-3 py-1 rounded-sm text-white uppercase tracking-[0.2em] shadow-lg shadow-primary/20">
-                {profile?.tier === 'FREE' ? 'RESTRICTED' : 'FULL ACCESS'}
-              </span>
-            </div>
-
-            <div className="flex-1 space-y-6">
-              <div>
-                <p className="text-3xl font-black tracking-tighter">
-                  {profile?.tier === 'FREE' ? 'Free Plan' : `${profile?.tier} Plan`}
-                </p>
-                <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-wide mt-2 leading-relaxed max-w-md">
-                  {profile?.tier === 'FREE' 
-                    ? "Upgrade to a professional plan to unlock more leads and tools." 
-                    : "Your account is active and ready to find new leads."}
-                </p>
+          <div className="relative space-y-6 flex-1 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between border-b border-primary/10 pb-3 mb-6">
+                <div className="flex items-center gap-2.5 text-foreground">
+                  <Target className="h-4.5 w-4.5 text-primary" />
+                  <h2 className="text-[10px] font-black uppercase tracking-widest">Quota Performance</h2>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-primary text-white text-[8px] font-black uppercase tracking-[0.25em] shadow-md shadow-primary/20">
+                  {profile.tier === 'FREE' ? 'STARTER LIMIT' : 'ENTERPRISE CAP'}
+                </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-5 rounded-xl bg-black/40 border border-white/5 relative overflow-hidden group/quota">
-                  <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/quota:opacity-100 transition-opacity" />
-                  <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-1 relative">Daily Limit</p>
-                  <p className="text-stat">
-                    {profile.tier === 'FREE' ? '10' : profile.tier === 'STARTER' ? '100' : profile.tier === 'PROFESSIONAL' ? '500' : '2,500'}
-                    <span className="text-label ml-2">Leads</span>
+              <div className="space-y-6">
+                <div>
+                  <p className="text-3xl font-extrabold tracking-tight text-foreground">
+                    {profile.tier === 'FREE' ? 'Standard Tier Outbounds' : `Professional ${profile.tier} Operations`}
+                  </p>
+                  <p className="text-xs text-foreground/75 font-semibold mt-2 leading-relaxed max-w-xl">
+                    {profile.tier === 'FREE' 
+                      ? "Your account is active on our basic tier. Upgrade your professional sales membership to scale daily sweeps and trigger high-velocity outreach dispatches." 
+                      : "Your sales agent seat is active and fully optimized. Outbound discovery pipelines are running continuously in the background."}
                   </p>
                 </div>
-                <div className="p-5 rounded-xl bg-black/40 border border-white/5 relative overflow-hidden group/safe">
-                  <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover/safe:opacity-100 transition-opacity" />
-                  <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-1 relative">Account Status</p>
-                  <p className="text-2xl font-black tracking-tight text-emerald-400 flex items-center gap-2 relative">
-                    <ShieldCheck className="h-5 w-5" /> Secured
-                  </p>
+
+                {/* Quota Progress Meter */}
+                <div className="space-y-2 p-5 rounded-2xl bg-background border border-card-border shadow-sm">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Daily Outreach Quota</span>
+                    <span className="text-foreground">
+                      <span className="text-primary font-bold">{leadsScrapedToday}</span> / <span className="font-bold">{dailyLimit} Mapped</span>
+                    </span>
+                  </div>
+                  <div className="w-full bg-card-border h-2 rounded-full overflow-hidden">
+                    <div className="bg-primary h-full transition-all duration-500 rounded-full" style={{ width: `${quotaPercent}%` }} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-background border border-card-border flex items-center gap-3.5 shadow-sm">
+                    <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                      <ShieldCheck className="h-4.5 w-4.5 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Verification Status</p>
+                      <p className="text-xs font-extrabold text-emerald-500 uppercase tracking-wider">Secured Mappings</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-background border border-card-border flex items-center gap-3.5 shadow-sm">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0">
+                      <Activity className="h-4.5 w-4.5 text-primary animate-pulse" />
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Outbound Velocity</p>
+                      <p className="text-xs font-extrabold text-foreground uppercase tracking-wider">Continuous Sweeps</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-10">
+            <div className="mt-8 border-t border-primary/10 pt-4 flex items-center justify-between">
               <button 
                 onClick={() => window.location.href = '/billing'}
-                className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-all group"
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary-hover transition-colors group cursor-pointer"
               >
-                <Compass className="h-4 w-4" /> Billing Settings <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                <CreditCard className="h-4 w-4" /> Manage Subscriptions <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </div>
         </div>
+
       </div>
 
-      {/* Transaction History */}
-      <div className="space-y-6">
+      {/* Transaction History Ledger */}
+      <div className="space-y-4 pt-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 text-zinc-400">
-            <History className="h-4 w-4 text-primary" />
-            <h2 className="text-[10px] font-black uppercase tracking-widest">Past Payments</h2>
+          <div className="flex items-center gap-2.5 text-foreground/75">
+            <History className="h-4.5 w-4.5 text-primary" />
+            <h2 className="text-[10px] font-black uppercase tracking-widest">Billing & Invoices Ledger</h2>
           </div>
           <button 
             onClick={fetchData}
-            className="text-[9px] font-black text-zinc-600 hover:text-white uppercase tracking-widest transition-colors"
+            className="text-[9px] font-black text-foreground/50 hover:text-primary uppercase tracking-widest transition-colors cursor-pointer"
           >
-            Refresh
+            Sync Ledger
           </button>
         </div>
 
-        <div className="glass-card rounded-sm border border-white/5 overflow-hidden">
+        <div className="bg-card border border-card-border rounded-3xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-white/[0.03] border-b border-white/5">
-                <tr className="text-[10px] uppercase font-black text-zinc-600 tracking-[0.2em]">
-                  <th className="px-8 py-5">ID</th>
-                  <th className="px-8 py-5">Status</th>
-                  <th className="px-8 py-5">Method</th>
-                  <th className="px-8 py-5">Amount</th>
-                  <th className="px-8 py-5 text-right">Date</th>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-card-border bg-background text-[9px] font-black text-foreground/50 uppercase tracking-[0.2em]">
+                  <th className="px-6 py-4">Transaction ID</th>
+                  <th className="px-6 py-4">Auth Status</th>
+                  <th className="px-6 py-4">Gateway</th>
+                  <th className="px-6 py-4">Invoiced Amount</th>
+                  <th className="px-6 py-4 text-right">Settlement Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-card-border text-xs font-semibold">
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-8 py-20 text-center text-zinc-500">
-                      <div className="flex flex-col items-center gap-4 opacity-40">
-                        <CreditCard className="h-8 w-8" />
-                        <p className="text-[10px] font-black uppercase tracking-widest">No transaction history found.</p>
+                    <td colSpan={5} className="px-6 py-16 text-center text-foreground/45">
+                      <div className="flex flex-col items-center gap-3 opacity-40">
+                        <CreditCard className="h-7 w-7 text-primary" />
+                        <p className="text-[9px] font-black uppercase tracking-widest">No invoice history found on this seat.</p>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-white/[0.01] transition-colors group">
-                      <td className="px-8 py-4">
-                        <span className="font-mono text-[10px] text-zinc-600 group-hover:text-primary transition-colors">
+                    <tr key={tx.id} className="hover:bg-card-border/30 transition-colors group">
+                      <td className="px-6 py-3.5">
+                        <span className="font-mono text-[10px] text-foreground/55 group-hover:text-primary transition-colors">
                           {tx.id.substring(0, 8)}
                         </span>
                       </td>
-                      <td className="px-8 py-4">
-                        <div className={`inline-flex items-center gap-2 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${
-                          tx.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                      <td className="px-6 py-3.5">
+                        <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${
+                          tx.status === 'SUCCESS' 
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
+                            : 'bg-amber-500/10 border-amber-500/20 text-amber-500'
                         }`}>
                           {tx.status}
                         </div>
                       </td>
-                      <td className="px-8 py-4">
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{tx.gateway}</span>
+                      <td className="px-6 py-3.5">
+                        <span className="text-[9px] font-black text-foreground/60 uppercase tracking-widest">{tx.gateway}</span>
                       </td>
-                      <td className="px-8 py-4">
-                        <span className="text-sm font-black text-white">${tx.amount}</span>
+                      <td className="px-6 py-3.5">
+                        <span className="font-black text-foreground">${tx.amount}</span>
                       </td>
-                      <td className="px-8 py-4 text-right">
-                        <span className="text-[11px] text-zinc-500 font-medium">
+                      <td className="px-6 py-3.5 text-right">
+                        <span className="text-foreground/75 font-semibold">
                           {new Date(tx.createdAt).toLocaleDateString()}
                         </span>
                       </td>
@@ -275,6 +321,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

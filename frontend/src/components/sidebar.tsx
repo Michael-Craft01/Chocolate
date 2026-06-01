@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { 
   LayoutDashboard, Settings, LogOut, User, ShieldCheck, 
   Home, Shield, Compass, Sparkles, Zap, ChevronRight, X,
-  ArrowRight
+  ArrowRight, Sun, Moon
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -38,6 +38,7 @@ export function Sidebar() {
   const [isResizing, setIsResizing] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
     const savedWidth = localStorage.getItem("sidebarWidth");
@@ -45,7 +46,21 @@ export function Sidebar() {
     
     const savedCollapsed = localStorage.getItem("sidebarCollapsed");
     if (savedCollapsed === "true") setIsCollapsed(true);
+
+    const activeTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+    setTheme(activeTheme);
   }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+    if (nextTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -130,7 +145,7 @@ export function Sidebar() {
       {/* Mobile Toggle Button */}
       <button 
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed bottom-8 right-8 h-16 w-16 rounded-full bg-primary text-white flex items-center justify-center z-[100] shadow-2xl glow-primary active:scale-95 transition-all border border-white/20"
+        className="md:hidden fixed bottom-8 right-8 h-16 w-16 rounded-full bg-primary text-white flex items-center justify-center z-[100] shadow-2xl active:scale-95 transition-all border border-card-border"
       >
         <Compass className={cn("h-7 w-7", mobileOpen && "animate-spin")} />
       </button>
@@ -144,35 +159,35 @@ export function Sidebar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[110] md:hidden"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] md:hidden"
             />
             <motion.div 
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 w-[280px] z-[120] md:hidden flex flex-col chocolate-gradient border-r border-white/10"
+              className="fixed inset-y-0 left-0 w-[280px] z-[120] md:hidden flex flex-col bg-sidebar border-r border-card-border"
             >
                <div className="flex flex-col h-full">
-                  <div className="flex h-24 items-center justify-between px-8 border-b border-white/5">
-                    <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 font-black text-xl tracking-tighter">
-                      <div className="h-14 w-14 relative">
+                  <div className="flex h-24 items-center justify-between px-8 border-b border-card-border">
+                    <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 font-black text-lg tracking-tighter">
+                      <div className="h-9 w-9 relative">
                         <img 
                           src="/logo.png" 
                           alt="HyprLead Oracle" 
-                          className="h-full w-full object-contain animate-neural drop-shadow-[0_0_25px_rgba(59,130,246,0.4)]"
+                          className="h-full w-full object-contain"
                         />
                       </div>
-                      <span className="text-white uppercase tracking-tight font-black">HyprLead</span>
+                      <span className="text-foreground uppercase tracking-tight font-black">HyprLead</span>
                     </Link>
-                    <button onClick={() => setMobileOpen(false)} className="p-2 text-zinc-500">
+                    <button onClick={() => setMobileOpen(false)} className="p-2 text-foreground">
                       <X className="h-6 w-6" />
                     </button>
                   </div>
 
                   <nav className="flex-1 p-6 space-y-2">
                     {navItems.map((item) => {
-                      const isActive = pathname === item.href;
+                      const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                       const Icon = item.icon;
                       return (
                         <Link
@@ -180,8 +195,10 @@ export function Sidebar() {
                           href={item.href}
                           onClick={() => setMobileOpen(false)}
                           className={cn(
-                            "flex items-center gap-4 px-6 py-4 rounded-sm text-[14px] font-bold uppercase tracking-widest transition-all",
-                            isActive ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-zinc-500"
+                            "flex items-center gap-4 px-6 py-3.5 rounded-full text-[12px] font-bold uppercase tracking-widest transition-all",
+                            isActive 
+                              ? "bg-primary text-white shadow-md shadow-primary/10 border border-primary/20" 
+                              : "text-foreground hover:bg-card hover:border-card-border border border-transparent"
                           )}
                         >
                           <Icon className="h-5 w-5" />
@@ -191,10 +208,10 @@ export function Sidebar() {
                     })}
                   </nav>
 
-                  <div className="p-6 border-t border-white/5">
+                  <div className="p-6 border-t border-card-border">
                     <button 
                       onClick={handleSignOut}
-                      className="flex w-full items-center gap-4 px-6 py-4 text-zinc-500 text-[14px] font-bold uppercase tracking-widest hover:text-white transition-colors"
+                      className="flex w-full items-center gap-4 px-6 py-4 text-foreground text-[14px] font-bold uppercase tracking-widest hover:bg-card rounded-full border border-transparent hover:border-card-border transition-colors"
                     >
                       <LogOut className="h-5 w-5" />
                       Sign Out
@@ -208,7 +225,7 @@ export function Sidebar() {
 
       <div 
         className={cn(
-          "hidden md:flex h-screen flex-col border-r border-white/5 chocolate-gradient relative group/sidebar select-none transition-all duration-300 ease-in-out",
+          "hidden md:flex h-screen flex-col border-r border-card-border bg-sidebar relative group/sidebar select-none transition-all duration-300 ease-in-out",
           isCollapsed ? "w-20" : ""
         )}
         style={{ width: isCollapsed ? '80px' : `${width}px` }}
@@ -216,9 +233,9 @@ export function Sidebar() {
       {/* Collapse Toggle */}
       <button 
         onClick={toggleCollapse}
-        className="absolute -right-3 top-10 h-6 w-6 rounded-full bg-primary border border-white/10 flex items-center justify-center z-[60] shadow-xl hover:scale-110 transition-transform active:scale-95"
+        className="absolute -right-3 top-10 h-6 w-6 rounded-full bg-card border border-card-border flex items-center justify-center z-[60] shadow-md hover:scale-110 transition-transform active:scale-95 text-foreground"
       >
-        <ChevronRight className={cn("h-3 w-3 text-white transition-transform duration-500", isCollapsed ? "" : "rotate-180")} />
+        <ChevronRight className={cn("h-3 w-3 transition-transform duration-500", isCollapsed ? "" : "rotate-180")} />
       </button>
 
       {/* Resize Handle */}
@@ -234,14 +251,14 @@ export function Sidebar() {
       
       <div className={cn("flex h-20 items-center transition-all duration-300", isCollapsed ? "justify-center" : "px-8")}>
         <Link href="/dashboard" className="flex items-center gap-3 font-black text-lg tracking-tighter">
-          <div className={cn("relative transition-all duration-500", isCollapsed ? "h-12 w-12" : "h-11 w-11")}>
+          <div className={cn("relative transition-all duration-500", isCollapsed ? "h-8 w-8" : "h-8 w-8")}>
             <img 
               src="/logo.png" 
               alt="HyprLead Oracle" 
-              className="h-full w-full object-contain animate-neural drop-shadow-[0_0_20px_rgba(59,130,246,0.4)]"
+              className="h-full w-full object-contain"
             />
           </div>
-          {!isCollapsed && <span className="text-white tracking-tight font-black uppercase text-sm">HyprLead</span>}
+          {!isCollapsed && <span className="text-foreground tracking-tight font-black uppercase text-sm">HyprLead</span>}
         </Link>
       </div>
 
@@ -256,14 +273,16 @@ export function Sidebar() {
               href={item.href}
               title={isCollapsed ? item.name : undefined}
               className={cn(
-                "group flex items-center rounded-sm transition-all duration-300",
-                isCollapsed ? "justify-center h-12 w-12 mx-auto px-0" : "gap-3 px-4 py-3 text-[12px] font-bold uppercase tracking-[0.15em]",
+                "group flex items-center transition-all duration-300",
+                isCollapsed 
+                  ? "justify-center h-10 w-10 mx-auto px-0 rounded-full" 
+                  : "gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.15em] rounded-full",
                 isActive 
-                  ? "bg-primary/20 text-white shadow-[0_0_20px_-5px_rgba(255,109,41,0.2)] border border-primary/30 glass"
-                  : "text-zinc-500 hover:text-white hover:bg-white/[0.03] border border-transparent"
+                  ? "bg-primary text-white shadow-md shadow-primary/10 border border-primary/20"
+                  : "text-foreground hover:bg-card hover:border-card-border border border-transparent"
               )}
             >
-              <Icon className={cn("h-4.5 w-4.5 transition-transform duration-500 shrink-0", isActive ? "scale-110 text-primary" : "group-hover:scale-110")} />
+              <Icon className={cn("h-4 w-4 transition-transform duration-500 shrink-0", isActive ? "scale-110 text-white" : "group-hover:scale-110 text-foreground")} />
               {!isCollapsed && item.name}
             </Link>
           );
@@ -272,37 +291,35 @@ export function Sidebar() {
 
       <div className={cn("p-4 mt-auto transition-all", isCollapsed ? "p-2" : "p-4")}>
         {!isCollapsed ? (
-          <div className="rounded-xl bg-white/[0.03] border border-white/5 p-5 space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 h-16 w-16 bg-primary/10 blur-2xl rounded-full -mr-8 -mt-8" />
-            
+          <div className="rounded-card bg-card border border-card-border p-5 space-y-4 relative overflow-hidden shadow-sm">
             <div className="flex items-center justify-between relative">
               <div className="space-y-0.5">
-                <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Subscription</p>
-                <p className="text-xs font-black tracking-tight text-white">{isFree ? "Free Access" : `${stats?.tier} Plan`}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-foreground opacity-60">Subscription</p>
+                <p className="text-xs font-black tracking-tight text-foreground">{isFree ? "Free Access" : `${stats?.tier} Plan`}</p>
               </div>
               <div className={cn(
                 "h-2 w-2 rounded-full",
-                isFree ? "bg-amber-500 animate-pulse" : "bg-primary shadow-[0_0_10px_rgba(255,109,41,0.5)]"
+                isFree ? "bg-amber-500" : "bg-primary"
               )} />
             </div>
             
             <div className="space-y-2 relative">
-              <div className="flex justify-between text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+              <div className="flex justify-between text-[10px] font-bold text-foreground opacity-60 uppercase tracking-widest">
                 <span>Usage</span>
-                <span className="text-white">{leadUsage} / {dailyLimit}</span>
+                <span className="text-foreground font-black">{leadUsage} / {dailyLimit}</span>
               </div>
-              <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-border-muted rounded-full overflow-hidden">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${usagePercent}%` }}
                   transition={{ duration: 1 }}
-                  className="h-full bg-gradient-to-r from-primary/50 to-primary shadow-[0_0_8px_rgba(255,109,41,0.3)]" 
+                  className="h-full bg-primary" 
                 />
               </div>
             </div>
 
             {isFree && (
-              <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-lg bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-primary/20 relative group">
+              <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all relative group shadow-md shadow-primary/10">
                 Upgrade Now
                 <ArrowRight className="h-3 w-3 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -318,10 +335,32 @@ export function Sidebar() {
         )}
 
         <button 
-          onClick={handleSignOut}
-          className={cn("flex items-center rounded-sm transition-all hover:text-white hover:bg-white/[0.02] uppercase tracking-[0.2em] group", isCollapsed ? "justify-center h-12 w-12 mx-auto mt-2" : "gap-3 px-4 py-4 mt-4 text-[12px] font-bold text-zinc-600")}
+          onClick={toggleTheme}
+          className={cn(
+            "flex items-center rounded-full transition-all hover:bg-card border border-transparent hover:border-card-border uppercase tracking-[0.15em] group text-foreground w-full",
+            isCollapsed 
+              ? "justify-center h-10 w-10 mx-auto mt-2" 
+              : "gap-3 px-4 py-2.5 mt-2 text-[10px] font-black"
+          )}
         >
-          <LogOut className="h-4.5 w-4.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
+          {theme === "dark" ? (
+            <Sun className="h-4 w-4 text-amber-500 shrink-0" />
+          ) : (
+            <Moon className="h-4 w-4 text-blue-500 shrink-0" />
+          )}
+          {!isCollapsed && (theme === "dark" ? "Light Mode" : "Dark Mode")}
+        </button>
+
+        <button 
+          onClick={handleSignOut}
+          className={cn(
+            "flex items-center rounded-full transition-all hover:bg-card border border-transparent hover:border-card-border uppercase tracking-[0.2em] group text-foreground w-full", 
+            isCollapsed 
+              ? "justify-center h-10 w-10 mx-auto mt-2" 
+              : "gap-3 px-4 py-2.5 mt-1 text-[10px] font-black"
+          )}
+        >
+          <LogOut className="h-4 w-4 group-hover:translate-x-0.5 transition-transform shrink-0" />
           {!isCollapsed && "Sign Out"}
         </button>
       </div>

@@ -28,7 +28,7 @@ export class AIService {
 
     async refineInput(field: string, value: string, context?: any): Promise<string> {
         const prompt = `<start_of_turn>user
-SYSTEM: You are the HyprLead Form Assistant (Gemma-4 Powered).
+SYSTEM: You are the HyprLead Form Assistant (HyprLead AI Powered).
 GOAL: Refine user input into high-fidelity, professional descriptions optimized for a lead discovery engine.
 
 FIELD: "${field}"
@@ -71,7 +71,7 @@ ONLY return the refined text. No conversational fillers, no "Here is the refined
         const valueProp = campaign.productDescription || "we help businesses eliminate bottlenecks.";
 
         const prompt = `<start_of_turn>user
-SYSTEM: You are the HyprLead Outreach Specialist (Gemma-4 Powered).
+SYSTEM: You are the HyprLead Outreach Specialist (HyprLead AI Powered).
 GOAL: Write a personalized, high-converting cold outreach message.
 
 INPUTS:
@@ -122,9 +122,9 @@ ONLY return the message text. No conversational fillers.
         const product = campaignConfig?.productDescription || "HyprLead Intelligence & Automation Solutions";
         const customInstructions = campaignConfig?.targetPainPoints || "";
 
-        // GEMMA 4 ROBUST REASONING PROMPT
+        // HyprLead AI ROBUST REASONING PROMPT
         const prompt = `<start_of_turn>user
-SYSTEM: You are the HyprLead Discovery Engine (Gemma-4 Optimized). 
+SYSTEM: You are the HyprLead Discovery Engine (HyprLead AI Optimized). 
 GOAL: High-fidelity business discovery and sector-specific operational friction detection.
 REASONING: Use your internal thinking mode to analyze the business context AND visual data. 
 IMPORTANT: Ground your analysis in the lead's specific SECTOR. Do not invent technical software issues (like 'API failures' or 'list hygiene') unless the lead is actually in the technology space.
@@ -166,7 +166,7 @@ JSON OUTPUT:
         }
 
         return this.retryOperation(async () => {
-            logger.info(`[GEMMA-4] Thinking... Deep-diving into: ${businessName}`);
+            logger.info(`[HyprLead AI] Thinking... Deep-diving into: ${businessName}`);
             const result = await this.model.generateContent(parts);
             const response = await result.response;
             const text = response.text();
@@ -187,7 +187,7 @@ JSON OUTPUT:
 
     async generateMissionBrief(campaign: any): Promise<string> {
         const prompt = `<start_of_turn>user
-SYSTEM: You are the HyprLead Mission Strategist (Gemma-4 Powered).
+SYSTEM: You are the HyprLead Mission Strategist (HyprLead AI Powered).
 GOAL: Explain the current operational mission of a Search Hub in professional, non-technical language.
 
 CAMPAIGN DNA:
@@ -229,7 +229,7 @@ ONLY return the brief text. No fillers.
                 lastError = err;
                 if (err.status === 429 || err.message?.includes('429')) {
                     const wait = Math.pow(2, i) * 2000;
-                    logger.warn(`[GEMMA-4] Rate limited. Retrying in ${wait}ms...`);
+                    logger.warn(`[HyprLead AI] Rate limited. Retrying in ${wait}ms...`);
                     await new Promise(r => setTimeout(r, wait));
                 } else {
                     throw err;
