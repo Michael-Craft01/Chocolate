@@ -366,10 +366,47 @@ app.get('/api/campaigns/hub/:id', authenticate, async (req: any, res: any) => {
 app.get('/api/settings', authenticate, async (req: any, res: any) => {
     try {
         const userId = req.user!.id;
-        const profile = await prisma.profile.findUnique({ where: { userId } });
-        const mainCampaign = await prisma.campaign.findFirst({ where: { userId, name: 'Main Engine' } });
+        let profile = await prisma.profile.findUnique({ where: { userId } });
+        let mainCampaign = await prisma.campaign.findFirst({ where: { userId, name: 'Main Engine' } });
+        
+        // If profile doesn't exist, create default
+        if (!profile) {
+            profile = await prisma.profile.create({
+                data: {
+                    userId,
+                    companyName: "",
+                    industry: "",
+                    website: "",
+                    defaultSenderName: "",
+                    defaultSenderRole: "",
+                    onboardingComplete: false
+                }
+            });
+        }
+
+        // If main campaign doesn't exist, create default Main Engine campaign
+        if (!mainCampaign) {
+            mainCampaign = await prisma.campaign.create({
+                data: {
+                    userId,
+                    name: 'Main Engine',
+                    senderName: profile.defaultSenderName || "Founder",
+                    senderRole: profile.defaultSenderRole || "Founder",
+                    companyName: profile.companyName || "My Business",
+                    targetCountry: "ZW",
+                    locations: ["Harare"],
+                    industries: [profile.industry || "Business"],
+                    productName: profile.companyName || "Leads Outreach Engine",
+                    productDescription: "AI Outbound Outreach System",
+                    targetPainPoints: "Target discovery and lead enrichment",
+                    outreachTone: "PROFESSIONAL",
+                }
+            });
+        }
+
         res.json({ profile, campaign: mainCampaign });
     } catch (error) {
+        console.error("GET /api/settings failed:", error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
@@ -378,13 +415,70 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: an
     try {
         const userId = req.user!.id;
         const data = req.body;
+
+        // Check if onboarding is completing for the first time
+        const existingProfile = await prisma.profile.findUnique({ where: { userId } });
+        const isFirstTimeOnboarding = !existingProfile || !existingProfile.onboardingComplete;
+
+        // 1. Separate profile data and campaign data
+        const profileData = {
+            companyName: data.companyName,
+            website: data.website || "",
+            industry: data.industry || "",
+            defaultSenderName: data.defaultSenderName,
+            defaultSenderRole: data.defaultSenderRole,
+            onboardingComplete: true
+        };
+
+        const campaignData = {
+            senderName: data.defaultSenderName,
+            senderRole: data.defaultSenderRole,
+            companyName: data.companyName,
+            targetCountry: data.targetCountry || "ZW",
+            locations: data.locations || ["Harare"],
+            industries: [data.industry || "Business"],
+            discordWebhook: data.discordWebhook || null,
+        };
+
+        // 2. Perform Profile upsert
         const profile = await prisma.profile.upsert({
             where: { userId },
-            create: { ...data, userId, onboardingComplete: true },
-            update: { ...data }
+            create: { ...profileData, userId },
+            update: profileData
         });
-        res.json(profile);
+
+        // 3. Find and sync/upsert campaign "Main Engine"
+        let mainCampaign = await prisma.campaign.findFirst({ where: { userId, name: 'Main Engine' } });
+
+        if (mainCampaign) {
+            mainCampaign = await prisma.campaign.update({
+                where: { id: mainCampaign.id },
+                data: campaignData
+            });
+        } else {
+            mainCampaign = await prisma.campaign.create({
+                data: {
+                    ...campaignData,
+                    userId,
+                    name: 'Main Engine',
+                    productName: data.companyName || "Leads Outreach Engine",
+                    productDescription: "AI Outbound Outreach System",
+                    targetPainPoints: "Target discovery and lead enrichment",
+                    outreachTone: "PROFESSIONAL",
+                }
+            });
+        }
+
+        // Trigger welcome onboarding email asynchronously if completing onboarding for the first time
+        if (isFirstTimeOnboarding) {
+            dispatchService.sendUserWelcomeEmail(userId).catch(e => {
+                console.error("Failed to send onboarding welcome email:", e.message);
+            });
+        }
+
+        res.json({ profile, campaign: mainCampaign });
     } catch (error) {
+        console.error("POST /api/settings failed:", error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

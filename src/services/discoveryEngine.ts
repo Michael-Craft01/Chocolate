@@ -133,6 +133,13 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                     await prisma.user.update({ where: { id: user.id }, data: { leadsFoundToday: { increment: 1 } } });
                     user.leadsFoundToday++; 
                     leadsFound++;
+
+                    // Safe, non-blocking auto-dispatch outside of database transactions
+                    if (campaign.discordWebhook) {
+                        dispatchService.dispatchLeadToDiscord(result, campaign).catch(e => {
+                            logger.error({ err: e.message }, `Failed to auto-dispatch lead ${result.id} to Discord`);
+                        });
+                    }
                 }
 
                 // Stealth Delay to prevent detection
@@ -246,9 +253,24 @@ export async function triggerEngineCycle() {
             cycleSummary.push({ campaign: campaign.name, count: campaignTotal });
         }
 
-        // Send User Summaries
+        // Send User Summaries (Only for users without an active Discord Webhook)
         for (const [userId, results] of Object.entries(userResults)) {
-            await dispatchService.sendUserCycleSummary(userId, results).catch(e => logger.error({ err: e.message }, 'Failed to send summary email'));
+            const hasDiscord = await prisma.campaign.findFirst({
+                where: {
+                    userId,
+                    NOT: [
+                        { discordWebhook: null },
+                        { discordWebhook: "" }
+                    ]
+                }
+            });
+
+            if (!hasDiscord) {
+                await dispatchService.sendUserCycleSummary(userId, results)
+                    .catch(e => logger.error({ err: e.message }, 'Failed to send summary email'));
+            } else {
+                logger.info(`[SUMMARY] Skipping summary email for user ${userId} because active Discord webhook is configured.`);
+            }
         }
 
         await cleanupDatabase();
