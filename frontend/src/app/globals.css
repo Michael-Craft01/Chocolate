@@ -48,9 +48,7 @@ html.dark {
   --card-hover-border: #3f3f46;
 }
 
-footer {
-  --foreground: #ffffff !important;
-}
+
 
 @layer base {
   body {
@@ -142,20 +140,20 @@ html.dark .glass-morphism {
 
 /* Minimal solid borders instead of heavy glowing styles */
 .glow-border-green {
-  border: none !important;
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.15) !important;
+  border: 1px solid var(--primary) !important;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.2) !important;
 }
 
 .glow-border-orange {
-  border: none !important;
-  box-shadow: 0 0 15px rgba(255, 109, 41, 0.15) !important;
+  border: 1px solid var(--orange) !important;
+  box-shadow: 0 0 25px rgba(255, 109, 41, 0.2) !important;
 }
 
 /* Redefined Bento Grid System: Extremely Sleek, Monochromatic */
 .bento-card {
   @apply rounded-card p-8 transition-all duration-300;
   background-color: var(--card-bg);
-  border: none !important;
+  border: 1px solid var(--card-border);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
 }
 html.dark .bento-card {
@@ -290,12 +288,14 @@ html.dark [class*="text-"], html.dark span, html.dark p, html.dark h1, html.dark
 button, input, select, [class*="btn-"], [class*="badge-"], [class*="chip-"], [class*="pill-"] {
   border-radius: 9999px !important; /* Perfect round capsule/pill shape */
   border-style: solid !important;
+  border-width: 1px !important;
 }
 
 /* Dedicated B2B multiline textareas should be sleek cards, not pills, to prevent text clipping */
 textarea {
   border-radius: 20px !important;
   border-style: solid !important;
+  border-width: 1px !important;
 }
 
 /* Ensure cards and sidebars have robust, perfectly rounded corners */

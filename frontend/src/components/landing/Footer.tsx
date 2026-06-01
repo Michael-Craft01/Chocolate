@@ -17,18 +17,18 @@ export default function Footer() {
              </div>
              <span className="uppercase tracking-tight">HyprLead</span>
            </div>
-           <p className="text-[10px] font-bold text-foreground/50 uppercase tracking-widest max-w-sm leading-relaxed">
+           <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest max-w-sm leading-relaxed">
              Next-generation lead discovery infrastructure. <br />
              Engineered for scaling teams and high-fidelity output.
            </p>
            <div className="flex items-center gap-6 mt-4">
               <div className="flex items-center gap-2">
                  <Activity className="h-3 w-3 text-primary animate-pulse" />
-                 <span className="text-[8px] font-black uppercase tracking-[0.3em] text-foreground/60">Engine: Active</span>
+                 <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white/60">Engine: Active</span>
               </div>
               <div className="flex items-center gap-2">
                  <ShieldCheck className="h-3 w-3 text-emerald-500" />
-                 <span className="text-[8px] font-black uppercase tracking-[0.3em] text-foreground/60">Vault: Secure</span>
+                 <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white/60">Vault: Secure</span>
               </div>
            </div>
         </div>
@@ -37,7 +37,7 @@ export default function Footer() {
            <p className="text-[9px] font-black text-white uppercase tracking-[0.3em] flex items-center gap-2">
              <Cpu className="h-3 w-3 text-primary" /> Protocol
            </p>
-           <div className="flex flex-col gap-3 text-[10px] font-bold text-foreground/50 uppercase tracking-widest">
+           <div className="flex flex-col gap-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">
               <Link href="#" className="hover:text-primary transition-colors flex items-center gap-2 group">
                 Privacy <div className="h-[1px] w-0 group-hover:w-4 bg-primary transition-all" />
               </Link>
@@ -54,7 +54,7 @@ export default function Footer() {
            <p className="text-[9px] font-black text-white uppercase tracking-[0.3em] flex items-center gap-2">
              <Globe className="h-3 w-3 text-primary" /> Systems
            </p>
-           <div className="flex flex-col gap-3 text-[10px] font-bold text-foreground/50 uppercase tracking-widest">
+           <div className="flex flex-col gap-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">
               <Link href="/dashboard" className="hover:text-primary transition-colors flex items-center gap-2 group">
                 Dashboard <div className="h-[1px] w-0 group-hover:w-4 bg-primary transition-all" />
               </Link>
@@ -71,10 +71,10 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 mt-24 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[8px] font-black text-foreground/40 uppercase tracking-[0.4em]">
+      <div className="max-w-7xl mx-auto px-8 mt-24 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[8px] font-black text-white/40 uppercase tracking-[0.4em]">
          <div className="flex items-center gap-4">
            <span>© 2026 HyprLead Global</span>
-           <span className="text-foreground/20">|</span>
+           <span className="text-white/20">|</span>
            <span>v2.4.1-STABLE</span>
          </div>
          <div className="flex items-center gap-2">

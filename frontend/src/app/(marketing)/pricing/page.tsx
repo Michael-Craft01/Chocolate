@@ -23,7 +23,7 @@ export default function PricingPage() {
         "CSV Data Export",
       ],
       cta: "Choose Plan",
-      color: "border-white/10"
+      color: ""
     },
     {
       name: "Standard",
@@ -37,7 +37,7 @@ export default function PricingPage() {
         "Priority Support",
       ],
       cta: "Choose Plan",
-      color: "border-white/20"
+      color: ""
     },
     {
       name: "Pro",
@@ -58,37 +58,39 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="bg-black min-h-screen selection:bg-primary/30">
+    <div className="bg-background text-foreground min-h-screen selection:bg-primary/30 transition-colors duration-500 relative overflow-hidden">
       <Navbar />
       
-      {/* Background Blobs (Reference Image 2) */}
-      <div className="bg-blob bg-blue top-[10%] left-[20%] opacity-10" />
-      <div className="bg-blob bg-primary bottom-[20%] right-[10%] opacity-10" />
+      {/* Background Blobs */}
+      <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-blue/10 dark:bg-blue/5 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse-slow" />
+      <div className="absolute bottom-[20%] right-[10%] w-[600px] h-[600px] bg-primary/10 dark:bg-primary/5 rounded-full blur-[150px] pointer-events-none -z-10 animate-pulse-slow" />
 
-      <section className="relative pt-48 pb-32 overflow-hidden px-6">
+      <section className="relative pt-48 pb-32 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20 space-y-6">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-7xl md:text-9xl font-bold tracking-[-0.06em] text-white leading-none"
+              className="text-display tracking-tight font-black leading-none text-foreground text-7xl md:text-9xl"
             >
               Pricing
             </motion.h1>
             
-            {/* Toggle (Reference Image 2) */}
+            {/* Toggle */}
             <div className="flex items-center justify-center gap-4 mt-12">
-               <span className={`text-sm font-bold ${!isYearly ? 'text-white' : 'text-zinc-500'}`}>Monthly</span>
+               <span className={`text-sm font-bold ${!isYearly ? 'text-foreground' : 'text-foreground/50'}`}>Monthly</span>
                <button 
                 onClick={() => setIsYearly(!isYearly)}
-                className="w-14 h-7 rounded-full bg-white/10 border border-white/10 p-1 flex items-center transition-all"
+                className={`w-14 h-7 rounded-full border p-1 flex items-center transition-all cursor-pointer ${
+                  isYearly ? 'bg-primary/20 border-primary/30' : 'bg-foreground/10 border-card-border'
+                }`}
                >
                   <motion.div 
                     animate={{ x: isYearly ? 28 : 0 }}
-                    className="h-5 w-5 rounded-full bg-white shadow-lg"
+                    className={`h-5 w-5 rounded-full shadow-lg ${isYearly ? 'bg-primary' : 'bg-foreground'}`}
                   />
                </button>
-               <span className={`text-sm font-bold ${isYearly ? 'text-white' : 'text-zinc-500'}`}>Yearly</span>
+               <span className={`text-sm font-bold ${isYearly ? 'text-foreground' : 'text-foreground/50'}`}>Yearly</span>
             </div>
           </div>
 
@@ -99,7 +101,7 @@ export default function PricingPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className={`glass-morphism p-10 rounded-[32px] flex flex-col ${plan.color} relative overflow-hidden group`}
+                className={`bento-card p-10 flex flex-col ${plan.color} relative overflow-hidden group`}
               >
                 {plan.popular && (
                   <div className="absolute top-0 right-0 p-8">
@@ -107,27 +109,34 @@ export default function PricingPage() {
                   </div>
                 )}
 
-                <div className="space-y-2 mb-10">
-                   <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+                <div className="space-y-2 mb-10 text-left">
+                   <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
                    <div className="flex items-baseline gap-1">
-                      <span className="text-5xl font-bold text-white tracking-tighter">{plan.price}</span>
-                      <span className="text-zinc-500 font-bold text-sm">/m</span>
+                      <span className="text-5xl font-bold text-foreground tracking-tighter">{plan.price}</span>
+                      <span className="text-foreground/50 font-bold text-sm">/m</span>
                    </div>
-                   <p className="text-zinc-500 text-sm font-medium leading-relaxed">{plan.description}</p>
+                   <p className="text-foreground/60 text-xs font-semibold leading-relaxed">{plan.description}</p>
                 </div>
 
-                <div className="space-y-5 mb-12 flex-grow">
+                <div className="space-y-5 mb-12 flex-grow text-left">
                    {plan.features.map((feature, j) => (
-                     <div key={j} className="flex items-start gap-3">
-                        <div className="h-5 w-5 rounded-full bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
-                           <Check className="h-3 w-3 text-white" />
+                     <div key={j} className="flex items-start gap-3 text-xs font-semibold text-foreground/80 leading-relaxed">
+                        <div className="h-5 w-5 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 mt-0.5 text-primary">
+                           <Check className="h-3 w-3 text-primary" />
                         </div>
-                        <span className="text-sm font-medium text-zinc-300">{feature}</span>
+                        <span>{feature}</span>
                      </div>
                    ))}
                 </div>
 
-                <Link href="/signup" className="btn-pill-white w-full">
+                <Link 
+                  href="/signup" 
+                  className={`w-full h-12 flex items-center justify-center rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                    plan.popular
+                      ? "btn-pill-white !bg-primary hover:!bg-primary-hover !text-white !border-primary hover:!border-primary-hover"
+                      : "btn-pill-glass !bg-foreground/5 hover:!bg-foreground/10 !text-foreground !border-card-border"
+                  }`}
+                >
                    {plan.cta}
                 </Link>
               </motion.div>
@@ -137,7 +146,7 @@ export default function PricingPage() {
       </section>
 
       {/* Trust Section */}
-      <section className="py-32 border-t border-white/5 relative bg-black/50 backdrop-blur-md">
+      <section className="py-32 border-t border-card-border relative bg-card/25 backdrop-blur-md text-left">
          <div className="max-w-7xl mx-auto px-6">
             <div className="grid md:grid-cols-4 gap-12">
                {[
@@ -147,11 +156,11 @@ export default function PricingPage() {
                  { icon: Database, title: "Data Integrity", desc: "Verified business contact information only." },
                ].map((item, i) => (
                  <div key={i} className="space-y-4">
-                    <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                       <item.icon className="h-5 w-5 text-white" />
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                       <item.icon className="h-5 w-5 text-primary" />
                     </div>
-                    <h4 className="text-sm font-bold text-white uppercase tracking-widest">{item.title}</h4>
-                    <p className="text-xs text-zinc-500 leading-relaxed font-medium">{item.desc}</p>
+                    <h4 className="text-xs font-black text-foreground uppercase tracking-widest">{item.title}</h4>
+                    <p className="text-xs text-foreground/60 leading-relaxed font-semibold">{item.desc}</p>
                  </div>
                ))}
             </div>

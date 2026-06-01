@@ -258,7 +258,7 @@ export function Sidebar() {
               className="h-full w-full object-contain"
             />
           </div>
-          {!isCollapsed && <span className="text-foreground tracking-tight font-black text-sm">HyprLead</span>}
+          {!isCollapsed && <span className="text-foreground tracking-tight font-black text-base">HyprLead</span>}
         </Link>
       </div>
 
@@ -276,7 +276,7 @@ export function Sidebar() {
                 "group flex items-center transition-all duration-300",
                 isCollapsed 
                   ? "justify-center h-10 w-10 mx-auto px-0 rounded-full" 
-                  : "gap-3 px-4 py-2 text-xs font-semibold rounded-full",
+                  : "gap-3 px-4 py-2.5 text-sm font-semibold rounded-full",
                 isActive 
                   ? "bg-primary text-white shadow-md shadow-primary/10 border border-primary/20"
                   : "text-foreground hover:bg-card hover:border-card-border border border-transparent"
@@ -295,7 +295,7 @@ export function Sidebar() {
             <div className="flex items-center justify-between relative">
               <div className="space-y-0.5">
                 <p className="text-xs font-semibold text-foreground opacity-60">Subscription</p>
-                <p className="text-xs font-bold tracking-tight text-foreground">{isFree ? "Free Access" : `${stats?.tier} Plan`}</p>
+                <p className="text-sm font-bold tracking-tight text-foreground">{isFree ? "Free Access" : `${stats?.tier} Plan`}</p>
               </div>
               <div className={cn(
                 "h-2 w-2 rounded-full",
@@ -319,7 +319,7 @@ export function Sidebar() {
             </div>
 
             {isFree && (
-              <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-full bg-primary text-white text-xs font-bold hover:brightness-110 transition-all relative group shadow-md shadow-primary/10">
+              <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-full bg-primary text-white text-sm font-bold hover:brightness-110 transition-all relative group shadow-md shadow-primary/10">
                 Upgrade Now
                 <ArrowRight className="h-3 w-3 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -340,7 +340,7 @@ export function Sidebar() {
             "flex items-center rounded-full transition-all hover:bg-card border border-transparent hover:border-card-border group text-foreground w-full",
             isCollapsed 
               ? "justify-center h-10 w-10 mx-auto mt-2" 
-              : "gap-3 px-4 py-2 mt-2 text-xs font-semibold"
+              : "gap-3 px-4 py-2 mt-2 text-sm font-semibold"
           )}
         >
           {theme === "dark" ? (
@@ -350,14 +350,14 @@ export function Sidebar() {
           )}
           {!isCollapsed && (theme === "dark" ? "Light Mode" : "Dark Mode")}
         </button>
-
+ 
         <button 
           onClick={handleSignOut}
           className={cn(
             "flex items-center rounded-full transition-all hover:bg-card border border-transparent hover:border-card-border group text-foreground w-full", 
             isCollapsed 
               ? "justify-center h-10 w-10 mx-auto mt-2" 
-              : "gap-3 px-4 py-2 mt-1 text-xs font-semibold"
+              : "gap-3 px-4 py-2 mt-1 text-sm font-semibold"
           )}
         >
           <LogOut className="h-4 w-4 group-hover:translate-x-0.5 transition-transform shrink-0" />
