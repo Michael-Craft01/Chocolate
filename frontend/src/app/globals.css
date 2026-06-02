@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss";
 
 @theme {
   --color-background: var(--background);
@@ -10,61 +10,45 @@
   --color-border-muted: var(--border-muted);
   --color-card-border: var(--card-border);
   
-  --color-primary: #10b981; /* Emerald Green from the reference */
+  --color-primary: #10b981;
   --color-primary-hover: #059669;
   --color-orange: #ff6d29;
   --color-blue: #3b82f6;
   
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --radius-pill: 9999px;
-  --radius-card: 32px;
-  --letter-spacing-tightest: -0.06em;
-  --animate-spin-slow: spin 12s linear infinite;
-  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --radius-card: 12px;
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
-  --card-bg: #f9f9fb;
-  --card-border: #e4e4e7;
-  --sidebar-bg: #f4f4f5;
-  --text-muted: #000000;
-  --text-secondary: #000000;
-  --border-muted: #e4e4e7;
-  --card-hover-border: #d4d4d8;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --sidebar-bg: #ffffff;
+  --text-muted: #64748b;
+  --text-secondary: #475569;
+  --border-muted: #e2e8f0;
+  --card-hover-border: #cbd5e1;
   --primary: #10b981;
 }
 
 html.dark {
-  --background: #000000;
-  --foreground: #ffffff;
-  --card-bg: #080808;
-  --card-border: #27272a;
-  --sidebar-bg: #060606;
-  --text-muted: #ffffff;
-  --text-secondary: #ffffff;
-  --border-muted: #18181b;
-  --card-hover-border: #3f3f46;
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --sidebar-bg: #0f172a;
+  --text-muted: #94a3b8;
+  --text-secondary: #cbd5e1;
+  --border-muted: #334155;
+  --card-hover-border: #475569;
 }
-
-
 
 @layer base {
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/30 overflow-x-hidden;
     background-color: var(--background);
-  }
-
-  /* --- NEURAL BRANDING --- */
-  @keyframes neural-pulse {
-    0% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(59, 130, 246, 0)); }
-    50% { transform: scale(1.05); filter: drop-shadow(0 0 25px rgba(139, 92, 246, 0.5)); }
-    100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(59, 130, 246, 0)); }
-  }
-
-  .animate-neural {
-    animation: neural-pulse 6s ease-in-out infinite;
   }
 
   /* --- NEURAL IMMERSION --- */
@@ -166,7 +150,7 @@ html.dark .bento-card {
 }
 
 .btn-pill-glass {
-  @apply h-11 px-6 rounded-full bg-white/5 border border-white/5 text-white font-bold text-xs transition-all hover:bg-white/10 active:scale-98 flex items-center justify-center gap-2;
+  @apply h-11 px-6 rounded-full bg-white/5 text-white font-bold text-xs transition-all hover:bg-white/10 active:scale-98 flex items-center justify-center gap-2;
 }
 
 /* Gridded Background */
@@ -237,6 +221,16 @@ html.dark .bento-card {
   background: transparent;
 }
 
+
+/* --- TELEMETRY SCROLLBAR --- */
+.scrollbar-neural::-webkit-scrollbar {
+  width: 3px;
+}
+
+.scrollbar-neural::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .scrollbar-neural::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.03);
   border-radius: 4px;
@@ -244,19 +238,6 @@ html.dark .bento-card {
 
 .scrollbar-neural:hover::-webkit-scrollbar-thumb {
   background: #10b981;
-}
-
-/* Global Overrides to turn all gray text into pure white in dark mode and solid black in light mode, with 100% opacity */
-.text-zinc-100, .text-zinc-200, .text-zinc-300, .text-zinc-400, .text-zinc-500, .text-zinc-600, .text-zinc-700, .text-zinc-800, .text-zinc-900, .text-zinc-950,
-.text-gray-100, .text-gray-200, .text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900, .text-gray-950,
-.text-slate-100, .text-slate-200, .text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600, .text-slate-700, .text-slate-800, .text-slate-900, .text-slate-950,
-[class*="text-zinc-"], [class*="text-gray-"], [class*="text-slate-"] {
-  color: var(--foreground) !important;
-}
-
-/* Force 100% opacity on all text to eliminate any gray opacity washes in dark mode */
-html.dark [class*="text-"], html.dark span, html.dark p, html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
-  opacity: 1 !important;
 }
 
 /* Retain primary green coloring for green accents and orange for highlight */
@@ -276,36 +257,16 @@ html.dark [class*="text-"], html.dark span, html.dark p, html.dark h1, html.dark
   color: #000000 !important;
 }
 
-/* Prevent microscopic text size; force small text (12px / 14px) on anticipated xsmall text */
-.text-\[8px\], .text-\[9px\], .text-\[10px\], [class*="text-[8px]"], [class*="text-[9px]"], [class*="text-[10px]"] {
-  font-size: 0.75rem !important; /* 12px / text-xs */
-}
-.text-\[11px\], [class*="text-[11px]"] {
-  font-size: 0.875rem !important; /* 14px / text-sm */
-}
-
-/* Force solid borders and perfectly rounded capsule/pill controls globally on interactive components (buttons, input fields, select items, chips, badges) */
-button, input, select, [class*="btn-"], [class*="badge-"], [class*="chip-"], [class*="pill-"] {
-  border-radius: 9999px !important; /* Perfect round capsule/pill shape */
-  border-style: solid !important;
-  border-width: 1px !important;
-}
-
 /* Dedicated B2B multiline textareas should be sleek cards, not pills, to prevent text clipping */
 textarea {
-  border-radius: 20px !important;
+  border-radius: 8px !important;
   border-style: solid !important;
   border-width: 1px !important;
 }
 
-/* Ensure cards and sidebars have robust, perfectly rounded corners */
+/* Ensure cards have soft, clean rounded corners */
 .rounded-card, [class*="rounded-card"] {
-  border-radius: 32px !important; /* Rich, perfectly rounded rectangle */
-}
-
-/* Flawless Premium Hover Transitions & Interactive Scaling */
-button, a, [role="button"], .bento-card, input, select, textarea {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border-radius: 12px !important;
 }
 
 /* Bento Card Hover lift & soft organic ambient shadows */
@@ -335,6 +296,3 @@ input:focus, select:focus, textarea:focus {
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 1px var(--primary) !important;
 }
-
-
-

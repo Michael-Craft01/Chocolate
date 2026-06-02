@@ -72,8 +72,7 @@ export function SheetContent({
               className
             )}
           >
-            <button 
-              onClick={() => setOpen(false)}
+            <button onClick={() => setOpen(false)}
               className="absolute top-6 right-6 h-10 w-10 rounded-sm bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
             >
               <X size={20} />

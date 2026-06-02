@@ -86,8 +86,7 @@ function LoginForm() {
       )}
 
       <div className="grid grid-cols-1 gap-4">
-         <button 
-           onClick={() => handleSocialLogin('google')}
+         <button onClick={() => handleSocialLogin('google')}
            disabled={socialLoading || loading}
            className="btn-pill-glass w-full h-14 gap-3 group/google"
          >
@@ -140,10 +139,7 @@ function LoginForm() {
           </div>
         </div>
 
-        <button 
-          disabled={loading || socialLoading}
-          className="btn-pill-white w-full h-14 group/submit"
-        >
+        <button disabled={loading || socialLoading} className="btn-pill-white w-full h-14 group/submit" >
           {loading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (

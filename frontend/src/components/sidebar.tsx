@@ -135,16 +135,16 @@ export function Sidebar() {
     return () => clearInterval(interval);
   }, []);
 
-  const dailyLimit = stats?.quota?.limit || 10;
-  const leadUsage = stats?.quota?.used || 0;
-  const usagePercent = Math.min(100, (leadUsage / dailyLimit) * 100);
+  const cycleLimit = stats?.cycles?.monthlyLimit || 0;
+  const cyclesRemaining = stats?.cycles?.remaining || 0;
+  const cyclesUsed = stats?.cycles?.usedThisPeriod || Math.max(0, cycleLimit - cyclesRemaining);
+  const usagePercent = cycleLimit ? Math.min(100, (cyclesUsed / cycleLimit) * 100) : 0;
   const isFree = !stats?.tier || stats?.tier === 'FREE';
 
   return (
     <>
       {/* Mobile Toggle Button */}
-      <button 
-        onClick={() => setMobileOpen(true)}
+      <button onClick={() => setMobileOpen(true)}
         className="md:hidden fixed bottom-8 right-8 h-16 w-16 rounded-full bg-primary text-white flex items-center justify-center z-[100] shadow-2xl active:scale-95 transition-all border border-card-border"
       >
         <Compass className={cn("h-7 w-7", mobileOpen && "animate-spin")} />
@@ -197,8 +197,8 @@ export function Sidebar() {
                           className={cn(
                             "flex items-center gap-4 px-6 py-3 rounded-full text-sm font-semibold transition-all",
                             isActive 
-                              ? "bg-primary text-white shadow-md shadow-primary/10 border border-primary/20" 
-                              : "text-foreground hover:bg-card hover:border-card-border border border-transparent"
+                              ? "bg-primary text-white shadow-md shadow-primary/10" 
+                              : "text-foreground hover:bg-card"
                           )}
                         >
                           <Icon className="h-5 w-5" />
@@ -209,10 +209,7 @@ export function Sidebar() {
                   </nav>
 
                   <div className="p-6 border-t border-card-border">
-                    <button 
-                      onClick={handleSignOut}
-                      className="flex w-full items-center gap-4 px-6 py-3 text-foreground text-sm font-semibold hover:bg-card rounded-full border border-transparent hover:border-card-border transition-colors"
-                    >
+                    <button onClick={handleSignOut} className="flex w-full items-center gap-4 px-6 py-3 text-foreground text-sm font-semibold hover:bg-card rounded-full transition-colors" >
                       <LogOut className="h-5 w-5" />
                       Sign Out
                     </button>
@@ -231,10 +228,7 @@ export function Sidebar() {
         style={{ width: isCollapsed ? '80px' : `${width}px` }}
       >
       {/* Collapse Toggle */}
-      <button 
-        onClick={toggleCollapse}
-        className="absolute -right-3 top-10 h-6 w-6 rounded-full bg-card border border-card-border flex items-center justify-center z-[60] shadow-md hover:scale-110 transition-transform active:scale-95 text-foreground"
-      >
+      <button onClick={toggleCollapse} className="absolute -right-3 top-10 h-6 w-6 rounded-full bg-card flex items-center justify-center z-[60] shadow-md hover:scale-110 transition-transform active:scale-95 text-foreground" >
         <ChevronRight className={cn("h-3 w-3 transition-transform duration-500", isCollapsed ? "" : "rotate-180")} />
       </button>
 
@@ -278,8 +272,8 @@ export function Sidebar() {
                   ? "justify-center h-10 w-10 mx-auto px-0 rounded-full" 
                   : "gap-3 px-4 py-2.5 text-sm font-semibold rounded-full",
                 isActive 
-                  ? "bg-primary text-white shadow-md shadow-primary/10 border border-primary/20"
-                  : "text-foreground hover:bg-card hover:border-card-border border border-transparent"
+                  ? "bg-primary text-white shadow-md shadow-primary/10"
+                  : "text-foreground hover:bg-card"
               )}
             >
               <Icon className={cn("h-4 w-4 transition-transform duration-500 shrink-0", isActive ? "scale-110 text-white" : "group-hover:scale-110 text-foreground")} />
@@ -305,8 +299,8 @@ export function Sidebar() {
             
             <div className="space-y-2 relative">
               <div className="flex justify-between text-xs font-semibold text-foreground opacity-60">
-                <span>Usage</span>
-                <span className="text-foreground font-bold">{leadUsage} / {dailyLimit}</span>
+                <span>Cycles</span>
+                <span className="text-foreground font-bold">{cyclesRemaining} left</span>
               </div>
               <div className="h-1.5 w-full bg-border-muted rounded-full overflow-hidden">
                 <motion.div 
@@ -334,15 +328,7 @@ export function Sidebar() {
           </div>
         )}
 
-        <button 
-          onClick={toggleTheme}
-          className={cn(
-            "flex items-center rounded-full transition-all hover:bg-card border border-transparent hover:border-card-border group text-foreground w-full",
-            isCollapsed 
-              ? "justify-center h-10 w-10 mx-auto mt-2" 
-              : "gap-3 px-4 py-2 mt-2 text-sm font-semibold"
-          )}
-        >
+        <button onClick={toggleTheme} className={cn( "flex items-center rounded-full transition-all hover:bg-card group text-foreground w-full", isCollapsed ? "justify-center h-10 w-10 mx-auto mt-2" : "gap-3 px-4 py-2 mt-2 text-sm font-semibold" )} >
           {theme === "dark" ? (
             <Sun className="h-4 w-4 text-amber-500 shrink-0" />
           ) : (
@@ -351,15 +337,7 @@ export function Sidebar() {
           {!isCollapsed && (theme === "dark" ? "Light Mode" : "Dark Mode")}
         </button>
  
-        <button 
-          onClick={handleSignOut}
-          className={cn(
-            "flex items-center rounded-full transition-all hover:bg-card border border-transparent hover:border-card-border group text-foreground w-full", 
-            isCollapsed 
-              ? "justify-center h-10 w-10 mx-auto mt-2" 
-              : "gap-3 px-4 py-2 mt-1 text-sm font-semibold"
-          )}
-        >
+        <button onClick={handleSignOut} className={cn( "flex items-center rounded-full transition-all hover:bg-card group text-foreground w-full", isCollapsed ? "justify-center h-10 w-10 mx-auto mt-2" : "gap-3 px-4 py-2 mt-1 text-sm font-semibold" )} >
           <LogOut className="h-4 w-4 group-hover:translate-x-0.5 transition-transform shrink-0" />
           {!isCollapsed && "Sign Out"}
         </button>

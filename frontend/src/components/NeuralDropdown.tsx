@@ -42,24 +42,22 @@ export function NeuralDropdown({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
   return (
     <div className={cn("relative inline-block", className)} ref={dropdownRef}>
       {/* TRIGGER */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
+      <button onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "h-10 px-4 rounded-sm bg-white/[0.03] border border-white/10 flex items-center gap-3 hover:border-primary/40 transition-all group",
-          isOpen && "border-primary/60 bg-white/[0.05]"
+          "h-10 px-4 rounded-lg bg-card border border-card-border flex items-center gap-3 hover:border-card-hover-border transition-all group",
+          isOpen && "border-primary/60 bg-card"
         )}
       >
         {icon && <span className="text-zinc-500 group-hover:text-primary transition-colors">{icon}</span>}
-        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">
+        <span className="text-xs font-semibold text-foreground/80 transition-colors">
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown 
           className={cn(
-            "h-3.5 w-3.5 text-zinc-600 group-hover:text-primary transition-all duration-300",
+            "h-3.5 w-3.5 text-zinc-550 group-hover:text-primary transition-all duration-300",
             isOpen && "rotate-180 text-primary"
           )} 
         />
@@ -73,24 +71,22 @@ export function NeuralDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute left-0 mt-2 min-w-[200px] bg-[#0A0A0B] border border-white/10 rounded-sm overflow-hidden z-[100] shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            className="absolute left-0 mt-2 min-w-[200px] bg-card border border-card-border rounded-lg overflow-hidden z-[100] shadow-lg"
           >
             <div className="max-h-64 overflow-y-auto custom-scrollbar">
               {options.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => {
+                <button key={option.value} onClick={() => {
                     onChange(option.value);
                     setIsOpen(false);
                   }}
                   className={cn(
-                    "w-full px-5 py-3.5 text-left flex items-center justify-between group/item transition-all",
-                    value === option.value ? "bg-primary/10" : "hover:bg-white/5"
+                    "w-full px-5 py-3 text-left flex items-center justify-between group/item transition-all",
+                    value === option.value ? "bg-primary/10" : "hover:bg-foreground/5"
                   )}
                 >
                   <span className={cn(
-                    "text-[10px] font-black uppercase tracking-widest transition-colors",
-                    value === option.value ? "text-primary" : "text-zinc-400 group-hover/item:text-white"
+                    "text-xs font-medium transition-colors",
+                    value === option.value ? "text-primary font-semibold" : "text-foreground/80 group-hover/item:text-foreground"
                   )}>
                     {option.label}
                   </span>
@@ -107,9 +103,6 @@ export function NeuralDropdown({
                 </button>
               ))}
             </div>
-            
-            {/* Neural Accent Line */}
-            <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-50" />
           </motion.div>
         )}
       </AnimatePresence>

@@ -122,7 +122,7 @@ export default function EnginePage() {
             <h1 className="text-display">
               Automated <br /> <span className="text-primary">Discovery Engine.</span>
             </h1>
-            <p className="max-w-xl mx-auto text-foreground/80 text-xs font-semibold leading-relaxed">The high-performance scouting infrastructure powering every B2B pipeline sweep. Engineered for extreme speed, DNS verification, and complete market coverage.</p>
+            <p className="max-w-xl mx-auto text-foreground/80 text-xs font-semibold leading-relaxed">The high-performance scouting infrastructure powering every B2B discovery cycle. Engineered for bounded runs, verification, and complete market coverage.</p>
           </motion.div>
 
           <motion.div
@@ -141,7 +141,7 @@ export default function EnginePage() {
       <section className="py-24 max-w-7xl mx-auto px-6">
          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-               { icon: Search, title: "Deep Scan Discovery", desc: "Our system sweeps business registration directories, Google Maps hubs, and corporate portals in parallel for fresh accounts.", color: "text-primary" },
+               { icon: Search, title: "Deep Scan Discovery", desc: "Each cycle scans business registration directories, Google Maps hubs, and corporate portals in parallel for fresh accounts.", color: "text-primary" },
                { icon: Brain, title: "Neural Pain Analysis", desc: "Built-in HyprLead AI logic cores analyze websites to discover current technical challenges and active business hurdles.", color: "text-primary" },
                { icon: Shield, title: "SMTP Credentials Validation", desc: "Direct handshakes confirm SMTP and DNS health to verify actual mailbox availability, ensuring zero bounce ratios.", color: "text-primary" },
                { icon: Zap, title: "Instant Opener Dispatch", desc: "Pre-written, highly persuasive outreach openers targeting actual pain points are instantly mapped to your dashboard feed.", color: "text-primary" },
@@ -168,7 +168,7 @@ export default function EnginePage() {
             <div className="space-y-12">
                <div className="space-y-4">
                   <h2 className="text-4xl font-extrabold text-foreground leading-tight">Operational <br /> <span className="text-primary">Infrastructure.</span></h2>
-                  <p className="text-foreground/75 text-xs font-semibold leading-relaxed">Industrial-grade stability for global lead discovery. Built to scale from 100 to 100,000+ sweeps daily without performance degradation or API limits.</p>
+                  <p className="text-foreground/75 text-xs font-semibold leading-relaxed">Industrial-grade stability for global lead discovery. Built around scheduled, bounded cycles that control cost and protect quality.</p>
                </div>
                
                <div className="space-y-10">
@@ -199,7 +199,7 @@ export default function EnginePage() {
                   Get Started Now
                   <ArrowRight className="h-4 w-4" />
                </Link>
-               <Link href="/pricing" className="btn-pill-glass h-14 px-10 flex items-center gap-2 border border-card-border hover:bg-card-border/50 text-foreground cursor-pointer text-xs font-black uppercase tracking-widest">
+               <Link href="/pricing" className="h-14 px-10 rounded-full bg-white/5 flex items-center gap-2 hover:bg-white/10 text-foreground cursor-pointer text-xs font-black uppercase tracking-widest transition-all active:scale-98">
                   View Plans
                </Link>
             </div>

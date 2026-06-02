@@ -51,8 +51,7 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
         </div>
 
         <div className="flex items-center gap-3">
-           <button
-             onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
+           <button onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
              className="h-8 w-8 rounded-sm bg-white/5 hover:bg-red-500/10 flex items-center justify-center text-zinc-600 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
            >
              <Trash2 className="h-4 w-4" />
@@ -129,8 +128,7 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
                          Chat on WhatsApp
                       </a>
                     )}
-                    <button
-                      onClick={() => copyFullIntel(lead)}
+                    <button onClick={() => copyFullIntel(lead)}
                       className={`h-11 rounded-sm font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
                         copiedId === lead.id ? "bg-blue-500 text-white" : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
                       }`}
@@ -142,7 +140,7 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
                       <a
                         href={lead.business.website}
                         target="_blank"
-                        className="h-10 rounded-sm bg-white/[0.03] border border-white/5 text-zinc-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center hover:bg-white/10 hover:text-white transition-all gap-2"
+                        className="h-10 rounded-sm bg-white/[0.03] text-zinc-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center hover:bg-white/10 hover:text-white transition-all gap-2"
                       >
                          Visit Website
                          <ExternalLink className="h-3 w-3" />

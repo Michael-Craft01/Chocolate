@@ -72,8 +72,7 @@ export default function NewCampaignPage() {
         <div className="min-h-screen bg-[#070707] text-white p-6 md:p-12 pb-32 font-sans selection:bg-primary/20">
             <div className="max-w-4xl mx-auto space-y-12">
                 <div className="flex items-center justify-between">
-                    <button 
-                        onClick={() => router.back()}
+                    <button onClick={() => router.back()}
                         className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group"
                     >
                         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />

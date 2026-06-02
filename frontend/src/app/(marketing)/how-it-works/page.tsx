@@ -25,13 +25,13 @@ const STEPS = [
   },
   {
     number: "02",
-    title: "Continuous Scout Scrapes",
+    title: "Scheduled Scout Cycles",
     icon: Search,
     badge: "AUTONOMOUS SWEEP",
     desc: "High-speed scouting nodes crawl Google Maps, local business registries, and industry portals in parallel. Scrapers run safely behind high-density proxy rotation to safely map fresh listings.",
     details: [
       "Real-time geographical mapping of localized business footprints.",
-      "Proxy-rotated extraction ensuring complete, continuous scrapers scans.",
+      "Proxy-rotated extraction inside bounded discovery cycles.",
       "Auto-filtering of duplicates and irrelevant listings."
     ]
   },
@@ -115,9 +115,7 @@ export default function HowItWorksPage() {
                 const Icon = step.icon;
                 const isActive = activeStep === idx;
                 return (
-                  <button
-                    key={step.number}
-                    onClick={() => setActiveStep(idx)}
+                  <button key={step.number} onClick={() => setActiveStep(idx)}
                     id={`step-btn-${idx}`}
                     className={`w-full p-5 rounded-[24px] border text-left transition-all duration-300 flex items-center justify-between gap-4 cursor-pointer hover:scale-[1.01] ${
                       isActive 
@@ -192,8 +190,7 @@ export default function HowItWorksPage() {
                     <span className="text-[10px] font-bold text-foreground/40 uppercase tracking-wider">
                       Automated Sales Loop System
                     </span>
-                    <button 
-                      onClick={() => setActiveStep(prev => (prev + 1) % STEPS.length)}
+                    <button onClick={() => setActiveStep(prev => (prev + 1) % STEPS.length)}
                       id="next-step-btn"
                       className="h-9 px-5 rounded-full bg-primary text-white font-black text-[10px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 shadow-md cursor-pointer border border-primary/10"
                     >
@@ -225,7 +222,7 @@ export default function HowItWorksPage() {
                 {
                   icon: Database,
                   title: "$0.00 Scrape Extract Cost",
-                  desc: "Stop buying credits for stale contacts. Our continuous crawler nodes directly scan directories and active search listings to compile fully qualified, fresh leads from scratch.",
+                  desc: "Stop buying stale contacts. Our scheduled discovery cycles scan directories and active search listings to compile fully qualified, fresh leads from scratch.",
                   saving: "Saves $400+/mo on databases"
                 },
                 {
@@ -278,7 +275,7 @@ export default function HowItWorksPage() {
                 Launch Outbound Engine
                 <ArrowRight className="h-4 w-4" />
              </Link>
-             <Link href="/pricing" id="cta-pricing" className="h-12 px-8 rounded-full border border-card-border bg-foreground/[0.03] hover:bg-foreground/[0.06] text-foreground font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all">
+             <Link href="/pricing" id="cta-pricing" className="h-12 px-8 rounded-full bg-foreground/[0.03] hover:bg-foreground/[0.06] text-foreground font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all">
                 View Pricing
              </Link>
           </div>

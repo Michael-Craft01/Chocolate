@@ -8,8 +8,8 @@ export type PaymentMethod = 'STRIPE' | 'PAYNOW';
 
 interface CheckoutOptions {
     userId: string;
-    tier: 'STARTER' | 'PROFESSIONAL' | 'ELITE' | 'CREDIT';
-    amount?: number; // Used for credit top-ups
+    tier: 'STARTER' | 'PROFESSIONAL' | 'ELITE' | 'CYCLE_PACK';
+    amount?: number; // Used for cycle packs
 }
 
 class PaymentService {
@@ -51,16 +51,16 @@ class PaymentService {
                     price_data: {
                         currency: 'usd',
                         product_data: {
-                            name: options.tier === 'CREDIT' ? 'Discovery Credits' : `HyprLead Lead Engine - ${options.tier} Plan`,
-                            description: options.tier === 'CREDIT' ? `Top up ${options.amount} credits` : `Monthly subscription to ${options.tier} tier`,
+                            name: options.tier === 'CYCLE_PACK' ? 'Discovery Cycle Pack' : `HyprLead Lead Engine - ${options.tier} Plan`,
+                            description: options.tier === 'CYCLE_PACK' ? `Add ${Math.max(1, Math.floor((options.amount || 0) / 2))} discovery cycles` : `Monthly subscription to ${options.tier} tier`,
                         },
                         unit_amount: price * 100,
-                        recurring: options.tier !== 'CREDIT' ? { interval: 'month' } : undefined,
+                        recurring: options.tier !== 'CYCLE_PACK' ? { interval: 'month' } : undefined,
                     },
                     quantity: 1,
                 },
             ],
-            mode: options.tier !== 'CREDIT' ? 'subscription' : 'payment',
+            mode: options.tier !== 'CYCLE_PACK' ? 'subscription' : 'payment',
             success_url: `${config.FRONTEND_URL}/billing?success=true`,
             cancel_url: `${config.FRONTEND_URL}/billing?canceled=true`,
             metadata: {
@@ -98,8 +98,8 @@ class PaymentService {
                         userId: options.userId,
                         amount: price,
                         gateway: 'PAYNOW',
-                        type: options.tier === 'CREDIT' ? 'CREDIT_TOPUP' : 'SUBSCRIPTION',
-                        tier: options.tier === 'CREDIT' ? null : options.tier as any,
+                        type: options.tier === 'CYCLE_PACK' ? 'CYCLE_PACK' : 'SUBSCRIPTION',
+                        tier: options.tier === 'CYCLE_PACK' ? null : options.tier as any,
                         gatewayRef: response.pollUrl,
                         status: 'PENDING',
                     }

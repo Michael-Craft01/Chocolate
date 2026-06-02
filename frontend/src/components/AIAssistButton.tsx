@@ -40,16 +40,7 @@ export function AIAssistButton({ field, currentValue, context, onRefined, classN
   };
 
   return (
-    <button
-      onClick={handleRefine}
-      disabled={loading}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-widest transition-all ${
-        success 
-          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
-          : "bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 hover:border-primary/20"
-      } ${className}`}
-      title="Refine with AI"
-    >
+    <button onClick={handleRefine} disabled={loading} className={`flex items-center gap-2 px-3 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-widest transition-all ${ success ? "bg-emerald-500/10 text-emerald-400 " : "bg-primary/5 text-primary hover:bg-primary/10 " } ${className}`} title="Refine with AI" >
       {loading ? (
         <Loader2 size={12} className="animate-spin" />
       ) : success ? (

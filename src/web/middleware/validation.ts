@@ -31,8 +31,8 @@ export const campaignStatusSchema = z.object({
 // Billing Checkout Schema
 export const billingSchema = z.object({
   method: z.enum(['STRIPE', 'PAYNOW']),
-  tier: z.enum(['STARTER', 'PROFESSIONAL', 'ELITE', 'CREDIT']),
-  amount: z.number().optional(), // For credit topups
+  tier: z.enum(['STARTER', 'PROFESSIONAL', 'ELITE', 'CYCLE_PACK']),
+  amount: z.number().optional(), // For cycle packs
 });
 
 export const settingsSchema = z.object({
@@ -51,6 +51,8 @@ export const settingsSchema = z.object({
   locations: z.array(z.string()).default(['Harare']),
   industries: z.array(z.string()).default(['Business']),
   discordWebhook: z.string().url().or(z.literal('')).optional().nullable(),
+  automationMode: z.enum(['MANUAL', 'AUTOMATIC', 'SMART']).optional(),
+  autoRunFrequency: z.enum(['MANUAL', 'WEEKLY', 'EVERY_2_DAYS', 'DAILY']).optional(),
 });
 
 // Validation Middleware

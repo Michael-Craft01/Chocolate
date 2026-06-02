@@ -14,7 +14,13 @@ export async function GET(
   try {
     const campaign = await prisma.campaign.findFirst({
       where: { id, userId: user.id },
-      include: { _count: { select: { leads: true } } }
+      include: {
+        _count: { select: { leads: true } },
+        cycleRuns: {
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        }
+      }
     });
 
     if (!campaign) {

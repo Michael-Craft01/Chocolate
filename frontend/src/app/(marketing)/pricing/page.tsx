@@ -16,7 +16,7 @@ export default function PricingPage() {
       price: "$0",
       description: "For individual builders exploring the platform.",
       features: [
-        "10 Verified Leads / Day",
+        "Manual demo discovery cycle",
         "Standard AI Analysis",
         "Google Maps Integration",
         "Email Summaries",
@@ -30,10 +30,10 @@ export default function PricingPage() {
       price: isYearly ? "$15" : "$20",
       description: "For freelancers and small teams who need more freedom.",
       features: [
-        "50 Verified Leads / Day",
+        "4 Discovery Cycles / Month",
+        "Up to 25 Leads / Cycle",
         "Detailed Pain Point Detection",
         "WhatsApp Deep-Linking",
-        "1 Search Region",
         "Priority Support",
       ],
       cta: "Choose Plan",
@@ -44,7 +44,8 @@ export default function PricingPage() {
       price: isYearly ? "$39" : "$49",
       description: "For scaling revenue leaders and professional creators.",
       features: [
-        "200 Verified Leads / Day",
+        "15 Discovery Cycles / Month",
+        "Up to 40 Leads / Cycle",
         "Advanced AI Modeling",
         "Custom Outreach Scripts",
         "5 Search Regions",
@@ -79,8 +80,7 @@ export default function PricingPage() {
             {/* Toggle */}
             <div className="flex items-center justify-center gap-4 mt-12">
                <span className={`text-sm font-bold ${!isYearly ? 'text-foreground' : 'text-foreground/50'}`}>Monthly</span>
-               <button 
-                onClick={() => setIsYearly(!isYearly)}
+               <button onClick={() => setIsYearly(!isYearly)}
                 className={`w-14 h-7 rounded-full border p-1 flex items-center transition-all cursor-pointer ${
                   isYearly ? 'bg-primary/20 border-primary/30' : 'bg-foreground/10 border-card-border'
                 }`}
@@ -133,8 +133,8 @@ export default function PricingPage() {
                   href="/signup" 
                   className={`w-full h-12 flex items-center justify-center rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
                     plan.popular
-                      ? "btn-pill-white !bg-primary hover:!bg-primary-hover !text-white !border-primary hover:!border-primary-hover"
-                      : "btn-pill-glass !bg-foreground/5 hover:!bg-foreground/10 !text-foreground !border-card-border"
+                      ? "btn-pill-white !bg-primary hover:!bg-primary-hover !text-white"
+                      : "bg-foreground/5 hover:bg-foreground/10 text-foreground active:scale-98"
                   }`}
                 >
                    {plan.cta}

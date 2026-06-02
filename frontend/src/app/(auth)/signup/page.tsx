@@ -106,8 +106,7 @@ export default function SignupPage() {
           )}
 
           <div className="grid grid-cols-1 gap-4">
-             <button 
-               onClick={() => handleSocialLogin('google')}
+             <button onClick={() => handleSocialLogin('google')}
                disabled={socialLoading || loading}
                className="btn-pill-glass w-full h-14 gap-3 group/google"
              >
@@ -161,10 +160,7 @@ export default function SignupPage() {
               <p className="text-[9px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Minimum security clearance: 8 characters.</p>
             </div>
 
-            <button 
-              disabled={loading || socialLoading}
-              className="btn-pill-white w-full h-14 group/submit"
-            >
+            <button disabled={loading || socialLoading} className="btn-pill-white w-full h-14 group/submit" >
               {loading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (

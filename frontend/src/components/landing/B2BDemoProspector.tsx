@@ -129,10 +129,7 @@ export default function B2BDemoProspector() {
         </div>
         
         {phase !== "idle" && (
-          <button 
-            onClick={resetSweep}
-            className="btn-pill-glass !h-9 !px-4 flex items-center gap-2 border border-card-border hover:bg-card-border/50 text-foreground cursor-pointer text-xs"
-          >
+          <button onClick={resetSweep} className="h-9 px-4 rounded-full bg-white/5 flex items-center gap-2 hover:bg-white/10 text-foreground cursor-pointer text-xs font-bold transition-all active:scale-98" >
             <RotateCcw className="h-3 w-3" /> Reset Demo
           </button>
         )}
@@ -142,9 +139,7 @@ export default function B2BDemoProspector() {
       {phase === "idle" && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
           {NICHES.map((niche, idx) => (
-            <button
-              key={idx}
-              onClick={() => setActiveNicheIndex(idx)}
+            <button key={idx} onClick={() => setActiveNicheIndex(idx)}
               className={`p-4 rounded-2xl border text-left transition-all duration-300 flex items-center gap-3 cursor-pointer ${
                 activeNicheIndex === idx 
                   ? "bg-primary/10 border-primary text-foreground" 
@@ -179,10 +174,7 @@ export default function B2BDemoProspector() {
                   Click below to watch the autonomous scraper crawl geographical hubs, extract deep business pain-points, verify credentials, and write outreach drafts.
                 </p>
               </div>
-              <button
-                onClick={startSweep}
-                className="btn-pill-white !bg-primary !text-white hover:!bg-primary-hover !h-12 w-full max-w-[240px] mx-auto text-xs uppercase tracking-widest font-black flex items-center justify-center gap-2 cursor-pointer shadow-md"
-              >
+              <button onClick={startSweep} className="btn-pill-white !bg-primary !text-white hover:!bg-primary-hover !h-12 w-full max-w-[240px] mx-auto text-xs uppercase tracking-widest font-black flex items-center justify-center gap-2 cursor-pointer shadow-md" >
                 <Play className="h-4 w-4 fill-white" /> Start Sweep Cycle
               </button>
             </div>
@@ -456,10 +448,7 @@ export default function B2BDemoProspector() {
                           <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider flex items-center gap-1">
                             🚀 Ready to Sync with CRM and Trigger Dispatch
                           </span>
-                          <button
-                            onClick={startSweep}
-                            className="btn-pill-white !bg-primary !text-white hover:!bg-primary-hover !h-8 !px-4 text-[10px] uppercase tracking-wider font-black flex items-center gap-1.5 cursor-pointer"
-                          >
+                          <button onClick={startSweep} className="btn-pill-white !bg-primary !text-white hover:!bg-primary-hover !h-8 !px-4 text-[10px] uppercase tracking-wider font-black flex items-center gap-1.5 cursor-pointer" >
                             Re-run Sweep <ArrowRight className="h-3 w-3" />
                           </button>
                         </motion.div>

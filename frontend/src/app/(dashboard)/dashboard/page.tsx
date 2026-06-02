@@ -15,31 +15,40 @@ import {
   ArrowRight,
   ShieldCheck,
   Cpu,
-  CheckCircle
+  CheckCircle,
+  CreditCard,
+  AlertTriangle,
+  Zap
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authJson } from "@/lib/api";
 import type { Stats, Lead } from "@/lib/types";
+import type { CycleRun } from "@/lib/types";
+import { fetchCycles } from "@/lib/services/cycles";
 import { Sparkline } from "@/components/Sparkline";
 import { motion } from "framer-motion";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
+import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
+  const [recentCycles, setRecentCycles] = useState<CycleRun[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const [statsData, leadsData] = await Promise.all([
+        const [statsData, leadsData, cyclesData] = await Promise.all([
           authJson<Stats>("/api/stats"),
-          authJson<Lead[]>("/api/leads?limit=5")
+          authJson<{ leads: Lead[] }>("/api/leads?limit=5"),
+          fetchCycles(5).catch(() => [])
         ]);
         setStats(statsData);
-        setRecentLeads(Array.isArray(leadsData) ? leadsData : []);
+        setRecentLeads(leadsData.leads || []);
+        setRecentCycles(cyclesData);
       } catch (err) {
         console.error("Dashboard sync failed", err);
       } finally {
@@ -49,7 +58,14 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, []);
 
-  const usagePercent = stats?.quota?.limit ? Math.min(100, ((stats?.quota?.used || 0) / stats.quota.limit) * 100) : 0;
+  const cycleLimit = stats?.cycles?.monthlyLimit || 0;
+  const cycleRemaining = stats?.cycles?.remaining || 0;
+  const cyclesUsed = stats?.cycles?.usedThisPeriod || Math.max(0, cycleLimit - cycleRemaining);
+  const usagePercent = cycleLimit ? Math.min(100, (cyclesUsed / cycleLimit) * 100) : 0;
+  const remainingPercent = cycleLimit ? Math.min(100, (cycleRemaining / cycleLimit) * 100) : 0;
+  const isCycleEmpty = cycleRemaining <= 0;
+  const isCycleLow = !isCycleEmpty && cycleRemaining <= Math.max(2, Math.ceil(cycleLimit * 0.15));
+  const leadCapacity = cycleRemaining * (stats?.cycles?.leadsPerCycle || 10);
   const isFree = !stats?.tier || stats?.tier === 'FREE';
 
   // Dynamic calculations for problem-solving metrics
@@ -80,8 +96,7 @@ export default function DashboardPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => window.location.reload()}
+          <button onClick={() => window.location.reload()}
             className="btn-pill-glass h-10 px-4 flex items-center gap-2 hover:bg-card border border-card-border rounded-full"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''} text-foreground`} />
@@ -144,7 +159,7 @@ export default function DashboardPage() {
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
             
-            <span className="text-[9px] font-black text-foreground opacity-40 uppercase tracking-widest">Active AI Outreach Sweeps</span>
+            <span className="text-[9px] font-black text-foreground opacity-40 uppercase tracking-widest">Scheduled Discovery Cycles</span>
           </div>
         </div>
 
@@ -209,8 +224,7 @@ export default function DashboardPage() {
                 <p className="tertiary !text-foreground opacity-60">Verified B2B prospects enriched with targeted pain points</p>
               </div>
             </div>
-            <button 
-              onClick={() => router.push('/leads')}
+            <button onClick={() => router.push('/leads')}
               className="text-[10px] font-black uppercase tracking-widest text-foreground opacity-60 hover:opacity-100 transition-opacity flex items-center gap-1 group"
             >
               Qualified Ledger <ArrowUpRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -247,8 +261,7 @@ export default function DashboardPage() {
                       {new Date(lead.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <button 
-                    onClick={() => router.push(`/leads?campaignId=${lead.campaignId}`)}
+                  <button onClick={() => router.push(`/leads?campaignId=${lead.campaignId}`)}
                     className="h-8 w-8 rounded-full bg-card border border-card-border hover:bg-primary hover:text-white transition-all flex items-center justify-center text-foreground opacity-60 hover:opacity-100"
                   >
                     <ArrowUpRight className="h-4 w-4" />
@@ -280,29 +293,104 @@ export default function DashboardPage() {
               </div>
            </div>
 
-           {/* Sleek Flat Quota Circle Card */}
-           <div className="bento-card p-8 flex items-center justify-between group transition-all">
-              <div className="space-y-1">
-                 <p className="tertiary">Sweep Quota</p>
-                 <p className="text-3xl font-semibold text-foreground tracking-tight">
-                    {stats?.quota?.used || 0} <span className="text-foreground opacity-40">/</span> {stats?.quota?.limit || 10}
-                 </p>
-                 <p className="text-[8px] text-foreground opacity-60 font-black uppercase tracking-wider">Resets daily</p>
+           {/* Sleek Flat Cycle Balance Card */}
+           <div className={cn(
+              "bento-card p-8 space-y-6 group transition-all",
+              isCycleEmpty ? "bg-red-500/5" : isCycleLow ? "bg-amber-500/5" : ""
+           )}>
+              <div className="flex items-start justify-between gap-6">
+                <div className="space-y-2">
+                   <p className="tertiary">Cycle Wallet</p>
+                   <p className="text-4xl font-semibold text-foreground tracking-tight">
+                      {cycleRemaining} <span className="text-foreground opacity-30 text-2xl">left</span>
+                   </p>
+                   <p className="text-[9px] text-foreground opacity-60 font-black uppercase tracking-wider">
+                      {leadCapacity} possible leads before top-up
+                   </p>
+                </div>
+                <div className="relative h-16 w-16 flex items-center justify-center shrink-0">
+                  <svg className="h-full w-full rotate-[-90deg]">
+                    <circle cx="32" cy="32" r="28" className="stroke-border-muted fill-none" strokeWidth="4" />
+                    <motion.circle
+                      cx="32" cy="32" r="28"
+                      className={cn(
+                        "fill-none",
+                        isCycleEmpty ? "stroke-red-500" : isCycleLow ? "stroke-amber-500" : "stroke-primary"
+                      )}
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      initial={{ strokeDasharray: "0 176" }}
+                      animate={{ strokeDasharray: `${Math.min(176, (remainingPercent / 100) * 176)} 176` }}
+                      transition={{ duration: 1 }}
+                    />
+                  </svg>
+                  {isCycleEmpty || isCycleLow ? (
+                    <AlertTriangle className={cn("absolute h-5 w-5", isCycleEmpty ? "text-red-500" : "text-amber-500")} />
+                  ) : (
+                    <Activity className="absolute h-5 w-5 text-primary" />
+                  )}
+                </div>
               </div>
-              <div className="relative h-16 w-16 flex items-center justify-center shrink-0">
-                <svg className="h-full w-full rotate-[-90deg]">
-                  <circle cx="32" cy="32" r="28" className="stroke-border-muted fill-none" strokeWidth="4" />
-                  <motion.circle 
-                    cx="32" cy="32" r="28" 
-                    className="stroke-primary fill-none" 
-                    strokeWidth="4" 
-                    strokeLinecap="round"
-                    initial={{ strokeDasharray: "0 176" }}
-                    animate={{ strokeDasharray: `${Math.min(176, (((stats?.quota?.used || 0) / (stats?.quota?.limit || 10)) || 0) * 176)} 176` }}
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-foreground/50">
+                  <span>{cyclesUsed} used this period</span>
+                  <span>{cycleLimit} monthly limit</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-border-muted overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${remainingPercent}%` }}
+                    className={cn(
+                      "h-full",
+                      isCycleEmpty ? "bg-red-500" : isCycleLow ? "bg-amber-500" : "bg-primary"
+                    )}
                     transition={{ duration: 1 }}
                   />
-                </svg>
-                <Activity className="absolute h-5 w-5 text-primary" />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href={isCycleEmpty ? "/billing" : "/campaigns"}
+                  className="h-11 px-5 rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-md shadow-primary/10"
+                >
+                  {isCycleEmpty ? <CreditCard className="h-3.5 w-3.5" /> : <Zap className="h-3.5 w-3.5" />}
+                  {isCycleEmpty ? "Buy Cycles" : "Run Cycle"}
+                </Link>
+                <Link
+                  href="/billing"
+                  className="h-11 px-5 rounded-full bg-card text-foreground text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
+                >
+                  Top Up
+                </Link>
+              </div>
+           </div>
+
+           <div className="bento-card p-8 space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="tertiary">Latest Cycle</p>
+                  <h3 className="text-lg font-bold text-foreground tracking-tight">
+                    {stats?.latestCycle?.status || "No cycle yet"}
+                  </h3>
+                </div>
+                <Link href="/campaigns" className="h-9 px-4 rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                  Run Cycle <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <div className="space-y-2">
+                {recentCycles.length === 0 ? (
+                  <p className="text-xs text-foreground opacity-50 font-semibold">No discovery cycles recorded yet.</p>
+                ) : recentCycles.map((cycle) => (
+                  <div key={cycle.id} className="flex items-center justify-between gap-3 rounded-card border border-card-border bg-card/50 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-foreground truncate">{cycle.campaign?.name || "Campaign"}</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-foreground opacity-45">{cycle.triggerType} · {cycle.status}</p>
+                    </div>
+                    <p className="text-sm font-black text-primary shrink-0">{cycle.leadsFound}/{cycle.maxLeads}</p>
+                  </div>
+                ))}
               </div>
            </div>
         </div>

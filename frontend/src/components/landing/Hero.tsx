@@ -116,7 +116,7 @@ export default function Hero() {
           </h1>
           
           <p className="max-w-3xl mx-auto text-foreground/80 text-base md:text-lg font-medium mb-12 leading-relaxed">
-            The ultimate self-driving B2B sales development engine. Continuous sweeps locate high-intent corporate targets, HyprLead AI uncovers their exact business pain-points, and verified SMTP workflows draft hyper-personalized copy.
+            The self-driving B2B sales development engine. Scheduled discovery cycles locate high-intent corporate targets, HyprLead AI uncovers their exact business pain-points, and verified workflows draft hyper-personalized copy.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24">
@@ -126,7 +126,7 @@ export default function Hero() {
                  Start Free Discovery <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                </span>
             </Link>
-            <a href="#demo-prospector" className="h-14 px-10 rounded-full border border-card-border bg-foreground/[0.03] hover:bg-foreground/[0.06] text-foreground font-semibold text-xs flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all group cursor-pointer shadow-sm">
+            <a href="#demo-prospector" className="h-14 px-10 rounded-full bg-foreground/[0.03] hover:bg-foreground/[0.06] text-foreground font-semibold text-xs flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all group cursor-pointer shadow-sm">
               <Play className="h-3 w-3 fill-foreground group-hover:scale-110 transition-transform" /> Watch Demo Sim
             </a>
           </div>

@@ -30,13 +30,34 @@ model User {
   leadsFoundToday      Int            @default(0)
   creditBalance        Int            @default(0)
   lastQuotaReset       DateTime       @default(now())
+  monthlyCycleLimit    Int            @default(0)
+  cyclesRemaining      Int            @default(0)
+  leadsPerCycle        Int            @default(10)
+  automationMode       CycleAutomationMode @default(MANUAL)
+  autoRunFrequency     AutoRunFrequency @default(MANUAL)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
   stripeCustomerId     String?        @unique
   stripeSubscriptionId String?        @unique
   paymentStatus        String         @default("free") // active, free, past_due, canceled, incomplete
   profile              Profile?
   campaigns            Campaign[]
   transactions         Transaction[]
+  cycleRuns            CycleRun[]
   createdAt            DateTime       @default(now())
+}
+
+enum AutoRunFrequency {
+  MANUAL
+  WEEKLY
+  EVERY_2_DAYS
+  DAILY
+}
+
+enum CycleAutomationMode {
+  MANUAL
+  AUTOMATIC
+  SMART
 }
 
 model Profile {
@@ -79,6 +100,7 @@ model Campaign {
   
   discordWebhook     String?
   leads              Lead[]
+  cycleRuns          CycleRun[]
   queryHistory       QueryHistory[]
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
@@ -126,6 +148,8 @@ model Lead {
   id               String      @id @default(cuid())
   campaignId       String
   campaign         Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  cycleRunId       String?
+  cycleRun         CycleRun?   @relation(fields: [cycleRunId], references: [id], onDelete: SetNull)
   businessId       String
   business         Business    @relation(fields: [businessId], references: [id])
   industry         String
@@ -139,6 +163,44 @@ model Lead {
 
   @@unique([campaignId, businessId])
   @@index([campaignId])
+  @@index([cycleRunId])
+}
+
+enum CycleRunStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum CycleTriggerType {
+  AUTO
+  MANUAL
+  SYSTEM
+}
+
+model CycleRun {
+  id             String           @id @default(cuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaignId     String
+  campaign       Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  status         CycleRunStatus   @default(QUEUED)
+  triggerType    CycleTriggerType @default(MANUAL)
+  maxLeads       Int
+  leadsFound     Int              @default(0)
+  maxRuntimeMs   Int              @default(900000)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  failureReason  String?
+  costEstimate   Float?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  leads          Lead[]
+
+  @@index([userId, status])
+  @@index([campaignId, createdAt])
 }
 
 model Transaction {
@@ -169,6 +231,7 @@ enum PaymentGateway {
 enum TransactionType {
   SUBSCRIPTION
   CREDIT_TOPUP
+  CYCLE_PACK
 }
 
 model QueryHistory {

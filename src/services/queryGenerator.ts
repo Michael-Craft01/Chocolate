@@ -69,7 +69,14 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
         }, '🔍 Generating batch queries');
 
         const baseLocations = campaign?.locations && campaign.locations.length > 0 ? campaign.locations : (LOCATIONS_ZW.length > 0 ? LOCATIONS_ZW : ['Global']);
-        const baseIndustries = campaign?.industries && campaign.industries.length > 0 ? campaign.industries : (INDUSTRIES.length > 0 ? INDUSTRIES : ['Business']);
+        
+        // Sanitize industries: split long junk entries on commas/periods (e.g. AI-generated paragraphs that got saved as one array item)
+        const rawIndustries = campaign?.industries && campaign.industries.length > 0 ? campaign.industries : (INDUSTRIES.length > 0 ? INDUSTRIES : ['Business']);
+        const baseIndustries: string[] = rawIndustries
+            .flatMap((i: string) => i.split(/[.,]/).map((s: string) => s.trim()))
+            .filter((i: string) => i.length >= 3 && i.length <= 40) // keep only clean, short industry names
+            .filter((i: string, idx: number, arr: string[]) => arr.indexOf(i) === idx); // deduplicate
+
         const country = campaign?.targetCountry || 'US';
 
         const [industries, locations] = await Promise.all([

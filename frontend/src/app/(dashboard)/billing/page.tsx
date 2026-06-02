@@ -4,6 +4,7 @@ import { useState, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check, Zap, Compass, ShieldCheck, CreditCard, Loader2, X, History, Sparkles } from "lucide-react";
 import { authJson } from "@/lib/api";
+import type { Stats } from "@/lib/types";
 import { motion } from "framer-motion";
 import { BrandedLoader } from "@/components/BrandedLoader";
 import { toast } from "sonner";
@@ -12,26 +13,26 @@ const tiers = [
   {
     name: "Starter",
     price: 20,
-    leads: "100 Leads / day",
-    campaigns: "5 Search Areas",
-    features: ["Magic Link Emails", "Mobile-Ready View", "Standard Search Speed", "CSV Data Export"],
+    leads: "4 cycles / month",
+    campaigns: "25 leads / cycle",
+    features: ["Automatic weekly cycles", "Mobile-ready view", "Standard search speed", "CSV data export"],
     color: "bg-white/5",
   },
   {
     name: "Professional",
     price: 49,
-    leads: "500 Leads / day",
-    campaigns: "20 Search Areas",
-    features: ["Discord Webhooks", "Magic Link Emails", "High-Speed Sweeps", "Priority AI Support"],
+    leads: "15 cycles / month",
+    campaigns: "40 leads / cycle",
+    features: ["Automatic cycles every 2 days", "Discord webhooks", "High-speed sweeps", "Priority AI support"],
     color: "bg-primary/10 border-primary/20",
     popular: true,
   },
   {
     name: "Elite",
     price: 300,
-    leads: "2,500 Leads / day",
-    campaigns: "Unlimited Search Areas",
-    features: ["Instant WhatsApp Alerts", "Discord Webhooks", "Deep-Dive AI Intelligence", "24/7 Priority Support"],
+    leads: "40 cycles / month",
+    campaigns: "75 leads / cycle",
+    features: ["Automatic daily cycles", "Discord webhooks", "Deep-dive AI intelligence", "24/7 priority support"],
     color: "bg-white/5",
   },
 ];
@@ -54,6 +55,7 @@ function BillingContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [userTier, setUserTier] = useState<string | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const success = searchParams.get("success") === "true";
@@ -68,6 +70,7 @@ function BillingContent() {
     try {
       const data = await authJson<{ tier: string }>("/api/me");
       setUserTier(data.tier);
+      setStats(await authJson<Stats>("/api/stats"));
     } catch (err: any) {
       console.error("Profile status error:", err);
       setError("Unable to sync account status.");
@@ -108,14 +111,14 @@ function BillingContent() {
     }
   };
 
-  const handleBuyCredits = async () => {
+  const handleBuyCycles = async () => {
     try {
-      setLoading("CREDITS");
+      setLoading("CYCLE_PACK");
       const { url } = await authJson<{ url: string }>("/api/billing/create-checkout", {
         method: "POST",
         body: JSON.stringify({
           method: gateway,
-          tier: "CREDIT",
+          tier: "CYCLE_PACK",
           amount: 10,
         }),
       });
@@ -172,7 +175,7 @@ function BillingContent() {
         </div>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">Billing Dashboard</h1>
         <p className="text-sm text-foreground/60 max-w-xl mx-auto">
-          Select a pipeline growth tier or buy extra lead discovery credits for HyprLead AI.
+          Select a pipeline growth tier or buy extra automatic discovery cycles for HyprLead AI.
         </p>
         {userTier === null && (
           <div className="p-3 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 mt-4">
@@ -180,8 +183,7 @@ function BillingContent() {
           </div>
         )}
         <div className="pt-2">
-            <button 
-              onClick={async () => {
+            <button onClick={async () => {
                 try {
                   setLoading('SYNC');
                   await authJson('/api/payments/stripe/sync', { method: 'POST' });
@@ -203,11 +205,24 @@ function BillingContent() {
       </div>
 
       {/* Gateway Toggle */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { label: "Cycles Left", value: stats?.cycles?.remaining ?? 0 },
+          { label: "Monthly Allowance", value: stats?.cycles?.monthlyLimit ?? 0 },
+          { label: "Leads / Cycle", value: stats?.cycles?.leadsPerCycle ?? 0 },
+          { label: "Mode", value: stats?.cycles?.automationMode || "MANUAL" },
+        ].map((item) => (
+          <div key={item.label} className="bento-card !p-5 text-left">
+            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/45">{item.label}</p>
+            <p className="mt-2 text-2xl font-black tracking-tight text-foreground">{item.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Gateway Toggle */}
       <div className="flex justify-center">
         <div className="bg-foreground/[0.03] p-1.5 rounded-full flex gap-1.5 border border-foreground/5 max-w-sm w-full">
-          <button 
-            type="button"
-            onClick={() => setGateway("STRIPE")}
+          <button type="button" onClick={() => setGateway("STRIPE")}
             className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               gateway === "STRIPE" 
                 ? "bg-primary text-white shadow-md shadow-primary/20" 
@@ -216,9 +231,7 @@ function BillingContent() {
           >
             <CreditCard className="h-4 w-4" /> Card (Stripe)
           </button>
-          <button 
-            type="button"
-            onClick={() => setGateway("PAYNOW")}
+          <button type="button" onClick={() => setGateway("PAYNOW")}
             className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               gateway === "PAYNOW" 
                 ? "bg-primary text-white shadow-md shadow-primary/20" 
@@ -279,8 +292,7 @@ function BillingContent() {
               </div>
             </div>
 
-            <button 
-              onClick={() => handleSubscribe(tier.name)}
+            <button onClick={() => handleSubscribe(tier.name)}
               disabled={!!loading || userTier === tier.name.toUpperCase()}
               className={`w-full h-12 rounded-full text-xs font-bold uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                 userTier === tier.name.toUpperCase() 
@@ -302,18 +314,18 @@ function BillingContent() {
         ))}
       </div>
 
-      {/* Extra Credits Section */}
+      {/* Extra Cycles Section */}
       <div className="bento-card p-10 relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent opacity-50 pointer-events-none" />
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full -mr-48 -mt-48 group-hover:bg-primary/15 transition-all duration-700 blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
           <div className="space-y-3 max-w-xl text-left">
             <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
-              <CreditCard className="h-4 w-4 animate-pulse" /> Outbound Credits
+              <CreditCard className="h-4 w-4 animate-pulse" /> Cycle Packs
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">Extra Credits</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">Extra Cycles</h2>
             <p className="text-sm text-foreground/75 leading-relaxed">
-              Need to sweep more local markets today? Purchase extra lead discovery credits instantly. Credits carry over across cycles.
+              Need to sweep more local markets this month? Purchase extra discovery cycles instantly. Cycle packs add to your current balance.
             </p>
           </div>
           <div className="flex flex-col items-center sm:flex-row gap-6 min-w-[280px] shrink-0">
@@ -322,15 +334,11 @@ function BillingContent() {
                 <span className="text-3xl font-black text-foreground">$</span>
                 <span className="text-5xl font-black text-foreground tracking-tight">10</span>
               </div>
-              <p className="text-[10px] text-foreground/50 font-bold uppercase tracking-wider mt-1">100 Discoveries</p>
+              <p className="text-[10px] text-foreground/50 font-bold uppercase tracking-wider mt-1">5 Discovery Cycles</p>
             </div>
-            <button 
-              onClick={handleBuyCredits}
-              disabled={!!loading}
-              className="w-full sm:w-auto h-12 px-8 rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-xl shadow-foreground/5 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-            >
-              {loading === "CREDITS" && <Loader2 className="h-4 w-4 animate-spin text-background" />}
-              {loading === "CREDITS" ? "Processing..." : "Add Credits"}
+            <button onClick={handleBuyCycles} disabled={!!loading} className="w-full sm:w-auto h-12 px-8 rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-xl shadow-foreground/5 hover:scale-[1.02] active:scale-[0.98] cursor-pointer" >
+              {loading === "CYCLE_PACK" && <Loader2 className="h-4 w-4 animate-spin text-background" />}
+              {loading === "CYCLE_PACK" ? "Processing..." : "Add Cycles"}
             </button>
           </div>
         </div>
@@ -344,7 +352,7 @@ function BillingContent() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-foreground">Transaction Log</h2>
-            <p className="text-xs text-foreground/60">Review your past credit top-ups and subscriptions straight from the database</p>
+            <p className="text-xs text-foreground/60">Review your past cycle packs and subscriptions straight from the database</p>
           </div>
         </div>
         

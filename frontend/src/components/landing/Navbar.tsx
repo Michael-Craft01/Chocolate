@@ -58,7 +58,7 @@ export default function Navbar() {
 
         <div className="flex shrink-0 items-center gap-4 sm:gap-8">
           <Link href="/login" className="hidden sm:inline text-xs font-black uppercase tracking-[0.2em] text-foreground/75 hover:text-primary transition-colors">Sign In</Link>
-          <Link href={session ? "/dashboard" : "/signup"} className="btn-pill-white !bg-primary hover:!bg-primary-hover !text-white border border-primary/20 shadow-sm !h-10 !px-5 sm:!px-6 !text-[10px] !uppercase !tracking-[0.15em] cursor-pointer">
+          <Link href={session ? "/dashboard" : "/signup"} className="btn-pill-white !bg-primary hover:!bg-primary-hover !text-white shadow-sm !h-10 !px-5 sm:!px-6 !text-[10px] !uppercase !tracking-[0.15em] cursor-pointer">
             {session ? 'Dashboard' : 'Get Started'}
           </Link>
         </div>

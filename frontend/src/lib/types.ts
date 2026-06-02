@@ -8,6 +8,17 @@ export interface Stats {
     limit: number;
     credits: number;
   };
+  cycles: {
+    remaining: number;
+    monthlyLimit: number;
+    usedThisPeriod: number;
+    leadsPerCycle: number;
+    automationMode: "MANUAL" | "AUTOMATIC" | "SMART";
+    autoRunFrequency: "MANUAL" | "WEEKLY" | "EVERY_2_DAYS" | "DAILY";
+    currentPeriodStart?: string;
+    currentPeriodEnd?: string;
+  };
+  latestCycle?: CycleRun | null;
 }
 
 export interface Campaign {
@@ -31,11 +42,14 @@ export interface Campaign {
   _count?: {
     leads: number;
   };
+  cycleRuns?: CycleRun[];
 }
 
 export interface Lead {
   id: string;
   campaignId?: string;
+  cycleRunId?: string;
+  cycleRun?: CycleRun;
   sweepId?: string;
   sweepDate?: string;
   industry: string;
@@ -48,6 +62,28 @@ export interface Lead {
     website?: string;
     phone?: string;
     email?: string;
+  };
+}
+
+export interface CycleRun {
+  id: string;
+  userId: string;
+  campaignId: string;
+  status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "PARTIAL";
+  triggerType: "AUTO" | "MANUAL" | "SYSTEM";
+  maxLeads: number;
+  leadsFound: number;
+  maxRuntimeMs: number;
+  startedAt?: string;
+  completedAt?: string;
+  failureReason?: string;
+  costEstimate?: number;
+  createdAt: string;
+  updatedAt: string;
+  campaign?: {
+    id: string;
+    name: string;
+    status: Campaign["status"];
   };
 }
 

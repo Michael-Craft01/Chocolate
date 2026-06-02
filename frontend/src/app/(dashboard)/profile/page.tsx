@@ -73,10 +73,7 @@ export default function ProfilePage() {
           <h2 className="text-2xl font-extrabold text-foreground tracking-tight">Access Error</h2>
           <p className="text-foreground/60 max-w-sm mx-auto font-semibold">{error || "Your account profile could not be retrieved. Try signing in again."}</p>
         </div>
-        <button 
-          onClick={fetchData}
-          className="btn-pill-white !bg-primary !text-white hover:!bg-primary-hover h-12 px-8 cursor-pointer"
-        >
+        <button onClick={fetchData} className="btn-pill-white !bg-primary !text-white hover:!bg-primary-hover h-12 px-8 cursor-pointer" >
           Try Again
         </button>
       </div>
@@ -88,9 +85,10 @@ export default function ProfilePage() {
     ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) 
     : 'April 2024';
 
-  const dailyLimit = profile.tier === 'FREE' ? 10 : profile.tier === 'STARTER' ? 100 : profile.tier === 'PROFESSIONAL' ? 500 : 2500;
-  const leadsScrapedToday = stats?.leadsToday || 0;
-  const quotaPercent = Math.min(100, Math.max(0, (leadsScrapedToday / dailyLimit) * 100));
+  const cycleLimit = stats?.cycles?.monthlyLimit || 0;
+  const cyclesRemaining = stats?.cycles?.remaining || 0;
+  const cyclesUsed = stats?.cycles?.usedThisPeriod || Math.max(0, cycleLimit - cyclesRemaining);
+  const quotaPercent = cycleLimit ? Math.min(100, Math.max(0, (cyclesUsed / cycleLimit) * 100)) : 0;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-24 font-sans selection:bg-primary/20">
@@ -193,17 +191,17 @@ export default function ProfilePage() {
                   </p>
                   <p className="text-xs text-foreground/75 font-semibold mt-2 leading-relaxed max-w-xl">
                     {profile.tier === 'FREE' 
-                      ? "Your account is active on our basic tier. Upgrade your professional sales membership to scale daily sweeps and trigger high-velocity outreach dispatches." 
-                      : "Your sales agent seat is active and fully optimized. Outbound discovery pipelines are running continuously in the background."}
+                      ? "Your account is active on our basic tier. Upgrade your professional sales membership to unlock automatic discovery cycles." 
+                      : "Your sales agent seat is active and optimized. Discovery cycles run automatically from your monthly cycle balance."}
                   </p>
                 </div>
 
                 {/* Quota Progress Meter */}
                 <div className="space-y-2 p-5 rounded-2xl bg-background border border-card-border shadow-sm">
                   <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Daily Outreach Quota</span>
+                    <span className="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Monthly Discovery Cycles</span>
                     <span className="text-foreground">
-                      <span className="text-primary font-bold">{leadsScrapedToday}</span> / <span className="font-bold">{dailyLimit} Mapped</span>
+                      <span className="text-primary font-bold">{cyclesRemaining}</span> / <span className="font-bold">{cycleLimit} Remaining</span>
                     </span>
                   </div>
                   <div className="w-full bg-card-border h-2 rounded-full overflow-hidden">
@@ -228,7 +226,7 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Outbound Velocity</p>
-                      <p className="text-xs font-extrabold text-foreground uppercase tracking-wider">Continuous Sweeps</p>
+                      <p className="text-xs font-extrabold text-foreground uppercase tracking-wider">Scheduled Cycles</p>
                     </div>
                   </div>
                 </div>
@@ -236,8 +234,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="mt-8 border-t border-primary/10 pt-4 flex items-center justify-between">
-              <button 
-                onClick={() => window.location.href = '/billing'}
+              <button onClick={() => window.location.href = '/billing'}
                 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary-hover transition-colors group cursor-pointer"
               >
                 <CreditCard className="h-4 w-4" /> Manage Subscriptions <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
@@ -255,10 +252,7 @@ export default function ProfilePage() {
             <History className="h-4.5 w-4.5 text-primary" />
             <h2 className="text-[10px] font-black uppercase tracking-widest">Billing & Invoices Ledger</h2>
           </div>
-          <button 
-            onClick={fetchData}
-            className="text-[9px] font-black text-foreground/50 hover:text-primary uppercase tracking-widest transition-colors cursor-pointer"
-          >
+          <button onClick={fetchData} className="text-[9px] font-black text-foreground/50 hover:text-primary uppercase tracking-widest transition-colors cursor-pointer" >
             Sync Ledger
           </button>
         </div>

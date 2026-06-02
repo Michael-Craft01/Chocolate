@@ -19,9 +19,10 @@ export class AIService {
         this.model = this.genAI.getGenerativeModel({
             model: config.GEMINI_MODEL,
             generationConfig: {
-                temperature: 0.9,
+                temperature: 0.3, // Lowered temperature to ensure deterministic, professional business emails and structured profiles
                 topP: 0.95,
                 topK: 40,
+                stopSequences: ["<end_of_turn>"] // Prevent generation leakage into pre-training Chinese text or generic website scrapes
             }
         });
     }
@@ -44,7 +45,6 @@ TASK:
 ONLY return the refined text. No conversational fillers, no "Here is the refined text".
 <end_of_turn>
 <start_of_turn>model
-<thought>
 `;
 
         return this.retryOperation(async () => {
@@ -85,30 +85,39 @@ INPUTS:
 - LINK: "${link}"
 
 TASK:
-1. Write a professional, punchy, and human-sounding message.
-2. ABSOLUTELY AVOID generic robotic phrases like "strategic walkthrough", "protocol", "high-performance framework", "reclaim competitive edge", or "invisible revenue leakage".
-3. Speak like a helpful expert, not a sales bot.
-4. Address the lead's pain point specifically.
+1. Write a warm, friendly, and robust message, speaking like a dedicated sales representative of the company who genuinely cares about helping their business grow.
+2. Adopt a highly persuasive yet fully natural, human-sounding conversational tone—absolutely avoid sounding like a boring robotic corporate sales bot.
+3. ABSOLUTELY AVOID robotic buzzwords or generic jargon like "strategic walkthrough", "protocol", "high-performance framework", "reclaim competitive edge", or "invisible revenue leakage".
+4. Address the lead's pain point specifically and show how "${product}" can directly solve their frustrations, recover lost sales, or streamline operations.
 5. Ensure proper capitalization (e.g., "${company}", NOT lowercase).
 6. Keep it under 120 words.
-7. Use a clear, low-friction call-to-action (e.g., "Open to a quick chat?").
+7. Use a clear, warm, and highly persuasive call-to-action (e.g., "Are you open to a quick 5-minute chat this week to see if we can help?", or "Open to a quick call to check this out?").
 8. Structure the message with line breaks for readability.
 9. If the brand name still sounds like "Scraper Junk", fix it in the message body.
 10. MANDATORY: USE THE LINK PROVIDED IN THE INPUTS ("${link}"). DO NOT INVENT OR USE ANY OTHER URL. THIS IS THE AUTHORITATIVE DESTINATION.
 
-ONLY return the message text. No conversational fillers.
+MANDATORY: Wrap the final completed cold outreach message inside <email> and </email> XML tags (e.g., <email>Hi there, ... Best, Mike</email>). Do NOT output anything else inside these XML tags.
 <end_of_turn>
 <start_of_turn>model
-<thought>
+
 `;
 
         return this.retryOperation(async () => {
             const result = await this.model.generateContent(prompt);
             const response = await result.response;
-            let text = response.text().trim();
-            text = text.replace(/<thought>[\s\S]*?<\/thought>/g, '').trim();
-            text = text.replace(/<[^>]*>?/gm, '').trim(); 
-            return text;
+            const text = response.text().trim();
+            
+            // Bulletproof extraction: match content within <email> tags
+            const emailMatch = text.match(/<email>([\s\S]*?)<\/email>/i);
+            if (emailMatch && emailMatch[1]) {
+                return emailMatch[1].trim();
+            }
+
+            // Fallback parser if tags are absent or mutated
+            let fallback = text;
+            fallback = fallback.replace(/<thought>[\s\S]*?<\/thought>/g, '').trim();
+            fallback = fallback.replace(/<[^>]*>?/gm, '').trim(); 
+            return fallback;
         });
     }
 
@@ -152,7 +161,6 @@ JSON OUTPUT:
 }
 <end_of_turn>
 <start_of_turn>model
-<thought>
 `;
 
         const parts: any[] = [{ text: prompt }];
@@ -207,7 +215,6 @@ TASK:
 ONLY return the brief text. No fillers.
 <end_of_turn>
 <start_of_turn>model
-<thought>
 `;
 
         return this.retryOperation(async () => {

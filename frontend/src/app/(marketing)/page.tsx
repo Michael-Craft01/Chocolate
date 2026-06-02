@@ -63,7 +63,7 @@ export default function LandingPage() {
               </div>
               <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">Loved by <span className="text-primary">revenue leaders</span></h2>
             </div>
-            <p className="text-foreground/75 text-xs font-semibold max-w-xs text-left md:text-right">Join high-growth outbound teams automating their qualified pipeline discovery sweeps.</p>
+            <p className="text-foreground/75 text-xs font-semibold max-w-xs text-left md:text-right">Join high-growth outbound teams automating qualified pipeline discovery cycles.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -117,7 +117,7 @@ export default function LandingPage() {
       <section id="features" className="py-40 max-w-7xl mx-auto px-6">
         <div className="text-center mb-24 space-y-4">
            <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground">Complete Sales <span className="text-primary">Pipeline Automation</span></h2>
-           <p className="max-w-2xl mx-auto text-foreground/75 text-xs font-semibold">Experience AI-driven B2B lead discovery: continuous geographic sweeps, deep operational pain-point matrices, and seamless SMTP validation built for high-performance sales forces.</p>
+           <p className="max-w-2xl mx-auto text-foreground/75 text-xs font-semibold">Experience AI-driven B2B lead discovery: scheduled market cycles, deep operational pain-point matrices, and seamless validation built for high-performance sales forces.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto">
@@ -127,9 +127,9 @@ export default function LandingPage() {
             className="md:col-span-7 bg-primary rounded-[32px] p-10 flex flex-col justify-between group overflow-hidden relative min-h-[300px]"
           >
              <div className="relative z-10 space-y-6">
-                <div className="px-3 py-1 rounded-full bg-white/20 text-[10px] font-black text-white uppercase tracking-widest w-fit">24/7 Autonomous Sweeps</div>
-                <h3 className="text-3xl font-extrabold text-white leading-tight">Continuous B2B Scrapers <br /> Scouting Mapped Geographies</h3>
-                <p className="text-white/80 text-xs max-w-sm font-semibold">Our discovery engine continuously crawls local business registrations, maps listings, and directories in real-time, fetching fresh leads matching your exact target criteria.</p>
+                <div className="px-3 py-1 rounded-full bg-white/20 text-[10px] font-black text-white uppercase tracking-widest w-fit">Automatic Discovery Cycles</div>
+                <h3 className="text-3xl font-extrabold text-white leading-tight">Bounded B2B Cycles <br /> Scouting Mapped Geographies</h3>
+                <p className="text-white/80 text-xs max-w-sm font-semibold">Our discovery engine wakes on schedule, scans local business registrations, maps listings, and directories, then stops when the cycle is complete.</p>
              </div>
              
              {/* Abstract Grid Decor */}

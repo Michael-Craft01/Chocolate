@@ -17,7 +17,16 @@ export async function GET(req: NextRequest) {
       where: { createdAt: { gte: startOfToday }, campaign: { userId } }
     });
 
-    const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+    const [dbUser, latestCycle] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.cycleRun.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          campaign: { select: { id: true, name: true, status: true } }
+        }
+      })
+    ]);
     
     return NextResponse.json({
       totalBusinesses,
@@ -28,7 +37,18 @@ export async function GET(req: NextRequest) {
         used: dbUser?.leadsFoundToday || 0,
         limit: dbUser?.dailyLimit || 10,
         credits: dbUser?.creditBalance || 0
-      }
+      },
+      cycles: {
+        remaining: dbUser?.cyclesRemaining || 0,
+        monthlyLimit: dbUser?.monthlyCycleLimit || 0,
+        usedThisPeriod: Math.max(0, (dbUser?.monthlyCycleLimit || 0) - (dbUser?.cyclesRemaining || 0)),
+        leadsPerCycle: dbUser?.leadsPerCycle || 10,
+        automationMode: dbUser?.automationMode || 'MANUAL',
+        autoRunFrequency: dbUser?.autoRunFrequency || 'MANUAL',
+        currentPeriodStart: dbUser?.currentPeriodStart,
+        currentPeriodEnd: dbUser?.currentPeriodEnd
+      },
+      latestCycle
     });
   } catch (error: any) {
     console.error('API Error:', error);

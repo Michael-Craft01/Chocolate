@@ -28,10 +28,7 @@ export function EmptyState({
         {description}
       </p>
       {actionText && (
-        <button
-          onClick={onAction}
-          className="flex h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-white hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all active:scale-95"
-        >
+        <button onClick={onAction} className="flex h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-white hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all active:scale-95" >
           <Plus className="h-4 w-4" />
           {actionText}
         </button>

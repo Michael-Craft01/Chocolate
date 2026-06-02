@@ -215,7 +215,7 @@ export const INDUSTRIES = [
     'Packaging Material Supplier',
 ];
 
-// Query templates optimized for local businesses
+// Query templates - diversified for maximum discovery volume
 export const QUERY_TEMPLATES = [
     // --- CORE INTENT ---
     '{industry} in {location}',
@@ -230,5 +230,25 @@ export const QUERY_TEMPLATES = [
     '{industry} suppliers {location}',
     '{industry} wholesalers {location}',
     '{industry} distribution {location}',
+
+    // --- CONTACT-INTENT (highest phone/email yield) ---
+    '{industry} {location} contact number',
+    '{industry} {location} phone number',
+    '{industry} near {location}',
+    '{industry} {location} address',
+
+    // --- LOCAL BUSINESS DISCOVERY ---
+    'top {industry} {location}',
+    'best {industry} {location}',
+    '{industry} business {location}',
+    'local {industry} {location}',
+    '{industry} companies {location}',
+
+    // --- DIRECTORY-STYLE ---
+    '{industry} dealers {location}',
+    '{industry} traders {location}',
+    '{industry} outlet {location}',
+    '{industry} stockist {location}',
+    '{industry} {location} open',
 ];
 

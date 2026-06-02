@@ -7,7 +7,7 @@ import { config } from '../config.js';
 import { paymentService } from '../services/paymentService.js';
 import { WebhookHandler } from '../services/webhookHandler.js';
 import { PaymentSyncService } from '../services/paymentSyncService.js';
-import { triggerEngineCycle } from '../services/discoveryEngine.js';
+import { triggerEngineCycle, runUntilQuotaFilled, createAndRunCampaignCycle } from '../services/discoveryEngine.js';
 import { aiService } from '../services/aiService.js';
 import { dispatchService } from '../services/dispatchService.js';
 import { 
@@ -73,7 +73,7 @@ app.post(['/api/payments/stripe/webhook', '/api/webhooks/stripe'], express.raw({
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object as any;
             const { userId, tier } = session.metadata;
-            if (tier === 'CREDIT') {
+            if (tier === 'CYCLE_PACK') {
                 await WebhookHandler.handleCreditTopup(userId, session.amount_total / 100, session.id, 'STRIPE');
             } else {
                 await WebhookHandler.handleSubscriptionSuccess(userId, tier, session.id, 'STRIPE');
@@ -84,7 +84,17 @@ app.post(['/api/payments/stripe/webhook', '/api/webhooks/stripe'], express.raw({
             if (userId) {
                 await prisma.user.update({
                     where: { id: userId },
-                    data: { paymentStatus: 'canceled', tier: 'STARTER', dailyLimit: 10, maxCampaigns: 1 }
+                    data: {
+                        paymentStatus: 'canceled',
+                        tier: 'STARTER',
+                        dailyLimit: 10,
+                        maxCampaigns: 1,
+                        monthlyCycleLimit: 0,
+                        cyclesRemaining: 0,
+                        leadsPerCycle: 10,
+                        automationMode: 'MANUAL',
+                        autoRunFrequency: 'MANUAL'
+                    }
                 });
             }
         }
@@ -206,7 +216,7 @@ app.get('/api/billing/transactions', authenticate, async (req: any, res: any) =>
                     currency: "USD",
                     status: "SUCCESS" as const,
                     gateway: "PAYNOW" as const,
-                    type: "CREDIT_TOPUP" as const,
+                    type: "CYCLE_PACK" as const,
                     tier: null,
                     gatewayRef: "paynow_ref_" + Math.random().toString(36).substring(2, 10),
                     createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000) // 45 days ago
@@ -299,7 +309,7 @@ app.post('/api/payments/paynow/result', express.urlencoded({ extended: true }), 
 
         const successStatuses = ['paid', 'awaiting delivery', 'delivered'];
         if (successStatuses.includes(currentStatus)) {
-            if (tx.type === 'CREDIT_TOPUP') {
+            if (tx.type === 'CYCLE_PACK' || tx.type === 'CREDIT_TOPUP') {
                 await WebhookHandler.handleCreditTopup(tx.userId, tx.amount, pollurl, 'PAYNOW');
             } else {
                 await WebhookHandler.handleSubscriptionSuccess(tx.userId, tx.tier || 'STARTER', pollurl, 'PAYNOW');
@@ -330,7 +340,14 @@ app.get('/api/stats', authenticate, async (req: any, res: any) => {
             where: { createdAt: { gte: startOfToday }, campaign: { userId } }
         });
 
-        const user = await prisma.user.findUnique({ where: { id: userId } });
+        const [user, latestCycle] = await Promise.all([
+            prisma.user.findUnique({ where: { id: userId } }),
+            prisma.cycleRun.findFirst({
+                where: { userId },
+                orderBy: { createdAt: 'desc' },
+                include: { campaign: { select: { id: true, name: true, status: true } } }
+            })
+        ]);
         res.json({
             totalBusinesses,
             totalLeads,
@@ -340,10 +357,71 @@ app.get('/api/stats', authenticate, async (req: any, res: any) => {
                 used: user?.leadsFoundToday || 0,
                 limit: user?.dailyLimit || 10,
                 credits: user?.creditBalance || 0
-            }
+            },
+            cycles: {
+                remaining: user?.cyclesRemaining || 0,
+                monthlyLimit: user?.monthlyCycleLimit || 0,
+                usedThisPeriod: Math.max(0, (user?.monthlyCycleLimit || 0) - (user?.cyclesRemaining || 0)),
+                leadsPerCycle: user?.leadsPerCycle || 10,
+                automationMode: user?.automationMode || 'MANUAL',
+                autoRunFrequency: user?.autoRunFrequency || 'MANUAL',
+                currentPeriodStart: user?.currentPeriodStart,
+                currentPeriodEnd: user?.currentPeriodEnd
+            },
+            latestCycle
         });
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.get('/api/cycles', authenticate, async (req: any, res: any) => {
+    try {
+        const userId = req.user!.id;
+        const limit = Math.min(100, parseInt(String(req.query.limit || '20')));
+        const cycles = await prisma.cycleRun.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+            include: { campaign: { select: { id: true, name: true, status: true } } }
+        });
+        res.json(cycles);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.get('/api/campaigns/:id/cycles', authenticate, async (req: any, res: any) => {
+    try {
+        const userId = req.user!.id;
+        const id = String(req.params.id);
+        const limit = Math.min(100, parseInt(String(req.query.limit || '10')));
+        const campaign = await prisma.campaign.findFirst({ where: { id, userId } });
+        if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+
+        const cycles = await prisma.cycleRun.findMany({
+            where: { userId, campaignId: id },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+            include: { campaign: { select: { id: true, name: true, status: true } } }
+        });
+        res.json(cycles);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.post('/api/campaigns/:id/cycles', authenticate, requireActiveSubscription, async (req: any, res: any) => {
+    try {
+        const userId = req.user!.id;
+        const id = String(req.params.id);
+        const campaign = await prisma.campaign.findFirst({ where: { id, userId } });
+        if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+
+        const cycle = await createAndRunCampaignCycle(id, userId, 'MANUAL');
+        res.status(202).json({ message: 'Discovery cycle queued successfully.', cycle });
+    } catch (error: any) {
+        res.status(400).json({ error: error.message || 'Failed to queue discovery cycle' });
     }
 });
 
@@ -353,7 +431,10 @@ app.get('/api/campaigns/hub/:id', authenticate, async (req: any, res: any) => {
         const userId = req.user!.id;
         const campaign = await prisma.campaign.findFirst({
             where: { id, userId },
-            include: { _count: { select: { leads: true } } }
+            include: {
+                _count: { select: { leads: true } },
+                cycleRuns: { orderBy: { createdAt: 'desc' }, take: 10 }
+            }
         });
         if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
         res.json(campaign);
@@ -368,6 +449,10 @@ app.get('/api/settings', authenticate, async (req: any, res: any) => {
         const userId = req.user!.id;
         let profile = await prisma.profile.findUnique({ where: { userId } });
         let mainCampaign = await prisma.campaign.findFirst({ where: { userId, name: 'Main Engine' } });
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { automationMode: true, autoRunFrequency: true }
+        });
         
         // If profile doesn't exist, create default
         if (!profile) {
@@ -404,7 +489,7 @@ app.get('/api/settings', authenticate, async (req: any, res: any) => {
             });
         }
 
-        res.json({ profile, campaign: mainCampaign });
+        res.json({ profile, campaign: mainCampaign, user });
     } catch (error) {
         console.error("GET /api/settings failed:", error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -440,6 +525,11 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: an
             discordWebhook: data.discordWebhook || null,
         };
 
+        const userAutomationData = {
+            automationMode: data.automationMode || undefined,
+            autoRunFrequency: data.autoRunFrequency || undefined,
+        };
+
         // 2. Perform Profile upsert
         const profile = await prisma.profile.upsert({
             where: { userId },
@@ -469,6 +559,13 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: an
             });
         }
 
+        if (userAutomationData.automationMode || userAutomationData.autoRunFrequency) {
+            await prisma.user.update({
+                where: { id: userId },
+                data: userAutomationData
+            });
+        }
+
         // Trigger welcome onboarding email asynchronously if completing onboarding for the first time
         if (isFirstTimeOnboarding) {
             dispatchService.sendUserWelcomeEmail(userId).catch(e => {
@@ -490,7 +587,10 @@ app.get('/api/campaigns', authenticate, async (req: any, res: any) => {
         const campaigns = await prisma.campaign.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' },
-            include: { _count: { select: { leads: true } } }
+            include: {
+                _count: { select: { leads: true } },
+                cycleRuns: { orderBy: { createdAt: 'desc' }, take: 5 }
+            }
         });
         res.json(campaigns);
     } catch (error) {
@@ -504,7 +604,10 @@ app.get('/api/campaigns/:id', authenticate, async (req: any, res: any) => {
         const userId = req.user!.id;
         const campaign = await prisma.campaign.findFirst({
             where: { id, userId },
-            include: { _count: { select: { leads: true } } }
+            include: {
+                _count: { select: { leads: true } },
+                cycleRuns: { orderBy: { createdAt: 'desc' }, take: 10 }
+            }
         });
         if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
         res.json(campaign);
@@ -545,8 +648,8 @@ app.post('/api/campaigns/:id/trigger', authenticate, requireActiveSubscription, 
         const id = String(req.params.id);
         const campaign = await prisma.campaign.findFirst({ where: { id, userId } });
         if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
-        triggerEngineCycle().catch(err => logger.error({ err }, 'Manual trigger failed'));
-        res.json({ message: 'Lead sweep initiated successfully.' });
+        const cycle = await createAndRunCampaignCycle(id, userId, 'MANUAL');
+        res.status(202).json({ message: 'Discovery cycle queued successfully.', cycle });
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
@@ -572,7 +675,11 @@ app.get('/api/leads', authenticate, async (req: any, res: any) => {
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * limit,
                 take: limit,
-                include: { business: true, campaign: { select: { name: true } } }
+                include: {
+                    business: true,
+                    campaign: { select: { name: true } },
+                    cycleRun: true
+                }
             }),
             prisma.lead.count({ where })
         ]);
@@ -647,9 +754,29 @@ app.delete('/api/leads/:id', authenticate, async (req: any, res: any) => {
 app.post('/api/engine/trigger', async (req: any, res: any) => {
     try {
         if (req.query.key !== config.ENGINE_TRIGGER_SECRET) return res.status(401).json({ error: 'Unauthorized' });
-        const results = await triggerEngineCycle();
-        res.json({ success: true, results });
-    } catch (error) {
+        const campaigns = await prisma.campaign.findMany({
+            where: {
+                status: 'ACTIVE',
+                user: {
+                    paymentStatus: { in: ['active', 'trialing'] },
+                    cyclesRemaining: { gt: 0 }
+                }
+            },
+            select: { id: true, userId: true }
+        });
+
+        const cycles = [];
+        for (const campaign of campaigns) {
+            try {
+                cycles.push(await createAndRunCampaignCycle(campaign.id, campaign.userId, 'SYSTEM'));
+            } catch (err) {
+                logger.warn({ err, campaignId: campaign.id }, 'Failed to queue system cycle');
+            }
+        }
+
+        res.status(202).json({ success: true, queued: cycles.length, cycles });
+    } catch (error: any) {
+        logger.error({ err: error.message }, 'Engine trigger failed');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

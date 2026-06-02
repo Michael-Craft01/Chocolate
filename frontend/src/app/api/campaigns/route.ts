@@ -10,7 +10,13 @@ export async function GET(req: NextRequest) {
     const campaigns = await prisma.campaign.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { leads: true } } }
+      include: {
+        _count: { select: { leads: true } },
+        cycleRuns: {
+          orderBy: { createdAt: 'desc' },
+          take: 5
+        }
+      }
     });
     return NextResponse.json(campaigns);
   } catch (error: any) {

@@ -24,8 +24,14 @@ export class WebhookHandler {
         }
 
         const dailyLimit = tier === 'STARTER' ? 100 : tier === 'PROFESSIONAL' ? 500 : 2500;
+        const monthlyCycleLimit = tier === 'STARTER' ? 4 : tier === 'PROFESSIONAL' ? 15 : 40;
+        const leadsPerCycle = tier === 'STARTER' ? 25 : tier === 'PROFESSIONAL' ? 40 : 75;
+        const autoRunFrequency = tier === 'STARTER' ? 'WEEKLY' : tier === 'PROFESSIONAL' ? 'EVERY_2_DAYS' : 'DAILY';
         const maxCampaigns = tier === 'ELITE' ? 10 : tier === 'PROFESSIONAL' ? 5 : 1;
         const price = tier === 'STARTER' ? 20 : tier === 'PROFESSIONAL' ? 49 : 300;
+        const now = new Date();
+        const periodEnd = new Date(now);
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
 
         await prisma.$transaction([
             // Update User
@@ -34,6 +40,13 @@ export class WebhookHandler {
                 data: {
                     tier: tier as any,
                     dailyLimit,
+                    monthlyCycleLimit,
+                    cyclesRemaining: monthlyCycleLimit,
+                    leadsPerCycle,
+                    automationMode: 'AUTOMATIC',
+                    autoRunFrequency: autoRunFrequency as any,
+                    currentPeriodStart: now,
+                    currentPeriodEnd: periodEnd,
                     maxCampaigns,
                     paymentStatus: 'active',
                 }
@@ -57,7 +70,7 @@ export class WebhookHandler {
     }
 
     static async handleCreditTopup(userId: string, amount: number, gatewayRef: string, gateway: 'STRIPE' | 'PAYNOW') {
-        logger.info({ userId, amount, gateway, gatewayRef }, 'Processing credit topup');
+        logger.info({ userId, amount, gateway, gatewayRef }, 'Processing cycle pack topup');
 
         const existing = await prisma.transaction.findUnique({
             where: { gatewayRef }
@@ -68,14 +81,13 @@ export class WebhookHandler {
             return;
         }
 
-        // 1 USD = 10 Credits
-        const credits = amount * 10;
+        const cycles = Math.max(1, Math.floor(amount / 2));
 
         await prisma.$transaction([
             prisma.user.update({
                 where: { id: userId },
                 data: {
-                    creditBalance: { increment: credits }
+                    cyclesRemaining: { increment: cycles }
                 }
             }),
             prisma.transaction.upsert({
@@ -85,13 +97,13 @@ export class WebhookHandler {
                     userId,
                     amount,
                     gateway,
-                    type: 'CREDIT_TOPUP',
+                    type: 'CYCLE_PACK',
                     status: 'SUCCESS',
                     gatewayRef,
                 }
             })
         ]);
 
-        logger.info({ userId, credits }, 'Credits provisioned successfully');
+        logger.info({ userId, cycles }, 'Cycle pack provisioned successfully');
     }
 }

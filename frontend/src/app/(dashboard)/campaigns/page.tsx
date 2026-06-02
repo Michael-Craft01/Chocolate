@@ -18,7 +18,9 @@ import {
   Sparkles,
   ClipboardCheck,
   Settings,
-  RefreshCw
+  RefreshCw,
+  CreditCard,
+  AlertTriangle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CardSkeleton } from "@/components/skeleton";
@@ -27,6 +29,7 @@ import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { useRouter } from "next/navigation";
 import { authJson } from "@/lib/api";
 import { fetchCampaigns as fetchCampaignList, updateCampaignStatus, deleteCampaign } from "@/lib/services/campaigns";
+import { runCampaignCycle } from "@/lib/services/cycles";
 import type { Campaign } from "@/lib/types";
 import { Sparkline } from "@/components/Sparkline";
 import { clsx, type ClassValue } from "clsx";
@@ -161,6 +164,37 @@ export default function CampaignsPage() {
     return searchMatch && statusMatch;
   });
 
+  const cyclesRemaining = stats?.cycles?.remaining || 0;
+  const cycleLimit = stats?.cycles?.monthlyLimit || 0;
+  const isCycleEmpty = cyclesRemaining <= 0;
+  const isCycleLow = !isCycleEmpty && cyclesRemaining <= Math.max(2, Math.ceil(cycleLimit * 0.15));
+
+  const handleRunCycle = async (id: string) => {
+    setTriggering(id);
+    const promise = runCampaignCycle(id);
+
+    toast.promise(promise, {
+      loading: "Queueing discovery cycle...",
+      success: "Discovery cycle queued.",
+      error: (err: any) => err.message || "Failed to queue cycle",
+    });
+
+    try {
+      await promise;
+      await fetchCampaigns(true);
+    } finally {
+      setTriggering(null);
+    }
+  };
+
+  const cycleBadgeClass = (status?: string) => {
+    if (status === "COMPLETED") return "bg-emerald-500/10 border-emerald-500/20 text-emerald-500";
+    if (status === "RUNNING" || status === "QUEUED") return "bg-primary/10 border-primary/20 text-primary";
+    if (status === "FAILED") return "bg-red-500/10 border-red-500/20 text-red-500";
+    if (status === "PARTIAL") return "bg-amber-500/10 border-amber-500/20 text-amber-500";
+    return "bg-card border-card-border text-foreground";
+  };
+
   return (
     <div className="w-full space-y-10 pb-32 font-sans selection:bg-primary/20">
       {/* Professional Header & Global Stats */}
@@ -179,8 +213,7 @@ export default function CampaignsPage() {
           </div>
 
           <div className="flex gap-4">
-            <button
-              onClick={() => fetchCampaigns(true)}
+            <button onClick={() => fetchCampaigns(true)}
               className="h-14 w-14 rounded-full bg-card border border-card-border flex items-center justify-center hover:border-primary/20 hover:text-primary text-foreground transition-all"
             >
               <RefreshCw className={`h-5 w-5 ${refreshing ? "animate-spin text-primary" : ""}`} />
@@ -199,7 +232,7 @@ export default function CampaignsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: 'Active Campaigns', value: campaigns.filter(c => c.status === 'ACTIVE').length, icon: Activity, detail: 'Operational' },
-            { label: 'Leads Found Today', value: stats?.leadsToday || '0', icon: Shield, detail: `${stats?.dailyLimit || 2500} Daily Limit` },
+            { label: 'Cycles Remaining', value: cyclesRemaining, icon: Shield, detail: `${stats?.cycles?.leadsPerCycle || 10} Leads / Cycle` },
             { label: 'Average Accuracy', value: '98.4%', icon: Sparkles, detail: 'AI Verified' },
             { label: 'System Status', value: 'Optimal', icon: Compass, detail: 'Global Edge' },
           ].map((stat, i) => (
@@ -218,6 +251,36 @@ export default function CampaignsPage() {
             </div>
           ))}
         </div>
+
+        {(isCycleEmpty || isCycleLow) && (
+          <div className={cn(
+            "rounded-card p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm",
+            isCycleEmpty ? "bg-red-500/10" : "bg-amber-500/10"
+          )}>
+            <div className="flex items-start gap-3">
+              <div className={cn(
+                "h-10 w-10 rounded-full flex items-center justify-center shrink-0",
+                isCycleEmpty ? "bg-red-500/15 text-red-500" : "bg-amber-500/15 text-amber-500"
+              )}>
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-foreground tracking-tight">
+                  {isCycleEmpty ? "No discovery cycles left" : "Discovery cycles are running low"}
+                </p>
+                <p className="text-xs text-foreground/60 font-semibold mt-1">
+                  {isCycleEmpty
+                    ? "Add a cycle pack or upgrade before launching another campaign run."
+                    : `${cyclesRemaining} cycles remain. Top up now to keep automatic discovery from pausing.`}
+                </p>
+              </div>
+            </div>
+            <Link href="/billing" className="h-11 px-5 rounded-full bg-primary text-white text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-md shadow-primary/10">
+              <CreditCard className="h-4 w-4" />
+              {isCycleEmpty ? "Buy Cycles" : "Top Up"}
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Filter & Search Controls */}
@@ -236,9 +299,7 @@ export default function CampaignsPage() {
         
         <div className="flex gap-2 p-1 bg-card border border-card-border rounded-full">
           {["ALL", "ACTIVE", "PAUSED"].map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status as any)}
+            <button key={status} onClick={() => setStatusFilter(status as any)}
               className={cn(
                 "h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all",
                 statusFilter === status 
@@ -288,6 +349,12 @@ export default function CampaignsPage() {
                         )}>
                           {c.status}
                         </div>
+                        <div className={cn(
+                          "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                          cycleBadgeClass(c.cycleRuns?.[0]?.status)
+                        )}>
+                          {c.cycleRuns?.[0]?.status ? `Last ${c.cycleRuns?.[0]?.status}` : "No Cycles"}
+                        </div>
                       </div>
                       <p className="text-[11px] font-medium text-foreground opacity-60 uppercase tracking-widest">Initialized {new Date(c.createdAt).toLocaleDateString()}</p>
                     </div>
@@ -295,8 +362,35 @@ export default function CampaignsPage() {
 
                   {/* Actions Column */}
                   <div className="flex gap-2 w-full lg:w-auto">
-                    <button 
-                      onClick={() => toggleStatus(c.id, c.status)}
+                    {isCycleEmpty ? (
+                      <Link
+                        href="/billing"
+                        className="flex-1 lg:flex-none h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 shadow-md shadow-primary/10"
+                      >
+                        <CreditCard className="h-3.5 w-3.5" /> Buy Cycles
+                      </Link>
+                    ) : c.status !== "ACTIVE" ? (
+                      <button
+                        onClick={() => toggleStatus(c.id, c.status)}
+                        disabled={busyCampaignId === c.id}
+                        className="flex-1 lg:flex-none h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 shadow-md shadow-primary/10 disabled:opacity-50"
+                      >
+                        {busyCampaignId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Play className="h-3.5 w-3.5" /> Activate Hub</>}
+                      </button>
+                    ) : c.cycleRuns?.[0]?.status === "RUNNING" || c.cycleRuns?.[0]?.status === "QUEUED" ? (
+                      <div className="flex-1 lg:flex-none h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 bg-primary/10 text-primary">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Cycle Running
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleRunCycle(c.id)}
+                        disabled={triggering === c.id}
+                        className="flex-1 lg:flex-none h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 disabled:opacity-50 shadow-md shadow-primary/10"
+                      >
+                        {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Zap className="h-3.5 w-3.5" /> Run Cycle</>}
+                      </button>
+                    )}
+                    <button onClick={() => toggleStatus(c.id, c.status)}
                       disabled={busyCampaignId === c.id}
                       className={cn(
                         "flex-1 lg:flex-none h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all border flex items-center justify-center gap-2",
@@ -307,8 +401,7 @@ export default function CampaignsPage() {
                     >
                       {busyCampaignId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (c.status === 'ACTIVE' ? <><Pause className="h-3.5 w-3.5" /> Pause</> : <><Play className="h-3.5 w-3.5" /> Resume</>)}
                     </button>
-                    <button 
-                      onClick={() => handleDelete(c.id, c.name)}
+                    <button onClick={() => handleDelete(c.id, c.name)}
                       disabled={busyCampaignId === c.id}
                       className="h-12 w-12 rounded-full bg-card border border-card-border text-foreground hover:text-red-500 hover:border-red-500/30 transition-all flex items-center justify-center"
                     >
@@ -349,16 +442,22 @@ export default function CampaignsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Activity className="h-4 w-4 text-primary/60" />
-                        <span className="text-[10px] font-bold text-foreground opacity-60 uppercase tracking-widest">Campaign Performance</span>
+                      <span className="text-[10px] font-bold text-foreground opacity-60 uppercase tracking-widest">Cycle Performance</span>
                       </div>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-[10px] font-medium text-foreground opacity-60 uppercase tracking-widest">Accuracy Score</span>
-                        <span className="text-[10px] font-black text-foreground">94%</span>
+                        <span className="text-[10px] font-medium text-foreground opacity-60 uppercase tracking-widest">Last Cycle</span>
+                        <span className="text-[10px] font-black text-foreground">
+                          {c.cycleRuns?.[0] ? `${c.cycleRuns[0].leadsFound}/${c.cycleRuns[0].maxLeads}` : "None"}
+                        </span>
                       </div>
                       <div className="h-1.5 w-full bg-border-muted rounded-full overflow-hidden">
-                        <motion.div initial={{ width: 0 }} animate={{ width: '94%' }} className="h-full bg-primary" />
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${c.cycleRuns?.[0]?.maxLeads ? Math.min(100, (c.cycleRuns[0].leadsFound / c.cycleRuns[0].maxLeads) * 100) : 0}%` }}
+                          className="h-full bg-primary"
+                        />
                       </div>
                     </div>
                   </div>
@@ -372,17 +471,16 @@ export default function CampaignsPage() {
                       <p className="text-3xl font-bold text-foreground">{c._count?.leads || 0}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-foreground opacity-40 uppercase tracking-widest">Discovery Rate</p>
-                      <p className="text-3xl font-bold text-foreground">12.4<span className="text-sm text-foreground opacity-40">/hr</span></p>
+                      <p className="text-[10px] font-bold text-foreground opacity-40 uppercase tracking-widest">Avg / Cycle</p>
+                      <p className="text-3xl font-bold text-foreground">
+                        {c.cycleRuns?.length ? Math.round(c.cycleRuns.reduce((sum, cycle) => sum + cycle.leadsFound, 0) / c.cycleRuns.length) : 0}
+                      </p>
                     </div>
                   </div>
 
                   {/* Actions Area */}
                   <div className="flex items-center gap-3">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => router.push(`/campaigns/${c.id}/edit`)}
+                    <Button variant="outline" size="sm" onClick={() => router.push(`/campaigns/${c.id}/edit`)}
                       className="h-10 px-5 bg-card hover:bg-card border border-card-border rounded-full text-xs font-bold uppercase tracking-widest transition-all text-foreground"
                     >
                       <Settings className="h-3.5 w-3.5 mr-2 opacity-60" />
@@ -391,10 +489,7 @@ export default function CampaignsPage() {
 
                     <Sheet>
                       <SheetTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => fetchBrief(c.id)}
+                        <Button variant="outline" size="sm" onClick={() => fetchBrief(c.id)}
                           className="h-10 px-5 bg-card hover:bg-card border border-card-border rounded-full text-xs font-bold uppercase tracking-widest transition-all text-foreground"
                         >
                           <Info className="h-3.5 w-3.5 mr-2 opacity-60" />
@@ -537,10 +632,7 @@ export default function CampaignsPage() {
 
                           {/* Panel Footer */}
                           <div className="p-10 border-t border-card-border bg-card/20 backdrop-blur-md">
-                            <Button 
-                              variant="secondary" 
-                              className="w-full h-14 bg-card hover:bg-primary hover:text-white border border-card-border rounded-full transition-all duration-500 flex items-center justify-center gap-3 group"
-                              onClick={() => {
+                            <Button variant="secondary" className="w-full h-14 bg-card hover:bg-primary hover:text-white rounded-full transition-all duration-500 flex items-center justify-center gap-3 group" onClick={() => {
                                   if (briefs[c.id]) {
                                     navigator.clipboard.writeText(briefs[c.id]);
                                     toast.success("Intelligence Copied", { description: "Mission brief saved to clipboard." });
@@ -555,11 +647,7 @@ export default function CampaignsPage() {
                       </SheetContent>
                     </Sheet>
 
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      disabled={busyCampaignId === c.id}
-                      onClick={() => handleDelete(c.id, c.name)}
+                    <Button variant="outline" size="sm" disabled={busyCampaignId === c.id} onClick={() => handleDelete(c.id, c.name)}
                       className="w-12 h-9 border border-card-border bg-card text-foreground hover:text-destructive hover:border-destructive/40 transition-all duration-300 rounded-full flex items-center justify-center"
                     >
                       {busyCampaignId === c.id ? (

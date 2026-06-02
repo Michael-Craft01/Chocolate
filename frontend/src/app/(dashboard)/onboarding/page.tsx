@@ -15,10 +15,12 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AIAssistButton } from "@/components/AIAssistButton";
+import { authJson } from "@/lib/api";
 
 export default function OnboardingPage() {
     const router = useRouter();
     const [step, setStep] = useState(1);
+    const [cycleMode, setCycleMode] = useState<"automatic" | "manual" | "smart">("automatic");
     const [formData, setFormData] = useState({
         // Identity
         senderName: "",
@@ -51,8 +53,24 @@ export default function OnboardingPage() {
     };
 
     const finishOnboarding = async () => {
-        // In a real app, we would POST to /api/onboarding
-        console.log("Onboarding Complete:", formData);
+        await authJson("/api/settings", {
+            method: "POST",
+            body: JSON.stringify({
+                companyName: formData.companyName,
+                website: "",
+                industry: formData.defaultIndustry || "Business",
+                defaultSenderName: formData.senderName,
+                defaultSenderRole: formData.senderRole,
+                productName: formData.productName,
+                productDescription: formData.productDescription,
+                targetPainPoints: "Campaign-matched operational friction",
+                targetCountry: "ZW",
+                locations: [formData.defaultLocation || "Harare"],
+                industries: [formData.defaultIndustry || "Business"],
+                automationMode: cycleMode === "automatic" ? "AUTOMATIC" : cycleMode === "smart" ? "SMART" : "MANUAL",
+                autoRunFrequency: cycleMode === "manual" ? "MANUAL" : "WEEKLY",
+            }),
+        }).catch((err) => console.error("Onboarding save failed:", err));
         router.push("/dashboard");
     };
 
@@ -60,7 +78,7 @@ export default function OnboardingPage() {
         if (step === 1) return "Add your company name to personalize your workspace.";
         if (step === 2) return "Set sender identity used in outreach signatures.";
         if (step === 3) return "Describe your offer so AI can match real pain points.";
-        return "Final review complete. Launch your dashboard.";
+        return "Choose how your discovery cycles should run.";
     };
 
     const containerVariants = {
@@ -231,23 +249,31 @@ export default function OnboardingPage() {
                                     <Check className="text-primary" size={32} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-lg">System Calibrated</h3>
-                                    <p className="text-sm text-white/50">Your business identity and product intelligence are now synced with the engine.</p>
+                                    <h3 className="font-bold text-lg">Discovery Cycles Ready</h3>
+                                    <p className="text-sm text-white/50">Your business identity and product intelligence are ready for bounded cycle runs.</p>
                                 </div>
                             </div>
-                            <p className="text-center text-xs text-white/20">
-                                You can customize specific targets for each individual campaign in the dashboard.
-                            </p>
+                            <div className="grid grid-cols-1 gap-3">
+                                {[
+                                    { id: "automatic", label: "Automatic", desc: "Spend cycles on the plan schedule." },
+                                    { id: "manual", label: "Manual", desc: "Only run cycles when you press start." },
+                                    { id: "smart", label: "Smart", desc: "Run when targeting quality and yield are healthy." },
+                                ].map((mode) => (
+                                    <button key={mode.id} onClick={() => setCycleMode(mode.id as typeof cycleMode)}
+                                        className={`p-4 rounded-sm border text-left transition-all ${cycleMode === mode.id ? "border-primary bg-primary/10" : "border-white/10 bg-white/[0.02]"}`}
+                                    >
+                                        <p className="text-sm font-bold">{mode.label}</p>
+                                        <p className="text-xs text-white/45 mt-1">{mode.desc}</p>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
 
                     {/* Navigation */}
                     <div className="mt-12 flex items-center justify-between">
                         {step > 1 ? (
-                            <button 
-                                onClick={prevStep}
-                                className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm font-semibold ml-2"
-                            >
+                            <button onClick={prevStep} className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm font-semibold ml-2" >
                                 <ChevronLeft size={20} />
                                 Back
                             </button>

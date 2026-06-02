@@ -104,9 +104,7 @@ export function CommandPalette() {
                         { name: "My Profile", href: "/profile", icon: User },
                         { name: "Settings", href: "/settings", icon: Settings },
                       ].map((item) => (
-                        <button
-                          key={item.href}
-                          onClick={() => navigate(item.href)}
+                        <button key={item.href} onClick={() => navigate(item.href)}
                           className="flex items-center gap-3 p-4 rounded-xl hover:bg-white/[0.03] border border-transparent hover:border-white/5 transition-all text-zinc-400 hover:text-white group"
                         >
                           <item.icon className="h-4 w-4 text-zinc-500 group-hover:text-primary transition-colors" />
@@ -120,9 +118,7 @@ export function CommandPalette() {
                 {query && results.length > 0 && (
                   <div className="p-2 space-y-1">
                     {results.map((res) => (
-                      <button
-                        key={res.id}
-                        onClick={() => navigate(res.type === 'Discovery Hub' ? `/campaigns` : `/leads`)}
+                      <button key={res.id} onClick={() => navigate(res.type === 'Discovery Hub' ? `/campaigns` : `/leads`)}
                         className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-primary/5 border border-transparent hover:border-primary/10 transition-all group"
                       >
                         <div className="flex items-center gap-4">

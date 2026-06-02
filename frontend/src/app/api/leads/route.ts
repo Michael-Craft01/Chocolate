@@ -25,7 +25,11 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
-        include: { business: true, campaign: { select: { name: true } } }
+        include: {
+          business: true,
+          campaign: { select: { name: true } },
+          cycleRun: true
+        }
       }),
       prisma.lead.count({ where })
     ]);
