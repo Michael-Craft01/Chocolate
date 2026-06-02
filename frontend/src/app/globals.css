@@ -16,8 +16,17 @@
   --color-blue: #3b82f6;
   
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --radius-pill: 9999px;
-  --radius-card: 12px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 5px;
+  --radius-lg: 5px;
+  --radius-xl: 5px;
+  --radius-2xl: 5px;
+  --radius-3xl: 5px;
+  --radius-4xl: 5px;
+  --radius-full: 5px;
+  --radius-pill: 5px;
+  --radius-card: 5px;
 }
 
 :root {
@@ -259,14 +268,14 @@ html.dark .bento-card {
 
 /* Dedicated B2B multiline textareas should be sleek cards, not pills, to prevent text clipping */
 textarea {
-  border-radius: 8px !important;
+  border-radius: 5px !important;
   border-style: solid !important;
   border-width: 1px !important;
 }
 
 /* Ensure cards have soft, clean rounded corners */
 .rounded-card, [class*="rounded-card"] {
-  border-radius: 12px !important;
+  border-radius: 5px !important;
 }
 
 /* Bento Card Hover lift & soft organic ambient shadows */

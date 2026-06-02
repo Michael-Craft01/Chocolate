@@ -326,6 +326,7 @@ export async function runCampaignCycle(cycleRunId: string) {
     let leadsFound = 0;
     let zeroYieldRounds = 0;
     const MAX_ZERO_YIELD_ROUNDS = 3;
+    let abortedDueToPause = false;
 
     await prisma.cycleRun.update({
         where: { id: cycleRunId },
@@ -336,13 +337,32 @@ export async function runCampaignCycle(cycleRunId: string) {
         logger.info({ cycleRunId, campaignId: campaign.id, maxLeads: cycle.maxLeads }, '[CYCLE] Starting bounded campaign cycle');
 
         while (leadsFound < cycle.maxLeads && Date.now() < deadline && zeroYieldRounds < MAX_ZERO_YIELD_ROUNDS) {
+            // Check if campaign was paused or deactivated
+            const currentCampaign = await prisma.campaign.findUnique({
+                where: { id: campaign.id },
+                select: { status: true }
+            });
+            if (!currentCampaign || currentCampaign.status !== 'ACTIVE') {
+                logger.info({ cycleRunId }, '[CYCLE] Campaign was paused or deactivated. Aborting cycle.');
+                abortedDueToPause = true;
+                break;
+            }
+
             const stillNeeded = cycle.maxLeads - leadsFound;
             const queries = await queryGenerator.generateBatchQueries(Math.min(10, Math.max(3, stillNeeded)), campaign);
             if (queries.length === 0) break;
 
             let roundFound = 0;
             for (const query of queries) {
-                if (leadsFound >= cycle.maxLeads || Date.now() >= deadline) break;
+                // Check if campaign was paused inside inner loop
+                const innerCampaign = await prisma.campaign.findUnique({
+                    where: { id: campaign.id },
+                    select: { status: true }
+                });
+                if (!innerCampaign || innerCampaign.status !== 'ACTIVE' || leadsFound >= cycle.maxLeads || Date.now() >= deadline) {
+                    abortedDueToPause = true;
+                    break;
+                }
 
                 const count = await processLeadsForQuery(
                     campaign,
@@ -364,8 +384,15 @@ export async function runCampaignCycle(cycleRunId: string) {
                 await sleep(1000);
             }
 
+            if (abortedDueToPause) break;
+
             zeroYieldRounds = roundFound === 0 ? zeroYieldRounds + 1 : 0;
             if (roundFound === 0) await sleep(30000);
+        }
+
+        if (abortedDueToPause) {
+            logger.info({ cycleRunId }, '[CYCLE] Campaign paused. Leaving cycle run status untouched.');
+            return await prisma.cycleRun.findUnique({ where: { id: cycleRunId } });
         }
 
         const status = leadsFound > 0 || Date.now() < deadline ? 'COMPLETED' : 'PARTIAL';

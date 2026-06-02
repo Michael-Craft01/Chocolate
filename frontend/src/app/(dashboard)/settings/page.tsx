@@ -106,7 +106,7 @@ export default function SettingsPage() {
     }
   };
 
-  const inputClass = "w-full bg-foreground/[0.03] hover:bg-foreground/[0.05] focus:bg-background border border-foreground/10 focus:border-primary rounded-full px-6 py-3.5 transition-all text-sm font-medium text-foreground placeholder:text-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary";
+  const inputClass = "w-full bg-foreground/[0.03] hover:bg-foreground/[0.05] focus:bg-background border border-foreground/10 focus:border-primary rounded-lg px-4 py-2.5 transition-all text-sm font-medium text-foreground placeholder:text-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary";
   const labelClass = "text-xs font-bold uppercase tracking-wider text-foreground/80 block mb-2 ml-1";
 
   if (loading) {
@@ -127,9 +127,9 @@ export default function SettingsPage() {
         
         {!isEditing ? (
           <button type="button" onClick={() => setIsEditing(true)}
-            className="flex items-center justify-center gap-3 h-12 px-8 bg-primary hover:bg-emerald-600 text-white rounded-full text-xs font-bold transition-all shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 active:scale-[0.98] cursor-pointer"
+            className="flex items-center justify-center gap-2.5 h-10 px-4 bg-primary hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 active:scale-[0.98] cursor-pointer"
           >
-            <Pencil className="h-4 w-4" />
+            <Pencil className="h-3.5 w-3.5" />
             Edit Settings
           </button>
         ) : (
@@ -138,15 +138,15 @@ export default function SettingsPage() {
                 setFormData(savedData);
                 setIsEditing(false);
               }}
-              className="flex items-center justify-center h-12 px-6 bg-foreground/5 hover:bg-foreground/10 text-foreground border border-card-border rounded-full text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
+              className="flex items-center justify-center h-10 px-4 bg-foreground/5 hover:bg-foreground/10 text-foreground border border-card-border rounded-lg text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
             >
               Cancel
             </button>
             <button onClick={() => handleSave()}
               disabled={saving}
-              className="flex items-center justify-center gap-3 h-12 px-8 bg-primary hover:bg-emerald-600 text-white rounded-full text-xs font-bold transition-all shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-50 min-w-[160px] shrink-0 cursor-pointer"
+              className="flex items-center justify-center gap-2.5 h-10 px-5 bg-primary hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-50 min-w-[140px] shrink-0 cursor-pointer"
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : success ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : success ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
               {saving ? "Saving..." : success ? "Changes Saved" : "Save Changes"}
             </button>
           </div>
@@ -154,7 +154,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Automation Controls */}
-      <div className="bento-card p-8 space-y-6">
+      <div className="bento-card p-6 space-y-6">
         <div className="flex items-center gap-4 border-b border-foreground/5 pb-6">
           <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <Zap size={22} />
@@ -171,9 +171,9 @@ export default function SettingsPage() {
             { label: "Leads / Cycle", value: stats?.cycles?.leadsPerCycle ?? 0 },
             { label: "Latest Result", value: stats?.latestCycle ? `${stats.latestCycle.leadsFound}/${stats.latestCycle.maxLeads}` : "None" },
           ].map((item) => (
-            <div key={item.label} className="rounded-[20px] border border-card-border bg-foreground/[0.02] p-5 text-left">
+            <div key={item.label} className="rounded-xl border border-card-border bg-foreground/[0.02] p-4 text-left">
               <p className="text-[9px] font-black uppercase tracking-widest text-foreground/45">{item.label}</p>
-              <p className="mt-2 text-xl font-black tracking-tight text-foreground">{item.value}</p>
+              <p className="mt-1.5 text-lg font-black tracking-tight text-foreground">{item.value}</p>
             </div>
           ))}
         </div>
@@ -188,7 +188,7 @@ export default function SettingsPage() {
                 automationMode: mode.value,
                 autoRunFrequency: mode.value === "MANUAL" ? "MANUAL" : (prev.autoRunFrequency === "MANUAL" ? "WEEKLY" : prev.autoRunFrequency)
               }))}
-              className={`rounded-[20px] border px-5 py-4 text-left transition-all ${formData.automationMode === mode.value ? "border-primary/40 bg-primary/10" : "border-card-border bg-foreground/[0.02]"}`}
+              className={`rounded-xl border px-4 py-3 text-left transition-all ${formData.automationMode === mode.value ? "border-primary/40 bg-primary/10" : "border-card-border bg-foreground/[0.02]"}`}
             >
               <p className="text-xs font-black uppercase tracking-widest text-foreground">{mode.label}</p>
               <p className="mt-1 text-xs font-semibold text-foreground/55 leading-relaxed">{mode.desc}</p>
@@ -197,7 +197,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Mode Explanations Info Box */}
-        <div className="p-6 rounded-[20px] border border-card-border bg-foreground/[0.01] text-left space-y-4">
+        <div className="p-5 rounded-xl border border-card-border bg-foreground/[0.01] text-left space-y-4">
           <p className="text-xs font-bold uppercase tracking-wider text-foreground/80">Understanding Automation Modes</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-foreground/70 leading-relaxed">
             <div className="space-y-1.5">
@@ -215,7 +215,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-center gap-3 rounded-[20px] border border-card-border bg-foreground/[0.02] p-5">
+        <div className="flex flex-col md:flex-row md:items-center gap-3 rounded-xl border border-card-border bg-foreground/[0.02] p-4">
           <div className="flex-1 text-left">
             <p className="text-xs font-black uppercase tracking-widest text-foreground">Cycle Schedule</p>
             <p className="mt-1 text-xs font-semibold text-foreground/55">Used only when mode is Automatic or Smart.</p>
@@ -224,7 +224,7 @@ export default function SettingsPage() {
             value={formData.autoRunFrequency}
             onChange={(e) => setFormData(prev => ({ ...prev, autoRunFrequency: e.target.value }))}
             disabled={formData.automationMode === "MANUAL"}
-            className="h-11 rounded-full border border-card-border bg-background px-5 text-xs font-bold uppercase tracking-widest text-foreground disabled:opacity-40"
+            className="h-10 rounded-lg border border-card-border bg-background px-3.5 text-xs font-semibold text-foreground disabled:opacity-40"
           >
             <option value="MANUAL">Manual</option>
             <option value="WEEKLY">Weekly</option>
@@ -238,7 +238,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Section 1: Business Profile Card */}
-        <div className="bento-card space-y-6">
+        <div className="bento-card p-6 space-y-6">
           <div className="flex items-center gap-4 border-b border-foreground/5 pb-6">
             <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Building2 size={22} />
@@ -254,7 +254,7 @@ export default function SettingsPage() {
             <div className="space-y-6">
               <div className="space-y-1 text-left">
                 <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Company Name</span>
-                <p className="text-sm font-bold text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-full px-6 py-3.5 leading-none">
+                <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                   {formData.companyName || "Not configured"}
                 </p>
               </div>
@@ -267,12 +267,12 @@ export default function SettingsPage() {
                       href={formData.website} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                        className="text-sm font-bold text-primary hover:text-primary-hover bg-primary/5 hover:bg-primary/10 rounded-full px-6 py-3.5 inline-flex items-center gap-2 transition-all"
+                        className="text-sm font-medium text-primary hover:text-primary-hover bg-primary/5 hover:bg-primary/10 rounded-lg px-4 py-2.5 inline-flex items-center gap-2 transition-all"
                     >
                       {formData.website} <ExternalLink size={12} />
                     </a>
                   ) : (
-                    <p className="text-sm font-bold text-foreground/40 bg-foreground/[0.02] border border-foreground/5 rounded-full px-6 py-3.5 leading-none">
+                    <p className="text-sm font-medium text-foreground/40 bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                       Not configured
                     </p>
                   )}
@@ -282,20 +282,20 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1 text-left">
                   <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Full Name</span>
-                  <p className="text-sm font-bold text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-full px-6 py-3.5 leading-none">
+                  <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                     {formData.defaultSenderName || "Not configured"}
                   </p>
                 </div>
                 <div className="space-y-1 text-left">
                   <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Position</span>
-                  <p className="text-sm font-bold text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-full px-6 py-3.5 leading-none">
+                  <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                     {formData.defaultSenderRole || "Not configured"}
                   </p>
                 </div>
               </div>
 
               {/* Premium Callout Info Box */}
-              <div className="flex gap-4 items-start p-5 rounded-[24px] bg-primary/5 border border-primary/10 text-left mt-4">
+              <div className="flex gap-4 items-start p-4 rounded-xl bg-primary/5 border border-primary/10 text-left mt-4">
                 <div className="p-2 rounded-full bg-primary/10 text-primary shrink-0">
                   <MessageSquare size={16} />
                 </div>
@@ -314,7 +314,7 @@ export default function SettingsPage() {
                     field="Company Name" 
                     currentValue={formData.companyName} 
                     onRefined={(val) => setFormData(prev => ({...prev, companyName: val}))} 
-                    className="rounded-full"
+                    className="rounded-lg"
                   />
                 </div>
                 <input 
@@ -364,7 +364,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Premium Callout Info Box */}
-              <div className="flex gap-4 items-start p-5 rounded-[24px] bg-primary/5 border border-primary/10 text-left mt-4">
+              <div className="flex gap-4 items-start p-4 rounded-xl bg-primary/5 border border-primary/10 text-left mt-4">
                 <div className="p-2 rounded-full bg-primary/10 text-primary shrink-0">
                   <MessageSquare size={16} />
                 </div>
@@ -377,7 +377,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Section 2: Default Targeting Bento Card */}
-        <div className="bento-card space-y-6">
+        <div className="bento-card p-6 space-y-6">
           <div className="flex items-center gap-4 border-b border-foreground/5 pb-6">
             <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Target size={22} />
@@ -393,7 +393,7 @@ export default function SettingsPage() {
             <div className="space-y-6">
               <div className="space-y-1 text-left">
                 <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Core Industry</span>
-                <p className="text-sm font-bold text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-full px-6 py-3.5 leading-none">
+                <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                   {formData.industry || "Not configured"}
                 </p>
               </div>
@@ -401,7 +401,7 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1 text-left">
                   <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Default Region</span>
-                  <p className="text-sm font-bold text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-full px-6 py-3.5 leading-none">
+                  <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                     {formData.targetCountry === "ZW" ? "Zimbabwe" :
                      formData.targetCountry === "SA" ? "South Africa" :
                      formData.targetCountry === "UK" ? "United Kingdom" :
@@ -410,7 +410,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-1 text-left">
                   <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Default City</span>
-                  <p className="text-sm font-bold text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-full px-6 py-3.5 leading-none">
+                  <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                     {formData.locations[0] || "Not configured"}
                   </p>
                 </div>
@@ -418,7 +418,7 @@ export default function SettingsPage() {
 
               <div className="space-y-1 text-left">
                 <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Integration Hook (Discord)</span>
-                <p className="text-sm font-bold text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-full px-6 py-3.5 leading-none tracking-widest font-mono truncate">
+                <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none tracking-widest font-mono truncate">
                   {formData.discordWebhook 
                     ? formData.discordWebhook.replace(/(.{12}).+(.{8})/, "$1••••••••••••••••$2") 
                     : "Not configured"}
@@ -426,7 +426,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Premium Callout Info Box */}
-              <div className="flex gap-4 items-start p-5 rounded-[24px] bg-primary/5 border border-primary/10 text-left mt-4">
+              <div className="flex gap-4 items-start p-4 rounded-xl bg-primary/5 border border-primary/10 text-left mt-4">
                 <div className="p-2 rounded-full bg-primary/10 text-primary shrink-0">
                   <MapPin size={16} />
                 </div>
@@ -445,7 +445,7 @@ export default function SettingsPage() {
                     field="Industry" 
                     currentValue={formData.industry} 
                     onRefined={(val) => setFormData(prev => ({...prev, industry: val}))} 
-                    className="rounded-full"
+                    className="rounded-lg"
                   />
                 </div>
                 <input 
@@ -480,7 +480,7 @@ export default function SettingsPage() {
                       currentValue={formData.locations[0]} 
                       context={{ targetCountry: formData.targetCountry }}
                       onRefined={(val) => setFormData(prev => ({...prev, locations: [val]}))} 
-                      className="rounded-full"
+                      className="rounded-lg"
                     />
                   </div>
                   <input 
@@ -506,7 +506,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Premium Callout Info Box */}
-              <div className="flex gap-4 items-start p-5 rounded-[24px] bg-primary/5 border border-primary/10 text-left mt-4">
+              <div className="flex gap-4 items-start p-4 rounded-xl bg-primary/5 border border-primary/10 text-left mt-4">
                 <div className="p-2 rounded-full bg-primary/10 text-primary shrink-0">
                   <MapPin size={16} />
                 </div>
@@ -519,8 +519,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Sync Card */}
-      <div className="bento-card p-10 relative overflow-hidden group">
+      <div className="bento-card p-6 md:p-8 relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent opacity-50 pointer-events-none" />
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full -mr-48 -mt-48 group-hover:bg-primary/15 transition-all duration-700 blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
@@ -536,16 +535,16 @@ export default function SettingsPage() {
           
           {!isEditing ? (
             <button onClick={() => setIsEditing(true)}
-              className="h-12 px-8 bg-foreground text-background hover:bg-foreground/90 text-xs font-bold uppercase tracking-wider rounded-full transition-all flex items-center gap-2 shadow-xl shadow-foreground/5 hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
+              className="h-10 px-5 bg-foreground text-background hover:bg-foreground/90 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2.5 shadow-xl shadow-foreground/5 hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
             >
-              Modify Identity <ShieldCheck className="h-4 w-4" />
+              Modify Identity <ShieldCheck className="h-3.5 w-3.5" />
             </button>
           ) : (
             <button onClick={() => handleSave()}
               disabled={saving}
-              className="h-12 px-8 bg-primary hover:bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider rounded-full transition-all flex items-center gap-2 shadow-xl shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
+              className="h-10 px-5 bg-primary hover:bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2.5 shadow-xl shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
             >
-              Sync & Deploy <ShieldCheck className="h-4 w-4" />
+              Sync & Deploy <ShieldCheck className="h-3.5 w-3.5" />
             </button>
           )}
         </div>

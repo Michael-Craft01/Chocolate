@@ -48,6 +48,22 @@ export interface Campaign {
 export interface Lead {
   id: string;
   campaignId?: string;
+  campaign?: {
+    id?: string;
+    name: string;
+    status?: Campaign["status"];
+    companyName?: string;
+    senderName?: string;
+    senderRole?: string;
+    targetCountry?: string;
+    locations?: string[];
+    industries?: string[];
+    productName?: string;
+    productDescription?: string;
+    targetPainPoints?: string;
+    outreachTone?: Campaign["outreachTone"];
+    ctaLink?: string;
+  };
   cycleRunId?: string;
   cycleRun?: CycleRun;
   sweepId?: string;

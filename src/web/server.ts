@@ -443,6 +443,21 @@ app.get('/api/campaigns/hub/:id', authenticate, async (req: any, res: any) => {
     }
 });
 
+// API: AI Assistant Refinement
+app.post('/api/ai/refine', authenticate, async (req: any, res: any) => {
+    try {
+        const { field, value, context } = req.body;
+        if (!field) {
+            return res.status(400).json({ error: 'Field is required' });
+        }
+        const refined = await aiService.refineInput(field, value, context);
+        res.json({ refined });
+    } catch (error: any) {
+        logger.error({ err: error.message }, 'AI input refinement failed');
+        res.status(500).json({ error: error.message || 'Internal Server Error' });
+    }
+});
+
 // API: Settings
 app.get('/api/settings', authenticate, async (req: any, res: any) => {
     try {
@@ -469,21 +484,22 @@ app.get('/api/settings', authenticate, async (req: any, res: any) => {
             });
         }
 
-        // If main campaign doesn't exist, create default Main Engine campaign
+        // If main campaign doesn't exist, create a PAUSED stub — engine won't touch it until user fills in settings
         if (!mainCampaign) {
             mainCampaign = await prisma.campaign.create({
                 data: {
                     userId,
                     name: 'Main Engine',
-                    senderName: profile.defaultSenderName || "Founder",
-                    senderRole: profile.defaultSenderRole || "Founder",
-                    companyName: profile.companyName || "My Business",
+                    status: 'PAUSED',
+                    senderName: profile.defaultSenderName || "",
+                    senderRole: profile.defaultSenderRole || "",
+                    companyName: profile.companyName || "",
                     targetCountry: "ZW",
-                    locations: ["Harare"],
-                    industries: [profile.industry || "Business"],
-                    productName: profile.companyName || "Leads Outreach Engine",
-                    productDescription: "AI Outbound Outreach System",
-                    targetPainPoints: "Target discovery and lead enrichment",
+                    locations: [],
+                    industries: [],
+                    productName: "",
+                    productDescription: "",
+                    targetPainPoints: "",
                     outreachTone: "PROFESSIONAL",
                 }
             });
@@ -551,9 +567,11 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: an
                     ...campaignData,
                     userId,
                     name: 'Main Engine',
-                    productName: data.companyName || "Leads Outreach Engine",
-                    productDescription: "AI Outbound Outreach System",
-                    targetPainPoints: "Target discovery and lead enrichment",
+                    // Start ACTIVE now — user just saved real settings
+                    status: 'ACTIVE',
+                    productName: data.productName || data.companyName || "",
+                    productDescription: data.productDescription || "",
+                    targetPainPoints: data.targetPainPoints || "",
                     outreachTone: "PROFESSIONAL",
                 }
             });
@@ -655,6 +673,37 @@ app.post('/api/campaigns/:id/trigger', authenticate, requireActiveSubscription, 
     }
 });
 
+app.patch('/api/campaigns/:id/status', authenticate, requireActiveSubscription, async (req: any, res: any) => {
+    try {
+        const id = String(req.params.id);
+        const userId = req.user!.id;
+        const { status } = req.body;
+
+        if (!['ACTIVE', 'PAUSED', 'EXHAUSTED'].includes(status)) {
+            return res.status(400).json({ error: 'Invalid status' });
+        }
+
+        const campaign = await prisma.campaign.findFirst({ where: { id, userId } });
+        if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+
+        const updated = await prisma.campaign.update({
+            where: { id },
+            data: { status }
+        });
+
+        if (status === 'PAUSED') {
+            await prisma.cycleRun.updateMany({
+                where: { campaignId: id, status: { in: ['QUEUED', 'RUNNING'] } },
+                data: { status: 'FAILED', failureReason: 'Campaign paused by user', completedAt: new Date() }
+            });
+        }
+
+        res.json(updated);
+    } catch (error: any) {
+        res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    }
+});
+
 // API: Leads
 app.get('/api/leads', authenticate, async (req: any, res: any) => {
     try {
@@ -677,7 +726,24 @@ app.get('/api/leads', authenticate, async (req: any, res: any) => {
                 take: limit,
                 include: {
                     business: true,
-                    campaign: { select: { name: true } },
+                    campaign: {
+                        select: {
+                            id: true,
+                            name: true,
+                            status: true,
+                            companyName: true,
+                            senderName: true,
+                            senderRole: true,
+                            targetCountry: true,
+                            locations: true,
+                            industries: true,
+                            productName: true,
+                            productDescription: true,
+                            targetPainPoints: true,
+                            outreachTone: true,
+                            ctaLink: true
+                        }
+                    },
                     cycleRun: true
                 }
             }),
@@ -690,6 +756,87 @@ app.get('/api/leads', authenticate, async (req: any, res: any) => {
         });
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+function fallbackLeadAnalysis(lead: any, campaign: any) {
+    const hasDirectContact = Boolean(lead.business.email || lead.business.phone);
+    const product = campaign.productName || 'your offer';
+    const painPoint = lead.painPoint || campaign.targetPainPoints || 'operational friction';
+    const channel = lead.business.email ? 'email' : lead.business.phone ? 'WhatsApp or phone' : 'website-first outreach';
+
+    return {
+        summary: `${lead.business.name} is a ${lead.industry || 'target'} prospect matched to this campaign because its detected friction overlaps with ${product}'s value proposition. The strongest sales path is to connect the pain signal to a measurable outcome, then move quickly toward a short diagnostic conversation.`,
+        opportunityScore: hasDirectContact ? 8 : 6,
+        whyThisLead: `This lead matches the campaign because it sits in ${lead.industry || 'the selected industry'} and shows signs of ${painPoint}. ${hasDirectContact ? 'A direct contact channel is available, so outreach can start immediately.' : 'Contact data is thinner, so qualify through the website before pushing for a meeting.'}`,
+        salesApproach: `${campaign.outreachTone === 'DIRECT' ? 'DIRECT' : 'CONSULTATIVE'} - lead with the specific pain signal, then position ${product} as the practical fix.`,
+        talkingPoints: [
+            `Open with the detected pain point: ${painPoint}.`,
+            `Tie the issue to ${campaign.productDescription || product}.`,
+            `Reference their ${lead.industry || 'industry'} context instead of sending a generic pitch.`,
+            `End with one low-friction next step, such as a short review or demo.`
+        ],
+        likelyObjection: 'We already have a process for this.',
+        objectionResponse: `Acknowledge that, then frame ${product} as a way to improve the current process without forcing a full workflow change upfront.`,
+        nextBestAction: `Send a ${channel} message that mentions ${painPoint} and asks for a 10-minute fit check.`,
+        urgencySignal: `This lead was found by a live campaign targeting ${campaign.locations?.join(', ') || campaign.targetCountry || 'the selected market'}, so the context is fresh enough for immediate outreach.`
+    };
+}
+
+app.post('/api/leads/:id/analyze', authenticate, async (req: any, res: any) => {
+    try {
+        const id = String(req.params.id);
+        const lead = await prisma.lead.findFirst({
+            where: { id, campaign: { userId: req.user!.id } },
+            include: {
+                business: true,
+                cycleRun: true,
+                campaign: {
+                    include: {
+                        user: {
+                            select: {
+                                tier: true,
+                                automationMode: true,
+                                autoRunFrequency: true,
+                                profile: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!lead) {
+            return res.status(404).json({ error: 'Lead not found or access denied' });
+        }
+
+        try {
+            const analysis = await aiService.analyzeLead({
+                businessName: lead.business.name,
+                industry: lead.industry,
+                painPoint: lead.painPoint,
+                website: lead.business.website,
+                phone: lead.business.phone,
+                email: lead.business.email
+            }, {
+                productName: lead.campaign.productName,
+                productDescription: lead.campaign.productDescription,
+                targetPainPoints: lead.campaign.targetPainPoints,
+                companyName: lead.campaign.companyName || lead.campaign.user.profile?.companyName || 'your company',
+                senderName: lead.campaign.senderName || lead.campaign.user.profile?.defaultSenderName || 'the team'
+            });
+
+            return res.json({
+                ...analysis,
+                opportunityScore: Math.min(10, Math.max(1, Number(analysis.opportunityScore) || 7))
+            });
+        } catch (error: any) {
+            logger.warn({ err: error.message, leadId: id }, 'AI lead analysis failed, returning deterministic fallback');
+            return res.json(fallbackLeadAnalysis(lead, lead.campaign));
+        }
+    } catch (error: any) {
+        logger.error({ err: error.message }, 'Lead analysis endpoint failed');
+        return res.status(500).json({ error: error.message || 'Analysis failed' });
     }
 });
 

@@ -2,6 +2,8 @@ import prisma from './lib/prisma.js';
 import { logger } from './lib/logger.js';
 import { startServer } from './web/server.js';
 import { createAndRunCampaignCycle } from './services/discoveryEngine.js';
+import { config } from './config.js';
+import cron from 'node-cron';
 
 // Configuration
 const CYCLE_INTERVAL = 12 * 60 * 60 * 1000; // Lightweight AC-BDE scheduler check
@@ -79,17 +81,19 @@ async function startEngine() {
         logger.info('Engine Standby: No active campaigns found. Waiting for user to launch a mission.');
     }
 
-    // 3. Schedule Recurring Hunts
-    setInterval(async () => {
+    // 3. Schedule Recurring Hunts with node-cron
+    const cronSchedule = config.CRON_SCHEDULE || '0 */6 * * *';
+    cron.schedule(cronSchedule, async () => {
+        logger.info('⏰ Running scheduled campaign cycle sweep...');
         try {
             const queued = await queueDueDiscoveryCycles('AUTO');
             logger.info(`AC-BDE scheduler check complete. Queued ${queued} campaign cycle(s).`);
         } catch (error: any) {
             logger.error({ err: error }, 'Scheduled cycle queue failed');
         }
-    }, CYCLE_INTERVAL);
+    });
 
-    logger.info(`Engine operational. Next sweep in ${CYCLE_INTERVAL / (60 * 60 * 1000)} hours.`);
+    logger.info(`Engine operational. Scheduler configured via cron: "${cronSchedule}"`);
 }
 
 // Handle errors

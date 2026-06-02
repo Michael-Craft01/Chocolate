@@ -77,11 +77,11 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
             .filter((i: string) => i.length >= 3 && i.length <= 40) // keep only clean, short industry names
             .filter((i: string, idx: number, arr: string[]) => arr.indexOf(i) === idx); // deduplicate
 
-        const country = campaign?.targetCountry || 'US';
+        const targetCountry = campaign?.targetCountry || 'US';
 
         const [industries, locations] = await Promise.all([
             this.expandIndustries(baseIndustries),
-            this.expandLocations(baseLocations, country)
+            this.expandLocations(baseLocations, targetCountry)
         ]);
 
         logger.info({ 
@@ -92,7 +92,7 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
         const queries = await this.generateQueriesForContext(
             locations, 
             industries,
-            country, 
+            targetCountry, 
             count,
             campaign?.id
         );

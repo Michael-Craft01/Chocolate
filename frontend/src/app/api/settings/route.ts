@@ -33,15 +33,16 @@ export async function GET(req: NextRequest) {
         data: {
           userId: user.id,
           name: 'Main Engine',
-          senderName: profile.defaultSenderName || "Founder",
-          senderRole: profile.defaultSenderRole || "Founder",
-          companyName: profile.companyName || "My Business",
+          status: 'PAUSED',
+          senderName: profile.defaultSenderName || "",
+          senderRole: profile.defaultSenderRole || "",
+          companyName: profile.companyName || "",
           targetCountry: "ZW",
-          locations: ["Harare"],
-          industries: [profile.industry || "Business"],
-          productName: profile.companyName || "Leads Outreach Engine",
-          productDescription: "AI Outbound Outreach System",
-          targetPainPoints: "Target discovery and lead enrichment",
+          locations: [],
+          industries: [],
+          productName: "",
+          productDescription: "",
+          targetPainPoints: "",
           outreachTone: "PROFESSIONAL",
         }
       });
@@ -94,9 +95,11 @@ export async function POST(req: NextRequest) {
           ...campaignData,
           userId: user.id,
           name: 'Main Engine',
-          productName: data.productName || data.companyName || "Leads Outreach Engine",
-          productDescription: data.productDescription || "AI Outbound Outreach System",
-          targetPainPoints: data.targetPainPoints || "Target discovery and lead enrichment",
+          // Activate with real user data on first save
+          status: 'ACTIVE',
+          productName: data.productName || data.companyName || "",
+          productDescription: data.productDescription || "",
+          targetPainPoints: data.targetPainPoints || "",
           outreachTone: "PROFESSIONAL",
         }
       });

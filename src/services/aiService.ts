@@ -1,6 +1,10 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { config } from '../config.js';
 import { logger } from '../lib/logger.js';
+import OpenAI from 'openai';
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Types
+// ─────────────────────────────────────────────────────────────────────────────
 
 export interface AIEnrichment {
     brandName: string;
@@ -10,239 +14,400 @@ export interface AIEnrichment {
     score: number;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Parsing Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Strip any residual thought / reasoning tags the model might still emit
+ * even when using the OpenAI-compat endpoint.
+ */
+function stripThinking(text: string): string {
+    return text
+        .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
+        .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+        .replace(/<[^>]+>/gm, '')
+        .trim();
+}
+
+/**
+ * Robust JSON extractor.
+ * Finds the LAST complete {...} block in a string so it works even if the
+ * model prepends reasoning prose before the actual JSON object.
+ */
+function extractJson<T>(text: string): T {
+    const start = text.lastIndexOf('{');
+    const end   = text.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) {
+        throw new Error(`No JSON object found in AI response: ${text.slice(0, 200)}`);
+    }
+    return JSON.parse(text.substring(start, end + 1)) as T;
+}
+
+/**
+ * Extract content wrapped in <email>...</email> tags.
+ * Falls back to stripping all XML-like tags if the model omitted the wrapper.
+ */
+function extractEmail(text: string): string {
+    const match = text.match(/<email>([\s\S]*?)<\/email>/i);
+    if (match?.[1]) return match[1].trim();
+    return stripThinking(text);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  AIService — single OpenAI-compat client for ALL AI calls
+// ─────────────────────────────────────────────────────────────────────────────
+
 export class AIService {
-    private genAI: GoogleGenerativeAI;
-    private model: any;
+    private openai: OpenAI;
+    private model: string;
 
     constructor() {
-        this.genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
-        this.model = this.genAI.getGenerativeModel({
-            model: config.GEMINI_MODEL,
-            generationConfig: {
-                temperature: 0.3, // Lowered temperature to ensure deterministic, professional business emails and structured profiles
-                topP: 0.95,
-                topK: 40,
-                stopSequences: ["<end_of_turn>"] // Prevent generation leakage into pre-training Chinese text or generic website scrapes
-            }
+        this.model  = config.GEMINI_MODEL;
+        this.openai = new OpenAI({
+            apiKey:  config.GEMINI_API_KEY,
+            baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
         });
     }
+
+    // ── 1. Form Field Refinement (enforced JSON output) ───────────────────────
 
     async refineInput(field: string, value: string, context?: any): Promise<string> {
-        const prompt = `<start_of_turn>user
-SYSTEM: You are the HyprLead Form Assistant (HyprLead AI Powered).
-GOAL: Refine user input into high-fidelity, professional descriptions optimized for a lead discovery engine.
+        return this.withRetry('refineInput', async () => {
+            const response = await this.openai.chat.completions.create({
+                model: this.model,
+                messages: [
+                    {
+                        role: 'system',
+                        content:
+                            'You are the HyprLead Form Assistant (HyprLead AI Powered). ' +
+                            'Your goal is to refine the user input into a high-fidelity, professional description ' +
+                            'optimized for a B2B lead discovery engine. ' +
+                            'Return ONLY a valid JSON object with a single key "refined" containing the final refined value. ' +
+                            'Do NOT output any reasoning, thoughts, drafts, or markdown.',
+                    },
+                    {
+                        role: 'user',
+                        content: `FIELD: "${field}"\nUSER INPUT: "${value || 'None provided'}"\nCONTEXT: ${JSON.stringify(context || {})}`,
+                    },
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.1,
+            });
 
-FIELD: "${field}"
-USER INPUT: "${value || 'None provided'}"
-CONTEXT: ${JSON.stringify(context || {})}
+            const raw = response.choices[0].message.content ?? '';
+            const parsed = extractJson<{ refined?: string }>(raw);
 
-TASK:
-1. If the input is empty or "None provided", provide a high-quality suggestion based on the context (e.g. industry, target market).
-2. If the input is short or lazy, expand it into a professional, punchy, and compelling description.
-3. Optimize the language for lead discovery and business intelligence gathering.
-4. Keep the output under 300 characters for names/industries and under 1000 characters for descriptions.
+            if (parsed.refined && typeof parsed.refined === 'string') {
+                return parsed.refined.trim();
+            }
 
-ONLY return the refined text. No conversational fillers, no "Here is the refined text".
-<end_of_turn>
-<start_of_turn>model
-`;
-
-        return this.retryOperation(async () => {
-            const result = await this.model.generateContent(prompt);
-            const response = await result.response;
-            let text = response.text().trim();
-            // Remove any thinking tags or markers if they leak
-            text = text.replace(/<thought>[\s\S]*?<\/thought>/g, '').trim();
-            text = text.replace(/<[^>]*>?/gm, '').trim(); 
-            return text;
+            // Fallback: clean and return raw text if JSON key is missing
+            return stripThinking(raw);
         });
     }
+
+    // ── 2. Lead Enrichment (enforced JSON + optional vision) ──────────────────
+
+    async enrichLead(
+        businessName: string,
+        category?: string,
+        campaignConfig?: { productDescription?: string | null; targetPainPoints?: string | null },
+        context?: string | null,
+        imageBuffer?: Buffer | null,
+    ): Promise<AIEnrichment> {
+        const product            = campaignConfig?.productDescription || 'HyprLead Intelligence & Automation Solutions';
+        const customInstructions = campaignConfig?.targetPainPoints   || '';
+
+        const systemPrompt =
+            'You are the HyprLead Discovery Engine (HyprLead AI Optimized). ' +
+            'Perform high-fidelity business discovery and sector-specific operational friction detection. ' +
+            'Ground your analysis in the lead\'s specific SECTOR. ' +
+            'Do not invent technical software issues (like "API failures") unless the lead is actually in the technology space. ' +
+            'Return ONLY a valid JSON object — no prose, no markdown, no reasoning text.';
+
+        const userPrompt =
+            `INPUT PACKAGE:\n` +
+            `- BRAND: "${businessName}"\n` +
+            `- SECTOR: "${category || 'SME'}"\n` +
+            `- CONTEXT: "${context || 'No context available'}"\n` +
+            (customInstructions ? `- CUSTOM INSTRUCTIONS: "${customInstructions}"\n` : '') +
+            `\nTASK:\n` +
+            `1. Clean the Brand Name for professional outreach (remove "Leads", "Inc", "Limited", "Corp", or location suffixes that make it robotic).\n` +
+            `2. Identify 3 possible friction points RELEVANT to a "${category || 'SME'}" business.\n` +
+            `3. Select the MOST CRITICAL friction point that "${product}" can actually solve.\n` +
+            (imageBuffer ? `4. Analyze the provided website screenshot for design/business presence signals.\n` : '') +
+            `\nJSON OUTPUT SCHEMA:\n` +
+            `{\n` +
+            `  "brandName": "Short clean human name",\n` +
+            `  "industry": "Specific vertical",\n` +
+            `  "painPoint": "Sector-relevant friction point",\n` +
+            `  "recommendedSolution": "${product}",\n` +
+            `  "score": 0.0\n` +
+            `}`;
+
+        // Build content array — inject image using OpenAI vision format if provided
+        const userContent: OpenAI.Chat.ChatCompletionContentPart[] = [
+            { type: 'text', text: userPrompt },
+        ];
+
+        if (imageBuffer) {
+            userContent.push({
+                type: 'image_url',
+                image_url: {
+                    url: `data:image/png;base64,${imageBuffer.toString('base64')}`,
+                },
+            });
+        }
+
+        return this.withRetry('enrichLead', async () => {
+            logger.info(`[HyprLead AI] Thinking... Deep-diving into: ${businessName}`);
+
+            const response = await this.openai.chat.completions.create({
+                model: this.model,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user',   content: userContent  },
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.2,
+            });
+
+            const raw    = response.choices[0].message.content ?? '';
+            const parsed = extractJson<{
+                brandName?: string;
+                industry?: string;
+                painPoint?: string;
+                recommendedSolution?: string;
+                score?: number | string;
+            }>(raw);
+
+            return {
+                brandName:           parsed.brandName           || businessName,
+                industry:            parsed.industry            || category || 'SME',
+                painPoint:           parsed.painPoint           || 'Operational friction detected',
+                recommendedSolution: parsed.recommendedSolution || product,
+                score:               parseFloat(String(parsed.score ?? '8.5')) || 8.5,
+            };
+        });
+    }
+
+    // ── 3. Personalized Outreach Message (structured free text) ───────────────
 
     async generatePersonalizedMessage(
         campaign: any,
         businessName: string,
         industry: string,
-        painPoint: string
+        painPoint: string,
     ): Promise<string> {
-        const product = campaign.productName || "HyprLead Core";
-        const sender = campaign.senderName || "Michael";
-        const company = campaign.companyName || "HyprLead";
-        const link = campaign.ctaLink || campaign.user?.profile?.website || "https://hyprlead.com";
-        const valueProp = campaign.productDescription || "we help businesses eliminate bottlenecks.";
+        const product   = campaign.productName        || 'HyprLead Core';
+        const sender    = campaign.senderName         || 'Michael';
+        const company   = campaign.companyName        || 'HyprLead';
+        const link      = campaign.ctaLink || campaign.user?.profile?.website || 'https://hyprlead.com';
+        const valueProp = campaign.productDescription || 'we help businesses eliminate bottlenecks.';
 
-        const prompt = `<start_of_turn>user
-SYSTEM: You are the HyprLead Outreach Specialist (HyprLead AI Powered).
-GOAL: Write a personalized, high-converting cold outreach message.
+        const systemPrompt =
+            'You are the HyprLead Outreach Specialist (HyprLead AI Powered). ' +
+            'Write personalized, high-converting cold outreach messages.\n' +
+            'RULES:\n' +
+            '- Warm, friendly, human-sounding — NOT robotic or corporate.\n' +
+            '- AVOID buzzwords: "strategic walkthrough", "protocol", "high-performance framework", "reclaim competitive edge", "invisible revenue leakage".\n' +
+            '- Under 120 words.\n' +
+            '- End with a clear, warm call-to-action.\n' +
+            '- Use line breaks for readability.\n' +
+            '- Wrap the FINAL message ONLY inside <email>...</email> XML tags. Output NOTHING outside those tags.';
 
-INPUTS:
-- LEAD BRAND: "${businessName}"
-- SECTOR: "${industry}"
-- DETECTED PAIN POINT: "${painPoint}"
-- MY PRODUCT: "${product}"
-- MY COMPANY: "${company}"
-- MY VALUE PROP: "${valueProp}"
-- SENDER: "${sender}"
-- LINK: "${link}"
+        const userPrompt =
+            `LEAD BRAND: "${businessName}"\n` +
+            `SECTOR: "${industry}"\n` +
+            `DETECTED PAIN POINT: "${painPoint}"\n` +
+            `MY PRODUCT: "${product}"\n` +
+            `MY COMPANY: "${company}"\n` +
+            `MY VALUE PROP: "${valueProp}"\n` +
+            `SENDER: "${sender}"\n` +
+            `MANDATORY LINK (use EXACTLY this, do NOT invent another URL): "${link}"`;
 
-TASK:
-1. Write a warm, friendly, and robust message, speaking like a dedicated sales representative of the company who genuinely cares about helping their business grow.
-2. Adopt a highly persuasive yet fully natural, human-sounding conversational tone—absolutely avoid sounding like a boring robotic corporate sales bot.
-3. ABSOLUTELY AVOID robotic buzzwords or generic jargon like "strategic walkthrough", "protocol", "high-performance framework", "reclaim competitive edge", or "invisible revenue leakage".
-4. Address the lead's pain point specifically and show how "${product}" can directly solve their frustrations, recover lost sales, or streamline operations.
-5. Ensure proper capitalization (e.g., "${company}", NOT lowercase).
-6. Keep it under 120 words.
-7. Use a clear, warm, and highly persuasive call-to-action (e.g., "Are you open to a quick 5-minute chat this week to see if we can help?", or "Open to a quick call to check this out?").
-8. Structure the message with line breaks for readability.
-9. If the brand name still sounds like "Scraper Junk", fix it in the message body.
-10. MANDATORY: USE THE LINK PROVIDED IN THE INPUTS ("${link}"). DO NOT INVENT OR USE ANY OTHER URL. THIS IS THE AUTHORITATIVE DESTINATION.
+        return this.withRetry('generatePersonalizedMessage', async () => {
+            logger.info(`[HyprLead AI] Generating personalized outreach for ${businessName}`);
 
-MANDATORY: Wrap the final completed cold outreach message inside <email> and </email> XML tags (e.g., <email>Hi there, ... Best, Mike</email>). Do NOT output anything else inside these XML tags.
-<end_of_turn>
-<start_of_turn>model
+            const response = await this.openai.chat.completions.create({
+                model: this.model,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user',   content: userPrompt   },
+                ],
+                temperature: 0.4,
+            });
 
-`;
-
-        return this.retryOperation(async () => {
-            const result = await this.model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text().trim();
-            
-            // Bulletproof extraction: match content within <email> tags
-            const emailMatch = text.match(/<email>([\s\S]*?)<\/email>/i);
-            if (emailMatch && emailMatch[1]) {
-                return emailMatch[1].trim();
-            }
-
-            // Fallback parser if tags are absent or mutated
-            let fallback = text;
-            fallback = fallback.replace(/<thought>[\s\S]*?<\/thought>/g, '').trim();
-            fallback = fallback.replace(/<[^>]*>?/gm, '').trim(); 
-            return fallback;
+            const raw = response.choices[0].message.content ?? '';
+            return extractEmail(raw);
         });
     }
 
-    async enrichLead(
-        businessName: string, 
-        category?: string, 
-        campaignConfig?: { productDescription?: string | null, targetPainPoints?: string | null },
-        context?: string | null,
-        imageBuffer?: Buffer | null
-    ): Promise<AIEnrichment> {
-        const product = campaignConfig?.productDescription || "HyprLead Intelligence & Automation Solutions";
-        const customInstructions = campaignConfig?.targetPainPoints || "";
+    // ── 5. Lead Sales Intelligence Analysis (enforced JSON) ──────────────────
 
-        // HyprLead AI ROBUST REASONING PROMPT
-        const prompt = `<start_of_turn>user
-SYSTEM: You are the HyprLead Discovery Engine (HyprLead AI Optimized). 
-GOAL: High-fidelity business discovery and sector-specific operational friction detection.
-REASONING: Use your internal thinking mode to analyze the business context AND visual data. 
-IMPORTANT: Ground your analysis in the lead's specific SECTOR. Do not invent technical software issues (like 'API failures' or 'list hygiene') unless the lead is actually in the technology space.
+    async analyzeLead(lead: {
+        businessName: string;
+        industry: string;
+        painPoint: string;
+        website?: string | null;
+        phone?: string | null;
+        email?: string | null;
+    }, campaign: {
+        productName: string;
+        productDescription: string;
+        targetPainPoints: string;
+        companyName: string;
+        senderName: string;
+    }): Promise<{
+        summary: string;
+        opportunityScore: number;
+        whyThisLead: string;
+        salesApproach: string;
+        talkingPoints: string[];
+        likelyObjection: string;
+        objectionResponse: string;
+        nextBestAction: string;
+        urgencySignal: string;
+    }> {
+        const systemPrompt =
+            'You are a senior B2B sales strategist embedded in the HyprLead platform. ' +
+            'Your job is to analyze a discovered lead and produce a concise, actionable sales intelligence brief. ' +
+            'Be specific to the business context — no generic advice. ' +
+            'Return ONLY a valid JSON object matching the schema exactly.';
 
-INPUT PACKAGE:
-- BRAND: "${businessName}"
-- SECTOR: "${category || 'SME'}"
-- CONTEXT: "${context || 'No context available'}"
+        const userPrompt =
+            `LEAD:
+- Company: "${lead.businessName}"
+- Industry: "${lead.industry}"
+- Detected Pain Point: "${lead.painPoint}"
+- Has Phone: ${lead.phone ? 'Yes' : 'No'}
+- Has Email: ${lead.email ? 'Yes' : 'No'}
+- Has Website: ${lead.website ? 'Yes (' + lead.website + ')' : 'No'}
 
-TASK:
-1. Clean the Brand Name for professional outreach. (e.g., Remove "Leads", "Inc", "Limited", "Corp", or location suffixes if they make the name sound robotic).
-2. Identify 3 possible friction points RELEVANT to a "${category || 'SME'}" business.
-3. Select the MOST CRITICAL friction point that "${product}" can actually solve.
-4. If a screenshot is provided, analyze the actual design/business presence, not just the code.
+CAMPAIGN CONTEXT:
+- Our Product: "${campaign.productName}"
+- What We Do: "${campaign.productDescription}"
+- Pain Points We Target: "${campaign.targetPainPoints}"
+- Our Company: "${campaign.companyName}"
+- Sender: "${campaign.senderName}"
 
-${customInstructions}
+TASK: Produce a sales intelligence brief for this specific lead.
 
-JSON OUTPUT:
+JSON SCHEMA:
 {
-  "brandName": "Short Clean Human Name (e.g. 'Zimbabwe Pharma' instead of 'Zimbabwe Pharma Leads Inc')",
-  "industry": "Specific Vertical",
-  "painPoint": "Sector-relevant friction point (e.g. 'Inconsistent brand aesthetic' for Fashion, or 'Supply chain opacity' for Logistics)",
-  "recommendedSolution": "${product}",
-  "score": 0.0 to 10.0 (Match confidence score based on how well ${product} solves the pain point)
-}
-<end_of_turn>
-<start_of_turn>model
-`;
+  "summary": "2-3 sentence plain-English explanation of what this business does and why they are a strong lead for us",
+  "opportunityScore": 1-10 integer (how strong this opportunity is given our product fit),
+  "whyThisLead": "1-2 sentences explaining specifically why this business matches our ICP",
+  "salesApproach": "DIRECT | CONSULTATIVE | EDUCATIONAL — which approach fits best and why in one sentence",
+  "talkingPoints": ["3-4 specific, concrete talking points to use in the outreach — reference their pain point and our product directly"],
+  "likelyObjection": "The most likely objection this type of business will raise",
+  "objectionResponse": "A concise, confident response to that objection",
+  "nextBestAction": "The single most effective next action to move this lead toward a meeting or sale",
+  "urgencySignal": "One specific reason why reaching out now is timely for this business type"
+}`;
 
-        const parts: any[] = [{ text: prompt }];
-        if (imageBuffer) {
-            parts.push({
-                inlineData: {
-                    data: imageBuffer.toString('base64'),
-                    mimeType: 'image/png'
-                }
+        return this.withRetry('analyzeLead', async () => {
+            const response = await this.openai.chat.completions.create({
+                model: this.model,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user',   content: userPrompt   },
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.3,
             });
-        }
 
-        return this.retryOperation(async () => {
-            logger.info(`[HyprLead AI] Thinking... Deep-diving into: ${businessName}`);
-            const result = await this.model.generateContent(parts);
-            const response = await result.response;
-            const text = response.text();
-            
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) throw new Error("Invalid AI Response Format");
-            
-            const parsed = JSON.parse(jsonMatch[0]);
+            const raw    = response.choices[0].message.content ?? '';
+            const parsed = extractJson<any>(raw);
+
             return {
-                brandName: parsed.brandName || businessName,
-                industry: parsed.industry || category || 'SME',
-                painPoint: parsed.painPoint || 'Operational friction detected',
-                recommendedSolution: product,
-                score: parseFloat(parsed.score) || 8.5
+                summary:           parsed.summary           || 'No summary available.',
+                opportunityScore:  parseInt(String(parsed.opportunityScore ?? '7')) || 7,
+                whyThisLead:       parsed.whyThisLead       || '',
+                salesApproach:     parsed.salesApproach     || 'CONSULTATIVE',
+                talkingPoints:     Array.isArray(parsed.talkingPoints) ? parsed.talkingPoints : [],
+                likelyObjection:   parsed.likelyObjection   || '',
+                objectionResponse: parsed.objectionResponse || '',
+                nextBestAction:    parsed.nextBestAction    || '',
+                urgencySignal:     parsed.urgencySignal     || '',
             };
         });
     }
 
+    // ── 5. Mission Brief (structured free text) ───────────────────────────────
+
     async generateMissionBrief(campaign: any): Promise<string> {
-        const prompt = `<start_of_turn>user
-SYSTEM: You are the HyprLead Mission Strategist (HyprLead AI Powered).
-GOAL: Explain the current operational mission of a Search Hub in professional, non-technical language.
+        const systemPrompt =
+            'You are the HyprLead Mission Strategist (HyprLead AI Powered). ' +
+            'Write a concise 2-3 sentence professional mission brief. ' +
+            'Use expert, mission-driven language. ' +
+            'Keep it under 400 characters. ' +
+            'Return ONLY the brief text — no markdown, no labels, no extra commentary.';
 
-CAMPAIGN DNA:
-- NAME: "${campaign.name}"
-- PRODUCT: "${campaign.productName}"
-- SECTORS: "${campaign.industries?.join(', ') || 'General SME'}"
-- REGIONS: "${campaign.locations?.join(', ') || 'Unspecified'}"
-- TONE: "${campaign.outreachTone}"
-- PAIN POINTS: "${campaign.targetPainPoints}"
+        const userPrompt =
+            `CAMPAIGN NAME: "${campaign.name}"\n` +
+            `PRODUCT: "${campaign.productName}"\n` +
+            `SECTORS: "${campaign.industries?.join(', ') || 'General SME'}"\n` +
+            `REGIONS: "${campaign.locations?.join(', ')  || 'Unspecified'}"\n` +
+            `TONE: "${campaign.outreachTone}"\n` +
+            `PAIN POINTS: "${campaign.targetPainPoints}"`;
 
-TASK:
-1. Write a 2-3 sentence summary explaining EXACTLY what this campaign is trying to achieve.
-2. Use professional, mission-driven language (e.g. "Identifying businesses struggling with [X] to deploy [Y] as the primary resolution vector").
-3. Make it sound like an expert strategist explaining a mission to a commander.
-4. Keep it under 400 characters.
+        return this.withRetry('generateMissionBrief', async () => {
+            const response = await this.openai.chat.completions.create({
+                model: this.model,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user',   content: userPrompt   },
+                ],
+                temperature: 0.3,
+            });
 
-ONLY return the brief text. No fillers.
-<end_of_turn>
-<start_of_turn>model
-`;
-
-        return this.retryOperation(async () => {
-            const result = await this.model.generateContent(prompt);
-            const response = await result.response;
-            let text = response.text().trim();
-            text = text.replace(/<thought>[\s\S]*?<\/thought>/g, '').trim();
-            text = text.replace(/<[^>]*>?/gm, '').trim(); 
-            return text;
+            const raw = response.choices[0].message.content ?? '';
+            return stripThinking(raw);
         });
     }
 
-    private async retryOperation<T>(operation: () => Promise<T>, retries = 3): Promise<T> {
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Unified Retry with Exponential Backoff
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private async withRetry<T>(
+        operationName: string,
+        operation: () => Promise<T>,
+        maxRetries = 3,
+    ): Promise<T> {
         let lastError: any;
-        for (let i = 0; i < retries; i++) {
+
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
             try {
                 return await operation();
             } catch (err: any) {
                 lastError = err;
-                if (err.status === 429 || err.message?.includes('429')) {
-                    const wait = Math.pow(2, i) * 2000;
-                    logger.warn(`[HyprLead AI] Rate limited. Retrying in ${wait}ms...`);
-                    await new Promise(r => setTimeout(r, wait));
-                } else {
+
+                const isRateLimit   = err.status === 429 || String(err.message).includes('429');
+                const isServerError = err.status >= 500;
+                const isRetryable   = isRateLimit || isServerError;
+
+                if (!isRetryable) {
+                    // Hard failure (bad request, auth error, etc.) — don't waste retries
+                    logger.error(
+                        { err: err.message, operationName, status: err.status },
+                        '[HyprLead AI] Non-retryable error. Aborting.',
+                    );
                     throw err;
                 }
+
+                const delayMs = Math.pow(2, attempt) * 2000; // 2s → 4s → 8s
+                logger.warn(
+                    { operationName, attempt: attempt + 1, maxRetries, delayMs, status: err.status },
+                    '[HyprLead AI] Retryable error. Backing off...',
+                );
+                await new Promise(r => setTimeout(r, delayMs));
             }
         }
+
+        logger.error({ operationName, maxRetries }, '[HyprLead AI] All retries exhausted.');
         throw lastError;
     }
 }

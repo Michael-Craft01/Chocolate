@@ -27,7 +27,24 @@ export async function GET(req: NextRequest) {
         take: limit,
         include: {
           business: true,
-          campaign: { select: { name: true } },
+          campaign: {
+            select: {
+              id: true,
+              name: true,
+              status: true,
+              companyName: true,
+              senderName: true,
+              senderRole: true,
+              targetCountry: true,
+              locations: true,
+              industries: true,
+              productName: true,
+              productDescription: true,
+              targetPainPoints: true,
+              outreachTone: true,
+              ctaLink: true
+            }
+          },
           cycleRun: true
         }
       }),

@@ -31,6 +31,13 @@ export async function PATCH(
       data: { status }
     });
 
+    if (status === 'PAUSED') {
+      await prisma.cycleRun.updateMany({
+        where: { campaignId: id, status: { in: ['QUEUED', 'RUNNING'] } },
+        data: { status: 'FAILED', failureReason: 'Campaign paused by user', completedAt: new Date() }
+      });
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error('API Error:', error);

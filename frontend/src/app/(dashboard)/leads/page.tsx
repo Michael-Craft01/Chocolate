@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import {
   ExternalLink, MessageSquare, Filter, FileDown, Phone, Globe, Calendar, Building2, Check, Trash2, 
   ShieldCheck, Shield, ChevronDown, ChevronUp, Zap, Search, RefreshCw, BarChart3, Users, Mail, MapPin, 
-  Brain, Send, Copy, ArrowUpRight
+  Brain, Send, Copy, ArrowUpRight, Sparkles, Target, AlertCircle, TrendingUp, Lightbulb, X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/skeleton";
@@ -69,7 +69,7 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,6 +79,25 @@ export default function LeadsPage() {
   const [showExportOptions, setShowExportOptions] = useState(false);
   const [activeTab, setActiveTab] = useState<"timeline" | "all">("timeline");
   const [stats, setStats] = useState<any>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailResult, setEmailResult] = useState<'sent' | 'failed' | null>(null);
+
+  // Sales intelligence state
+  type SalesIntel = {
+    summary: string;
+    opportunityScore: number;
+    whyThisLead: string;
+    salesApproach: string;
+    talkingPoints: string[];
+    likelyObjection: string;
+    objectionResponse: string;
+    nextBestAction: string;
+    urgencySignal: string;
+  };
+  const [intel, setIntel] = useState<SalesIntel | null>(null);
+  const [loadingIntel, setLoadingIntel] = useState(false);
+  const [intelError, setIntelError] = useState<string | null>(null);
+  const [showIntelModal, setShowIntelModal] = useState(false);
 
   // Suggested email local editor state when a lead is clicked
   const [editedMessage, setEditedMessage] = useState("");
@@ -148,9 +167,50 @@ export default function LeadsPage() {
     return found;
   }, [leads, selectedLeadId]);
 
+  const activeCampaign = useMemo(() => {
+    if (!activeLead) return null;
+    return activeLead.campaign || campaigns.find(c => c.id === activeLead.campaignId) || null;
+  }, [activeLead, campaigns]);
+
   const selectLead = (lead: Lead) => {
     setSelectedLeadId(lead.id);
     setEditedMessage(lead.suggestedMessage || "");
+    // Clear previous intel; analysis runs only when the user opens the explainer.
+    setIntel(null);
+    setIntelError(null);
+    setShowIntelModal(false);
+  };
+
+  const openIntelModal = (lead: Lead) => {
+    setShowIntelModal(true);
+    if (!intel && !loadingIntel) {
+      fetchIntel(lead.id);
+    }
+  };
+
+  const fetchIntel = async (leadId: string) => {
+    setLoadingIntel(true);
+    setIntelError(null);
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Authentication required");
+
+      const response = await fetch(`/api/leads/${leadId}/analyze`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || data?.message || `Request failed (${response.status})`);
+      setIntel(data);
+    } catch (err: any) {
+      setIntelError(err.message || 'Analysis failed');
+    } finally {
+      setLoadingIntel(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -179,12 +239,48 @@ export default function LeadsPage() {
     }
   };
 
-  const copyIntel = async () => {
+  const handleEmailDispatch = async (id: string) => {
+    if (sendingEmail) return;
+    setSendingEmail(true);
+    setEmailResult(null);
+    try {
+      const result = await authJson<{ emailSent: boolean }>(`/api/leads/${id}/dispatch`, {
+        method: "POST",
+        body: JSON.stringify({ customMessage: editedMessage })
+      });
+      setLeads(prev => prev.map(l => l.id === id ? { ...l, status: 'CONTACTED' as any } : l));
+      setEmailResult(result.emailSent ? 'sent' : 'failed');
+      setTimeout(() => setEmailResult(null), 3000);
+    } catch {
+      setEmailResult('failed');
+      setTimeout(() => setEmailResult(null), 3000);
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const copyField = async (key: string, value: string) => {
+    await navigator.clipboard.writeText(value).catch(() => {});
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const copyAll = async () => {
     if (!activeLead) return;
-    const text = `Business: ${activeLead.business.name}\nIndustry: ${activeLead.industry}\nOpportunity: ${activeLead.painPoint}\n\nSuggested Message:\n${editedMessage}`;
-    await navigator.clipboard.writeText(text).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const lines = [
+      `Company:   ${activeLead.business.name}`,
+      `Industry:  ${activeLead.industry || '—'}`,
+      `Phone:     ${activeLead.business.phone || '—'}`,
+      `Email:     ${activeLead.business.email || '—'}`,
+      `Website:   ${activeLead.business.website || '—'}`,
+      `Pain Point: ${activeLead.painPoint || '—'}`,
+      ``,
+      `Message:`,
+      editedMessage,
+    ].join('\n');
+    await navigator.clipboard.writeText(lines).catch(() => {});
+    setCopied('all');
+    setTimeout(() => setCopied(null), 2000);
   };
 
   const exportLeads = async (format: string) => {
@@ -416,9 +512,9 @@ export default function LeadsPage() {
             )}
           </div>
 
-          {/* Right Detail Leads Panel (Dossier detail page) */}
+          {/* Right Detail Panel — Form-Table Layout */}
           <div className="lg:col-span-7">
-            <div className="sticky top-28 self-start bg-card border border-card-border rounded-xl p-6 shadow-sm min-h-[580px] flex flex-col justify-between relative overflow-hidden">
+            <div className="sticky top-28 self-start bg-card border border-card-border rounded-xl shadow-sm min-h-[580px] flex flex-col overflow-hidden">
 
               <AnimatePresence mode="wait">
                 {activeLead ? (
@@ -428,160 +524,458 @@ export default function LeadsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
-                    className="space-y-6 flex-1 flex flex-col justify-between"
+                    className="flex flex-col flex-1"
                   >
-                    {/* Header profile details */}
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between border-b border-card-border pb-4">
-                        <div className="space-y-1 min-w-0 pr-4">
-                          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-semibold">
-                            {activeLead.industry}
-                          </span>
-                          <h2 className="text-xl font-bold text-foreground tracking-tight truncate mt-1.5">{activeLead.business.name}</h2>
-                          {activeLead.business.website ? (
-                            <a 
-                              href={activeLead.business.website} 
-                              target="_blank" 
-                              className="text-xs font-medium text-primary flex items-center gap-1 hover:underline w-fit"
-                            >
-                              <Globe className="h-3.5 w-3.5" /> {activeLead.business.website.replace(/https?:\/\/(www\.)?/, "")} <ArrowUpRight className="h-2.5 w-2.5" />
-                            </a>
-                          ) : (
-                            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                              <Globe className="h-3.5 w-3.5" /> No website mapped
-                            </span>
-                          )}
+                    {/* Panel Header */}
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-card-border">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <Building2 className="h-4 w-4 text-primary" />
                         </div>
-
-                        {/* Top action: delete lead */}
-                        <button onClick={() => handleDelete(activeLead.id)}
-                          className="h-8 w-8 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 border border-red-500/10 flex items-center justify-center transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                        </button>
-                      </div>
-
-                      {/* Location and Campaign info */}
-                      <div className="grid grid-cols-2 gap-4 bg-background border border-card-border p-3.5 rounded-lg text-xs font-semibold">
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground font-semibold flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> Geo Location</p>
-                          <p className="text-foreground truncate font-medium">{activeLead.business.email || activeLead.business.website || "Verified Hub Profile"}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground font-semibold flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Capture Status</p>
-                          <p className="text-foreground truncate font-semibold text-xs">
-                            {activeLead.status === "CONTACTED" ? "✓ Contacted Dispatch" : "● Discovery Active"}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h2 className="text-base font-bold text-foreground tracking-tight truncate">{activeLead.business.name}</h2>
+                            <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold shrink-0">{activeLead.industry}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground font-medium">
+                            {activeLead.status === 'CONTACTED' ? '✓ Dispatched' : '● Active'} · Discovered {new Date(activeLead.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-
-                      {/* Pain Point Matrix */}
-                      <div className="space-y-2">
-                        <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                          <Brain className="h-3.5 w-3.5 text-primary" /> HyprLead AI Pain-Point Vector
-                        </span>
-                        <p className="text-sm text-foreground/90 leading-relaxed bg-muted/30 border border-card-border p-4 rounded-lg">
-                          {activeLead.painPoint}
-                        </p>
-                      </div>
-
-                      {/* Contact Channel verification logs */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        <div className="p-3 bg-background border border-card-border rounded-lg flex items-center justify-between gap-2 shadow-sm">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Mail className="h-4 w-4 text-primary shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-xs text-muted-foreground font-semibold">Business Email</p>
-                              <p className="text-xs font-medium text-foreground font-mono truncate">{activeLead.business.email || "Missing"}</p>
-                            </div>
-                          </div>
-                          {activeLead.business.email ? (
-                            <span className="px-2 py-0.5 rounded bg-green-500/10 text-green-600 text-xs font-semibold shrink-0">SMTP OK</span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs font-semibold shrink-0">NONE</span>
-                          )}
-                        </div>
-
-                        <div className="p-3 bg-background border border-card-border rounded-lg flex items-center justify-between gap-2 shadow-sm">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Phone className="h-4 w-4 text-primary shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-xs text-muted-foreground font-semibold">Phone Mapped</p>
-                              <p className="text-xs font-medium text-foreground font-mono truncate">{activeLead.business.phone || "Missing"}</p>
-                            </div>
-                          </div>
-                          {activeLead.business.phone ? (
-                            <span className="px-2 py-0.5 rounded bg-green-500/10 text-green-600 text-xs font-semibold shrink-0">CELL OK</span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs font-semibold shrink-0">NONE</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Interactive Outreach Editor */}
-                      <div className="space-y-2 pt-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                            <Send className="h-3 w-3 text-primary" /> Active Outreach Dispatch Editor
-                          </span>
-                          <button onClick={copyIntel} className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline cursor-pointer" >
-                            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                            {copied ? "Copied" : "Copy Dossier"}
-                          </button>
-                        </div>
-                        <textarea
-                          value={editedMessage}
-                          onChange={e => setEditedMessage(e.target.value)}
-                          className="w-full h-32 p-3 bg-background/50 border border-card-border rounded-lg text-xs font-mono leading-relaxed outline-none focus:border-primary focus:ring-1 focus:ring-primary text-foreground resize-none"
-                          placeholder="Suggested message goes here..."
-                        />
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={copyAll}
+                          className="h-8 px-3 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          {copied === 'all' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copied === 'all' ? 'Copied!' : 'Copy All'}
+                        </button>
+                        <button onClick={() => handleDelete(activeLead.id)}
+                          className="h-8 w-8 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 border border-red-500/10 flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
 
-                    {/* Footer dispatches */}
-                    <div className="pt-4 border-t border-card-border flex flex-wrap items-center justify-between gap-4 mt-6">
-                      <div className="flex items-center gap-2">
+                    {/* Scrollable form-table body */}
+                    <div className="flex-1 overflow-y-auto scrollbar-neural">
+
+                      {/* ── Section: Contact Information ── */}
+                      <div className="px-5 pt-4 pb-2">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Contact Information</p>
+                        <div className="border border-card-border rounded-lg overflow-hidden">
+                          {[
+                            {
+                              key: 'name',
+                              label: 'Company Name',
+                              icon: Building2,
+                              value: activeLead.business.name,
+                              mono: false,
+                            },
+                            {
+                              key: 'phone',
+                              label: 'Phone Number',
+                              icon: Phone,
+                              value: activeLead.business.phone || '',
+                              mono: true,
+                              badge: activeLead.business.phone ? { text: 'VERIFIED', color: 'text-green-600 bg-green-500/10' } : { text: 'MISSING', color: 'text-muted-foreground bg-muted' },
+                            },
+                            {
+                              key: 'email',
+                              label: 'Email Address',
+                              icon: Mail,
+                              value: activeLead.business.email || '',
+                              mono: true,
+                              badge: activeLead.business.email ? { text: 'SMTP OK', color: 'text-green-600 bg-green-500/10' } : { text: 'MISSING', color: 'text-muted-foreground bg-muted' },
+                            },
+                            {
+                              key: 'website',
+                              label: 'Website',
+                              icon: Globe,
+                              value: activeLead.business.website || '',
+                              mono: true,
+                              link: activeLead.business.website || undefined,
+                            },
+                          ].map((field, idx, arr) => (
+                            <div
+                              key={field.key}
+                              className={`flex items-center gap-3 px-4 py-3 bg-background ${
+                                idx < arr.length - 1 ? 'border-b border-card-border' : ''
+                              }`}
+                            >
+                              {/* Icon */}
+                              <field.icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+
+                              {/* Label */}
+                              <div className="w-28 shrink-0">
+                                <p className="text-[11px] font-semibold text-muted-foreground">{field.label}</p>
+                              </div>
+
+                              {/* Value */}
+                              <div className="flex-1 min-w-0">
+                                {field.value ? (
+                                  field.link ? (
+                                    <a
+                                      href={field.link}
+                                      target="_blank"
+                                      className="text-xs font-medium text-primary hover:underline flex items-center gap-1 truncate"
+                                    >
+                                      {field.value.replace(/https?:\/\/(www\.)?/, '')}
+                                      <ArrowUpRight className="h-2.5 w-2.5 shrink-0" />
+                                    </a>
+                                  ) : (
+                                    <p className={`text-xs font-medium text-foreground truncate ${field.mono ? 'font-mono' : ''}`}>
+                                      {field.value}
+                                    </p>
+                                  )
+                                ) : (
+                                  <p className="text-xs text-muted-foreground/50 italic">Not available</p>
+                                )}
+                              </div>
+
+                              {/* Badge */}
+                              {field.badge && (
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${field.badge.color}`}>
+                                  {field.badge.text}
+                                </span>
+                              )}
+
+                              {/* Copy button */}
+                              <button
+                                onClick={() => field.value && copyField(field.key, field.value)}
+                                disabled={!field.value}
+                                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                                title={`Copy ${field.label}`}
+                              >
+                                {copied === field.key
+                                  ? <Check className="h-3 w-3 text-green-500" />
+                                  : <Copy className="h-3 w-3" />
+                                }
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* ── Section: AI Intelligence ── */}
+                      <div className="px-5 pt-3 pb-2">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">AI Intelligence</p>
+                        <div className="border border-card-border rounded-lg overflow-hidden">
+                          {/* Industry row */}
+                          <div className="flex items-center gap-3 px-4 py-3 bg-background border-b border-card-border">
+                            <Brain className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <div className="w-28 shrink-0">
+                              <p className="text-[11px] font-semibold text-muted-foreground">Industry</p>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-foreground">{activeLead.industry || '—'}</p>
+                            </div>
+                            <button
+                              onClick={() => activeLead.industry && copyField('industry', activeLead.industry)}
+                              disabled={!activeLead.industry}
+                              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                            >
+                              {copied === 'industry' ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                            </button>
+                          </div>
+
+                          {/* Pain Point row */}
+                          <div className="flex items-start gap-3 px-4 py-3 bg-background">
+                            <Zap className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                            <div className="w-28 shrink-0 pt-0.5">
+                              <p className="text-[11px] font-semibold text-muted-foreground">Pain Point</p>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-foreground leading-relaxed">{activeLead.painPoint || '—'}</p>
+                            </div>
+                            <button
+                              onClick={() => activeLead.painPoint && copyField('painPoint', activeLead.painPoint)}
+                              disabled={!activeLead.painPoint}
+                              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                            >
+                              {copied === 'painPoint' ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── Section: Sales Intelligence ── */}
+                      <div className="px-5 pt-3 pb-2">
+                        <div className="rounded-lg bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5" /> AI Sales Explainer
+                            </p>
+                            <p className="text-xs text-foreground/70 font-medium mt-1">
+                              Open a focused sale-path brief for this lead, based on campaign context and findings.
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => activeLead && openIntelModal(activeLead)}
+                            className="h-10 px-4 rounded-lg bg-primary text-white text-xs font-bold flex items-center justify-center gap-2 shrink-0 hover:bg-primary-hover transition-colors"
+                          >
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Explain Sale Path
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="hidden">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                              <Sparkles className="h-3 w-3 text-primary" /> AI Sales Path
+                            </p>
+                            <p className="text-[11px] text-muted-foreground font-medium mt-1">
+                              {activeCampaign?.name || "Campaign"} {activeCampaign?.productName ? `-> ${activeCampaign.productName}` : ""} {activeCampaign?.outreachTone ? `-> ${activeCampaign.outreachTone.toLowerCase()} tone` : ""}
+                            </p>
+                          </div>
+                          {intelError && (
+                            <button
+                              onClick={() => activeLead && fetchIntel(activeLead.id)}
+                              className="text-[11px] text-primary font-semibold hover:underline cursor-pointer flex items-center gap-1"
+                            >
+                              <RefreshCw className="h-3 w-3" /> Retry
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="border border-card-border rounded-lg overflow-hidden shadow-sm">
+                          {loadingIntel ? (
+                            /* Loading shimmer */
+                            <div className="p-4 space-y-3 bg-background">
+                              <div className="flex items-center gap-3">
+                                <div className="h-12 w-12 rounded-full bg-primary/10 animate-pulse shrink-0" />
+                                <div className="flex-1 space-y-2">
+                                  <div className="h-2.5 bg-muted rounded-full animate-pulse w-3/4" />
+                                  <div className="h-2.5 bg-muted rounded-full animate-pulse w-1/2" />
+                                </div>
+                              </div>
+                              <div className="space-y-1.5">
+                                {[1,2,3].map(i => (
+                                  <div key={i} className="h-2.5 bg-muted rounded-full animate-pulse" style={{ width: `${90 - i * 10}%` }} />
+                                ))}
+                              </div>
+                              <p className="text-[10px] text-muted-foreground text-center pt-1 font-medium">
+                                AI is analyzing this lead...
+                              </p>
+                            </div>
+                          ) : intelError ? (
+                            <div className="p-4 bg-background flex items-center gap-2 text-red-500">
+                              <AlertCircle className="h-4 w-4 shrink-0" />
+                              <p className="text-xs font-medium">{intelError}</p>
+                            </div>
+                          ) : intel ? (
+                            <div className="bg-background divide-y divide-card-border">
+
+                              {/* Score + Summary row */}
+                              <div className="p-4 flex items-start gap-4">
+                                {/* Opportunity Score ring */}
+                                <div className="shrink-0 flex flex-col items-center gap-1">
+                                  <div className="relative h-14 w-14">
+                                    <svg className="h-14 w-14 -rotate-90" viewBox="0 0 56 56">
+                                      <circle cx="28" cy="28" r="22" fill="none" stroke="currentColor" strokeWidth="5" className="text-card-border" />
+                                      <circle
+                                        cx="28" cy="28" r="22" fill="none" strokeWidth="5"
+                                        strokeDasharray={`${2 * Math.PI * 22}`}
+                                        strokeDashoffset={`${2 * Math.PI * 22 * (1 - intel.opportunityScore / 10)}`}
+                                        strokeLinecap="round"
+                                        className={intel.opportunityScore >= 8 ? "text-green-500" : intel.opportunityScore >= 5 ? "text-primary" : "text-orange-400"}
+                                        stroke="currentColor"
+                                      />
+                                    </svg>
+                                    <span className="absolute inset-0 flex items-center justify-center text-sm font-black text-foreground">
+                                      {intel.opportunityScore}
+                                    </span>
+                                  </div>
+                                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Score</p>
+                                </div>
+
+                                {/* Summary */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">What this lead is</p>
+                                  <p className="text-xs font-medium text-foreground leading-relaxed">{intel.summary}</p>
+                                  {intel.urgencySignal && (
+                                    <div className="mt-2 flex items-start gap-1.5">
+                                      <Zap className="h-3 w-3 text-amber-500 shrink-0 mt-0.5" />
+                                      <p className="text-[11px] text-amber-600 font-semibold leading-snug">{intel.urgencySignal}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Approach + Why row */}
+                              <div className="px-4 py-3 flex items-center gap-3">
+                                <Target className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                                    Why it matches this campaign
+                                  </p>
+                                  <p className="text-xs text-foreground font-medium leading-snug">{intel.whyThisLead}</p>
+                                </div>
+                              </div>
+
+                              <div className="px-4 py-3 flex items-start gap-3 bg-primary/5">
+                                <Send className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                                <div className="min-w-0">
+                                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">How to make it a sale</p>
+                                  <p className="text-xs text-foreground font-semibold leading-snug">{intel.salesApproach}</p>
+                                </div>
+                              </div>
+
+                              {/* Talking Points */}
+                              {intel.talkingPoints.length > 0 && (
+                                <div className="px-4 py-3">
+                                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                    <TrendingUp className="h-3 w-3" /> Talking Points
+                                  </p>
+                                  <ul className="space-y-1.5">
+                                    {intel.talkingPoints.map((pt, i) => (
+                                      <li key={i} className="flex items-start gap-2">
+                                        <span className="h-4 w-4 rounded bg-primary/10 text-primary text-[9px] font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                                        <p className="text-xs text-foreground leading-snug">{pt}</p>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {/* Objection handling */}
+                              {intel.likelyObjection && (
+                                <div className="px-4 py-3 space-y-2">
+                                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                                    <AlertCircle className="h-3 w-3" /> Likely Objection
+                                  </p>
+                                  <div className="bg-orange-500/5 border border-orange-500/15 rounded-lg p-2.5">
+                                    <p className="text-[11px] text-orange-700 dark:text-orange-400 font-medium italic">"{intel.likelyObjection}"</p>
+                                  </div>
+                                  {intel.objectionResponse && (
+                                    <div className="bg-green-500/5 border border-green-500/15 rounded-lg p-2.5">
+                                      <p className="text-[11px] text-green-700 dark:text-green-400 font-medium">↳ {intel.objectionResponse}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Next Best Action */}
+                              {intel.nextBestAction && (
+                                <div className="px-4 py-3 flex items-start gap-2 bg-primary/5">
+                                  <Lightbulb className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                                  <div>
+                                    <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">Next Best Action</p>
+                                    <p className="text-xs text-foreground font-semibold leading-snug">{intel.nextBestAction}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {/* ── Section: Outreach Message ── */}
+                      <div className="px-5 pt-3 pb-5">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Outreach Message</p>
+                          <button
+                            onClick={() => copyField('message', editedMessage)}
+                            disabled={!editedMessage}
+                            className="text-[11px] font-semibold text-primary flex items-center gap-1 hover:underline disabled:opacity-40 cursor-pointer"
+                          >
+                            {copied === 'message' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                            {copied === 'message' ? 'Copied!' : 'Copy Message'}
+                          </button>
+                        </div>
+                        <div className="border border-card-border rounded-lg overflow-hidden">
+                          <textarea
+                            value={editedMessage}
+                            onChange={e => setEditedMessage(e.target.value)}
+                            className="w-full h-36 p-4 bg-background text-xs font-mono leading-relaxed outline-none focus:ring-1 focus:ring-primary text-foreground resize-none"
+                            placeholder="AI-generated outreach message appears here..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className="px-5 py-4 border-t border-card-border bg-card">
+                      <div className="flex flex-wrap items-center gap-2">
+
+                        {/* WhatsApp */}
                         {activeLead.business.phone && (
                           <a
                             href={`https://wa.me/${activeLead.business.phone.replace(/\D/g, '')}?text=${encodeURIComponent(editedMessage)}`}
                             target="_blank"
                             onClick={() => handleDispatch(activeLead.id)}
-                            className="h-9 px-4 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center gap-2 text-xs font-semibold text-green-600 hover:bg-green-500/20 transition-all cursor-pointer"
+                            className="h-8 px-3 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center gap-2 text-xs font-semibold text-green-600 hover:bg-green-500/20 transition-all cursor-pointer"
                           >
-                            <MessageSquare className="h-3.5 w-3.5" /> WhatsApp Dispatch
+                            <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
                           </a>
                         )}
+
+                        {/* Send Email via Resend */}
+                        {activeLead.business.email && (
+                          <button
+                            onClick={() => handleEmailDispatch(activeLead.id)}
+                            disabled={sendingEmail}
+                            className={`h-8 px-3 rounded-lg border flex items-center gap-2 text-xs font-semibold transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed ${
+                              emailResult === 'sent'
+                                ? 'bg-green-500/10 border-green-500/20 text-green-600'
+                                : emailResult === 'failed'
+                                ? 'bg-red-500/10 border-red-500/20 text-red-500'
+                                : 'bg-primary/10 border-primary/20 text-primary hover:bg-primary/20'
+                            }`}
+                          >
+                            {sendingEmail ? (
+                              <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Sending...</>
+                            ) : emailResult === 'sent' ? (
+                              <><Check className="h-3.5 w-3.5" /> Email Sent!</>
+                            ) : emailResult === 'failed' ? (
+                              <><Mail className="h-3.5 w-3.5" /> Send Failed</>  
+                            ) : (
+                              <><Send className="h-3.5 w-3.5" /> Send Email
+                              <span className="px-1 py-0.5 rounded text-[9px] font-bold bg-primary/20">via Resend</span></>
+                            )}
+                          </button>
+                        )}
+
+                        {/* mailto fallback */}
                         {activeLead.business.email && (
                           <a
-                            href={`mailto:${activeLead.business.email}?subject=${encodeURIComponent('Strategic Growth Opportunity')}&body=${encodeURIComponent(editedMessage)}`}
+                            href={`mailto:${activeLead.business.email}?subject=${encodeURIComponent('Quick question')}&body=${encodeURIComponent(editedMessage)}`}
                             target="_blank"
-                            onClick={() => handleDispatch(activeLead.id)}
-                            className="h-9 px-4 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center gap-2 text-xs font-semibold text-blue-600 hover:bg-blue-500/20 transition-all cursor-pointer"
+                            className="h-8 px-3 rounded-lg bg-background border border-card-border flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-card-hover-border transition-all cursor-pointer"
+                            title="Open in your local email client"
                           >
-                            <Mail className="h-3.5 w-3.5" /> Email Dispatch
+                            <ExternalLink className="h-3.5 w-3.5" /> Open in Mail
                           </a>
                         )}
-                      </div>
 
-                      {activeLead.status !== "CONTACTED" && (
-                        <button onClick={() => handleDispatch(activeLead.id)}
-                          className="h-9 px-4 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-hover shadow-sm transition-all cursor-pointer"
-                        >
-                          Mark as Dispatched
-                        </button>
-                      )}
+                        {/* Mark dispatched */}
+                        {activeLead.status !== 'CONTACTED' && (
+                          <button onClick={() => handleDispatch(activeLead.id)}
+                            className="ml-auto h-8 px-4 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-hover shadow-sm transition-all cursor-pointer"
+                          >
+                            Mark Dispatched
+                          </button>
+                        )}
+                        {activeLead.status === 'CONTACTED' && (
+                          <span className="ml-auto px-3 py-1.5 rounded-lg bg-green-500/10 text-green-600 text-xs font-bold flex items-center gap-1">
+                            <Check className="h-3 w-3" /> Dispatched
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 ) : (
-                  // Default Radar showcase when no lead is selected
-                  <div className="h-full flex flex-col items-center justify-center text-center my-auto space-y-4 py-12">
-                    <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                  <div className="h-full flex flex-col items-center justify-center text-center my-auto space-y-4 py-16 px-6">
+                    <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center">
                       <Building2 className="h-8 w-8 text-primary" />
                     </div>
-                    <div className="space-y-2 max-w-sm">
-                      <h4 className="text-md font-bold text-foreground">Outreach Dossier Active</h4>
-                      <p className="text-xs text-muted-foreground leading-relaxed font-semibold">
-                        Select an ultra-thin pipeline lead on the left to extract their HyprLead AI pain-point vector, view verified MX records, and trigger outbound communications.
+                    <div className="space-y-2 max-w-xs">
+                      <h4 className="text-sm font-bold text-foreground">Select a lead to view details</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Click any lead on the left to see all contact info, AI intelligence, and the outreach message — with one-click copy on every field.
                       </p>
                     </div>
                   </div>
@@ -593,6 +987,145 @@ export default function LeadsPage() {
         </div>
 
       </div>
+
+      <AnimatePresence>
+        {showIntelModal && activeLead && (
+          <motion.div
+            className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowIntelModal(false)}
+          >
+            <motion.div
+              className="w-full max-w-3xl max-h-[86vh] overflow-hidden rounded-2xl bg-card shadow-2xl flex flex-col"
+              initial={{ opacity: 0, y: 18, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 18, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="px-6 py-5 border-b border-card-border flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5" /> AI Sales Explainer
+                  </p>
+                  <h3 className="text-xl font-bold text-foreground tracking-tight truncate mt-1">{activeLead.business.name}</h3>
+                  <p className="text-xs text-muted-foreground font-medium mt-1">
+                    {activeCampaign?.name || "Campaign"} {activeCampaign?.productName ? `-> ${activeCampaign.productName}` : ""} {activeCampaign?.outreachTone ? `-> ${activeCampaign.outreachTone.toLowerCase()} tone` : ""}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowIntelModal(false)}
+                  className="h-9 w-9 rounded-lg bg-background hover:bg-foreground/5 text-muted-foreground hover:text-foreground flex items-center justify-center shrink-0"
+                  aria-label="Close AI sales explainer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto scrollbar-neural p-6">
+                {loadingIntel ? (
+                  <div className="space-y-4">
+                    <div className="h-24 rounded-xl bg-background animate-pulse" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="h-28 rounded-xl bg-background animate-pulse" />
+                      <div className="h-28 rounded-xl bg-background animate-pulse" />
+                    </div>
+                    <p className="text-xs text-muted-foreground font-medium text-center">AI is building the sale path...</p>
+                  </div>
+                ) : intelError ? (
+                  <div className="rounded-xl bg-red-500/10 p-5 flex items-start gap-3 text-red-500">
+                    <AlertCircle className="h-5 w-5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold">Analysis failed</p>
+                      <p className="text-xs font-medium mt-1">{intelError}</p>
+                      <button
+                        onClick={() => fetchIntel(activeLead.id)}
+                        className="mt-4 h-9 px-4 rounded-lg bg-red-500 text-white text-xs font-bold inline-flex items-center gap-2"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" /> Retry
+                      </button>
+                    </div>
+                  </div>
+                ) : intel ? (
+                  <div className="space-y-4">
+                    <div className="rounded-xl bg-background p-5 flex items-start gap-4">
+                      <div className="h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <span className="text-lg font-black">{intel.opportunityScore}</span>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-primary uppercase tracking-widest">What this lead is</p>
+                        <p className="text-sm text-foreground/90 font-medium leading-relaxed mt-1">{intel.summary}</p>
+                        {intel.urgencySignal && (
+                          <p className="text-xs text-amber-500 font-semibold leading-relaxed mt-3 flex gap-2">
+                            <Zap className="h-3.5 w-3.5 shrink-0 mt-0.5" /> {intel.urgencySignal}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="rounded-xl bg-background p-5">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                          <Target className="h-3.5 w-3.5" /> Why it matches
+                        </p>
+                        <p className="text-sm text-foreground/85 font-medium leading-relaxed mt-2">{intel.whyThisLead}</p>
+                      </div>
+                      <div className="rounded-xl bg-primary/5 p-5">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                          <Send className="h-3.5 w-3.5" /> How to make it a sale
+                        </p>
+                        <p className="text-sm text-foreground font-semibold leading-relaxed mt-2">{intel.salesApproach}</p>
+                      </div>
+                    </div>
+
+                    {intel.talkingPoints.length > 0 && (
+                      <div className="rounded-xl bg-background p-5">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-3">
+                          <TrendingUp className="h-3.5 w-3.5" /> Talking points
+                        </p>
+                        <div className="space-y-2">
+                          {intel.talkingPoints.map((point, index) => (
+                            <div key={index} className="flex items-start gap-3">
+                              <span className="h-5 w-5 rounded bg-primary/10 text-primary text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">{index + 1}</span>
+                              <p className="text-sm text-foreground/85 leading-relaxed">{point}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(intel.likelyObjection || intel.nextBestAction) && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {intel.likelyObjection && (
+                          <div className="rounded-xl bg-orange-500/5 p-5">
+                            <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-2">
+                              <AlertCircle className="h-3.5 w-3.5" /> Likely objection
+                            </p>
+                            <p className="text-sm text-foreground/85 italic leading-relaxed mt-2">"{intel.likelyObjection}"</p>
+                            {intel.objectionResponse && (
+                              <p className="text-xs text-green-500 font-semibold leading-relaxed mt-3">{intel.objectionResponse}</p>
+                            )}
+                          </div>
+                        )}
+                        {intel.nextBestAction && (
+                          <div className="rounded-xl bg-primary/5 p-5">
+                            <p className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                              <Lightbulb className="h-3.5 w-3.5" /> Next best action
+                            </p>
+                            <p className="text-sm text-foreground font-semibold leading-relaxed mt-2">{intel.nextBestAction}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
