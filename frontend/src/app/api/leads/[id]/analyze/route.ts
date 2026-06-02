@@ -37,7 +37,15 @@ function fallbackAnalysis(lead: any, campaign: any) {
   const hasDirectContact = Boolean(lead.business.email || lead.business.phone);
   const product = campaign.productName || 'your offer';
   const painPoint = lead.painPoint || campaign.targetPainPoints || 'operational friction';
-  const channel = lead.business.email ? 'email' : lead.business.phone ? 'WhatsApp or phone' : 'website-first outreach';
+  const channel = lead.business.email
+    ? 'email'
+    : lead.business.phone
+      ? 'WhatsApp or phone'
+      : lead.business.bestContactChannel === 'social_profile'
+        ? 'social-profile outreach'
+        : lead.business.bestContactChannel === 'contact_page'
+          ? 'contact-page outreach'
+          : 'website-first outreach';
 
   return normalizeAnalysis({
     summary: `${lead.business.name} is a ${lead.industry || 'target'} prospect matched to this campaign because its detected friction overlaps with ${product}'s value proposition. The strongest sales path is to connect the pain signal to a measurable outcome, then move quickly toward a short diagnostic conversation.`,
@@ -113,6 +121,12 @@ export async function POST(
       `- Has Phone: ${business.phone ? 'Yes' : 'No'}\n` +
       `- Has Email: ${business.email ? 'Yes' : 'No'}\n` +
       `- Website: ${business.website || 'None'}\n` +
+      `- Contact Status: ${business.contactStatus || 'unknown'}\n` +
+      `- Best Contact Channel: ${business.bestContactChannel || 'unknown'}\n` +
+      `- Contact Confidence: ${business.contactConfidence || 0}\n` +
+      `- Contact Pages: ${Array.isArray(business.contactPages) ? business.contactPages.join(', ') : 'None'}\n` +
+      `- Social Profiles: ${Array.isArray(business.socialProfiles) ? business.socialProfiles.join(', ') : 'None'}\n` +
+      `- People To Contact: ${Array.isArray(business.decisionMakers) ? business.decisionMakers.map((p: any) => [p.name, p.role, p.profileUrl].filter(Boolean).join(' / ')).join('; ') : 'None'}\n` +
       `- Discovery Cycle: ${lead.cycleRun ? `${lead.cycleRun.triggerType} / ${lead.cycleRun.status} / ${lead.cycleRun.leadsFound} of ${lead.cycleRun.maxLeads} found` : 'Legacy or uncategorized'}\n\n` +
       `CAMPAIGN CONTEXT:\n` +
       `- Campaign: "${campaign.name}"\n` +

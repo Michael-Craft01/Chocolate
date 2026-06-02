@@ -5,8 +5,28 @@ import {
   CheckCircle2, Copy, ChevronDown, ChevronUp, MessageCircle, ExternalLink, Zap, Mail
 } from "lucide-react";
 
+function cleanOutreachMessage(text: string) {
+  let cleaned = (text || "")
+    .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
+    .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
+    .replace(/```[\w-]*\n?/g, "")
+    .replace(/<\/?email>/gi, "")
+    .replace(/\*\*(Opening|The Hook\/Pain Point|The Solution|Call to Action|CTA|Subject):\*\*:?/gi, "")
+    .replace(/^\s*[-*]\s+\*\*[^*\n]+:\*\*\s*/gm, "")
+    .replace(/^\s*[-*]\s*(Opening|The Hook\/Pain Point|The Solution|Call to Action|CTA|Subject):\s*/gim, "")
+    .replace(/^\s*`+\s*/gm, "")
+    .replace(/\s*`+\s*$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  const firstGreeting = cleaned.search(/\b(hi|hello|good day|hey|greetings)\b/i);
+  if (firstGreeting > 0) cleaned = cleaned.slice(firstGreeting).trim();
+  return cleaned;
+}
+
 export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: any) {
   const [expanded, setExpanded] = useState(false);
+  const outreachMessage = cleanOutreachMessage(lead.suggestedMessage || "");
 
   return (
     <motion.div
@@ -86,7 +106,7 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
                   </div>
                   <div className="relative">
                     <p className="text-[12px] text-zinc-400 leading-relaxed font-medium italic p-5 bg-white/[0.02] border border-white/5 rounded-sm shadow-inner">
-                      "{lead.suggestedMessage}"
+                      "{outreachMessage}"
                     </p>
                     <div className="absolute -left-1 top-4 h-8 w-1 bg-primary/20 rounded-full" />
                   </div>
@@ -120,7 +140,7 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
                   <div className="flex flex-col gap-2">
                     {lead.business.phone && (
                       <a
-                        href={`https://wa.me/${lead.business.phone.replace(/\D/g, '')}?text=${encodeURIComponent(lead.suggestedMessage)}`}
+                        href={`https://wa.me/${lead.business.phone.replace(/\D/g, '')}?text=${encodeURIComponent(outreachMessage)}`}
                         target="_blank"
                         className="h-11 rounded-sm bg-emerald-500 text-black text-[10px] font-black uppercase tracking-widest flex items-center justify-center hover:bg-emerald-400 transition-all gap-2 group/wa shadow-[0_0_20px_rgba(16,185,129,0.2)]"
                       >

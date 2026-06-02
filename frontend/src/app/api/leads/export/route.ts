@@ -31,6 +31,12 @@ export async function GET(req: NextRequest) {
       { label: 'Phone', value: 'business.phone' },
       { label: 'Email', value: 'business.email' },
       { label: 'Website', value: 'business.website' },
+      { label: 'Contact Status', value: 'business.contactStatus' },
+      { label: 'Best Contact Channel', value: 'business.bestContactChannel' },
+      { label: 'Contact Confidence', value: 'business.contactConfidence' },
+      { label: 'Contact Pages', value: (row: any) => Array.isArray(row.business?.contactPages) ? row.business.contactPages.join(' | ') : '' },
+      { label: 'Social Profiles', value: (row: any) => Array.isArray(row.business?.socialProfiles) ? row.business.socialProfiles.join(' | ') : '' },
+      { label: 'People To Contact', value: (row: any) => Array.isArray(row.business?.decisionMakers) ? row.business.decisionMakers.map((p: any) => [p.name, p.role].filter(Boolean).join(' - ')).join(' | ') : '' },
       { label: 'Pain Point', value: 'painPoint' },
       { label: 'Suggested Message', value: 'suggestedMessage' }
     ];

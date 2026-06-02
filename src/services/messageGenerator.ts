@@ -1,5 +1,5 @@
 import { logger } from '../lib/logger.js';
-import { aiService } from './aiService.js';
+import { aiService, cleanOutreachMessage } from './aiService.js';
 
 export class MessageGenerator {
     private getOpenings(campaign: any, businessName: string) {
@@ -51,10 +51,11 @@ export class MessageGenerator {
     async generate(campaign: any, businessName: string, industry: string, painPoint: string, recommendedSolution?: string): Promise<string> {
         try {
             logger.info(`[HyprLead AI] Generating personalized outreach for ${businessName}`);
-            return await aiService.generatePersonalizedMessage(campaign, businessName, industry, painPoint);
+            const message = await aiService.generatePersonalizedMessage(campaign, businessName, industry, painPoint);
+            return cleanOutreachMessage(message);
         } catch (error) {
             logger.warn({ error, businessName }, 'AI message generation failed, falling back to template');
-            return this.generateFallback(campaign, businessName, industry, painPoint, recommendedSolution);
+            return cleanOutreachMessage(this.generateFallback(campaign, businessName, industry, painPoint, recommendedSolution));
         }
     }
 

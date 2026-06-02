@@ -71,13 +71,26 @@ export interface Lead {
   industry: string;
   painPoint: string;
   suggestedMessage: string;
-  status: "NEW" | "CONTACTED" | "CONVERTED" | "REJECTED";
+  status: "NEW" | "CONTACT_ROUTE_OPENED" | "CONTACTED" | "CONVERTED" | "REJECTED";
   createdAt: string;
   business: {
     name: string;
     website?: string;
     phone?: string;
     email?: string;
+    contactStatus?: "sales_ready" | "contactable" | "needs_person" | "weak_contact" | "missing";
+    contactPages?: string[];
+    socialProfiles?: string[];
+    decisionMakers?: Array<{
+      name: string;
+      role?: string;
+      profileUrl?: string;
+      sourceUrl?: string;
+      confidence?: number;
+    }>;
+    bestContactChannel?: string;
+    contactConfidence?: number;
+    contactEvidence?: string[];
   };
 }
 

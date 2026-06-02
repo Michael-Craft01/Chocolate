@@ -11,6 +11,10 @@ export interface LeadPayload {
     website?: string | null;
     phone?: string | null;
     email?: string | null;
+    contactStatus?: string | null;
+    bestContactChannel?: string | null;
+    contactPages?: string[];
+    socialProfiles?: string[];
     location: string;
 }
 
@@ -61,6 +65,7 @@ export class DiscordDispatcher {
                 { name: 'Source Node', value: lead.website || '_Ghost Town_', inline: true },
                 { name: 'Frequency', value: lead.phone || '_No Signal_', inline: true },
                 { name: 'Registry', value: lead.email || '_Snail Mail?_', inline: true },
+                { name: 'Contact Route', value: lead.bestContactChannel || lead.contactStatus || '_No Route_', inline: true },
             ],
             footer: {
                 text: `HyprLead Intelligence says: "${randomQuote}"`,
@@ -101,6 +106,16 @@ export class DiscordDispatcher {
                 style: 5,
                 label: 'Website',
                 url: validWebsite,
+            });
+        }
+
+        const contactUrl = lead.contactPages?.[0] || lead.socialProfiles?.[0];
+        if (contactUrl) {
+            buttonRow.components.push({
+                type: 2,
+                style: 5,
+                label: 'Contact Route',
+                url: contactUrl,
             });
         }
 

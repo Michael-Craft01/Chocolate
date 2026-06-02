@@ -63,6 +63,56 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 }
 
+function cleanOutreachMessage(text: string) {
+  let cleaned = (text || "")
+    .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
+    .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
+    .replace(/```[\w-]*\n?/g, "")
+    .replace(/<\/?email>/gi, "")
+    .replace(/\*\*(Opening|The Hook\/Pain Point|The Solution|Call to Action|CTA|Subject):\*\*:?/gi, "")
+    .replace(/^\s*[-*]\s+\*\*[^*\n]+:\*\*\s*/gm, "")
+    .replace(/^\s*[-*]\s*(Opening|The Hook\/Pain Point|The Solution|Call to Action|CTA|Subject):\s*/gim, "")
+    .replace(/^\s*`+\s*/gm, "")
+    .replace(/\s*`+\s*$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  const firstGreeting = cleaned.search(/\b(hi|hello|good day|hey|greetings)\b/i);
+  if (firstGreeting > 0) cleaned = cleaned.slice(firstGreeting).trim();
+
+  return cleaned;
+}
+
+function contactStatusLabel(status?: Lead["business"]["contactStatus"]) {
+  switch (status) {
+    case "sales_ready":
+      return "Sales Ready";
+    case "contactable":
+      return "Contactable";
+    case "needs_person":
+      return "Needs Person";
+    case "weak_contact":
+      return "Weak Contact";
+    default:
+      return "Contact Route";
+  }
+}
+
+function contactStatusClass(status?: Lead["business"]["contactStatus"]) {
+  switch (status) {
+    case "sales_ready":
+      return "text-green-600 bg-green-500/10";
+    case "contactable":
+      return "text-primary bg-primary/10";
+    case "needs_person":
+      return "text-amber-600 bg-amber-500/10";
+    case "weak_contact":
+      return "text-orange-600 bg-orange-500/10";
+    default:
+      return "text-muted-foreground bg-muted";
+  }
+}
+
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -126,7 +176,7 @@ export default function LeadsPage() {
       // Auto-select the first lead to populate the intelligence panel instantly
       if (fetchedLeads.length > 0 && !selectedLeadId) {
         setSelectedLeadId(fetchedLeads[0].id);
-        setEditedMessage(fetchedLeads[0].suggestedMessage || "");
+        setEditedMessage(cleanOutreachMessage(fetchedLeads[0].suggestedMessage || ""));
       }
     } catch (err: any) {
       setError(err.message || "Unable to connect to your collection.");
@@ -162,7 +212,7 @@ export default function LeadsPage() {
   const activeLead = useMemo(() => {
     const found = leads.find(l => l.id === selectedLeadId);
     if (found && !editedMessage && found.suggestedMessage) {
-      setEditedMessage(found.suggestedMessage);
+      setEditedMessage(cleanOutreachMessage(found.suggestedMessage));
     }
     return found;
   }, [leads, selectedLeadId]);
@@ -174,7 +224,7 @@ export default function LeadsPage() {
 
   const selectLead = (lead: Lead) => {
     setSelectedLeadId(lead.id);
-    setEditedMessage(lead.suggestedMessage || "");
+    setEditedMessage(cleanOutreachMessage(lead.suggestedMessage || ""));
     // Clear previous intel; analysis runs only when the user opens the explainer.
     setIntel(null);
     setIntelError(null);
@@ -225,15 +275,16 @@ export default function LeadsPage() {
     } catch { alert("Failed to remove lead."); }
   };
 
-  const handleDispatch = async (id: string) => {
+  const handleDispatch = async (id: string, markContacted = false) => {
     try {
-      const result = await authJson<{ emailSent: boolean, whatsappUrl: string, mailtoUrl: string }>(`/api/leads/${id}/dispatch`, { 
+      const result = await authJson<{ emailSent: boolean, whatsappUrl: string | null, mailtoUrl: string | null, contactUrl: string | null, status: Lead["status"] }>(`/api/leads/${id}/dispatch`, { 
         method: "POST",
-        body: JSON.stringify({ customMessage: editedMessage })
+        body: JSON.stringify({ customMessage: editedMessage, markContacted })
       });
-      setLeads(prev => prev.map(l => l.id === id ? { ...l, status: 'CONTACTED' as any } : l));
+      setLeads(prev => prev.map(l => l.id === id ? { ...l, status: result.status } : l));
       if (result.whatsappUrl) window.open(result.whatsappUrl, '_blank');
       else if (result.mailtoUrl) window.open(result.mailtoUrl, '_blank');
+      else if (result.contactUrl) window.open(result.contactUrl, '_blank');
     } catch (err: any) {
       alert("Failed to dispatch: " + (err.message || "Unknown error"));
     }
@@ -244,11 +295,11 @@ export default function LeadsPage() {
     setSendingEmail(true);
     setEmailResult(null);
     try {
-      const result = await authJson<{ emailSent: boolean }>(`/api/leads/${id}/dispatch`, {
+      const result = await authJson<{ emailSent: boolean, status: Lead["status"] }>(`/api/leads/${id}/dispatch`, {
         method: "POST",
         body: JSON.stringify({ customMessage: editedMessage })
       });
-      setLeads(prev => prev.map(l => l.id === id ? { ...l, status: 'CONTACTED' as any } : l));
+      setLeads(prev => prev.map(l => l.id === id ? { ...l, status: result.status } : l));
       setEmailResult(result.emailSent ? 'sent' : 'failed');
       setTimeout(() => setEmailResult(null), 3000);
     } catch {
@@ -538,7 +589,7 @@ export default function LeadsPage() {
                             <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold shrink-0">{activeLead.industry}</span>
                           </div>
                           <p className="text-xs text-muted-foreground font-medium">
-                            {activeLead.status === 'CONTACTED' ? '✓ Dispatched' : '● Active'} · Discovered {new Date(activeLead.createdAt).toLocaleDateString()}
+                            {activeLead.status === 'CONTACTED' ? 'Contacted' : activeLead.status === 'CONTACT_ROUTE_OPENED' ? 'Route opened' : 'Active'} - Discovered {new Date(activeLead.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
@@ -596,6 +647,14 @@ export default function LeadsPage() {
                               value: activeLead.business.website || '',
                               mono: true,
                               link: activeLead.business.website || undefined,
+                            },
+                            {
+                              key: 'contactStatus',
+                              label: 'Contact Quality',
+                              icon: ShieldCheck,
+                              value: `${contactStatusLabel(activeLead.business.contactStatus)}${activeLead.business.contactConfidence ? ` (${activeLead.business.contactConfidence}%)` : ''}`,
+                              mono: false,
+                              badge: { text: activeLead.business.bestContactChannel || 'route', color: contactStatusClass(activeLead.business.contactStatus) },
                             },
                           ].map((field, idx, arr) => (
                             <div
@@ -656,6 +715,56 @@ export default function LeadsPage() {
                             </div>
                           ))}
                         </div>
+                        {((activeLead.business.contactPages?.length || 0) > 0 || (activeLead.business.socialProfiles?.length || 0) > 0 || (activeLead.business.decisionMakers?.length || 0) > 0) && (
+                          <div className="mt-3 border border-card-border rounded-lg overflow-hidden">
+                            {(activeLead.business.contactPages?.length || 0) > 0 && (
+                              <div className="px-4 py-3 bg-background border-b border-card-border">
+                                <p className="text-[11px] font-semibold text-muted-foreground mb-2">Contact Pages</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {activeLead.business.contactPages?.slice(0, 4).map((url) => (
+                                    <a key={url} href={url} target="_blank" className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline max-w-full">
+                                      <span className="truncate">{url.replace(/https?:\/\/(www\.)?/, '')}</span>
+                                      <ArrowUpRight className="h-3 w-3 shrink-0" />
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {(activeLead.business.socialProfiles?.length || 0) > 0 && (
+                              <div className="px-4 py-3 bg-background border-b border-card-border">
+                                <p className="text-[11px] font-semibold text-muted-foreground mb-2">Social Routes</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {activeLead.business.socialProfiles?.slice(0, 4).map((url) => (
+                                    <a key={url} href={url} target="_blank" className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline max-w-full">
+                                      <span className="truncate">{url.replace(/https?:\/\/(www\.)?/, '')}</span>
+                                      <ArrowUpRight className="h-3 w-3 shrink-0" />
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {(activeLead.business.decisionMakers?.length || 0) > 0 && (
+                              <div className="px-4 py-3 bg-background">
+                                <p className="text-[11px] font-semibold text-muted-foreground mb-2">People To Contact</p>
+                                <div className="space-y-2">
+                                  {activeLead.business.decisionMakers?.slice(0, 4).map((person) => (
+                                    <div key={`${person.name}-${person.profileUrl || person.role || ''}`} className="flex items-center justify-between gap-3">
+                                      <div className="min-w-0">
+                                        <p className="text-xs font-bold text-foreground truncate">{person.name}</p>
+                                        <p className="text-[11px] text-muted-foreground truncate">{person.role || 'Relevant contact'}{person.confidence ? ` · ${person.confidence}%` : ''}</p>
+                                      </div>
+                                      {person.profileUrl && (
+                                        <a href={person.profileUrl} target="_blank" className="h-7 w-7 rounded-md flex items-center justify-center text-primary hover:bg-primary/10 shrink-0" title="Open profile">
+                                          <ArrowUpRight className="h-3.5 w-3.5" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* ── Section: AI Intelligence ── */}
@@ -953,15 +1062,15 @@ export default function LeadsPage() {
 
                         {/* Mark dispatched */}
                         {activeLead.status !== 'CONTACTED' && (
-                          <button onClick={() => handleDispatch(activeLead.id)}
+                          <button onClick={() => handleDispatch(activeLead.id, true)}
                             className="ml-auto h-8 px-4 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-hover shadow-sm transition-all cursor-pointer"
                           >
-                            Mark Dispatched
+                            Confirm Contacted
                           </button>
                         )}
                         {activeLead.status === 'CONTACTED' && (
                           <span className="ml-auto px-3 py-1.5 rounded-lg bg-green-500/10 text-green-600 text-xs font-bold flex items-center gap-1">
-                            <Check className="h-3 w-3" /> Dispatched
+                            <Check className="h-3 w-3" /> Contacted
                           </span>
                         )}
                       </div>
@@ -1139,6 +1248,7 @@ interface ThinLeadRowProps {
 
 function ThinLeadRow({ lead, isSelected, onSelect }: ThinLeadRowProps) {
   const isContacted = lead.status === 'CONTACTED';
+  const isRouteOpened = lead.status === 'CONTACT_ROUTE_OPENED';
   return (
     <div
       onClick={onSelect}
@@ -1176,9 +1286,19 @@ function ThinLeadRow({ lead, isSelected, onSelect }: ThinLeadRowProps) {
             SMTP
           </span>
         )}
+        {!lead.business.phone && !lead.business.email && lead.business.contactStatus && (
+          <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 ${contactStatusClass(lead.business.contactStatus)}`}>
+            {lead.business.bestContactChannel === 'social_profile' ? 'SOCIAL' : lead.business.bestContactChannel === 'contact_page' ? 'PAGE' : 'WEB'}
+          </span>
+        )}
         {isContacted && (
           <span className="px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 text-[10px] font-semibold shrink-0">
             SENT
+          </span>
+        )}
+        {isRouteOpened && (
+          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 text-[10px] font-semibold shrink-0">
+            OPENED
           </span>
         )}
       </div>

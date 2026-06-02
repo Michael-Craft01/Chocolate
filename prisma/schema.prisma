@@ -120,25 +120,34 @@ enum CampaignStatus {
 }
 
 model Business {
-  id          String   @id @default(cuid())
-  name        String
-  address     String?
-  category    String?
-  website     String?
-  phone       String?
-  email       String?
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  leads       Lead[]
+  id                 String   @id @default(cuid())
+  name               String
+  address            String?
+  category           String?
+  website            String?
+  phone              String?
+  email              String?
+  description        String?
+  contactStatus      String?
+  contactPages       Json?
+  socialProfiles     Json?
+  decisionMakers     Json?
+  bestContactChannel String?
+  contactConfidence  Int?
+  contactEvidence    Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  leads              Lead[]
 
   @@index([name])
   @@index([phone])
   @@index([website])
+  @@index([contactStatus])
 }
 
 enum LeadStatus {
   NEW
+  CONTACT_ROUTE_OPENED
   CONTACTED
   CONVERTED
   REJECTED

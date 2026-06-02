@@ -3,29 +3,32 @@
 import { createClient } from "@/lib/supabase";
 
 /**
- * Robust API URL Resolver
- * Ensures we always hit the Lead Engine on port 3000 during development,
- * even if environment variables are missing or cached incorrectly.
+ * Browser calls prefer same-origin Next API routes in local development. This
+ * avoids CORS and localhost port drift while the Next API proxies or handles
+ * server work.
  */
 const resolveApiBaseUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  
-  if (envUrl && envUrl.startsWith('http')) {
-    // Legacy fix: If a production domain has port 3005 attached, strip it
-    if (envUrl.includes('vercel.app:3005')) {
-      return envUrl.replace(':3005', '');
+
+  if (typeof window !== "undefined") {
+    const localHostnames = new Set(["localhost", "127.0.0.1", "::1"]);
+    if (localHostnames.has(window.location.hostname)) return "";
+  }
+
+  if (envUrl && envUrl.startsWith("http")) {
+    if (envUrl.includes("vercel.app:3005")) {
+      return envUrl.replace(":3005", "");
     }
     return envUrl.replace(/\/$/, "");
   }
-  
+
   return "";
 };
 
 const apiBaseUrl = resolveApiBaseUrl();
 
-// Debugging: Log the target on every load
-if (typeof window !== 'undefined') {
-  console.log(`%c[HyprLead API] Backend: ${apiBaseUrl}`, "color: #3b82f6; font-weight: bold;");
+if (typeof window !== "undefined") {
+  console.log(`%c[HyprLead API] Backend: ${apiBaseUrl || "same-origin"}`, "color: #3b82f6; font-weight: bold;");
 }
 
 export class ApiAuthError extends Error {
@@ -38,6 +41,7 @@ export class ApiAuthError extends Error {
 export class ApiRequestError extends Error {
   status: number;
   details?: any[];
+
   constructor(status: number, message: string, details?: any[]) {
     super(message);
     this.name = "ApiRequestError";
@@ -52,13 +56,11 @@ export async function authFetch(path: string, init: RequestInit = {}) {
 
   if (!session) throw new ApiAuthError();
 
-  // Ensure path starts with /
-  const sanitizedPath = path.startsWith('/') ? path : `/${path}`;
+  const sanitizedPath = path.startsWith("/") ? path : `/${path}`;
   const fullUrl = `${apiBaseUrl}${sanitizedPath}`;
 
-  // Dev logging
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`🚀 [API] ${init.method || 'GET'} ${fullUrl}`);
+  if (process.env.NODE_ENV === "development") {
+    console.log(`[API] ${init.method || "GET"} ${fullUrl}`);
   }
 
   const headers = new Headers(init.headers || {});
@@ -76,10 +78,11 @@ export async function authFetch(path: string, init: RequestInit = {}) {
 export async function authJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await authFetch(path, init);
   let payload: any = null;
+
   try {
     payload = await response.json();
-  } catch (e) {
-    // Ignore JSON parse errors for 404s/500s
+  } catch {
+    // Ignore JSON parse errors for empty error responses.
   }
 
   if (!response.ok) {

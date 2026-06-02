@@ -11,6 +11,13 @@ export interface ScrapedBusiness {
     website?: string | null;
     phone?: string | null;
     email?: string | null;
+    contactPages?: string[];
+    socialProfiles?: string[];
+    decisionMakers?: Array<{ name: string; role?: string | null; profileUrl?: string | null; sourceUrl?: string | null; confidence?: number | null }>;
+    contactStatus?: string | null;
+    bestContactChannel?: string | null;
+    contactConfidence?: number | null;
+    contactEvidence?: string[];
     category?: string | null;
     address?: string | null;
 }

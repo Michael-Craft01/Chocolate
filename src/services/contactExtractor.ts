@@ -2,7 +2,14 @@ import { chromium } from 'playwright';
 import { logger } from '../lib/logger.js';
 
 export class ContactExtractor {
-    async extract(url: string): Promise<{ email?: string | null; phone?: string | null; screenshot?: Buffer | null }> {
+    async extract(url: string): Promise<{
+        email?: string | null;
+        phone?: string | null;
+        contactPages?: string[];
+        socialProfiles?: string[];
+        decisionMakers?: Array<{ name: string; role?: string | null; profileUrl?: string | null; sourceUrl?: string | null; confidence?: number | null }>;
+        screenshot?: Buffer | null;
+    }> {
         if (!url) return {};
 
         // Block known junk domains that will never have contact info
@@ -28,6 +35,9 @@ export class ContactExtractor {
 
             let email: string | null = null;
             let phone: string | null = null;
+            let contactPages: string[] = [];
+            let socialProfiles: string[] = [];
+            let decisionMakers: Array<{ name: string; role?: string | null; profileUrl?: string | null; sourceUrl?: string | null; confidence?: number | null }> = [];
 
             /**
              * Multi-strategy phone extraction from any page.
@@ -137,11 +147,68 @@ export class ContactExtractor {
                 }).catch(() => null);
             };
 
+            const extractRouteIntel = async () => {
+                return page.evaluate(() => {
+                    const unique = (values: string[]) => Array.from(new Set(values.map(v => v.trim()).filter(Boolean)));
+                    const links = Array.from(document.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+                    const socialDomains = ['linkedin.com', 'facebook.com', 'instagram.com', 'x.com', 'twitter.com', 'wa.me', 'api.whatsapp.com'];
+                    const contactKeywords = ['contact', 'reach us', 'get in touch', 'support', 'enquiry', 'enquiries', 'book', 'quote'];
+                    const titleKeywords = ['founder', 'ceo', 'director', 'owner', 'manager', 'sales', 'marketing', 'operations', 'partner'];
+
+                    const contactPages = unique(links
+                        .filter(a => {
+                            const text = `${a.innerText || ''} ${a.textContent || ''}`.toLowerCase();
+                            const href = a.href.toLowerCase();
+                            return contactKeywords.some(k => text.includes(k) || href.includes(k.replace(/\s/g, '-')) || href.includes(k.replace(/\s/g, '')));
+                        })
+                        .map(a => a.href)
+                        .filter(href => href.startsWith('http') && !href.includes('google.com')));
+
+                    const socialProfiles = unique(links
+                        .map(a => a.href)
+                        .filter(href => href.startsWith('http') && socialDomains.some(domain => href.includes(domain))));
+
+                    const text = document.body?.innerText || '';
+                    const people: Array<{ name: string; role?: string | null; profileUrl?: string | null; sourceUrl?: string | null; confidence?: number | null }> = [];
+                    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 3 && line.length < 120);
+                    for (const line of lines) {
+                        const lower = line.toLowerCase();
+                        const role = titleKeywords.find(keyword => lower.includes(keyword));
+                        if (!role) continue;
+                        const nameMatch = line.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/);
+                        if (!nameMatch?.[1]) continue;
+                        people.push({ name: nameMatch[1], role, sourceUrl: location.href, confidence: 55 });
+                        if (people.length >= 5) break;
+                    }
+
+                    for (const link of links) {
+                        if (!link.href.includes('linkedin.com/in/')) continue;
+                        const label = (link.innerText || link.textContent || '').trim();
+                        if (label.length < 3 || label.length > 80) continue;
+                        people.push({ name: label, role: null, profileUrl: link.href, sourceUrl: location.href, confidence: 65 });
+                    }
+
+                    const seenPeople = new Set<string>();
+                    const decisionMakers = people.filter(person => {
+                        const key = `${person.name.toLowerCase()}|${person.profileUrl || ''}`;
+                        if (seenPeople.has(key)) return false;
+                        seenPeople.add(key);
+                        return true;
+                    }).slice(0, 6);
+
+                    return { contactPages, socialProfiles, decisionMakers };
+                }).catch(() => ({ contactPages: [], socialProfiles: [], decisionMakers: [] }));
+            };
+
             phone = await extractPhone();
             email = await extractEmail();
+            const routeIntel = await extractRouteIntel();
+            contactPages = routeIntel.contactPages;
+            socialProfiles = routeIntel.socialProfiles;
+            decisionMakers = routeIntel.decisionMakers;
 
-            // If phone still missing, try the contact/about sub-page
-            if (!phone) {
+            // If direct contacts are still missing, try the contact/about sub-page.
+            if (!phone || !email) {
                 const contactLink = await page.evaluate((): string | null => {
                     const links = Array.from(document.querySelectorAll('a[href]'));
                     const target = links.find(a => {
@@ -159,6 +226,10 @@ export class ContactExtractor {
                     await page.waitForTimeout(1000);
                     phone = phone || await extractPhone();
                     email = email || await extractEmail();
+                    const contactRouteIntel = await extractRouteIntel();
+                    contactPages = Array.from(new Set([...contactPages, contactLink, ...contactRouteIntel.contactPages]));
+                    socialProfiles = Array.from(new Set([...socialProfiles, ...contactRouteIntel.socialProfiles]));
+                    decisionMakers = [...decisionMakers, ...contactRouteIntel.decisionMakers].slice(0, 8);
                 }
             }
 
@@ -166,7 +237,7 @@ export class ContactExtractor {
             if (email) logger.info(`[HUNGRY] ✅ Email found for ${url}: ${email}`);
 
             const screenshot = await page.screenshot({ type: 'png' }).catch(() => null);
-            return { email, phone, screenshot };
+            return { email, phone, contactPages, socialProfiles, decisionMakers, screenshot };
 
         } catch (err: any) {
             logger.debug(`[HUNGRY] Extraction failed for ${url}: ${err.message}`);

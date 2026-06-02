@@ -27,8 +27,7 @@ LOCATIONS: ${baseLocations.join(', ')}
 FORMAT: Respond with a comma-separated list only.
 <end_of_turn>
 <start_of_turn>model`;
-            const result = await aiService['model'].generateContent(prompt);
-            const text = (await result.response).text();
+            const text = await aiService.generateText(prompt, 'expandLocations');
             const locs = text.split(',').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
             locs.forEach((l: string) => expanded.add(l));
         } catch (err) {
@@ -50,8 +49,7 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
 <end_of_turn>
 <start_of_turn>model`;
             
-            const result = await aiService['model'].generateContent(prompt);
-            const text = (await result.response).text();
+            const text = await aiService.generateText(prompt, 'expandIndustries');
             const niches = text.split(',').map((n: string) => n.trim()).filter((n: string) => n.length > 0);
             niches.forEach((n: string) => expanded.add(n));
         } catch (err) {

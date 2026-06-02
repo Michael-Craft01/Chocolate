@@ -1,11 +1,22 @@
 import { logger } from '../lib/logger.js';
 import { discordDispatcher } from './discordDispatcher.js';
 import prisma from '../lib/prisma.js';
+import { LeadStatus } from '@prisma/client';
 import { Resend } from 'resend';
 import { config } from '../config.js';
+import { cleanOutreachMessage } from './aiService.js';
 
 const resend = new Resend(config.RESEND_API_KEY);
 const FROM_EMAIL = config.RESEND_FROM_EMAIL;
+
+function escapeHtml(value: string) {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 export interface DispatchPayload {
     leadId: string;
@@ -37,6 +48,13 @@ export class DispatchService {
             }
 
             const business = lead.business;
+            const outreachMessage = cleanOutreachMessage(lead.suggestedMessage);
+            const escapedMessage = escapeHtml(outreachMessage).replace(/\n/g, '<br>');
+            const escapedBusinessName = escapeHtml(business.name || 'there');
+            const escapedWebsite = escapeHtml(business.website || 'website');
+            const escapedSenderName = escapeHtml(lead.campaign.senderName || 'Michael');
+            const escapedSenderRole = escapeHtml(lead.campaign.senderRole || 'Growth Lead');
+            const escapedCompanyName = escapeHtml(lead.campaign.companyName || '');
             let emailSent = false;
 
             // 1. Send Email to Lead if email exists
@@ -48,20 +66,20 @@ export class DispatchService {
                         subject: `Outreach from ${lead.campaign.companyName}`,
                         html: `
                             <div style="font-family: sans-serif; font-size: 15px; line-height: 1.6; color: #111827; max-width: 600px; margin: 0 auto; text-align: left;">
-                                <p>Hi ${business.name || 'there'},</p>
+                                <p>Hi ${escapedBusinessName},</p>
                                 
-                                <p>I was looking at your website (${business.website || 'website'}) and noticed some details about your outreach vectors. I wanted to reach out directly with some specific business intelligence.</p>
+                                <p>I was looking at your website (${escapedWebsite}) and noticed some details about your outreach vectors. I wanted to reach out directly with some specific business intelligence.</p>
                                 
                                 <div style="margin: 24px 0; padding-left: 16px; border-left: 2px solid #e5e7eb; color: #374151; font-style: italic;">
-                                    ${lead.suggestedMessage.replace(/\n/g, '<br>')}
+                                    ${escapedMessage}
                                 </div>
                                 
                                 <p>If you're interested in exploring how we can streamline this or have any questions about these points, please let me know. I'd be happy to share more details.</p>
                                 
                                 <p>Best regards,<br>
-                                ${lead.campaign.senderName || 'Michael'}<br>
-                                ${lead.campaign.senderRole || 'Growth Lead'}<br>
-                                ${lead.campaign.companyName}</p>
+                                ${escapedSenderName}<br>
+                                ${escapedSenderRole}<br>
+                                ${escapedCompanyName}</p>
                             </div>
                         `
                     });
@@ -75,27 +93,36 @@ export class DispatchService {
             // 2. Generate Manual Outreach Links
             let whatsappUrl = null;
             let mailtoUrl = null;
+            let contactUrl = null;
 
             if (business.phone) {
                 const cleanPhone = business.phone.replace(/\D/g, '');
                 if (cleanPhone.length >= 7) {
-                    whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(lead.suggestedMessage)}`;
+                    whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(outreachMessage)}`;
                 }
             }
 
             if (business.email) {
                 const subject = encodeURIComponent(`Intelligence Report: ${business.name}`);
-                const body = encodeURIComponent(lead.suggestedMessage);
+                const body = encodeURIComponent(outreachMessage);
                 mailtoUrl = `mailto:${business.email}?subject=${subject}&body=${body}`;
             }
 
-            // 3. Mark as Contacted
+            const contactPages = Array.isArray(business.contactPages) ? business.contactPages.filter(Boolean) : [];
+            const socialProfiles = Array.isArray(business.socialProfiles) ? business.socialProfiles.filter(Boolean) : [];
+            contactUrl = contactPages[0] || socialProfiles[0] || null;
+
+            const hasOpenedRoute = Boolean(whatsappUrl || mailtoUrl || contactUrl);
+            const status = emailSent ? LeadStatus.CONTACTED : hasOpenedRoute ? LeadStatus.CONTACT_ROUTE_OPENED : lead.status;
+            const dispatchedAt = emailSent ? new Date() : lead.dispatchedAt;
+
+            // 3. Track the strongest action we can honestly prove.
             await prisma.lead.update({
                 where: { id: leadId },
-                data: { status: 'CONTACTED', dispatchedAt: new Date() }
+                data: { status, dispatchedAt }
             });
 
-            return { emailSent, whatsappUrl, mailtoUrl };
+            return { emailSent, whatsappUrl, mailtoUrl, contactUrl, status };
         } catch (error: any) {
             logger.error({ err: error.message }, 'Manual Dispatch Error');
             throw error;
@@ -190,6 +217,10 @@ export class DispatchService {
                 website: business.website,
                 phone: business.phone,
                 email: business.email,
+                contactStatus: business.contactStatus,
+                bestContactChannel: business.bestContactChannel,
+                contactPages: Array.isArray(business.contactPages) ? business.contactPages as string[] : [],
+                socialProfiles: Array.isArray(business.socialProfiles) ? business.socialProfiles as string[] : [],
                 location: `${campaign.locations[0] || 'Unknown'}, ${campaign.targetCountry || 'ZW'}`
             };
 

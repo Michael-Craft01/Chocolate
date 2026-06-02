@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma.js';
+import { Prisma } from '@prisma/client';
 import { logger } from '../lib/logger.js';
 import { queryGenerator, QueryData } from './queryGenerator.js';
 import { scraper } from './scraper.js';
@@ -7,31 +8,108 @@ import { messageGenerator } from './messageGenerator.js';
 import { dispatchService } from './dispatchService.js';
 import { cleanupDatabase } from './databaseCleanup.js';
 import { contactExtractor } from './contactExtractor.js';
+import { buildContactBundle, hasUsableContactRoute } from './contactIntelligence.js';
 import { withRetry, sleep } from '../lib/utils.js';
 
-const CONCURRENCY_LIMIT = 5;
+function normalizeWebsite(url?: string | null) {
+    if (!url) return null;
+    try {
+        const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+        parsed.hash = '';
+        parsed.search = '';
+        parsed.pathname = parsed.pathname === '/' ? '' : parsed.pathname.replace(/\/+$/, '');
+        return parsed.toString().replace(/\/$/, '');
+    } catch {
+        return url.trim() || null;
+    }
+}
+
+function uniqueStrings(values: unknown): string[] {
+    if (!Array.isArray(values)) return [];
+    return Array.from(new Set(values.filter((value): value is string => typeof value === 'string' && value.trim().length > 0).map(value => value.trim())));
+}
+
+function uniquePeople(values: unknown): Array<Record<string, unknown>> {
+    if (!Array.isArray(values)) return [];
+    const seen = new Set<string>();
+    return values
+        .filter((value): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && typeof (value as any).name === 'string')
+        .filter(person => {
+            const key = `${String(person.name).toLowerCase()}|${String(person.profileUrl || '')}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+}
 
 async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweepId?: string, sweepDate?: Date, cycleRunId?: string) {
     const cleanName = enrichment.brandName;
     const painPoint = enrichment.painPoint || 'operational friction';
     const message = await messageGenerator.generate(campaign, cleanName, enrichment.industry || 'your industry', painPoint, campaign.productName);
+    business.website = normalizeWebsite(business.website);
+    if (business.email) business.email = String(business.email).trim().toLowerCase();
+    const contactBundle = buildContactBundle(business);
+    const websiteVariants = [business.website, normalizeWebsite(business.website)].filter(Boolean) as string[];
+    const identityMatches = [
+        business.phone ? { phone: business.phone } : null,
+        ...websiteVariants.map(website => ({ website })),
+        business.email ? { email: business.email } : null,
+    ].filter(Boolean) as Array<{ phone?: string; website?: string; email?: string }>;
 
     return await prisma.$transaction(async (tx) => {
         let dbBusiness = await tx.business.findFirst({
-            where: { 
-                name: cleanName, 
-                OR: [{ phone: business.phone || undefined }, { website: business.website || undefined }] 
-            }
+            where: identityMatches.length > 0
+                ? { name: cleanName, OR: identityMatches }
+                : { name: cleanName }
         });
 
+        const businessData = {
+            name: cleanName,
+            website: contactBundle.website || business.website || '',
+            phone: contactBundle.phone || business.phone || '',
+            email: contactBundle.email || business.email || '',
+            address: business.address || undefined,
+            category: business.category || enrichment.industry || undefined,
+            contactStatus: contactBundle.contactStatus,
+            contactPages: contactBundle.contactPages as Prisma.InputJsonValue,
+            socialProfiles: contactBundle.socialProfiles as Prisma.InputJsonValue,
+            decisionMakers: contactBundle.decisionMakers as unknown as Prisma.InputJsonValue,
+            bestContactChannel: contactBundle.bestContactChannel,
+            contactConfidence: contactBundle.contactConfidence,
+            contactEvidence: contactBundle.contactEvidence as Prisma.InputJsonValue,
+        };
+
         if (!dbBusiness) {
-            dbBusiness = await tx.business.create({ 
-                data: { 
-                    name: cleanName, 
-                    website: business.website || '', 
-                    phone: business.phone || '', 
-                    email: business.email || '' 
-                } 
+            dbBusiness = await tx.business.create({ data: businessData });
+        } else {
+            const mergedContactPages = uniqueStrings([...(uniqueStrings(dbBusiness.contactPages)), ...contactBundle.contactPages]);
+            const mergedSocialProfiles = uniqueStrings([...(uniqueStrings(dbBusiness.socialProfiles)), ...contactBundle.socialProfiles]);
+            const mergedDecisionMakers = uniquePeople([...(uniquePeople(dbBusiness.decisionMakers)), ...contactBundle.decisionMakers]);
+            const mergedBundle = buildContactBundle({
+                email: dbBusiness.email || businessData.email,
+                phone: dbBusiness.phone || businessData.phone,
+                website: dbBusiness.website || businessData.website,
+                contactPages: mergedContactPages,
+                socialProfiles: mergedSocialProfiles,
+                decisionMakers: mergedDecisionMakers as any,
+            });
+
+            dbBusiness = await tx.business.update({
+                where: { id: dbBusiness.id },
+                data: {
+                    website: dbBusiness.website || businessData.website,
+                    phone: dbBusiness.phone || businessData.phone,
+                    email: dbBusiness.email || businessData.email,
+                    address: dbBusiness.address || businessData.address,
+                    category: dbBusiness.category || businessData.category,
+                    contactStatus: mergedBundle.contactStatus,
+                    contactPages: mergedBundle.contactPages as Prisma.InputJsonValue,
+                    socialProfiles: mergedBundle.socialProfiles as Prisma.InputJsonValue,
+                    decisionMakers: mergedBundle.decisionMakers as unknown as Prisma.InputJsonValue,
+                    bestContactChannel: mergedBundle.bestContactChannel,
+                    contactConfidence: Math.max(dbBusiness.contactConfidence || 0, mergedBundle.contactConfidence),
+                    contactEvidence: mergedBundle.contactEvidence as Prisma.InputJsonValue,
+                }
             });
         }
 
@@ -86,9 +164,11 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                 if (user.leadsFoundToday >= user.dailyLimit && user.creditBalance <= 0) break;
 
                 let visualIntel: Buffer | null = null;
+                business.website = normalizeWebsite(business.website);
+                if (business.email) business.email = String(business.email).trim().toLowerCase();
                 
                 // Deep Dive with retry
-                if (business.website && (!business.email || !business.phone)) {
+                if (business.website) {
                     try {
                         const deepData = await withRetry(
                             () => contactExtractor.extract(business.website!),
@@ -96,19 +176,33 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                         );
                         business.email = business.email || deepData.email;
                         business.phone = business.phone || deepData.phone;
+                        business.contactPages = Array.from(new Set([...(business.contactPages || []), ...(deepData.contactPages || [])]));
+                        business.socialProfiles = Array.from(new Set([...(business.socialProfiles || []), ...(deepData.socialProfiles || [])]));
+                        business.decisionMakers = [...(business.decisionMakers || []), ...(deepData.decisionMakers || [])].slice(0, 8);
                         visualIntel = deepData.screenshot || null;
                     } catch (e) {
                         logger.warn(`[HUNGRY] Contact extraction failed for ${business.name} after retries.`);
                     }
                 }
 
-                // CRITICAL QUALITY GATE: Only save if we now have a phone number
-                if (!business.phone) {
-                    logger.warn(`[QUALITY CONTROL] Skipping ${business.name} - No phone number found.`);
+                const contactBundle = buildContactBundle(business);
+                business.contactStatus = contactBundle.contactStatus;
+                business.bestContactChannel = contactBundle.bestContactChannel;
+                business.contactConfidence = contactBundle.contactConfidence;
+                business.contactEvidence = contactBundle.contactEvidence;
+
+                if (!hasUsableContactRoute(contactBundle)) {
+                    logger.warn(`[QUALITY CONTROL] Skipping ${business.name} - No usable contact route found.`);
                     continue;
                 }
 
-                const telemetry = `${business.address || ''} | ${business.website || 'No Site'}`;
+                const telemetry = [
+                    business.address || '',
+                    business.website || 'No Site',
+                    `Contact status: ${contactBundle.contactStatus}`,
+                    `Best channel: ${contactBundle.bestContactChannel || 'unknown'}`,
+                    `Evidence: ${contactBundle.contactEvidence.join(', ')}`,
+                ].join(' | ');
                 
                 // AI Enrichment with Fallback
                 let enrichment;

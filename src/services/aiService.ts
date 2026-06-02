@@ -54,6 +54,29 @@ function extractEmail(text: string): string {
     return stripThinking(text);
 }
 
+export function cleanOutreachMessage(text: string): string {
+    let cleaned = extractEmail(text || '');
+
+    cleaned = cleaned
+        .replace(/```[\w-]*\n?/g, '')
+        .replace(/\*\*(Opening|The Hook\/Pain Point|The Solution|Call to Action|CTA|Subject):\*\*:?/gi, '')
+        .replace(/^\s*[-*]\s+\*\*[^*\n]+:\*\*\s*/gm, '')
+        .replace(/^\s*[-*]\s*(Opening|The Hook\/Pain Point|The Solution|Call to Action|CTA|Subject):\s*/gim, '')
+        .replace(/^\s*`+\s*/gm, '')
+        .replace(/\s*`+\s*$/gm, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+    const firstGreeting = cleaned.search(/\b(hi|hello|good day|hey|greetings)\b/i);
+    if (firstGreeting > 0) cleaned = cleaned.slice(firstGreeting).trim();
+
+    return cleaned;
+}
+
+function firstChoiceContent(response: OpenAI.Chat.ChatCompletion): string {
+    return response.choices[0]?.message?.content ?? '';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  AIService — single OpenAI-compat client for ALL AI calls
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,7 +118,7 @@ export class AIService {
                 temperature: 0.1,
             });
 
-            const raw = response.choices[0].message.content ?? '';
+            const raw = firstChoiceContent(response);
             const parsed = extractJson<{ refined?: string }>(raw);
 
             if (parsed.refined && typeof parsed.refined === 'string') {
@@ -173,7 +196,7 @@ export class AIService {
                 temperature: 0.2,
             });
 
-            const raw    = response.choices[0].message.content ?? '';
+            const raw    = firstChoiceContent(response);
             const parsed = extractJson<{
                 brandName?: string;
                 industry?: string;
@@ -215,7 +238,8 @@ export class AIService {
             '- Under 120 words.\n' +
             '- End with a clear, warm call-to-action.\n' +
             '- Use line breaks for readability.\n' +
-            '- Wrap the FINAL message ONLY inside <email>...</email> XML tags. Output NOTHING outside those tags.';
+            '- Return ONLY JSON in this exact shape: {"message":"final outreach message"}.\n' +
+            '- Do NOT include thoughts, analysis, labels, markdown, bullets, or code fences.';
 
         const userPrompt =
             `LEAD BRAND: "${businessName}"\n` +
@@ -236,11 +260,17 @@ export class AIService {
                     { role: 'system', content: systemPrompt },
                     { role: 'user',   content: userPrompt   },
                 ],
+                response_format: { type: 'json_object' },
                 temperature: 0.4,
             });
 
-            const raw = response.choices[0].message.content ?? '';
-            return extractEmail(raw);
+            const raw = firstChoiceContent(response);
+            try {
+                const parsed = extractJson<{ message?: string }>(raw);
+                return cleanOutreachMessage(parsed.message || raw);
+            } catch {
+                return cleanOutreachMessage(raw);
+            }
         });
     }
 
@@ -318,7 +348,7 @@ JSON SCHEMA:
                 temperature: 0.3,
             });
 
-            const raw    = response.choices[0].message.content ?? '';
+            const raw    = firstChoiceContent(response);
             const parsed = extractJson<any>(raw);
 
             return {
@@ -363,7 +393,7 @@ JSON SCHEMA:
                 temperature: 0.3,
             });
 
-            const raw = response.choices[0].message.content ?? '';
+            const raw = firstChoiceContent(response);
             return stripThinking(raw);
         });
     }
@@ -371,6 +401,24 @@ JSON SCHEMA:
     // ─────────────────────────────────────────────────────────────────────────
     //  Unified Retry with Exponential Backoff
     // ─────────────────────────────────────────────────────────────────────────
+
+    async generateText(prompt: string, operationName = 'generateText'): Promise<string> {
+        return this.withRetry(operationName, async () => {
+            const response = await this.openai.chat.completions.create({
+                model: this.model,
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'Return only the requested plain text. No markdown, labels, or explanation.',
+                    },
+                    { role: 'user', content: prompt },
+                ],
+                temperature: 0.2,
+            });
+
+            return stripThinking(firstChoiceContent(response));
+        });
+    }
 
     private async withRetry<T>(
         operationName: string,
