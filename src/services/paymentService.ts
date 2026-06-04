@@ -61,7 +61,7 @@ class PaymentService {
                 },
             ],
             mode: options.tier !== 'CYCLE_PACK' ? 'subscription' : 'payment',
-            success_url: `${config.FRONTEND_URL}/billing?success=true`,
+            success_url: `${config.FRONTEND_URL}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${config.FRONTEND_URL}/billing?canceled=true`,
             metadata: {
                 userId: options.userId,
