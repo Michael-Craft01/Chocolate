@@ -38,7 +38,16 @@ function getTierPrice(tier: string) {
 
 function getFrontendUrl(req: NextRequest) {
   const configured = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
-  if (configured?.startsWith('http')) return configured.replace(/\/$/, '');
+  const isLocalRequest = req.nextUrl.hostname === 'localhost' || req.nextUrl.hostname === '127.0.0.1';
+
+  if (configured?.startsWith('http') && !configured.includes('localhost')) {
+    return configured.replace(/\/$/, '');
+  }
+
+  if (configured?.startsWith('http') && isLocalRequest) {
+    return configured.replace(/\/$/, '');
+  }
+
   return req.nextUrl.origin;
 }
 
@@ -106,7 +115,7 @@ async function createCheckout(req: NextRequest) {
     ],
     mode: tier !== 'CYCLE_PACK' ? 'subscription' : 'payment',
     customer_email: dbUser?.email || user.email || undefined,
-    success_url: `${frontendUrl}/billing?success=true`,
+    success_url: `${frontendUrl}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${frontendUrl}/billing?canceled=true`,
     metadata: {
       userId: user.id,

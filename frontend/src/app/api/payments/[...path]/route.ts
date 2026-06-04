@@ -84,23 +84,43 @@ async function syncStripePayment(req: NextRequest) {
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  const sessions = await stripe.checkout.sessions.list({
-    limit: 10,
-    customer_details: { email },
-  });
+  const body = await req.json().catch(() => ({}));
+  const sessionId = typeof body.sessionId === 'string'
+    ? body.sessionId
+    : req.nextUrl.searchParams.get('session_id');
 
-  const session = sessions.data.find((candidate) => {
-    const metadataUserId = candidate.metadata?.userId;
-    const metadataEmail = candidate.metadata?.email;
-    const customerEmail = candidate.customer_details?.email || candidate.customer_email;
-
-    return candidate.status === 'complete'
-      && candidate.payment_status === 'paid'
-      && (metadataUserId === user.id || metadataEmail === email || customerEmail === email);
-  });
+  const session = sessionId
+    ? await stripe.checkout.sessions.retrieve(sessionId)
+    : await findLatestPaidSession(stripe, email, user.id);
 
   if (!session) {
     return NextResponse.json({ success: false, message: 'No successful Stripe checkout session found yet.' }, { status: 404 });
+  }
+
+  const ownsSession = (() => {
+    const metadataUserId = session.metadata?.userId;
+    const metadataEmail = session.metadata?.email;
+    const customerEmail = session.customer_details?.email || session.customer_email;
+
+    return metadataUserId === user.id || metadataEmail === email || customerEmail === email;
+  })();
+
+  if (!ownsSession) {
+    return NextResponse.json({ error: 'Stripe checkout session does not belong to this account' }, { status: 403 });
+  }
+
+  if (session.status !== 'complete' || session.payment_status !== 'paid') {
+    return NextResponse.json({ success: false, message: 'Stripe payment has not completed.' }, { status: 402 });
+  }
+
+  const existing = await prisma.transaction.findUnique({ where: { gatewayRef: session.id } });
+  if (existing?.status === 'SUCCESS') {
+    return NextResponse.json({
+      success: true,
+      alreadyProcessed: true,
+      tier: existing.tier,
+      type: existing.type,
+    });
   }
 
   const tier = session.metadata?.tier || 'STARTER';
@@ -178,6 +198,23 @@ async function syncStripePayment(req: NextRequest) {
   ]);
 
   return NextResponse.json({ success: true, tier: plan.tier });
+}
+
+async function findLatestPaidSession(stripe: Stripe, email: string, userId: string) {
+  const sessions = await stripe.checkout.sessions.list({
+    limit: 10,
+    customer_details: { email },
+  });
+
+  return sessions.data.find((candidate) => {
+    const metadataUserId = candidate.metadata?.userId;
+    const metadataEmail = candidate.metadata?.email;
+    const customerEmail = candidate.customer_details?.email || candidate.customer_email;
+
+    return candidate.status === 'complete'
+      && candidate.payment_status === 'paid'
+      && (metadataUserId === userId || metadataEmail === email || customerEmail === email);
+  });
 }
 
 async function handleProxy(req: NextRequest, pathSegments: string[]) {

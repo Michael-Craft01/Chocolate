@@ -57,14 +57,41 @@ function BillingContent() {
   const [userTier, setUserTier] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [paymentVerified, setPaymentVerified] = useState(false);
+  const [paymentVerifying, setPaymentVerifying] = useState(false);
 
   const success = searchParams.get("success") === "true";
   const canceled = searchParams.get("canceled") === "true";
+  const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
     fetchTransactions();
     fetchUserStatus();
   }, []);
+
+  useEffect(() => {
+    if (!success || !sessionId || paymentVerified || paymentVerifying) return;
+
+    const verifyPayment = async () => {
+      try {
+        setPaymentVerifying(true);
+        await authJson('/api/payments/stripe/sync', {
+          method: 'POST',
+          body: JSON.stringify({ sessionId }),
+        });
+        await Promise.all([fetchUserStatus(), fetchTransactions()]);
+        setPaymentVerified(true);
+        toast.success("Payment verified. Account updated.");
+      } catch (err) {
+        console.error("Payment verification error:", err);
+        toast.error("Payment returned, but verification is still pending.");
+      } finally {
+        setPaymentVerifying(false);
+      }
+    };
+
+    verifyPayment();
+  }, [success, sessionId, paymentVerified, paymentVerifying]);
 
   const fetchUserStatus = async () => {
     try {
@@ -153,11 +180,13 @@ function BillingContent() {
             </div>
             <div>
               <p className="font-bold text-lg tracking-tight">
-                {success ? "Payment Securely Received" : "Payment Canceled"}
+                {success ? (paymentVerified ? "Payment Verified" : "Verifying Payment") : "Payment Canceled"}
               </p>
               <p className="text-sm opacity-80 leading-relaxed font-semibold">
                 {success 
-                  ? "Your transaction has completed successfully. Your new plan is now active." 
+                  ? paymentVerified
+                    ? "Stripe confirmed the payment and your account has been updated."
+                    : "Stripe returned you safely. We are confirming the checkout session before updating your account."
                   : "The checkout process was canceled. No charges were billed to your card."}
               </p>
             </div>
