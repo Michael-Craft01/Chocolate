@@ -53,14 +53,24 @@ export default function SignupPage() {
 
   const handleSocialLogin = async (provider: 'google') => {
     setSocialLoading(true);
+    setError(null);
+
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          skipBrowserRedirect: true,
         },
       });
+
       if (error) throw error;
+
+      if (!data?.url) {
+        throw new Error("Google sign-up could not start. Check the Supabase OAuth redirect settings.");
+      }
+
+      window.location.assign(data.url);
     } catch (err: any) {
       setError(err.message);
       setSocialLoading(false);
