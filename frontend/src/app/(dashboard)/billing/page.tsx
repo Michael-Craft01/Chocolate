@@ -2,7 +2,7 @@
 
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Check, Zap, Compass, ShieldCheck, CreditCard, Loader2, X, History, Sparkles } from "lucide-react";
+import { AlertCircle, Check, Zap, Compass, ShieldCheck, CreditCard, Loader2, X, History, Sparkles } from "lucide-react";
 import { authJson } from "@/lib/api";
 import type { Stats } from "@/lib/types";
 import { motion } from "framer-motion";
@@ -426,8 +426,6 @@ function BillingContent() {
     </div>
   );
 }
-
-import { AlertCircle } from "lucide-react";
 
 export default function BillingPage() {
   return (
