@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { Paynow } from 'paynow';
 import prisma from '@/lib/prisma';
 import { getAuthUser, authError } from '@/lib/api-auth';
 
@@ -65,7 +66,152 @@ async function handlePayments(req: NextRequest, pathSegments: string[]) {
     return syncStripePayment(req);
   }
 
+  if (path === 'paynow/sync' && req.method === 'POST') {
+    return syncPaynowPayments(req);
+  }
+
+  if (path === 'paynow/result' && req.method === 'POST') {
+    return handlePaynowResult(req);
+  }
+
   return handleProxy(req, pathSegments);
+}
+
+function getPaynowClient() {
+  const integrationId = process.env.PAYNOW_INTEGRATION_ID;
+  const integrationKey = process.env.PAYNOW_INTEGRATION_KEY;
+
+  if (!integrationId || !integrationKey) return null;
+  return new Paynow(integrationId, integrationKey);
+}
+
+async function provisionPaynowTransaction(tx: {
+  id: string;
+  userId: string;
+  amount: number;
+  tier: 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ELITE' | null;
+  type: 'SUBSCRIPTION' | 'CREDIT_TOPUP' | 'CYCLE_PACK';
+  gatewayRef: string | null;
+}) {
+  if (!tx.gatewayRef) return;
+
+  const existing = await prisma.transaction.findUnique({ where: { gatewayRef: tx.gatewayRef } });
+  if (existing?.status === 'SUCCESS') return;
+
+  if (tx.type === 'CYCLE_PACK' || tx.type === 'CREDIT_TOPUP') {
+    const cycles = Math.max(1, Math.floor(tx.amount / 2));
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: tx.userId },
+        data: { cyclesRemaining: { increment: cycles }, paymentStatus: 'active' },
+      }),
+      prisma.transaction.update({
+        where: { id: tx.id },
+        data: { status: 'SUCCESS' },
+      }),
+    ]);
+    return;
+  }
+
+  const plan = getPlanConfig(tx.tier || 'STARTER');
+  const now = new Date();
+  const periodEnd = new Date(now);
+  periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: tx.userId },
+      data: {
+        tier: plan.tier,
+        dailyLimit: plan.dailyLimit,
+        monthlyCycleLimit: plan.monthlyCycleLimit,
+        cyclesRemaining: plan.monthlyCycleLimit,
+        leadsPerCycle: plan.leadsPerCycle,
+        automationMode: 'AUTOMATIC',
+        autoRunFrequency: plan.autoRunFrequency,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        maxCampaigns: plan.maxCampaigns,
+        paymentStatus: 'active',
+      },
+    }),
+    prisma.transaction.update({
+      where: { id: tx.id },
+      data: { status: 'SUCCESS' },
+    }),
+  ]);
+}
+
+async function pollPaynowTransaction(pollUrl: string) {
+  const paynow = getPaynowClient();
+  if (!paynow) throw new Error('Paynow is not configured');
+
+  const statusResponse = await paynow.pollTransaction(pollUrl);
+  const status = String(statusResponse?.status || '').toLowerCase();
+  const successStatuses = ['paid', 'awaiting delivery', 'delivered'];
+
+  return {
+    paid: successStatuses.includes(status),
+    status,
+  };
+}
+
+async function syncPaynowPayments(req: NextRequest) {
+  const authUser = await getAuthUser(req);
+  if (!authUser) return authError();
+
+  if (!getPaynowClient()) {
+    return NextResponse.json({ error: 'Paynow is not configured' }, { status: 500 });
+  }
+
+  const pending = await prisma.transaction.findMany({
+    where: {
+      userId: authUser.id,
+      gateway: 'PAYNOW',
+      status: 'PENDING',
+      gatewayRef: { not: null },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  });
+
+  let processed = 0;
+
+  for (const tx of pending) {
+    if (!tx.gatewayRef) continue;
+    const status = await pollPaynowTransaction(tx.gatewayRef);
+    if (status.paid) {
+      await provisionPaynowTransaction(tx);
+      processed += 1;
+    }
+  }
+
+  return NextResponse.json({ success: processed > 0, processed });
+}
+
+async function handlePaynowResult(req: NextRequest) {
+  if (!getPaynowClient()) {
+    return NextResponse.json({ error: 'Paynow is not configured' }, { status: 500 });
+  }
+
+  const form = await req.formData();
+  const pollUrl = String(form.get('pollurl') || form.get('pollUrl') || '');
+
+  if (!pollUrl) {
+    return NextResponse.json({ error: 'Missing Paynow poll URL' }, { status: 400 });
+  }
+
+  const tx = await prisma.transaction.findUnique({ where: { gatewayRef: pollUrl } });
+  if (!tx) {
+    return NextResponse.json({ error: 'Paynow transaction not found' }, { status: 404 });
+  }
+
+  const status = await pollPaynowTransaction(pollUrl);
+  if (status.paid) {
+    await provisionPaynowTransaction(tx);
+  }
+
+  return NextResponse.json({ ok: true });
 }
 
 async function syncStripePayment(req: NextRequest) {

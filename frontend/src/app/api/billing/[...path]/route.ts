@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { Paynow } from 'paynow';
 import prisma from '@/lib/prisma';
 import { getAuthUser, authError } from '@/lib/api-auth';
 
@@ -36,6 +37,10 @@ function getTierPrice(tier: string) {
   }
 }
 
+function getCheckoutPrice(tier: string, amount: number) {
+  return amount || getTierPrice(tier);
+}
+
 function getFrontendUrl(req: NextRequest) {
   const configured = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
   const isLocalRequest = req.nextUrl.hostname === 'localhost' || req.nextUrl.hostname === '127.0.0.1';
@@ -69,25 +74,16 @@ async function createCheckout(req: NextRequest) {
   const user = await getAuthUser(req);
   if (!user) return authError();
 
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json({ error: 'Stripe is not configured' }, { status: 500 });
-  }
-
   const body = await req.json().catch(() => ({}));
   const method = body.method || 'STRIPE';
   const tier = body.tier as 'STARTER' | 'PROFESSIONAL' | 'ELITE' | 'CYCLE_PACK';
   const amount = Number(body.amount || 0);
 
-  if (method !== 'STRIPE') {
-    return NextResponse.json({ error: 'Paynow checkout requires the backend worker URL to be configured' }, { status: 400 });
-  }
-
   if (!['STARTER', 'PROFESSIONAL', 'ELITE', 'CYCLE_PACK'].includes(tier)) {
     return NextResponse.json({ error: 'Invalid billing tier' }, { status: 400 });
   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  const price = amount || getTierPrice(tier);
+  const price = getCheckoutPrice(tier, amount);
   if (price <= 0) {
     return NextResponse.json({ error: 'Invalid checkout amount' }, { status: 400 });
   }
@@ -95,6 +91,29 @@ async function createCheckout(req: NextRequest) {
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
   const frontendUrl = getFrontendUrl(req);
 
+  if (method === 'PAYNOW') {
+    return createPaynowCheckout({
+      userId: user.id,
+      email: dbUser?.email || user.email || 'customer@hyprlead.engine',
+      tier,
+      price,
+      frontendUrl,
+    });
+  }
+
+  if (method !== 'STRIPE') {
+    return NextResponse.json({ error: 'Unsupported checkout method' }, { status: 400 });
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: 'Stripe is not configured' }, { status: 500 });
+  }
+
+  if (process.env.NODE_ENV === 'production' && process.env.STRIPE_SECRET_KEY.startsWith('sk_test_')) {
+    return NextResponse.json({ error: 'Production checkout is using a Stripe test key' }, { status: 500 });
+  }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
@@ -125,6 +144,61 @@ async function createCheckout(req: NextRequest) {
   });
 
   return NextResponse.json({ url: session.url });
+}
+
+async function createPaynowCheckout(options: {
+  userId: string;
+  email: string;
+  tier: 'STARTER' | 'PROFESSIONAL' | 'ELITE' | 'CYCLE_PACK';
+  price: number;
+  frontendUrl: string;
+}) {
+  const integrationId = process.env.PAYNOW_INTEGRATION_ID;
+  const integrationKey = process.env.PAYNOW_INTEGRATION_KEY;
+
+  if (!integrationId || !integrationKey) {
+    return NextResponse.json({ error: 'Paynow is not configured' }, { status: 500 });
+  }
+
+  const paynow = new Paynow(integrationId, integrationKey);
+  const reference = `INV-${Date.now()}-${options.userId.slice(0, 8)}`;
+  paynow.resultUrl = `${options.frontendUrl}/api/payments/paynow/result`;
+  paynow.returnUrl = `${options.frontendUrl}/billing?success=true&gateway=paynow&reference=${encodeURIComponent(reference)}`;
+
+  const payment = paynow.createPayment(reference, options.email);
+  payment.add(
+    options.tier === 'CYCLE_PACK' ? 'HyprLead Discovery Cycle Pack' : `HyprLead ${options.tier} Plan`,
+    options.price,
+  );
+
+  const response = await paynow.send(payment);
+
+  if (!response?.success || !response.redirectUrl || !response.pollUrl) {
+    return NextResponse.json(
+      { error: response?.error || 'Paynow rejected checkout creation' },
+      { status: 502 },
+    );
+  }
+
+  await prisma.transaction.upsert({
+    where: { gatewayRef: response.pollUrl },
+    update: {
+      userId: options.userId,
+      amount: options.price,
+      status: 'PENDING',
+    },
+    create: {
+      userId: options.userId,
+      amount: options.price,
+      gateway: 'PAYNOW',
+      type: options.tier === 'CYCLE_PACK' ? 'CYCLE_PACK' : 'SUBSCRIPTION',
+      tier: options.tier === 'CYCLE_PACK' ? null : options.tier,
+      gatewayRef: response.pollUrl,
+      status: 'PENDING',
+    },
+  });
+
+  return NextResponse.json({ url: response.redirectUrl });
 }
 
 async function listTransactions(req: NextRequest) {

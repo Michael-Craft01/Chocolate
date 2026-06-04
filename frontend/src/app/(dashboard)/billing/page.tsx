@@ -63,6 +63,7 @@ function BillingContent() {
   const success = searchParams.get("success") === "true";
   const canceled = searchParams.get("canceled") === "true";
   const sessionId = searchParams.get("session_id");
+  const returnedGateway = searchParams.get("gateway");
 
   useEffect(() => {
     fetchTransactions();
@@ -70,15 +71,20 @@ function BillingContent() {
   }, []);
 
   useEffect(() => {
-    if (!success || !sessionId || paymentVerified || paymentVerifying) return;
+    if (!success || paymentVerified || paymentVerifying) return;
+    if (!sessionId && returnedGateway !== "paynow") return;
 
     const verifyPayment = async () => {
       try {
         setPaymentVerifying(true);
-        await authJson('/api/payments/stripe/sync', {
-          method: 'POST',
-          body: JSON.stringify({ sessionId }),
-        });
+        if (returnedGateway === "paynow") {
+          await authJson('/api/payments/paynow/sync', { method: 'POST' });
+        } else {
+          await authJson('/api/payments/stripe/sync', {
+            method: 'POST',
+            body: JSON.stringify({ sessionId }),
+          });
+        }
         await Promise.all([fetchUserStatus(), fetchTransactions()]);
         setPaymentVerified(true);
         toast.success("Payment verified. Account updated.");
@@ -91,7 +97,7 @@ function BillingContent() {
     };
 
     verifyPayment();
-  }, [success, sessionId, paymentVerified, paymentVerifying]);
+  }, [success, sessionId, returnedGateway, paymentVerified, paymentVerifying]);
 
   const fetchUserStatus = async () => {
     try {
@@ -215,7 +221,10 @@ function BillingContent() {
             <button onClick={async () => {
                 try {
                   setLoading('SYNC');
-                  await authJson('/api/payments/stripe/sync', { method: 'POST' });
+                  await authJson(
+                    gateway === "PAYNOW" ? '/api/payments/paynow/sync' : '/api/payments/stripe/sync',
+                    { method: 'POST' },
+                  );
                   await fetchUserStatus();
                   toast.success("Account status updated successfully!");
                 } catch (e) {

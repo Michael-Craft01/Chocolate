@@ -26,6 +26,12 @@ const resolveApiBaseUrl = () => {
 };
 
 const apiBaseUrl = resolveApiBaseUrl();
+const sameOriginRoutes = ["/api/billing", "/api/payments"];
+
+const resolveRequestBaseUrl = (path: string) => {
+  if (sameOriginRoutes.some((route) => path.startsWith(route))) return "";
+  return apiBaseUrl;
+};
 
 if (typeof window !== "undefined") {
   console.log(`%c[HyprLead API] Backend: ${apiBaseUrl || "same-origin"}`, "color: #3b82f6; font-weight: bold;");
@@ -57,7 +63,7 @@ export async function authFetch(path: string, init: RequestInit = {}) {
   if (!session) throw new ApiAuthError();
 
   const sanitizedPath = path.startsWith("/") ? path : `/${path}`;
-  const fullUrl = `${apiBaseUrl}${sanitizedPath}`;
+  const fullUrl = `${resolveRequestBaseUrl(sanitizedPath)}${sanitizedPath}`;
 
   if (process.env.NODE_ENV === "development") {
     console.log(`[API] ${init.method || "GET"} ${fullUrl}`);
