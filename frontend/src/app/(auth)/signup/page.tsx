@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Shield, ArrowRight, Mail, Lock, Loader2, AlertCircle, Globe, Sparkles, CheckCircle2, Zap } from "lucide-react";
+import { Shield, ArrowRight, Mail, Lock, Loader2, AlertCircle, Globe, Zap, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
 export default function SignupPage() {
@@ -13,7 +13,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const googleAuthEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
   
   const router = useRouter();
   const supabase = createClient();
@@ -78,123 +78,152 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-primary/30 relative overflow-hidden">
-      <div className="bg-animated-mesh" />
-      <div className="bg-grid absolute inset-0 opacity-20 -z-10" />
-      <div className="hero-glow opacity-30" />
-      
+    <div className="min-h-screen bg-[#f6f8fb] text-slate-950 selection:bg-emerald-200/70">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md relative z-10"
+        className="mx-auto grid min-h-screen w-full max-w-6xl grid-cols-1 items-center gap-10 px-6 py-10 lg:grid-cols-[1fr_460px]"
       >
-        <div className="text-center mb-10 space-y-6">
-          <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)] group-hover:scale-105 transition-all duration-300">
-               <Zap className="h-6 w-6 text-black fill-black" />
+        <section className="hidden lg:block">
+          <Link href="/" className="inline-flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm">
+              <Zap className="h-5 w-5 fill-white" />
             </div>
-            <span className="text-2xl font-bold text-white tracking-tight">HyprLead</span>
+            <span className="text-2xl font-black tracking-tight text-slate-950">HyprLead</span>
           </Link>
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-white tracking-tight">Create Account.</h1>
-            <p className="text-zinc-500 font-medium">Initialize your revenue discovery engine.</p>
+
+          <div className="mt-16 max-w-xl space-y-6">
+            <h1 className="text-5xl font-black leading-[1.02] tracking-tight text-slate-950">
+              Build a cleaner outbound pipeline.
+            </h1>
+            <p className="max-w-lg text-lg font-medium leading-8 text-slate-600">
+              Create your workspace, define your target market, and let the discovery engine find contact-ready B2B leads.
+            </p>
           </div>
-        </div>
 
-        <div className="p-10 rounded-[2.5rem] glass-morphism border-white/10 shadow-2xl space-y-8 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+          <div className="mt-12 grid max-w-xl gap-4">
+            {["Campaign-based lead discovery", "Verified contact requirement", "AI sales path and outreach support"].map((item) => (
+              <div key={item} className="flex items-center gap-3 text-sm font-bold text-slate-700">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                  <Check className="h-3.5 w-3.5" />
+                </span>
+                {item}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="w-full">
+          <div className="mb-8 text-center lg:hidden">
+            <Link href="/" className="inline-flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-white">
+                <Zap className="h-5 w-5 fill-white" />
+              </div>
+              <span className="text-2xl font-black tracking-tight text-slate-950">HyprLead</span>
+            </Link>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
+            <div className="mb-8">
+              <h2 className="text-3xl font-black tracking-tight text-slate-950">Create account</h2>
+              <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+                Start with email or continue with Google.
+              </p>
+            </div>
           
-          {error && (
-            <motion.div 
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-500 text-xs font-bold"
-            >
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              {error}
-            </motion.div>
-          )}
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700"
+              >
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {error}
+              </motion.div>
+            )}
 
-          <div className="grid grid-cols-1 gap-4">
-             <button onClick={() => handleSocialLogin('google')}
-               disabled={socialLoading || loading}
-               className="btn-pill-glass w-full h-14 gap-3 group/google"
-             >
-                {socialLoading ? (
+            {googleAuthEnabled && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleSocialLogin('google')}
+                  disabled={socialLoading || loading}
+                  className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {socialLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      <Globe className="h-5 w-5 text-emerald-600" />
+                      Sign up with Google
+                    </>
+                  )}
+                </button>
+
+                <div className="my-6 flex items-center gap-4">
+                  <div className="h-px flex-1 bg-slate-200" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">or</span>
+                  <div className="h-px flex-1 bg-slate-200" />
+                </div>
+              </>
+            )}
+
+            <form onSubmit={handleSignup} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input 
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@company.com"
+                    className="h-12 w-full rounded-lg border border-slate-200 bg-white pl-11 pr-4 text-sm font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input 
+                    type="password"
+                    required
+                    minLength={8}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="At least 8 characters"
+                    className="h-12 w-full rounded-lg border border-slate-200 bg-white pl-11 pr-4 text-sm font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                  />
+                </div>
+              </div>
+
+              <button
+                disabled={loading || socialLoading}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 text-sm font-black text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <>
-                    <Globe className="h-5 w-5 group-hover/google:text-primary transition-colors" />
-                    Sign up with Google
+                    Create account
+                    <ArrowRight className="h-4 w-4" />
                   </>
                 )}
-             </button>
-          </div>
+              </button>
+            </form>
 
-          <div className="relative">
-             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
-             <div className="relative flex justify-center text-[9px] font-black uppercase tracking-[0.3em]">
-                <span className="bg-[#050505] px-4 text-zinc-600">Secure Direct Sync</span>
-             </div>
-          </div>
-
-          <form onSubmit={handleSignup} className="space-y-6">
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Account Identity</label>
-              <div className="relative group">
-                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-600 group-focus-within:text-primary transition-colors" />
-                <input 
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
-                  className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl pl-14 pr-6 text-white text-sm focus:border-primary/50 focus:bg-white/[0.05] focus:ring-0 transition-all placeholder:text-zinc-700"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Access Protocol</label>
-              <div className="relative group">
-                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-600 group-focus-within:text-primary transition-colors" />
-                <input 
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create secure password"
-                  className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl pl-14 pr-6 text-white text-sm focus:border-primary/50 focus:bg-white/[0.05] focus:ring-0 transition-all placeholder:text-zinc-700"
-                />
-              </div>
-              <p className="text-[9px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Minimum security clearance: 8 characters.</p>
-            </div>
-
-            <button disabled={loading || socialLoading} className="btn-pill-white w-full h-14 group/submit" >
-              {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <>
-                  Establish Connection
-                  <ArrowRight className="h-5 w-5 group-hover/submit:translate-x-1 transition-transform" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="pt-6 text-center border-t border-white/5">
-            <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-wide">
-              Already have credentials?{" "}
-              <Link href="/login" className="text-primary hover:text-primary-hover transition-colors">Sign In</Link>
+            <p className="mt-6 text-center text-sm font-semibold text-slate-500">
+              Already have an account?{" "}
+              <Link href="/login" className="text-emerald-600 hover:text-emerald-700">Sign in</Link>
             </p>
           </div>
-        </div>
-
-        <div className="mt-12 text-center">
-           <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em] flex items-center justify-center gap-2">
-             <Shield className="h-3 w-3" /> End-to-End Encrypted Tunnel
-           </p>
-        </div>
+          <p className="mt-5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-500">
+            <Shield className="h-3.5 w-3.5" /> Secure authentication by Supabase
+          </p>
+        </section>
       </motion.div>
     </div>
   );
