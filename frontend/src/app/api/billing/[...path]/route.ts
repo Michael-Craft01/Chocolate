@@ -67,7 +67,28 @@ async function handleBilling(req: NextRequest, pathSegments: string[]) {
     return listTransactions(req);
   }
 
+  if (path === 'diagnostics' && req.method === 'GET') {
+    return billingDiagnostics(req);
+  }
+
   return handleProxy(req, pathSegments);
+}
+
+async function billingDiagnostics(req: NextRequest) {
+  const user = await getAuthUser(req);
+  if (!user) return authError();
+
+  const stripeKey = process.env.STRIPE_SECRET_KEY || '';
+  const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || '';
+  const backendUrl = process.env.BACKEND_URL || '';
+
+  return NextResponse.json({
+    checkoutRuntime: 'next-api',
+    requestOrigin: req.nextUrl.origin,
+    stripeMode: stripeKey.startsWith('sk_live_') ? 'live' : stripeKey.startsWith('sk_test_') ? 'test' : 'missing-or-invalid',
+    frontendUrlMode: frontendUrl.includes('localhost') ? 'localhost' : frontendUrl ? 'configured' : 'request-origin-fallback',
+    backendUrlMode: backendUrl ? (backendUrl.includes('localhost') ? 'localhost' : 'configured') : 'not-configured',
+  });
 }
 
 async function createCheckout(req: NextRequest) {
