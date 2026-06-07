@@ -95,8 +95,8 @@ export async function POST(req: NextRequest) {
           ...campaignData,
           userId: user.id,
           name: 'Main Engine',
-          // Activate with real user data on first save
-          status: 'ACTIVE',
+          // Start PAUSED - user must create their own campaigns to start searches
+          status: 'PAUSED',
           productName: data.productName || data.companyName || "",
           productDescription: data.productDescription || "",
           targetPainPoints: data.targetPainPoints || "",

@@ -8,7 +8,10 @@ export async function GET(req: NextRequest) {
 
   try {
     const campaigns = await prisma.campaign.findMany({
-      where: { userId: user.id },
+      where: { 
+        userId: user.id,
+        name: { not: 'Main Engine' }
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         _count: { select: { leads: true } },

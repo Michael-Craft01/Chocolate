@@ -65,7 +65,7 @@ export default function DashboardPage() {
   const remainingPercent = cycleLimit ? Math.min(100, (cycleRemaining / cycleLimit) * 100) : 0;
   const isCycleEmpty = cycleRemaining <= 0;
   const isCycleLow = !isCycleEmpty && cycleRemaining <= Math.max(2, Math.ceil(cycleLimit * 0.15));
-  const leadCapacity = cycleRemaining * (stats?.cycles?.leadsPerCycle || 10);
+  const leadCapacity = cycleRemaining * (stats?.cycles?.leadsPerCycle || 15);
   const isFree = !stats?.tier || stats?.tier === 'FREE';
 
   // Dynamic calculations for problem-solving metrics
@@ -155,11 +155,11 @@ export default function DashboardPage() {
               href="/campaigns/new" 
               className="inline-flex h-11 px-6 rounded-full bg-primary text-white font-bold text-xs uppercase tracking-widest hover:brightness-110 active:scale-98 transition-all items-center gap-2 shadow-md shadow-primary/10"
             >
-              Configure Target Hub
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-            
-            <span className="text-[9px] font-black text-foreground opacity-40 uppercase tracking-widest">Scheduled Discovery Cycles</span>
+            Configure Target Campaigns
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+          
+          <span className="text-[9px] font-black text-foreground opacity-40 uppercase tracking-widest">Scheduled Lead Searches</span>
           </div>
         </div>
 
@@ -220,7 +220,7 @@ export default function DashboardPage() {
                 <ListTodo className="h-5 w-5 text-foreground" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-foreground tracking-tight">Qualified Discovery Feed</h2>
+                <h2 className="text-base font-bold text-foreground tracking-tight">Qualified Lead Feed</h2>
                 <p className="tertiary !text-foreground opacity-60">Verified B2B prospects enriched with targeted pain points</p>
               </div>
             </div>
@@ -246,7 +246,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-foreground tracking-tight">{lead.business.name}</p>
-                    <p className="text-[10px] text-foreground opacity-60 font-bold uppercase tracking-widest">{lead.industry} • {lead.business.email || lead.business.website || "Verified Hub Profile"}</p>
+                    <p className="text-[10px] text-foreground opacity-60 font-bold uppercase tracking-widest">{lead.industry} • {lead.business.email || lead.business.website || "Verified Campaign Profile"}</p>
                     {lead.painPoint && (
                       <p className="text-[11px] text-foreground opacity-70 italic max-w-lg leading-relaxed bg-background/40 p-2.5 rounded-card border border-card-border/40 mt-2">
                         Target Pain Point: "{lead.painPoint}"
@@ -270,7 +270,7 @@ export default function DashboardPage() {
               </motion.div>
             )) : (
               <div className="py-16 text-center space-y-3">
-                 <p className="tertiary !text-foreground opacity-40">Ready to sweep target hubs...</p>
+                 <p className="tertiary !text-foreground opacity-40">Ready to search campaigns...</p>
               </div>
             )}
           </div>
@@ -300,7 +300,7 @@ export default function DashboardPage() {
            )}>
               <div className="flex items-start justify-between gap-6">
                 <div className="space-y-2">
-                   <p className="tertiary">Cycle Wallet</p>
+                   <p className="tertiary">Search Wallet</p>
                    <p className="text-4xl font-semibold text-foreground tracking-tight">
                       {cycleRemaining} <span className="text-foreground opacity-30 text-2xl">left</span>
                    </p>
@@ -356,7 +356,7 @@ export default function DashboardPage() {
                   className="h-11 px-5 rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-md shadow-primary/10"
                 >
                   {isCycleEmpty ? <CreditCard className="h-3.5 w-3.5" /> : <Zap className="h-3.5 w-3.5" />}
-                  {isCycleEmpty ? "Buy Cycles" : "Run Cycle"}
+                  {isCycleEmpty ? "Buy Credits" : "Run Search"}
                 </Link>
                 <Link
                   href="/billing"
@@ -370,22 +370,24 @@ export default function DashboardPage() {
            <div className="bento-card p-8 space-y-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="tertiary">Latest Cycle</p>
+                  <p className="tertiary">Latest Run</p>
                   <h3 className="text-lg font-bold text-foreground tracking-tight">
-                    {stats?.latestCycle?.status || "No cycle yet"}
+                    {stats?.latestCycle?.status || "No runs yet"}
                   </h3>
                 </div>
                 <Link href="/campaigns" className="h-9 px-4 rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                  Run Cycle <ArrowRight className="h-3 w-3" />
+                  Run Search <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
               <div className="space-y-2">
                 {recentCycles.length === 0 ? (
-                  <p className="text-xs text-foreground opacity-50 font-semibold">No discovery cycles recorded yet.</p>
+                  <p className="text-xs text-foreground opacity-50 font-semibold">No searches recorded yet.</p>
                 ) : recentCycles.map((cycle) => (
                   <div key={cycle.id} className="flex items-center justify-between gap-3 rounded-card border border-card-border bg-card/50 px-4 py-3">
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-foreground truncate">{cycle.campaign?.name || "Campaign"}</p>
+                      <p className="text-xs font-bold text-foreground truncate">
+                        {cycle.campaign?.name === 'Main Engine' ? 'General Search' : (cycle.campaign?.name || "Campaign")}
+                      </p>
                       <p className="text-[9px] font-black uppercase tracking-widest text-foreground opacity-45">{cycle.triggerType} · {cycle.status}</p>
                     </div>
                     <p className="text-sm font-black text-primary shrink-0">{cycle.leadsFound}/{cycle.maxLeads}</p>

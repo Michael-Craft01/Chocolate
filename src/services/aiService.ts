@@ -96,18 +96,31 @@ export class AIService {
     // ── 1. Form Field Refinement (enforced JSON output) ───────────────────────
 
     async refineInput(field: string, value: string, context?: any): Promise<string> {
+        const isListField = 
+            field.toLowerCase().includes('industry') || 
+            field.toLowerCase().includes('location') || 
+            field.toLowerCase().includes('city') || 
+            field.toLowerCase().includes('area');
+
+        const systemPrompt = isListField
+            ? 'You are the HyprLead Form Assistant (HyprLead AI Powered). ' +
+              'Your goal is to refine the user input into a clean, comma-separated list of concise B2B categories, industries, or geographic targets (maximum 3 words per item). ' +
+              'Do NOT output full sentences, explanation text, bullet points, or conjunctions like "and/or". ' +
+              'Return ONLY a valid JSON object with a single key "refined" containing the final refined value. ' +
+              'Do NOT output any reasoning, thoughts, drafts, or markdown.'
+            : 'You are the HyprLead Form Assistant (HyprLead AI Powered). ' +
+              'Your goal is to refine the user input into a high-fidelity, professional description ' +
+              'optimized for a B2B lead discovery engine. ' +
+              'Return ONLY a valid JSON object with a single key "refined" containing the final refined value. ' +
+              'Do NOT output any reasoning, thoughts, drafts, or markdown.';
+
         return this.withRetry('refineInput', async () => {
             const response = await this.openai.chat.completions.create({
                 model: this.model,
                 messages: [
                     {
                         role: 'system',
-                        content:
-                            'You are the HyprLead Form Assistant (HyprLead AI Powered). ' +
-                            'Your goal is to refine the user input into a high-fidelity, professional description ' +
-                            'optimized for a B2B lead discovery engine. ' +
-                            'Return ONLY a valid JSON object with a single key "refined" containing the final refined value. ' +
-                            'Do NOT output any reasoning, thoughts, drafts, or markdown.',
+                        content: systemPrompt,
                     },
                     {
                         role: 'user',

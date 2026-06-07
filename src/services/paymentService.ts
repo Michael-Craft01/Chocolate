@@ -8,7 +8,7 @@ export type PaymentMethod = 'STRIPE' | 'PAYNOW';
 
 interface CheckoutOptions {
     userId: string;
-    tier: 'STARTER' | 'PROFESSIONAL' | 'ELITE' | 'CYCLE_PACK';
+    tier: 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ELITE' | 'CYCLE_PACK';
     amount?: number; // Used for cycle packs
 }
 

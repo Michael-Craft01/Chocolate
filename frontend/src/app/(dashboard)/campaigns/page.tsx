@@ -94,7 +94,7 @@ export default function CampaignsPage() {
     } catch (err: any) {
       console.error("Failed to fetch data", err);
       toast.error("Connection Error", {
-        description: err.message || "Failed to retrieve campaign data hubs."
+        description: err.message || "Failed to retrieve campaigns."
       });
       setLoading(false);
     }
@@ -130,7 +130,7 @@ export default function CampaignsPage() {
 
   const handleDelete = (id: string, name: string) => {
     toast.warning(`Delete campaign: ${name}?`, {
-      description: "All lead data for this search hub will be permanently removed.",
+      description: "All lead data for this campaign will be permanently removed.",
       action: {
         label: "Delete",
         onClick: async () => {
@@ -143,7 +143,7 @@ export default function CampaignsPage() {
             });
           } catch (err: any) {
             toast.error("Failed to delete campaign", {
-              description: err.response?.data?.message || err.message || "Decommission protocol failed."
+              description: err.response?.data?.message || err.message || "Failed to delete campaign."
             });
           } finally {
             setBusyCampaignId(null);
@@ -174,8 +174,8 @@ export default function CampaignsPage() {
     const promise = runCampaignCycle(id);
 
     toast.promise(promise, {
-      loading: "Queueing discovery cycle...",
-      success: "Discovery cycle queued.",
+      loading: "Queueing search...",
+      success: "Search queued.",
       error: (err: any) => err.message || "Failed to queue cycle",
     });
 
@@ -202,13 +202,13 @@ export default function CampaignsPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-card-border pb-10">
           <div className="space-y-3">
             <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-foreground opacity-60">
-              <ShieldCheck className="h-4 w-4 text-emerald-500" /> Secure Data Discovery
+              <ShieldCheck className="h-4 w-4 text-emerald-500" /> Secure Search Campaigns
             </div>
             <h1 className="text-4xl font-black tracking-tight text-foreground">
-              Search <span className="text-primary">Hubs</span>
+              Lead <span className="text-primary">Campaigns</span>
             </h1>
             <p className="text-[13px] text-foreground opacity-60 font-medium max-w-2xl leading-relaxed">
-              Manage your autonomous lead generation campaigns. Monitor discovery performance and targeting accuracy in real-time.
+              Manage your lead generation campaigns. Monitor performance and targeting accuracy in real-time.
             </p>
           </div>
 
@@ -232,7 +232,7 @@ export default function CampaignsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: 'Active Campaigns', value: campaigns.filter(c => c.status === 'ACTIVE').length, icon: Activity, detail: 'Operational' },
-            { label: 'Cycles Remaining', value: cyclesRemaining, icon: Shield, detail: `${stats?.cycles?.leadsPerCycle || 10} Leads / Cycle` },
+            { label: 'Searches Remaining', value: cyclesRemaining, icon: Shield, detail: `${stats?.cycles?.leadsPerCycle || 15} Leads / Cycle` },
             { label: 'Average Accuracy', value: '98.4%', icon: Sparkles, detail: 'AI Verified' },
             { label: 'System Status', value: 'Optimal', icon: Compass, detail: 'Global Edge' },
           ].map((stat, i) => (
@@ -266,18 +266,18 @@ export default function CampaignsPage() {
               </div>
               <div>
                 <p className="text-sm font-black text-foreground tracking-tight">
-                  {isCycleEmpty ? "No discovery cycles left" : "Discovery cycles are running low"}
+                  {isCycleEmpty ? "No search credits left" : "Search credits are running low"}
                 </p>
                 <p className="text-xs text-foreground/60 font-semibold mt-1">
                   {isCycleEmpty
-                    ? "Add a cycle pack or upgrade before launching another campaign run."
-                    : `${cyclesRemaining} cycles remain. Top up now to keep automatic discovery from pausing.`}
+                    ? "Add a search pack or upgrade before launching another campaign run."
+                    : `${cyclesRemaining} searches remain. Top up now to keep campaign searches running.`}
                 </p>
               </div>
             </div>
             <Link href="/billing" className="h-11 px-5 rounded-full bg-primary text-white text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-md shadow-primary/10">
               <CreditCard className="h-4 w-4" />
-              {isCycleEmpty ? "Buy Cycles" : "Top Up"}
+              {isCycleEmpty ? "Buy Credits" : "Top Up"}
             </Link>
           </div>
         )}
@@ -353,7 +353,7 @@ export default function CampaignsPage() {
                           "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
                           cycleBadgeClass(c.cycleRuns?.[0]?.status)
                         )}>
-                          {c.cycleRuns?.[0]?.status ? `Last ${c.cycleRuns?.[0]?.status}` : "No Cycles"}
+                          {c.cycleRuns?.[0]?.status ? `Last Run: ${c.cycleRuns?.[0]?.status}` : "No Runs"}
                         </div>
                       </div>
                       <p className="text-[11px] font-medium text-foreground opacity-60 uppercase tracking-widest">Initialized {new Date(c.createdAt).toLocaleDateString()}</p>
@@ -367,7 +367,7 @@ export default function CampaignsPage() {
                         href="/billing"
                         className="flex-1 lg:flex-none h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 shadow-md shadow-primary/10"
                       >
-                        <CreditCard className="h-3.5 w-3.5" /> Buy Cycles
+                        <CreditCard className="h-3.5 w-3.5" /> Buy Credits
                       </Link>
                     ) : c.status !== "ACTIVE" ? (
                       <button
@@ -375,11 +375,11 @@ export default function CampaignsPage() {
                         disabled={busyCampaignId === c.id}
                         className="flex-1 lg:flex-none h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 shadow-md shadow-primary/10 disabled:opacity-50"
                       >
-                        {busyCampaignId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Play className="h-3.5 w-3.5" /> Activate Hub</>}
+                        {busyCampaignId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Play className="h-3.5 w-3.5" /> Activate Campaign</>}
                       </button>
                     ) : c.cycleRuns?.[0]?.status === "RUNNING" || c.cycleRuns?.[0]?.status === "QUEUED" ? (
                       <div className="flex-1 lg:flex-none h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 bg-primary/10 text-primary">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Cycle Running
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Search Running
                       </div>
                     ) : (
                       <button
@@ -387,7 +387,7 @@ export default function CampaignsPage() {
                         disabled={triggering === c.id}
                         className="flex-1 lg:flex-none h-12 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 disabled:opacity-50 shadow-md shadow-primary/10"
                       >
-                        {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Zap className="h-3.5 w-3.5" /> Run Cycle</>}
+                        {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Zap className="h-3.5 w-3.5" /> Run Search</>}
                       </button>
                     )}
                     <button onClick={() => toggleStatus(c.id, c.status)}
@@ -442,12 +442,12 @@ export default function CampaignsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Activity className="h-4 w-4 text-primary/60" />
-                      <span className="text-[10px] font-bold text-foreground opacity-60 uppercase tracking-widest">Cycle Performance</span>
+                      <span className="text-[10px] font-bold text-foreground opacity-60 uppercase tracking-widest">Search Performance</span>
                       </div>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-[10px] font-medium text-foreground opacity-60 uppercase tracking-widest">Last Cycle</span>
+                        <span className="text-[10px] font-medium text-foreground opacity-60 uppercase tracking-widest">Last Search</span>
                         <span className="text-[10px] font-black text-foreground">
                           {c.cycleRuns?.[0] ? `${c.cycleRuns[0].leadsFound}/${c.cycleRuns[0].maxLeads}` : "None"}
                         </span>
@@ -471,7 +471,7 @@ export default function CampaignsPage() {
                       <p className="text-3xl font-bold text-foreground">{c._count?.leads || 0}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-foreground opacity-40 uppercase tracking-widest">Avg / Cycle</p>
+                      <p className="text-[10px] font-bold text-foreground opacity-40 uppercase tracking-widest">Avg / Search</p>
                       <p className="text-3xl font-bold text-foreground">
                         {c.cycleRuns?.length ? Math.round(c.cycleRuns.reduce((sum, cycle) => sum + cycle.leadsFound, 0) / c.cycleRuns.length) : 0}
                       </p>
@@ -484,7 +484,7 @@ export default function CampaignsPage() {
                       className="h-10 px-5 bg-card hover:bg-card border border-card-border rounded-full text-xs font-bold uppercase tracking-widest transition-all text-foreground"
                     >
                       <Settings className="h-3.5 w-3.5 mr-2 opacity-60" />
-                      Edit Hub
+                      Edit Campaign
                     </Button>
 
                     <Sheet>
@@ -493,7 +493,7 @@ export default function CampaignsPage() {
                           className="h-10 px-5 bg-card hover:bg-card border border-card-border rounded-full text-xs font-bold uppercase tracking-widest transition-all text-foreground"
                         >
                           <Info className="h-3.5 w-3.5 mr-2 opacity-60" />
-                          Intelligence
+                          Insights
                         </Button>
                       </SheetTrigger>
                       <SheetContent className="w-full sm:max-w-lg border-l border-card-border bg-sidebar p-0 overflow-hidden shadow-2xl shadow-primary/10">
@@ -511,7 +511,7 @@ export default function CampaignsPage() {
                                 <h3 className="text-2xl font-black tracking-tight text-foreground">{c.name}</h3>
                                 <div className="flex items-center gap-2 mt-1">
                                   <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
-                                  <p className="text-[10px] text-foreground opacity-60 font-bold uppercase tracking-[0.3em]">Neural Hub Intelligence</p>
+                                  <p className="text-[10px] text-foreground opacity-60 font-bold uppercase tracking-[0.3em]">AI Campaign Insights</p>
                                 </div>
                               </div>
                             </div>
@@ -530,7 +530,7 @@ export default function CampaignsPage() {
                               }}
                               className="space-y-12 pb-10"
                             >
-                              {/* Mission DNA Section */}
+                              {/* Campaign Criteria Section */}
                               <motion.section 
                                 variants={{
                                   hidden: { x: 20, opacity: 0 },
@@ -542,7 +542,7 @@ export default function CampaignsPage() {
                                   <div className="h-8 w-8 rounded-full bg-card border border-card-border flex items-center justify-center">
                                     <Activity className="h-4 w-4 text-primary/60" />
                                   </div>
-                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground opacity-60">Mission DNA</h4>
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground opacity-60">Campaign Criteria</h4>
                                 </div>
                                 
                                 <div className="grid gap-6 bg-card p-8 rounded-card border border-card-border relative overflow-hidden group">
@@ -587,7 +587,7 @@ export default function CampaignsPage() {
                                   <div className="h-8 w-8 rounded-full bg-card border border-card-border flex items-center justify-center">
                                     <Sparkles className="h-4 w-4 text-primary/60" />
                                   </div>
-                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground opacity-60">AI Synthesis</h4>
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground opacity-60">AI Strategy Summary</h4>
                                 </div>
                                 
                                 <div className="relative group">
@@ -601,7 +601,7 @@ export default function CampaignsPage() {
                                       </div>
                                     ) : (
                                       <p className="text-base leading-relaxed text-foreground font-medium italic selection:bg-primary/30">
-                                        "{briefs[c.id] || "Analyzing mission parameters for strategic synthesis..."}"
+                                        "{briefs[c.id] || "Analyzing campaign criteria for strategy summary..."}"
                                       </p>
                                     )}
                                   </div>
@@ -635,12 +635,12 @@ export default function CampaignsPage() {
                             <Button variant="secondary" className="w-full h-14 bg-card hover:bg-primary hover:text-white rounded-full transition-all duration-500 flex items-center justify-center gap-3 group" onClick={() => {
                                   if (briefs[c.id]) {
                                     navigator.clipboard.writeText(briefs[c.id]);
-                                    toast.success("Intelligence Copied", { description: "Mission brief saved to clipboard." });
+                                    toast.success("Insights Copied", { description: "Strategy summary saved to clipboard." });
                                   }
                               }}
                             >
                               <ClipboardCheck className="h-4 w-4 opacity-40 group-hover:opacity-100 group-hover:scale-110 transition-all" />
-                              <span className="text-[11px] font-black uppercase tracking-[0.2em]">Copy Intelligence Brief</span>
+                              <span className="text-[11px] font-black uppercase tracking-[0.2em]">Copy Strategy Summary</span>
                             </Button>
                           </div>
                         </div>

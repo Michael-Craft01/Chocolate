@@ -11,12 +11,12 @@ interface LogEntry {
 }
 
 const mockLogs: LogEntry[] = [
-  { timestamp: "00:00:01", type: "engine", message: "Discovery Engine core initialized." },
+  { timestamp: "00:00:01", type: "engine", message: "Search Engine core initialized." },
   { timestamp: "00:00:02", type: "info", message: "Connecting to Supabase production cluster..." },
   { timestamp: "00:00:04", type: "success", message: "Supabase connection verified. 0ms latency." },
   { timestamp: "00:00:05", type: "info", message: "Loading target queries and location indexes..." },
   { timestamp: "00:00:07", type: "engine", message: "Playwright stealth extraction agent ready." },
-  { timestamp: "06:00:00", type: "engine", message: "Scheduled discovery cycle started." },
+  { timestamp: "06:00:00", type: "engine", message: "Scheduled campaign search started." },
   { timestamp: "06:00:15", type: "info", message: "Playwright: Querying search locations..." },
   { timestamp: "06:00:45", type: "info", message: "Cheerio: Parsing DOM maps and indexing web nodes..." },
   { timestamp: "06:01:10", type: "success", message: "Scraped 48 business listings in target areas." },
@@ -25,7 +25,7 @@ const mockLogs: LogEntry[] = [
   { timestamp: "06:01:28", type: "info", message: "Generating hyper-personalized outreach copywriting..." },
   { timestamp: "06:01:40", type: "success", message: "Outbound copy ready. Deduping entries against lead registry." },
   { timestamp: "06:01:42", type: "success", message: "Dispatched verified leads to Discord channels successfully." },
-  { timestamp: "06:01:45", type: "engine", message: "Cycle complete. Next automatic run scheduled." }
+  { timestamp: "06:01:45", type: "engine", message: "Search complete. Next automatic run scheduled." }
 ];
 
 export function DiscoveryMonitor() {
@@ -56,7 +56,7 @@ export function DiscoveryMonitor() {
       <div className="flex items-center justify-between border-b border-border-muted pb-4 mb-4">
         <div className="flex items-center gap-2.5">
           <Terminal className="h-4 w-4 text-primary" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">System Telemetry Log</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">System Activity Log</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-[9px] font-bold text-emerald-400 uppercase tracking-widest border border-emerald-500/20">

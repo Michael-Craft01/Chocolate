@@ -85,13 +85,13 @@ app.post(['/api/payments/stripe/webhook', '/api/webhooks/stripe'], express.raw({
                 await prisma.user.update({
                     where: { id: userId },
                     data: {
-                        paymentStatus: 'canceled',
-                        tier: 'STARTER',
-                        dailyLimit: 10,
+                        paymentStatus: 'free',
+                        tier: 'FREE',
+                        dailyLimit: 25,
                         maxCampaigns: 1,
-                        monthlyCycleLimit: 0,
-                        cyclesRemaining: 0,
-                        leadsPerCycle: 10,
+                        monthlyCycleLimit: 1,
+                        cyclesRemaining: 1,
+                        leadsPerCycle: 15,
                         automationMode: 'MANUAL',
                         autoRunFrequency: 'MANUAL'
                     }
@@ -155,7 +155,19 @@ app.get('/api/me', authenticate, async (req: any, res: any) => {
             user = await prisma.user.upsert({
                 where: { id: userId },
                 update: { email: email },
-                create: { id: userId, email: email },
+                create: { 
+                    id: userId, 
+                    email: email,
+                    tier: 'FREE',
+                    dailyLimit: 25,
+                    maxCampaigns: 1,
+                    monthlyCycleLimit: 1,
+                    cyclesRemaining: 1,
+                    leadsPerCycle: 15,
+                    automationMode: 'MANUAL',
+                    autoRunFrequency: 'MANUAL',
+                    paymentStatus: 'free'
+                },
                 include: { profile: true, campaigns: { where: { name: 'Main Engine' }, take: 1 } }
             });
         }
@@ -244,11 +256,54 @@ app.get('/api/billing/transactions', authenticate, async (req: any, res: any) =>
 });
 
 // API: Create Checkout Session (Stripe or Paynow)
-app.post('/api/billing/create-checkout', authenticate, async (req: any, res: any) => {
+app.post('/api/billing/create-checkout', authenticate, validate(billingSchema), async (req: any, res: any) => {
     try {
         const userId = req.user!.id;
         const { method, tier, amount } = req.body;
         
+        if (tier === 'FREE') {
+            const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+            if (dbUser) {
+                if (dbUser.stripeSubscriptionId && stripe) {
+                    try {
+                        await stripe.subscriptions.cancel(dbUser.stripeSubscriptionId);
+                    } catch (err) {
+                        console.error("Failed to cancel Stripe subscription:", err);
+                    }
+                }
+
+                await prisma.$transaction([
+                    prisma.user.update({
+                        where: { id: userId },
+                        data: {
+                            tier: 'FREE',
+                            dailyLimit: 25,
+                            monthlyCycleLimit: 1,
+                            cyclesRemaining: 1,
+                            leadsPerCycle: 15,
+                            automationMode: 'MANUAL',
+                            autoRunFrequency: 'MANUAL',
+                            maxCampaigns: 1,
+                            paymentStatus: 'free',
+                            stripeSubscriptionId: null,
+                        }
+                    }),
+                    prisma.transaction.create({
+                        data: {
+                            userId,
+                            amount: 0,
+                            gateway: 'STRIPE',
+                            type: 'SUBSCRIPTION',
+                            status: 'SUCCESS',
+                            tier: 'FREE',
+                            gatewayRef: `downgrade_${Date.now()}_${userId.slice(0, 8)}`,
+                        }
+                    })
+                ]);
+            }
+            return res.json({ url: `${config.FRONTEND_URL}/billing?success=true` });
+        }
+
         let url;
         if (method === 'STRIPE') {
             url = await paymentService.createStripeCheckout({ userId, tier, amount });
@@ -355,14 +410,14 @@ app.get('/api/stats', authenticate, async (req: any, res: any) => {
             tier: user?.tier || 'FREE',
             quota: {
                 used: user?.leadsFoundToday || 0,
-                limit: user?.dailyLimit || 10,
+                limit: user?.dailyLimit || 25,
                 credits: user?.creditBalance || 0
             },
             cycles: {
                 remaining: user?.cyclesRemaining || 0,
                 monthlyLimit: user?.monthlyCycleLimit || 0,
                 usedThisPeriod: Math.max(0, (user?.monthlyCycleLimit || 0) - (user?.cyclesRemaining || 0)),
-                leadsPerCycle: user?.leadsPerCycle || 10,
+                leadsPerCycle: user?.leadsPerCycle || 15,
                 automationMode: user?.automationMode || 'MANUAL',
                 autoRunFrequency: user?.autoRunFrequency || 'MANUAL',
                 currentPeriodStart: user?.currentPeriodStart,
@@ -537,8 +592,11 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: an
             companyName: data.companyName,
             targetCountry: data.targetCountry || "ZW",
             locations: data.locations || ["Harare"],
-            industries: [data.industry || "Business"],
+            industries: data.industries || [data.industry || "Business"],
             discordWebhook: data.discordWebhook || null,
+            productName: data.productName || undefined,
+            productDescription: data.productDescription || undefined,
+            targetPainPoints: data.targetPainPoints || undefined,
         };
 
         const userAutomationData = {
@@ -567,8 +625,8 @@ app.post('/api/settings', authenticate, validate(settingsSchema), async (req: an
                     ...campaignData,
                     userId,
                     name: 'Main Engine',
-                    // Start ACTIVE now — user just saved real settings
-                    status: 'ACTIVE',
+                    // Start PAUSED - user must create their own campaigns to start searches
+                    status: 'PAUSED',
                     productName: data.productName || data.companyName || "",
                     productDescription: data.productDescription || "",
                     targetPainPoints: data.targetPainPoints || "",

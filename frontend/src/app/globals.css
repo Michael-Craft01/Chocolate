@@ -24,7 +24,7 @@
   --radius-2xl: 5px;
   --radius-3xl: 5px;
   --radius-4xl: 5px;
-  --radius-full: 5px;
+  --radius-full: 9999px;
   --radius-pill: 5px;
   --radius-card: 5px;
 }
@@ -43,21 +43,27 @@
 }
 
 html.dark {
-  --background: #0f172a;
+  --background: #030504;
   --foreground: #f8fafc;
-  --card-bg: #1e293b;
-  --card-border: #334155;
-  --sidebar-bg: #0f172a;
+  --card-bg: rgba(15, 15, 17, 0.6);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --sidebar-bg: rgba(11, 11, 12, 0.6);
   --text-muted: #94a3b8;
   --text-secondary: #cbd5e1;
-  --border-muted: #334155;
-  --card-hover-border: #475569;
+  --border-muted: rgba(255, 255, 255, 0.05);
+  --card-hover-border: rgba(255, 255, 255, 0.15);
 }
 
 @layer base {
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/30 overflow-x-hidden;
-    background-color: var(--background);
+    background-color: #030504;
+    background-image: 
+      radial-gradient(circle at 75% 20%, rgba(16, 185, 129, 0.18) 0%, transparent 50%),
+      radial-gradient(circle at 20% 80%, rgba(4, 120, 87, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(6, 78, 59, 0.16) 0%, transparent 60%);
+    background-attachment: fixed;
+    background-size: cover;
   }
 
   /* --- NEURAL IMMERSION --- */

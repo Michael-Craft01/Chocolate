@@ -43,7 +43,9 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
       >
         <div className="flex items-center gap-6 flex-1">
           <div className="flex flex-col gap-1 w-1/4">
-            <span className="text-[10px] font-black uppercase text-primary tracking-widest">{lead.campaign?.name || 'Legacy Sweep'}</span>
+            <span className="text-[10px] font-black uppercase text-primary tracking-widest">
+              {lead.campaign?.name === 'Main Engine' ? 'General Search' : (lead.campaign?.name || 'Legacy Sweep')}
+            </span>
             <h3 className="text-sm font-bold text-white truncate">{lead.business.name}</h3>
           </div>
 

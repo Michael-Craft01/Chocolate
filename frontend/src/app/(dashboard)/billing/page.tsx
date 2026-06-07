@@ -11,29 +11,65 @@ import { toast } from "sonner";
 
 const tiers = [
   {
+    name: "Free",
+    price: 0,
+    features: [
+      "1 Campaign Limit",
+      "15 Leads / Cycle",
+      "Manual lead searches",
+      "Standard search speed",
+      "CSV Data Export"
+    ],
+    color: "bg-white/[0.01] border-zinc-800 hover:border-zinc-700/60 shadow-sm",
+    badge: "Basic Access",
+    icon: Compass,
+    accent: "text-zinc-400",
+  },
+  {
     name: "Starter",
     price: 20,
-    leads: "4 cycles / month",
-    campaigns: "25 leads / cycle",
-    features: ["Automatic weekly cycles", "Mobile-ready view", "Standard search speed", "CSV data export"],
-    color: "bg-white/5",
+    features: [
+      "1 Campaign Limit",
+      "150 Leads / Cycle",
+      "Automatic weekly searches",
+      "Standard search speed",
+      "CSV Data Export"
+    ],
+    color: "bg-white/[0.02] border-white/5 hover:border-white/10 hover:shadow-emerald-950/5 hover:scale-[1.01] transition-all",
+    badge: "Growth",
+    icon: Zap,
+    accent: "text-emerald-400",
   },
   {
     name: "Professional",
     price: 49,
-    leads: "15 cycles / month",
-    campaigns: "40 leads / cycle",
-    features: ["Automatic cycles every 2 days", "Discord webhooks", "High-speed sweeps", "Priority AI support"],
-    color: "bg-primary/10 border-primary/20",
+    features: [
+      "5 Campaigns Limit",
+      "400 Leads / Cycle",
+      "Automatic searches every 2 days",
+      "High-speed search priority",
+      "Discord webhooks integration"
+    ],
+    color: "bg-white/[0.06] border-primary/60 shadow-[0_0_30px_-5px_rgba(16,185,129,0.25)] hover:scale-[1.03] transition-all ring-1 ring-primary/30",
     popular: true,
+    badge: "Best Value",
+    icon: Sparkles,
+    accent: "text-primary",
   },
   {
     name: "Elite",
     price: 300,
-    leads: "40 cycles / month",
-    campaigns: "75 leads / cycle",
-    features: ["Automatic daily cycles", "Discord webhooks", "Deep-dive AI intelligence", "24/7 priority support"],
-    color: "bg-white/5",
+    features: [
+      "10 Campaigns Limit",
+      "800 Leads / Cycle",
+      "Automatic daily searches",
+      "Maximum search speed",
+      "24/7 priority support"
+    ],
+    color: "bg-white/[0.02] border-white/5 hover:border-white/10 hover:shadow-indigo-950/5 hover:scale-[1.01] transition-all",
+    badge: "Enterprise",
+    icon: ShieldCheck,
+    accent: "text-indigo-400",
   },
 ];
 
@@ -210,7 +246,7 @@ function BillingContent() {
         </div>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">Billing Dashboard</h1>
         <p className="text-sm text-foreground/60 max-w-xl mx-auto">
-          Select a pipeline growth tier or buy extra automatic discovery cycles for HyprLead AI.
+          Select a pipeline growth tier or buy extra search credits for HyprLead AI.
         </p>
         {userTier === null && (
           <div className="p-3 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 mt-4">
@@ -282,74 +318,83 @@ function BillingContent() {
       </div>
 
       {/* Pricing Grid */}
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-        {tiers.map((tier) => (
-          <div 
-            key={tier.name} 
-            className={`bento-card relative flex flex-col transition-all duration-300 ${
-              tier.popular ? "ring-2 ring-primary/40 shadow-xl" : ""
-            }`}
-          >
-            {tier.popular && (
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-primary/30">
-                Best Value
-              </div>
-            )}
-            
-            <div className="mb-6 relative text-left">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-foreground/50">{tier.name}</h3>
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-foreground/[0.03] border border-foreground/5">
-                  {gateway === "STRIPE" ? <Compass className="h-3.5 w-3.5 text-blue-400" /> : <ShieldCheck className="h-3.5 w-3.5 text-amber-400" />}
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/70">{gateway}</span>
-                </div>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-4xl md:text-5xl font-black text-foreground">$</span>
-                <span className="text-5xl md:text-6xl font-black text-foreground tracking-tight">{tier.price}</span>
-                <span className="text-xs font-bold uppercase tracking-wider text-foreground/50 ml-2">/ month</span>
-              </div>
-            </div>
-
-            <div className="space-y-4 mb-8 flex-1 text-left">
-              <div className="flex items-center gap-3 p-3.5 rounded-full bg-foreground/[0.02] border border-foreground/5">
-                <Check className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-xs text-foreground/80 font-bold uppercase tracking-wider">{tier.leads}</span>
-              </div>
-              <div className="flex items-center gap-3 p-3.5 rounded-full bg-foreground/[0.02] border border-foreground/5">
-                <Compass className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-xs text-foreground/80 font-bold uppercase tracking-wider">{tier.campaigns.replace('Discovery Hub', 'Search Area')}</span>
-              </div>
-              <div className="pt-6 space-y-3">
-                {tier.features.map((f) => (
-                  <div key={f} className="flex items-start gap-3 text-xs text-foreground/60 font-semibold leading-relaxed">
-                    <Check className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
-                    {f}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <button onClick={() => handleSubscribe(tier.name)}
-              disabled={!!loading || userTier === tier.name.toUpperCase()}
-              className={`w-full h-12 rounded-full text-xs font-bold uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
-                userTier === tier.name.toUpperCase() 
-                  ? "bg-primary/10 text-primary border border-primary/20" 
-                  : tier.popular ? "bg-primary text-white hover:scale-[1.02] shadow-md shadow-primary/25" : "bg-foreground/[0.03] hover:bg-foreground/[0.06] text-foreground border border-foreground/5"
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 items-stretch">
+        {tiers.map((tier) => {
+          const TierIcon = tier.icon;
+          return (
+            <div 
+              key={tier.name} 
+              className={`bento-card relative flex flex-col p-12 transition-all duration-300 ${tier.color} ${
+                tier.popular ? "scale-[1.01] md:scale-[1.02]" : ""
+              }`}
             >
-              {loading === tier.name ? (
-                <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Securing...</div>
-              ) : userTier === tier.name.toUpperCase() ? (
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider"><Check className="h-4 w-4" /> Current Plan</div>
+              {tier.popular ? (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-primary/30 flex items-center gap-1.5 z-10">
+                  <Sparkles className="h-3 w-3 animate-pulse" /> {tier.badge}
+                </div>
               ) : (
-                <div className="flex flex-col items-center">
-                  <span className="font-bold">Select {tier.name}</span>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-foreground/5 border border-foreground/10 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-foreground/50 backdrop-blur-md z-10">
+                  {tier.badge}
                 </div>
               )}
-            </button>
-          </div>
-        ))}
+              
+              <div className="mb-8 relative text-left">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <TierIcon className={`h-4.5 w-4.5 ${tier.accent}`} />
+                    <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground/80 leading-none">{tier.name}</h3>
+                  </div>
+                  {tier.price > 0 ? (
+                    <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-foreground/[0.03] border border-foreground/5">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-foreground/60">{gateway}</span>
+                    </div>
+                  ) : (
+                    <div className="px-2 py-0.5 rounded-full bg-foreground/[0.02] border border-foreground/5 text-[9px] font-bold uppercase tracking-wider text-foreground/40">
+                      Free Access
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-baseline gap-1 mt-2">
+                  <span className="text-4xl md:text-5xl font-black text-foreground select-none">$</span>
+                  <span className="text-7xl md:text-8xl font-black text-foreground tracking-tight leading-none">{tier.price}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40 ml-2">/ month</span>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-8 flex-1 text-left">
+                <div className="space-y-4">
+                  {tier.features.map((f, idx) => (
+                    <div key={idx} className="flex items-start gap-3 text-xs text-foreground/75 font-semibold leading-relaxed min-h-[20px]">
+                      <Check className={`h-4 w-4 ${tier.accent} shrink-0 mt-0.5`} />
+                      <span>{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button onClick={() => handleSubscribe(tier.name)}
+                disabled={!!loading || userTier === tier.name.toUpperCase()}
+                className={`w-full h-12 rounded-full text-xs font-black uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-0.5 mt-auto cursor-pointer ${
+                  userTier === tier.name.toUpperCase() 
+                    ? "bg-primary/10 text-primary border border-primary/20" 
+                    : tier.popular 
+                      ? "bg-primary text-white hover:bg-primary/95 hover:scale-[1.02] shadow-md shadow-primary/25" 
+                      : "bg-transparent border border-foreground/15 hover:border-foreground/30 hover:bg-foreground/5 text-foreground active:scale-98"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {loading === tier.name ? (
+                  <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processing...</div>
+                ) : userTier === tier.name.toUpperCase() ? (
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider"><Check className="h-4 w-4" /> Current Plan</div>
+                ) : tier.price === 0 ? (
+                  <span>{userTier ? "Downgrade to Free" : "Select Free"}</span>
+                ) : (
+                  <span>Select {tier.name}</span>
+                )}
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* Extra Cycles Section */}
@@ -359,11 +404,11 @@ function BillingContent() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
           <div className="space-y-3 max-w-xl text-left">
             <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
-              <CreditCard className="h-4 w-4 animate-pulse" /> Cycle Packs
+              <CreditCard className="h-4 w-4 animate-pulse" /> Search Packs
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">Extra Cycles</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">Extra Search Credits</h2>
             <p className="text-sm text-foreground/75 leading-relaxed">
-              Need to sweep more local markets this month? Purchase extra discovery cycles instantly. Cycle packs add to your current balance.
+              Need to find more leads this month? Purchase extra search credits instantly. Search packs add to your current balance.
             </p>
           </div>
           <div className="flex flex-col items-center sm:flex-row gap-6 min-w-[280px] shrink-0">
@@ -372,11 +417,11 @@ function BillingContent() {
                 <span className="text-3xl font-black text-foreground">$</span>
                 <span className="text-5xl font-black text-foreground tracking-tight">10</span>
               </div>
-              <p className="text-[10px] text-foreground/50 font-bold uppercase tracking-wider mt-1">5 Discovery Cycles</p>
+              <p className="text-[10px] text-foreground/50 font-bold uppercase tracking-wider mt-1">5 Search Runs</p>
             </div>
             <button onClick={handleBuyCycles} disabled={!!loading} className="w-full sm:w-auto h-12 px-8 rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-xl shadow-foreground/5 hover:scale-[1.02] active:scale-[0.98] cursor-pointer" >
               {loading === "CYCLE_PACK" && <Loader2 className="h-4 w-4 animate-spin text-background" />}
-              {loading === "CYCLE_PACK" ? "Processing..." : "Add Cycles"}
+              {loading === "CYCLE_PACK" ? "Processing..." : "Add Credits"}
             </button>
           </div>
         </div>
@@ -390,7 +435,7 @@ function BillingContent() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-foreground">Transaction Log</h2>
-            <p className="text-xs text-foreground/60">Review your past cycle packs and subscriptions straight from the database</p>
+            <p className="text-xs text-foreground/60">Review your past credit packs and subscriptions straight from the database</p>
           </div>
         </div>
         

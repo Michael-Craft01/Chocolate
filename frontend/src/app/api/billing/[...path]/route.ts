@@ -97,11 +97,56 @@ async function createCheckout(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const method = body.method || 'STRIPE';
-  const tier = body.tier as 'STARTER' | 'PROFESSIONAL' | 'ELITE' | 'CYCLE_PACK';
+  const tier = body.tier as 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ELITE' | 'CYCLE_PACK';
   const amount = Number(body.amount || 0);
 
-  if (!['STARTER', 'PROFESSIONAL', 'ELITE', 'CYCLE_PACK'].includes(tier)) {
+  if (!['FREE', 'STARTER', 'PROFESSIONAL', 'ELITE', 'CYCLE_PACK'].includes(tier)) {
     return NextResponse.json({ error: 'Invalid billing tier' }, { status: 400 });
+  }
+
+  if (tier === 'FREE') {
+    const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+    if (dbUser) {
+      if (dbUser.stripeSubscriptionId && process.env.STRIPE_SECRET_KEY) {
+        try {
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+          await stripe.subscriptions.cancel(dbUser.stripeSubscriptionId);
+        } catch (err) {
+          console.error("Failed to cancel Stripe subscription:", err);
+        }
+      }
+
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: user.id },
+          data: {
+            tier: 'FREE',
+            dailyLimit: 25,
+            monthlyCycleLimit: 1,
+            cyclesRemaining: 1,
+            leadsPerCycle: 15,
+            automationMode: 'MANUAL',
+            autoRunFrequency: 'MANUAL',
+            maxCampaigns: 1,
+            paymentStatus: 'free',
+            stripeSubscriptionId: null,
+          }
+        }),
+        prisma.transaction.create({
+          data: {
+            userId: user.id,
+            amount: 0,
+            gateway: 'STRIPE',
+            type: 'SUBSCRIPTION',
+            status: 'SUCCESS',
+            tier: 'FREE',
+            gatewayRef: `downgrade_${Date.now()}_${user.id.slice(0, 8)}`,
+          }
+        })
+      ]);
+    }
+    const frontendUrl = getFrontendUrl(req);
+    return NextResponse.json({ url: `${frontendUrl}/billing?success=true` });
   }
 
   const price = getCheckoutPrice(tier, amount);

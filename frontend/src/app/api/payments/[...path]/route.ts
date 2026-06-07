@@ -24,15 +24,28 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ p
   return handleProxy(req, path);
 }
 
+// ── AUTHORITATIVE TIER CONFIG — must stay in sync with webhookHandler.ts ──
+// leadsPerCycle: engine-deliverable leads per cycle (scroll-based scraper, tiered runtime)
+// dailyLimit:    hard cap on total DB writes per calendar day
 function getPlanConfig(tier: string) {
   switch (tier) {
+    case 'FREE':
+      return {
+        tier: 'FREE' as const,
+        amount: 0,
+        dailyLimit: 25,
+        monthlyCycleLimit: 1,
+        leadsPerCycle: 15,
+        autoRunFrequency: 'MANUAL' as const,
+        maxCampaigns: 1,
+      };
     case 'ELITE':
       return {
         tier: 'ELITE' as const,
         amount: 300,
-        dailyLimit: 2500,
+        dailyLimit: 1000,
         monthlyCycleLimit: 40,
-        leadsPerCycle: 75,
+        leadsPerCycle: 800,
         autoRunFrequency: 'DAILY' as const,
         maxCampaigns: 10,
       };
@@ -42,17 +55,17 @@ function getPlanConfig(tier: string) {
         amount: 49,
         dailyLimit: 500,
         monthlyCycleLimit: 15,
-        leadsPerCycle: 40,
+        leadsPerCycle: 400,
         autoRunFrequency: 'EVERY_2_DAYS' as const,
         maxCampaigns: 5,
       };
-    default:
+    default: // STARTER
       return {
         tier: 'STARTER' as const,
         amount: 20,
-        dailyLimit: 100,
+        dailyLimit: 200,
         monthlyCycleLimit: 4,
-        leadsPerCycle: 25,
+        leadsPerCycle: 150,
         autoRunFrequency: 'WEEKLY' as const,
         maxCampaigns: 1,
       };
@@ -117,6 +130,8 @@ async function provisionPaynowTransaction(tx: {
   const now = new Date();
   const periodEnd = new Date(now);
   periodEnd.setMonth(periodEnd.getMonth() + 1);
+  const paymentStatus = plan.tier === 'FREE' ? 'free' : 'active';
+  const automationMode = plan.tier === 'FREE' ? 'MANUAL' : 'AUTOMATIC';
 
   await prisma.$transaction([
     prisma.user.update({
@@ -127,12 +142,12 @@ async function provisionPaynowTransaction(tx: {
         monthlyCycleLimit: plan.monthlyCycleLimit,
         cyclesRemaining: plan.monthlyCycleLimit,
         leadsPerCycle: plan.leadsPerCycle,
-        automationMode: 'AUTOMATIC',
+        automationMode,
         autoRunFrequency: plan.autoRunFrequency,
         currentPeriodStart: now,
         currentPeriodEnd: periodEnd,
         maxCampaigns: plan.maxCampaigns,
-        paymentStatus: 'active',
+        paymentStatus,
       },
     }),
     prisma.transaction.update({
@@ -301,6 +316,8 @@ async function syncStripePayment(req: NextRequest) {
   const now = new Date();
   const periodEnd = new Date(now);
   periodEnd.setMonth(periodEnd.getMonth() + 1);
+  const paymentStatus = plan.tier === 'FREE' ? 'free' : 'active';
+  const automationMode = plan.tier === 'FREE' ? 'MANUAL' : 'AUTOMATIC';
 
   const stripeCustomerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
   const stripeSubscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
@@ -314,12 +331,12 @@ async function syncStripePayment(req: NextRequest) {
         monthlyCycleLimit: plan.monthlyCycleLimit,
         cyclesRemaining: plan.monthlyCycleLimit,
         leadsPerCycle: plan.leadsPerCycle,
-        automationMode: 'AUTOMATIC',
+        automationMode,
         autoRunFrequency: plan.autoRunFrequency,
         currentPeriodStart: now,
         currentPeriodEnd: periodEnd,
         maxCampaigns: plan.maxCampaigns,
-        paymentStatus: 'active',
+        paymentStatus,
         stripeCustomerId,
         stripeSubscriptionId,
       },
@@ -372,7 +389,6 @@ async function handleProxy(req: NextRequest, pathSegments: string[]) {
   const path = pathSegments.join('/');
   const targetUrl = `${BACKEND_URL.replace(/\/$/, '')}/api/payments/${path}${req.nextUrl.search}`;
 
-  // Forward only safe headers - skip host which would confuse Express
   const forwardHeaders: Record<string, string> = {};
   const skipHeaders = new Set(['host', 'connection', 'transfer-encoding']);
   req.headers.forEach((val, key) => {

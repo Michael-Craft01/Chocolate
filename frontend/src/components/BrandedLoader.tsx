@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Zap } from "lucide-react";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -22,19 +23,32 @@ export function BrandedLoader({
   
   const loaderContent = (
     <div className={cn(
-      "flex flex-col items-center justify-center gap-4 text-center select-none",
+      "flex flex-col items-center justify-center gap-5 text-center select-none",
       fullscreen ? "p-8" : "py-12 px-6"
     )}>
-      {/* Pristine Circular Spinner */}
-      <div className="relative">
+      {/* Pristine Circular Spinner branded with Zap Logo */}
+      <div className="relative flex items-center justify-center">
+        {/* Outer Rotating Track */}
         <div 
           className={cn(
-            "animate-spin rounded-full border-[3px] border-card-border shrink-0",
-            size === "sm" && "h-6 w-6 border-t-primary",
-            size === "md" && "h-10 w-10 border-t-primary",
-            size === "lg" && "h-14 w-14 border-t-primary"
+            "animate-spin rounded-full border-[3px] border-white/10 shrink-0",
+            size === "sm" && "h-10 w-10 border-t-primary",
+            size === "md" && "h-16 w-16 border-t-primary",
+            size === "lg" && "h-24 w-24 border-t-primary"
           )} 
         />
+        
+        {/* Centered Glowing Zap Icon */}
+        <div className="absolute flex items-center justify-center">
+          <Zap 
+            className={cn(
+              "text-primary fill-primary/20 animate-pulse",
+              size === "sm" && "h-4 w-4",
+              size === "md" && "h-6 w-6",
+              size === "lg" && "h-10 w-10"
+            )} 
+          />
+        </div>
       </div>
 
       {/* Typography */}
@@ -53,12 +67,12 @@ export function BrandedLoader({
 
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-[9999] flex items-center justify-center transition-all duration-300">
+      <div className="fixed inset-0 bg-background/85 backdrop-blur-md z-[9999] flex items-center justify-center transition-all duration-300">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="rounded-card bg-card border border-card-border shadow-xl p-8 max-w-sm w-full mx-4"
+          className="rounded-full bg-card border border-card-border shadow-xl p-8 w-72 h-72 mx-4 flex items-center justify-center"
         >
           {loaderContent}
         </motion.div>

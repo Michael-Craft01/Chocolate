@@ -35,14 +35,14 @@ export async function GET(req: NextRequest) {
       tier: dbUser?.tier || 'FREE',
       quota: {
         used: dbUser?.leadsFoundToday || 0,
-        limit: dbUser?.dailyLimit || 10,
+        limit: dbUser?.dailyLimit || 25,
         credits: dbUser?.creditBalance || 0
       },
       cycles: {
         remaining: dbUser?.cyclesRemaining || 0,
         monthlyLimit: dbUser?.monthlyCycleLimit || 0,
         usedThisPeriod: Math.max(0, (dbUser?.monthlyCycleLimit || 0) - (dbUser?.cyclesRemaining || 0)),
-        leadsPerCycle: dbUser?.leadsPerCycle || 10,
+        leadsPerCycle: dbUser?.leadsPerCycle || 15,
         automationMode: dbUser?.automationMode || 'MANUAL',
         autoRunFrequency: dbUser?.autoRunFrequency || 'MANUAL',
         currentPeriodStart: dbUser?.currentPeriodStart,

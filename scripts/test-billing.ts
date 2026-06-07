@@ -10,6 +10,7 @@ async function testBillingLogic() {
 
     try {
         // 1. Setup Test User
+        await prisma.user.deleteMany({ where: { email: "billing@test.com" } }).catch(() => {});
         await prisma.user.create({
             data: {
                 id: testUserId,
@@ -27,7 +28,7 @@ async function testBillingLogic() {
         if (user?.tier === 'ELITE' && user?.dailyLimit === 1000) {
             logger.info("✅ Subscription Upgrade Successful");
         } else {
-            throw new Error("Subscription Upgrade Failed");
+            throw new Error(`Subscription Upgrade Failed: Expected ELITE tier and 1000 daily limit, got tier ${user?.tier} and limit ${user?.dailyLimit}`);
         }
 
         // 3. Test Idempotency (Repeat same ref)
@@ -35,10 +36,10 @@ async function testBillingLogic() {
         await WebhookHandler.handleCreditTopup(testUserId, 100, gatewayRef, 'STRIPE'); // Same ref as sub
         
         const userAfterRepeat = await prisma.user.findUnique({ where: { id: testUserId } });
-        if (userAfterRepeat?.creditBalance === 0) {
+        if (userAfterRepeat?.cyclesRemaining === 40) { // Elite monthlyCycleLimit is 40
             logger.info("✅ Idempotency Check Successful (Duplicate Ref Rejected)");
         } else {
-            throw new Error("Idempotency Check Failed (Credits were added for duplicate ref)");
+            throw new Error(`Idempotency Check Failed (Cycles were modified on duplicate ref: expected 40, got ${userAfterRepeat?.cyclesRemaining})`);
         }
 
         // 4. Test Credit Topup (New Ref)
@@ -47,10 +48,10 @@ async function testBillingLogic() {
         await WebhookHandler.handleCreditTopup(testUserId, 50, newRef, 'STRIPE');
         
         const finalUser = await prisma.user.findUnique({ where: { id: testUserId } });
-        if (finalUser?.creditBalance === 500) { // 50 USD * 10
+        if (finalUser?.cyclesRemaining === 65) { // 40 base + 25 (50 USD / 2)
             logger.info("✅ Credit Topup Successful");
         } else {
-            throw new Error(`Credit Topup Failed: Expected 500, got ${finalUser?.creditBalance}`);
+            throw new Error(`Credit Topup Failed: Expected 65, got ${finalUser?.cyclesRemaining}`);
         }
 
         logger.info("🎉 ALL BILLING LOGIC TESTS PASSED!");

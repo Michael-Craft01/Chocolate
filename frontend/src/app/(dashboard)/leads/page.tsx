@@ -374,7 +374,7 @@ export default function LeadsPage() {
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Outbound Command Center</h1>
             <p className="text-xs text-muted-foreground font-medium">
-              {pagination.totalLeads} total active opportunities · grouped by discovery cycles
+              {pagination.totalLeads} total active opportunities · grouped by search runs
             </p>
           </div>
 
@@ -427,7 +427,7 @@ export default function LeadsPage() {
           {[
             { label: "Total Leads", value: pagination.totalLeads, icon: Users },
             { label: "Today", value: stats?.leadsToday || 0, icon: Zap },
-            { label: "Discovery Cycles", value: totalSweeps, icon: RefreshCw },
+            { label: "Search Runs", value: totalSweeps, icon: RefreshCw },
             { label: "Days Active", value: dayGroups.length, icon: Calendar },
           ].map(({ label, value, icon: Icon }) => (
             <div key={label} className="bg-card border border-card-border rounded-xl p-4 flex items-center gap-4 shadow-sm">
@@ -488,7 +488,7 @@ export default function LeadsPage() {
                     {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-10 rounded-lg bg-background" />)}
                   </div>
                 ) : dayGroups.length === 0 ? (
-                  <EmptyState title="No Cycles Logged" description="Run a discovery cycle to capture campaign-matched targets." />
+                  <EmptyState title="No Search Runs Logged" description="Run a campaign search to capture targeted prospects." />
                 ) : activeTab === "timeline" ? (
                   // Dense Cycle groups timeline
                   dayGroups.map((day, di) => (
@@ -638,7 +638,7 @@ export default function LeadsPage() {
                               icon: Mail,
                               value: activeLead.business.email || '',
                               mono: true,
-                              badge: activeLead.business.email ? { text: 'SMTP OK', color: 'text-green-600 bg-green-500/10' } : { text: 'MISSING', color: 'text-muted-foreground bg-muted' },
+                              badge: activeLead.business.email ? { text: 'Email Verified', color: 'text-green-600 bg-green-500/10' } : { text: 'MISSING', color: 'text-muted-foreground bg-muted' },
                             },
                             {
                               key: 'website',

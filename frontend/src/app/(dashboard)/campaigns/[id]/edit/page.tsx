@@ -32,7 +32,7 @@ export default function EditCampaignPage() {
             const data = await fetchCampaign(id);
             setCampaign(data);
         } catch (err: any) {
-            setError(err.message || "Failed to load hub intelligence.");
+            setError(err.message || "Failed to load search campaign.");
         } finally {
             setLoading(false);
         }
@@ -40,41 +40,41 @@ export default function EditCampaignPage() {
 
     if (loading) {
         return (
-            <div className="h-screen flex flex-col items-center justify-center gap-4 bg-[#070707]">
+            <div className="h-screen flex flex-col items-center justify-center gap-4 bg-transparent">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-zinc-500 font-medium tracking-widest uppercase text-[10px] font-black">Decrypting Hub Intelligence...</p>
+                <p className="text-zinc-500 font-medium tracking-widest uppercase text-[10px] font-black">Loading Campaign Settings...</p>
             </div>
         );
     }
 
     if (error || !campaign) {
         return (
-            <div className="h-screen flex flex-col items-center justify-center gap-4 bg-[#070707]">
+            <div className="h-screen flex flex-col items-center justify-center gap-4 bg-transparent">
                 <h2 className="text-xl font-bold text-white">Access Denied</h2>
-                <p className="text-zinc-500 text-sm">{error || "Hub DNA not found."}</p>
-                <button onClick={() => router.back()} className="text-primary font-bold text-sm hover:underline">Return to Command</button>
+                <p className="text-zinc-500 text-sm">{error || "Search campaign not found."}</p>
+                <button onClick={() => router.back()} className="text-primary font-bold text-sm hover:underline">Return to Dashboard</button>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#070707] text-white p-6 md:p-12 pb-32 font-sans selection:bg-primary/20">
+        <div className="min-h-screen bg-transparent text-white p-6 md:p-12 pb-32 font-sans selection:bg-primary/20">
             <div className="max-w-4xl mx-auto space-y-12">
                 <div className="flex items-center justify-between">
                     <button onClick={() => router.back()}
                         className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group"
                     >
                         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                        Back to Hubs
+                        Back to Campaigns
                     </button>
                 </div>
-
+ 
                 <div className="space-y-3">
                     <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
-                        <Settings className="h-4 w-4 glow-primary" /> Discovery Calibration
+                        <Settings className="h-4 w-4 glow-primary" /> Campaign Settings
                     </div>
-                    <h1 className="text-4xl font-black tracking-tight text-white">Refine <span className="text-primary">Hub DNA</span></h1>
-                    <p className="text-[13px] text-zinc-500 font-medium max-w-xl leading-relaxed">Calibrate your search hub's intelligence parameters and outreach links to optimize discovery performance.</p>
+                    <h1 className="text-4xl font-black tracking-tight text-white">Edit <span className="text-primary">Campaign Targets</span></h1>
+                    <p className="text-[13px] text-zinc-500 font-medium max-w-xl leading-relaxed">Adjust your lead search criteria and outreach links to target the right prospects.</p>
                 </div>
 
                 <CampaignForm 

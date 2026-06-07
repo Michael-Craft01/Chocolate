@@ -12,7 +12,8 @@ import {
   MapPin,
   Target,
   Pencil,
-  ExternalLink
+  ExternalLink,
+  Upload
 } from "lucide-react";
 import { authJson } from "@/lib/api";
 import { AIAssistButton } from "@/components/AIAssistButton";
@@ -39,12 +40,17 @@ export default function SettingsPage() {
     targetCountry: "ZW",
     locations: ["Harare"],
     industries: [""],
+    targetPainPoints: "",
     discordWebhook: "",
     automationMode: "MANUAL",
     autoRunFrequency: "MANUAL",
   });
 
   const [savedData, setSavedData] = useState({ ...formData });
+
+  const [industriesInput, setIndustriesInput] = useState("");
+  const [locationsInput, setLocationsInput] = useState("");
+  const [targetPainPoints, setTargetPainPoints] = useState("");
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -61,6 +67,7 @@ export default function SettingsPage() {
             targetCountry: data.campaign?.targetCountry || "ZW",
             locations: data.campaign?.locations || ["Harare"],
             industries: data.campaign?.industries || [""],
+            targetPainPoints: data.campaign?.targetPainPoints || "",
             discordWebhook: data.campaign?.discordWebhook || "",
             automationMode: data.user?.automationMode || "MANUAL",
             autoRunFrequency: data.user?.autoRunFrequency || "MANUAL",
@@ -77,14 +84,54 @@ export default function SettingsPage() {
     loadSettings();
   }, []);
 
+  useEffect(() => {
+    if (isEditing) {
+      setIndustriesInput(formData.industries.join(", "));
+      setLocationsInput(formData.locations.join(", "));
+      setTargetPainPoints(formData.targetPainPoints || "");
+    }
+  }, [isEditing, formData]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, fieldKey: "locations" | "industries") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const parsed = text
+        .split(/[\n\r,;\t]+/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0 && !item.startsWith('"') && !item.endsWith('"'));
+
+      const joined = parsed.join(", ");
+      if (fieldKey === "locations") {
+        setLocationsInput(joined);
+      } else {
+        setIndustriesInput(joined);
+      }
+      toast.success(`Imported ${parsed.length} items from ${file.name}`);
+    };
+    reader.readAsText(file);
+  };
+
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setSaving(true);
     setSuccess(false);
 
+    const updatedFormData = {
+      ...formData,
+      industries: industriesInput.split(",").map(i => i.trim()).filter(i => i),
+      locations: locationsInput.split(",").map(l => l.trim()).filter(l => l),
+      targetPainPoints: targetPainPoints,
+    };
+
     const savePromise = authJson("/api/settings", {
       method: "POST",
-      body: JSON.stringify(formData),
+      body: JSON.stringify(updatedFormData),
     });
 
     toast.promise(savePromise, {
@@ -95,7 +142,8 @@ export default function SettingsPage() {
 
     try {
       await savePromise;
-      setSavedData(formData);
+      setFormData(updatedFormData);
+      setSavedData(updatedFormData);
       setSuccess(true);
       setIsEditing(false);
       setTimeout(() => setSuccess(false), 3000);
@@ -122,7 +170,7 @@ export default function SettingsPage() {
             <ShieldCheck className="h-4 w-4" /> {isEditing ? "Modifying Identity" : "Secure Configuration"}
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">Settings</h1>
-          <p className="text-sm text-foreground/60">Configure your business identity and discovery preferences for HyprLead AI.</p>
+          <p className="text-sm text-foreground/60">Configure your business identity and campaign preferences for HyprLead AI.</p>
         </div>
         
         {!isEditing ? (
@@ -161,14 +209,14 @@ export default function SettingsPage() {
           </div>
           <div className="text-left">
             <h2 className="text-lg font-bold text-foreground">Automation Controls</h2>
-            <p className="text-xs text-foreground/60">Control how automatic discovery cycles spend your balance.</p>
+            <p className="text-xs text-foreground/60">Control how automatic campaign searches spend your balance.</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
             { label: "Mode", value: formData.automationMode },
-            { label: "Cycles Left", value: stats?.cycles?.remaining ?? 0 },
-            { label: "Leads / Cycle", value: stats?.cycles?.leadsPerCycle ?? 0 },
+            { label: "Searches Left", value: stats?.cycles?.remaining ?? 0 },
+            { label: "Leads / Search", value: stats?.cycles?.leadsPerCycle ?? 0 },
             { label: "Latest Result", value: stats?.latestCycle ? `${stats.latestCycle.leadsFound}/${stats.latestCycle.maxLeads}` : "None" },
           ].map((item) => (
             <div key={item.label} className="rounded-xl border border-card-border bg-foreground/[0.02] p-4 text-left">
@@ -179,9 +227,9 @@ export default function SettingsPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {[
-            { value: "MANUAL", label: "Manual", desc: "Only spend cycles when you press Run Cycle." },
-            { value: "AUTOMATIC", label: "Automatic", desc: "Spend cycles on the plan schedule." },
-            { value: "SMART", label: "Smart", desc: "Run automatically only when campaign yield looks healthy." },
+            { value: "MANUAL", label: "Manual Mode", desc: "Scan only when triggered manually. Ideal for conserving search credits." },
+            { value: "AUTOMATIC", label: "Automatic Mode", desc: "Runs sweeps on schedule in the background, consuming 1 credit per sweep." },
+            { value: "SMART", label: "Smart Automatic", desc: "Runs on schedule, but pauses if yield drops below 20% to save credit balance." },
           ].map((mode) => (
             <button key={mode.value} type="button" onClick={() => setFormData(prev => ({
                 ...prev,
@@ -202,15 +250,15 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-foreground/70 leading-relaxed">
             <div className="space-y-1.5">
               <span className="font-bold text-foreground block">Manual Mode</span>
-              <p>Scans are triggered only when you click "Run Cycle" manually. No background sweeps will occur, conserving your cycle balance indefinitely.</p>
+              <p>Search sweeps are executed exclusively when you click "Run Search" inside a campaign page. This mode guarantees zero background credit spend, letting you test ideas manually without recurring charges.</p>
             </div>
             <div className="space-y-1.5 border-t md:border-t-0 md:border-l border-card-border pt-4 md:pt-0 md:pl-6">
               <span className="font-bold text-foreground block">Automatic Mode</span>
-              <p>Scans run automatically in the background at your selected schedule (Weekly, Every 2 Days, or Daily), consuming 1 cycle balance per sweep.</p>
+              <p>Automated background scans trigger at your exact chosen frequency (Weekly, Every 2 Days, or Daily). Each automated sweep deducts exactly 1 credit from your remaining monthly cycle balance.</p>
             </div>
             <div className="space-y-1.5 border-t md:border-t-0 md:border-l border-card-border pt-4 md:pt-0 md:pl-6">
-              <span className="font-bold text-foreground block">Smart Mode</span>
-              <p>Scans run on your schedule, but only when targeting signals predict high qualified lead yields, saving your balance during dry periods.</p>
+              <span className="font-bold text-foreground block">Smart Automatic</span>
+              <p>An intelligent credit-saver mode. Sweeps run on your chosen schedule but are automatically paused in the background if the previous sweep failed or yielded less than 20% of its target capacity, preventing credit waste on dry queries.</p>
             </div>
           </div>
         </div>
@@ -383,7 +431,7 @@ export default function SettingsPage() {
               <Target size={22} />
             </div>
             <div className="text-left">
-              <h2 className="text-lg font-bold text-foreground">Discovery Targeting</h2>
+              <h2 className="text-lg font-bold text-foreground">Campaign Targeting</h2>
               <p className="text-xs text-foreground/60">Configure your default search scopes and vertical markets</p>
             </div>
           </div>
@@ -392,10 +440,25 @@ export default function SettingsPage() {
             // View Mode
             <div className="space-y-6">
               <div className="space-y-1 text-left">
-                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Core Industry</span>
+                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Core Profile Industry</span>
                 <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                   {formData.industry || "Not configured"}
                 </p>
+              </div>
+
+              <div className="space-y-1 text-left">
+                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Target Industries</span>
+                <div className="flex flex-wrap gap-2 p-3 bg-foreground/[0.02] border border-foreground/5 rounded-lg">
+                  {formData.industries && formData.industries.filter(i => i.trim()).length > 0 ? (
+                    formData.industries.filter(i => i.trim()).map((ind, idx) => (
+                      <span key={idx} className="px-2.5 py-1 text-xs font-semibold bg-primary/10 text-primary rounded-full border border-primary/20">
+                        {ind}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-foreground/45 italic ml-1">None configured</span>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -409,11 +472,33 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <div className="space-y-1 text-left">
-                  <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Default City</span>
+                  <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Target Country Code</span>
                   <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
-                    {formData.locations[0] || "Not configured"}
+                    {formData.targetCountry || "Not configured"}
                   </p>
                 </div>
+              </div>
+
+              <div className="space-y-1 text-left">
+                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Target Cities / Locations</span>
+                <div className="flex flex-wrap gap-2 p-3 bg-foreground/[0.02] border border-foreground/5 rounded-lg">
+                  {formData.locations && formData.locations.filter(l => l.trim()).length > 0 ? (
+                    formData.locations.filter(l => l.trim()).map((loc, idx) => (
+                      <span key={idx} className="px-2.5 py-1 text-xs font-semibold bg-foreground/10 text-foreground/80 rounded-full border border-foreground/10">
+                        {loc}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-foreground/45 italic ml-1">None configured</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1 text-left">
+                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Target Pain Points</span>
+                <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-relaxed whitespace-pre-wrap">
+                  {formData.targetPainPoints || "None configured"}
+                </p>
               </div>
 
               <div className="space-y-1 text-left">
@@ -431,7 +516,7 @@ export default function SettingsPage() {
                   <MapPin size={16} />
                 </div>
                 <p className="text-xs text-foreground/80 leading-relaxed font-semibold">
-                  These location rules determine the standard sweep radius for the HyprLead AI discovery engine during automatic targeting.
+                  These location rules determine the standard search radius for the HyprLead AI search engine during automatic targeting.
                 </p>
               </div>
             </div>
@@ -440,7 +525,7 @@ export default function SettingsPage() {
             <div className="space-y-5">
               <div className="space-y-2 text-left">
                 <div className="flex items-center justify-between">
-                  <label className={labelClass}>Core Industry</label>
+                  <label className={labelClass}>Core Profile Industry</label>
                   <AIAssistButton 
                     field="Industry" 
                     currentValue={formData.industry} 
@@ -456,6 +541,40 @@ export default function SettingsPage() {
                   className={inputClass}
                   required
                 />
+              </div>
+
+              <div className="space-y-2 text-left">
+                <div className="flex items-center justify-between">
+                  <label className={labelClass}>Target Industries</label>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all bg-foreground/5 hover:bg-foreground/10 text-foreground/70 cursor-pointer">
+                      <Upload size={10} />
+                      <span>Upload List</span>
+                      <input
+                        type="file"
+                        accept=".txt,.csv"
+                        onChange={(e) => handleFileUpload(e, "industries")}
+                        className="hidden"
+                      />
+                    </label>
+                    <AIAssistButton 
+                      field="Target Industries" 
+                      currentValue={industriesInput} 
+                      context={{ companyName: formData.companyName, industry: formData.industry }}
+                      onRefined={(val) => setIndustriesInput(val)} 
+                      className="rounded-lg"
+                    />
+                  </div>
+                </div>
+                <input 
+                  type="text" 
+                  value={industriesInput}
+                  onChange={e => setIndustriesInput(e.target.value)}
+                  placeholder="e.g. Retail, Cafes, Software"
+                  className={inputClass}
+                  required
+                />
+                <p className="text-[10px] text-foreground/45">Enter comma-separated values, or upload a TXT/CSV list file.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -474,24 +593,56 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2 text-left">
                   <div className="flex items-center justify-between">
-                    <label className={labelClass}>Default City</label>
-                    <AIAssistButton 
-                      field="Target City" 
-                      currentValue={formData.locations[0]} 
-                      context={{ targetCountry: formData.targetCountry }}
-                      onRefined={(val) => setFormData(prev => ({...prev, locations: [val]}))} 
-                      className="rounded-lg"
-                    />
+                    <label className={labelClass}>Target Cities / Locations</label>
+                    <div className="flex items-center gap-2">
+                      <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all bg-foreground/5 hover:bg-foreground/10 text-foreground/70 cursor-pointer">
+                        <Upload size={10} />
+                        <span>Upload List</span>
+                        <input
+                          type="file"
+                          accept=".txt,.csv"
+                          onChange={(e) => handleFileUpload(e, "locations")}
+                          className="hidden"
+                        />
+                      </label>
+                      <AIAssistButton 
+                        field="Target Locations" 
+                        currentValue={locationsInput} 
+                        context={{ targetCountry: formData.targetCountry }}
+                        onRefined={(val) => setLocationsInput(val)} 
+                        className="rounded-lg"
+                      />
+                    </div>
                   </div>
                   <input 
                     type="text" 
-                    value={formData.locations[0]}
-                    onChange={e => setFormData({...formData, locations: [e.target.value]})}
-                    placeholder="e.g. Harare"
+                    value={locationsInput}
+                    onChange={e => setLocationsInput(e.target.value)}
+                    placeholder="e.g. Harare, Cape Town"
                     className={inputClass}
                     required
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2 text-left">
+                <div className="flex items-center justify-between">
+                  <label className={labelClass}>Target Pain Points</label>
+                  <AIAssistButton 
+                    field="Target Pain Points" 
+                    currentValue={targetPainPoints} 
+                    context={{ companyName: formData.companyName, industry: formData.industry }}
+                    onRefined={(val) => setTargetPainPoints(val)} 
+                    className="rounded-lg"
+                  />
+                </div>
+                <textarea 
+                  rows={3}
+                  value={targetPainPoints}
+                  onChange={e => setTargetPainPoints(e.target.value)}
+                  placeholder="Describe default pain points to focus on..."
+                  className={`${inputClass} resize-none`}
+                />
               </div>
 
               <div className="space-y-2 text-left">
@@ -511,7 +662,7 @@ export default function SettingsPage() {
                   <MapPin size={16} />
                 </div>
                 <p className="text-xs text-foreground/80 leading-relaxed font-semibold">
-                  These location rules determine the standard sweep radius for the HyprLead AI discovery engine during automatic targeting.
+                  These location rules determine the standard search radius for the HyprLead AI search engine during automatic targeting.
                 </p>
               </div>
             </div>
@@ -529,7 +680,7 @@ export default function SettingsPage() {
             </div>
             <h3 className="text-2xl font-bold tracking-tight text-foreground">Sync Campaign Identity</h3>
             <p className="text-sm text-foreground/75 leading-relaxed">
-              Syncing these settings immediately propagates your core industry profile and region targets to the HyprLead AI discovery engine.
+              Syncing these settings immediately propagates your core industry profile and region targets to the HyprLead AI search engine.
             </p>
           </div>
           

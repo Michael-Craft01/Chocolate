@@ -33,7 +33,7 @@ export function CommandPalette() {
     try {
       const data = await authJson<any>(`/api/search?q=${val}`).catch(() => ({ leads: [], campaigns: [] }));
       const formatted = [
-        ...(data.campaigns || []).map((c: any) => ({ ...c, type: 'Discovery Hub', icon: Compass })),
+        ...(data.campaigns || []).filter((c: any) => c.name !== 'Main Engine').map((c: any) => ({ ...c, type: 'Search Campaign', icon: Compass })),
         ...(data.leads || []).map((l: any) => ({ ...l, name: l.business?.name, type: 'Lead Collection', icon: Shield }))
       ];
       setResults(formatted.slice(0, 8));
@@ -76,7 +76,7 @@ export function CommandPalette() {
                 <Search className="h-5 w-5 text-primary" />
                 <input
                   autoFocus
-                  placeholder="Search for discovery hubs, leads, or settings..."
+                  placeholder="Search for campaigns, leads, or settings..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   className="flex-1 bg-transparent border-none outline-none text-[13px] font-medium text-white placeholder:text-zinc-500"
@@ -98,7 +98,7 @@ export function CommandPalette() {
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { name: "Home Dashboard", href: "/dashboard", icon: Home },
-                        { name: "Discovery Hubs", href: "/campaigns", icon: Compass },
+                        { name: "Campaigns", href: "/campaigns", icon: Compass },
                         { name: "Lead Collection", href: "/leads", icon: Shield },
                         { name: "Growth Plan", href: "/billing", icon: Zap },
                         { name: "My Profile", href: "/profile", icon: User },
@@ -118,7 +118,7 @@ export function CommandPalette() {
                 {query && results.length > 0 && (
                   <div className="p-2 space-y-1">
                     {results.map((res) => (
-                      <button key={res.id} onClick={() => navigate(res.type === 'Discovery Hub' ? `/campaigns` : `/leads`)}
+                      <button key={res.id} onClick={() => navigate(res.type === 'Search Campaign' ? `/campaigns` : `/leads`)}
                         className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-primary/5 border border-transparent hover:border-primary/10 transition-all group"
                       >
                         <div className="flex items-center gap-4">
@@ -142,7 +142,7 @@ export function CommandPalette() {
                       <SearchX className="h-6 w-6 text-zinc-500" />
                     </div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">No results found for your search</p>
-                    <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Try searching for a hub name or business category</p>
+                    <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Try searching for a campaign name or business category</p>
                   </div>
                 )}
               </div>

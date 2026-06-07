@@ -31,7 +31,7 @@ export const campaignStatusSchema = z.object({
 // Billing Checkout Schema
 export const billingSchema = z.object({
   method: z.enum(['STRIPE', 'PAYNOW']),
-  tier: z.enum(['STARTER', 'PROFESSIONAL', 'ELITE', 'CYCLE_PACK']),
+  tier: z.enum(['FREE', 'STARTER', 'PROFESSIONAL', 'ELITE', 'CYCLE_PACK']),
   amount: z.number().optional(), // For cycle packs
 });
 

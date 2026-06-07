@@ -9,7 +9,7 @@ import { ApiAuthError } from "@/lib/api";
 import { fetchDashboardStats } from "@/lib/services/dashboard";
 
 export function UsageBar() {
-  const [usage, setUsage] = useState({ remaining: 0, monthlyLimit: 0, leadsPerCycle: 10 });
+  const [usage, setUsage] = useState({ remaining: 0, monthlyLimit: 0, leadsPerCycle: 15 });
 
   useEffect(() => {
     async function fetchUsage() {
@@ -39,7 +39,7 @@ export function UsageBar() {
   return (
     <div className="px-5 py-6 space-y-4 bg-white/[0.02] border-t border-white/5">
       <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-        <span>Cycle Wallet</span>
+        <span>Search Wallet</span>
         <span className={cn("text-white", isEmpty && "text-red-400", isLow && "text-amber-400")}>{usage.remaining} left</span>
       </div>
       
@@ -57,7 +57,7 @@ export function UsageBar() {
           isEmpty ? "bg-red-500/10 text-red-300" : "bg-amber-500/10 text-amber-300"
         )}>
           <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-          {isEmpty ? "Add cycles to run discovery." : "Top up before automation pauses."}
+          {isEmpty ? "Add credits to run search campaigns." : "Top up before automation pauses."}
         </div>
       )}
 

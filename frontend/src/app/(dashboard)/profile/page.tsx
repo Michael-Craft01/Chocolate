@@ -60,7 +60,7 @@ export default function ProfilePage() {
   }, []);
 
   if (loading) {
-    return <BrandedLoader message="Decoding agent credentials..." />;
+    return <BrandedLoader message="Loading account details..." />;
   }
 
   if (error || !profile) {
@@ -107,7 +107,7 @@ export default function ProfilePage() {
               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-foreground">{profile.email.split('@')[0]}</h1>
-            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Sales Intelligence Dossier</p>
+            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Sales Account Details</p>
           </div>
         </div>
 
@@ -191,15 +191,15 @@ export default function ProfilePage() {
                   </p>
                   <p className="text-xs text-foreground/75 font-semibold mt-2 leading-relaxed max-w-xl">
                     {profile.tier === 'FREE' 
-                      ? "Your account is active on our basic tier. Upgrade your professional sales membership to unlock automatic discovery cycles." 
-                      : "Your sales agent seat is active and optimized. Discovery cycles run automatically from your monthly cycle balance."}
+                      ? "Your account is active on our basic tier. Upgrade your professional sales membership to unlock automatic lead searches." 
+                      : "Your sales agent seat is active and optimized. Searches run automatically from your monthly credit balance."}
                   </p>
                 </div>
 
                 {/* Quota Progress Meter */}
                 <div className="space-y-2 p-5 rounded-2xl bg-background border border-card-border shadow-sm">
                   <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Monthly Discovery Cycles</span>
+                    <span className="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Monthly Search Runs</span>
                     <span className="text-foreground">
                       <span className="text-primary font-bold">{cyclesRemaining}</span> / <span className="font-bold">{cycleLimit} Remaining</span>
                     </span>
@@ -226,7 +226,7 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Outbound Velocity</p>
-                      <p className="text-xs font-extrabold text-foreground uppercase tracking-wider">Scheduled Cycles</p>
+                      <p className="text-xs font-extrabold text-foreground uppercase tracking-wider">Scheduled Searches</p>
                     </div>
                   </div>
                 </div>

@@ -141,14 +141,41 @@ async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweep
     });
 }
 
-export async function processLeadsForQuery(campaign: any, queryData: QueryData, targetCount: number, sweepId?: string, sweepDate?: Date, cycleRunId?: string): Promise<number> {
+// ── Tier-based runtime budgets (milliseconds per cycle) ──
+const TIER_RUNTIME_MS: Record<string, number> = {
+    FREE: 15 * 60 * 1000,          // 15 minutes
+    STARTER: 45 * 60 * 1000,       // 45 minutes
+    PROFESSIONAL: 90 * 60 * 1000,  // 90 minutes
+    ELITE: 180 * 60 * 1000,        // 180 minutes
+};
+
+function getTierRuntimeMs(tier?: string | null): number {
+    return TIER_RUNTIME_MS[tier?.toUpperCase() ?? 'FREE'] ?? TIER_RUNTIME_MS['FREE']!;
+}
+
+// ── Tier-based zero-yield patience (rounds with 0 new leads before aborting) ──
+const TIER_ZERO_YIELD_ROUNDS: Record<string, number> = {
+    FREE: 2,
+    STARTER: 3,
+    PROFESSIONAL: 5,
+    ELITE: 8,
+};
+
+function getZeroYieldRounds(tier?: string | null): number {
+    return TIER_ZERO_YIELD_ROUNDS[tier?.toUpperCase() ?? 'FREE'] ?? 3;
+}
+
+// ── Scraper card limit per query — matches scroll capacity ──
+const CARD_LIMIT = 40;
+
+export async function processLeadsForQuery(campaign: any, queryData: QueryData, targetCount: number, sweepId?: string, sweepDate?: Date, cycleRunId?: string, cardLimit: number = CARD_LIMIT): Promise<number> {
     let leadsFound = 0;
     try {
         if (!campaign || campaign.status !== 'ACTIVE') return 0;
         
-        // Industrial Retry for Scraper
+        // Industrial Retry for Scraper — pass cardLimit so scroll capacity is fully used
         const businesses = await withRetry(
-            () => scraper.scrape(queryData.query, queryData.country, queryData.page),
+            () => scraper.scrape(queryData.query, queryData.country, queryData.page, cardLimit),
             { retries: 3, delay: 2000, factor: 2, taskName: `Scrape: ${queryData.query}` }
         ).catch(() => []);
 
@@ -330,7 +357,7 @@ export async function triggerEngineCycle() {
                     const stillNeeded = target - campaignTotal;
                     if (stillNeeded <= 0) break;
 
-                    const count = await processLeadsForQuery(campaign, query, Math.min(20, stillNeeded), sweepId, sweepDate);
+                    const count = await processLeadsForQuery(campaign, query, Math.min(CARD_LIMIT, stillNeeded), sweepId, sweepDate, undefined, CARD_LIMIT);
                     campaignTotal += count;
                     await sleep(1000);
                 }
@@ -394,7 +421,7 @@ export async function runCampaignCycle(cycleRunId: string) {
         });
     }
 
-    if (user.paymentStatus !== 'active' && user.paymentStatus !== 'trialing') {
+    if (user.paymentStatus !== 'active' && user.paymentStatus !== 'trialing' && user.paymentStatus !== 'free') {
         return prisma.cycleRun.update({
             where: { id: cycleRunId },
             data: { status: 'FAILED', failureReason: 'User does not have an active subscription', completedAt: new Date() }
@@ -419,7 +446,7 @@ export async function runCampaignCycle(cycleRunId: string) {
     const sweepId = cycle.id;
     let leadsFound = 0;
     let zeroYieldRounds = 0;
-    const MAX_ZERO_YIELD_ROUNDS = 3;
+    const MAX_ZERO_YIELD_ROUNDS = getZeroYieldRounds(cycle.user?.tier);
     let abortedDueToPause = false;
 
     await prisma.cycleRun.update({
@@ -461,10 +488,11 @@ export async function runCampaignCycle(cycleRunId: string) {
                 const count = await processLeadsForQuery(
                     campaign,
                     query,
-                    Math.min(10, cycle.maxLeads - leadsFound),
+                    Math.min(CARD_LIMIT, cycle.maxLeads - leadsFound),
                     sweepId,
                     startedAt,
-                    cycleRunId
+                    cycleRunId,
+                    CARD_LIMIT
                 );
 
                 leadsFound += count;
@@ -518,7 +546,7 @@ export async function createAndRunCampaignCycle(campaignId: string, userId: stri
             userId,
             status: 'ACTIVE',
             user: {
-                paymentStatus: { in: ['active', 'trialing'] },
+                paymentStatus: { in: ['active', 'trialing', 'free'] },
                 cyclesRemaining: { gt: 0 }
             }
         },
@@ -556,7 +584,7 @@ export async function createAndRunCampaignCycle(campaignId: string, userId: stri
         where: {
             id: userId,
             cyclesRemaining: { gt: 0 },
-            paymentStatus: { in: ['active', 'trialing'] }
+            paymentStatus: { in: ['active', 'trialing', 'free'] }
         },
         data: { cyclesRemaining: { decrement: 1 } }
     });
@@ -565,13 +593,19 @@ export async function createAndRunCampaignCycle(campaignId: string, userId: stri
         throw new Error('No discovery cycles remaining');
     }
 
+    const tier = campaign.user.tier || 'FREE';
+    const maxLeads = campaign.user.leadsPerCycle || 15;  // Floor is FREE tier (15), not 10
+    const maxRuntimeMs = getTierRuntimeMs(tier);
+
+    logger.info({ tier, maxLeads, maxRuntimeMs: `${maxRuntimeMs / 60000}min` }, '[CYCLE] Creating cycle with tier-calibrated parameters');
+
     const cycle = await prisma.cycleRun.create({
         data: {
             userId,
             campaignId,
             triggerType,
-            maxLeads: campaign.user.leadsPerCycle || 10,
-            maxRuntimeMs: 15 * 60 * 1000
+            maxLeads,
+            maxRuntimeMs
         }
     });
 

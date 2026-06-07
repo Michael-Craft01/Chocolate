@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Check, ArrowRight, Shield, Network, Fingerprint, Database } from "lucide-react";
+import { Check, ArrowRight, Shield, Network, Fingerprint, Database, Zap, Compass, ShieldCheck, Sparkles } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import Link from "next/link";
@@ -16,45 +16,69 @@ export default function PricingPage() {
       price: "$0",
       description: "For individual builders exploring the platform.",
       features: [
-        "Manual demo discovery cycle",
-        "Standard AI Analysis",
-        "Google Maps Integration",
-        "Email Summaries",
-        "CSV Data Export",
+        "1 Campaign Limit",
+        "Up to 15 Leads / Cycle",
+        "Standard AI analysis",
+        "Google Maps integration",
+        "CSV Data Export"
       ],
       cta: "Choose Plan",
-      color: ""
+      color: "bg-white/[0.01] border-zinc-800 hover:border-zinc-700/60 shadow-sm",
+      badge: "Basic Access",
+      icon: Compass,
+      accent: "text-zinc-400"
     },
     {
-      name: "Standard",
+      name: "Starter",
       price: isYearly ? "$15" : "$20",
       description: "For freelancers and small teams who need more freedom.",
       features: [
-        "4 Discovery Cycles / Month",
-        "Up to 25 Leads / Cycle",
-        "Detailed Pain Point Detection",
-        "WhatsApp Deep-Linking",
-        "Priority Support",
+        "1 Campaign Limit",
+        "Up to 150 Leads / Cycle",
+        "Weekly Automated Searches",
+        "Standard search speed",
+        "CSV Data Export"
       ],
       cta: "Choose Plan",
-      color: ""
+      color: "bg-white/[0.02] border-white/5 hover:border-white/10 hover:shadow-emerald-950/5 hover:scale-[1.01] transition-all",
+      badge: "Growth",
+      icon: Zap,
+      accent: "text-emerald-400"
     },
     {
-      name: "Pro",
+      name: "Professional",
       price: isYearly ? "$39" : "$49",
       description: "For scaling revenue leaders and professional creators.",
       features: [
-        "15 Discovery Cycles / Month",
-        "Up to 40 Leads / Cycle",
-        "Advanced AI Modeling",
-        "Custom Outreach Scripts",
-        "5 Search Regions",
-        "Real-time Dashboard",
-        "Brand Customization"
+        "5 Campaigns Limit",
+        "Up to 400 Leads / Cycle",
+        "Every 2 Days Automated Searches",
+        "High-speed search priority",
+        "Discord Webhooks Integration"
       ],
       cta: "Choose Plan",
       popular: true,
-      color: "glow-border-green"
+      color: "bg-white/[0.06] border-primary/60 shadow-[0_0_30px_-5px_rgba(16,185,129,0.25)] hover:scale-[1.03] transition-all ring-1 ring-primary/30",
+      badge: "Best Value",
+      icon: Sparkles,
+      accent: "text-primary"
+    },
+    {
+      name: "Elite",
+      price: isYearly ? "$240" : "$300",
+      description: "For agencies and large teams requiring high volume growth.",
+      features: [
+        "10 Campaigns Limit",
+        "Up to 800 Leads / Cycle",
+        "Daily Automated Searches",
+        "Maximum search speed",
+        "24/7 Priority Support"
+      ],
+      cta: "Choose Plan",
+      color: "bg-white/[0.02] border-white/5 hover:border-white/10 hover:shadow-indigo-950/5 hover:scale-[1.01] transition-all",
+      badge: "Enterprise",
+      icon: ShieldCheck,
+      accent: "text-indigo-400"
     }
   ];
 
@@ -94,53 +118,65 @@ export default function PricingPage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 items-stretch">
-            {plans.map((plan, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className={`bento-card p-10 flex flex-col ${plan.color} relative overflow-hidden group`}
-              >
-                {plan.popular && (
-                  <div className="absolute top-0 right-0 p-8">
-                     <div className="px-3 py-1 rounded-full bg-primary/20 text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20">Popular</div>
-                  </div>
-                )}
-
-                <div className="space-y-2 mb-10 text-left">
-                   <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
-                   <div className="flex items-baseline gap-1">
-                      <span className="text-5xl font-bold text-foreground tracking-tighter">{plan.price}</span>
-                      <span className="text-foreground/50 font-bold text-sm">/m</span>
-                   </div>
-                   <p className="text-foreground/60 text-xs font-semibold leading-relaxed">{plan.description}</p>
-                </div>
-
-                <div className="space-y-5 mb-12 flex-grow text-left">
-                   {plan.features.map((feature, j) => (
-                     <div key={j} className="flex items-start gap-3 text-xs font-semibold text-foreground/80 leading-relaxed">
-                        <div className="h-5 w-5 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 mt-0.5 text-primary">
-                           <Check className="h-3 w-3 text-primary" />
-                        </div>
-                        <span>{feature}</span>
-                     </div>
-                   ))}
-                </div>
-
-                <Link 
-                  href="/signup" 
-                  className={`w-full h-12 flex items-center justify-center rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
-                    plan.popular
-                      ? "btn-pill-white !bg-primary hover:!bg-primary-hover !text-white"
-                      : "bg-foreground/5 hover:bg-foreground/10 text-foreground active:scale-98"
-                  }`}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
+            {plans.map((plan, i) => {
+              const TierIcon = plan.icon;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className={`bento-card p-8 flex flex-col ${plan.color} relative overflow-hidden group`}
                 >
-                   {plan.cta}
-                </Link>
-              </motion.div>
-            ))}
+                  {plan.popular ? (
+                    <div className="absolute top-0 right-0 p-6">
+                       <div className="px-3 py-1 rounded-full bg-primary/20 text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20 flex items-center gap-1">
+                         <Sparkles className="h-3 w-3 animate-pulse" /> {plan.badge}
+                       </div>
+                    </div>
+                  ) : (
+                    <div className="absolute top-0 right-0 p-6">
+                       <div className="px-2.5 py-0.5 rounded-full bg-foreground/5 text-foreground/50 text-[9px] font-bold uppercase tracking-widest border border-foreground/10">
+                         {plan.badge}
+                       </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2 mb-8 text-left pt-4">
+                     <div className="flex items-center gap-2">
+                       <TierIcon className={`h-4.5 w-4.5 ${plan.accent}`} />
+                       <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground/80 leading-none">{plan.name}</h3>
+                     </div>
+                     <div className="flex items-baseline gap-1 mt-2">
+                        <span className="text-7xl md:text-8xl font-black text-foreground tracking-tight leading-none">{plan.price}</span>
+                        <span className="text-foreground/50 font-black text-[10px] uppercase tracking-widest ml-2">/ month</span>
+                     </div>
+                     <p className="text-foreground/60 text-[11px] font-semibold leading-relaxed min-h-[32px]">{plan.description}</p>
+                  </div>
+
+                  <div className="space-y-4 mb-8 flex-grow text-left">
+                     {plan.features.map((feature, j) => (
+                       <div key={j} className="flex items-start gap-3 text-xs font-semibold text-foreground/75 leading-relaxed min-h-[20px]">
+                          <Check className={`h-4 w-4 ${plan.accent} shrink-0 mt-0.5`} />
+                          <span>{feature}</span>
+                       </div>
+                     ))}
+                  </div>
+
+                  <Link 
+                    href="/signup" 
+                    className={`w-full h-12 flex items-center justify-center rounded-full text-xs font-black uppercase tracking-wider transition-all mt-auto ${
+                      plan.popular
+                        ? "bg-primary text-white hover:bg-primary/95 hover:scale-[1.02] shadow-md shadow-primary/25"
+                        : "bg-transparent border border-foreground/15 hover:border-foreground/30 hover:bg-foreground/5 text-foreground active:scale-98"
+                    }`}
+                  >
+                     {plan.cta}
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>

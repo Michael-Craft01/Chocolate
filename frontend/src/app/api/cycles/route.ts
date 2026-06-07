@@ -9,7 +9,12 @@ export async function GET(req: NextRequest) {
   try {
     const limit = Math.min(100, parseInt(req.nextUrl.searchParams.get('limit') || '20'));
     const cycles = await prisma.cycleRun.findMany({
-      where: { userId: user.id },
+      where: { 
+        userId: user.id,
+        campaign: {
+          name: { not: 'Main Engine' }
+        }
+      },
       orderBy: { createdAt: 'desc' },
       take: limit,
       include: {

@@ -23,12 +23,18 @@ export class WebhookHandler {
             logger.warn({ userId }, '⚠️ Webhook received for non-existent ID. No recovery path available without event context.');
         }
 
-        const dailyLimit = tier === 'STARTER' ? 100 : tier === 'PROFESSIONAL' ? 500 : 2500;
-        const monthlyCycleLimit = tier === 'STARTER' ? 4 : tier === 'PROFESSIONAL' ? 15 : 40;
-        const leadsPerCycle = tier === 'STARTER' ? 25 : tier === 'PROFESSIONAL' ? 40 : 75;
-        const autoRunFrequency = tier === 'STARTER' ? 'WEEKLY' : tier === 'PROFESSIONAL' ? 'EVERY_2_DAYS' : 'DAILY';
-        const maxCampaigns = tier === 'ELITE' ? 10 : tier === 'PROFESSIONAL' ? 5 : 1;
-        const price = tier === 'STARTER' ? 20 : tier === 'PROFESSIONAL' ? 49 : 300;
+        // ── Authoritative tier configuration table ──
+        // leadsPerCycle: what the engine targets per cycle run
+        // dailyLimit:    hard cap on total leads written per calendar day
+        // Both derived from engine throughput analysis (scroll-based scraper, tiered runtimeMs)
+        const dailyLimit         = tier === 'FREE' ? 25    : tier === 'STARTER' ? 200  : tier === 'PROFESSIONAL' ? 500  : 1000;
+        const monthlyCycleLimit  = tier === 'FREE' ? 1     : tier === 'STARTER' ? 4    : tier === 'PROFESSIONAL' ? 15   : 40;
+        const leadsPerCycle      = tier === 'FREE' ? 15    : tier === 'STARTER' ? 150  : tier === 'PROFESSIONAL' ? 400  : 800;
+        const autoRunFrequency   = tier === 'FREE' ? 'MANUAL' : tier === 'STARTER' ? 'WEEKLY' : tier === 'PROFESSIONAL' ? 'EVERY_2_DAYS' : 'DAILY';
+        const maxCampaigns       = tier === 'FREE' ? 1     : tier === 'STARTER' ? 1    : tier === 'PROFESSIONAL' ? 5    : 10;
+        const price = tier === 'FREE' ? 0 : tier === 'STARTER' ? 20 : tier === 'PROFESSIONAL' ? 49 : 300;
+        const paymentStatus = tier === 'FREE' ? 'free' : 'active';
+        const automationMode = tier === 'FREE' ? 'MANUAL' : 'AUTOMATIC';
         const now = new Date();
         const periodEnd = new Date(now);
         periodEnd.setMonth(periodEnd.getMonth() + 1);
@@ -43,12 +49,12 @@ export class WebhookHandler {
                     monthlyCycleLimit,
                     cyclesRemaining: monthlyCycleLimit,
                     leadsPerCycle,
-                    automationMode: 'AUTOMATIC',
+                    automationMode,
                     autoRunFrequency: autoRunFrequency as any,
                     currentPeriodStart: now,
                     currentPeriodEnd: periodEnd,
                     maxCampaigns,
-                    paymentStatus: 'active',
+                    paymentStatus,
                 }
             }),
             // Upsert Transaction

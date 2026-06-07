@@ -11,7 +11,8 @@ import {
     ShieldCheck,
     User,
     Link as LinkIcon,
-    Globe
+    Globe,
+    Upload
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -41,12 +42,34 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
         productName: initialData?.productName || "",
         productDescription: initialData?.productDescription || "",
         targetPainPoints: initialData?.targetPainPoints || "",
-        industries: initialData?.industries?.join(", ") || "", 
-        locations: initialData?.locations?.join(", ") || "", 
+        industries: Array.isArray(initialData?.industries) ? initialData.industries.join(", ") : (initialData?.industries || ""),
+        locations: Array.isArray(initialData?.locations) ? initialData.locations.join(", ") : (initialData?.locations || ""), 
         outreachTone: initialData?.outreachTone || "PROFESSIONAL",
         ctaLink: initialData?.ctaLink || "",
         discordWebhook: initialData?.discordWebhook || "",
+        targetCountry: initialData?.targetCountry || "ZW",
     });
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, fieldKey: "locations" | "industries") => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const text = event.target?.result as string;
+            if (!text) return;
+
+            const parsed = text
+                .split(/[\n\r,;\t]+/)
+                .map(item => item.trim())
+                .filter(item => item.length > 0 && !item.startsWith('"') && !item.endsWith('"'));
+
+            const joined = parsed.join(", ");
+            setCampaign(prev => ({ ...prev, [fieldKey]: joined }));
+            toast.success(`Imported ${parsed.length} items from ${file.name}`);
+        };
+        reader.readAsText(file);
+    };
 
     const handleSave = async () => {
         // --- PRE-FLIGHT VALIDATION ---
@@ -86,7 +109,7 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                 outreachTone: campaign.outreachTone,
                 ctaLink: campaign.ctaLink.trim() || undefined,
                 discordWebhook: campaign.discordWebhook.trim() || undefined,
-                targetCountry: "ZW",
+                targetCountry: campaign.targetCountry,
             };
 
             if (isEdit && campaignId) {
@@ -98,13 +121,13 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
         })();
 
         toast.promise(savePromise, {
-            loading: isEdit ? 'Refining Hub Parameters...' : 'Initializing Search Hub...',
-            success: isEdit ? 'Intelligence Hub Updated.' : 'Search Hub Active. AI is now hunting.',
+            loading: isEdit ? 'Saving Campaign Settings...' : 'Initializing Lead Campaign...',
+            success: isEdit ? 'Campaign Settings Updated.' : 'Campaign Active. AI search started.',
             error: (err: any) => {
                 if (err instanceof ApiRequestError && err.details) {
                     return `Validation: ${err.details.map(d => `${d.path.join('.')}: ${d.message}`).join(', ')}`;
                 }
-                return err.message || 'Failed to process hub request.';
+                return err.message || 'Failed to process campaign request.';
             }
         });
 
@@ -156,7 +179,7 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                         {/* NEW: PRODUCT WEB URL FIELD */}
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                <Globe size={10} className="text-primary" />
+                                <Globe size={10} className="text-zinc-500" />
                                 Product Web URL (High Trust Link)
                             </label>
                             <input 
@@ -164,7 +187,7 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                                 placeholder="https://yourproduct.com"
                                 value={campaign.ctaLink}
                                 onChange={(e) => setCampaign({...campaign, ctaLink: e.target.value})}
-                                className="w-full bg-white/[0.05] border border-primary/20 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/60 text-sm font-medium text-emerald-400 placeholder:text-zinc-800"
+                                className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm text-white placeholder:text-zinc-800"
                             />
                             <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider ml-1 italic">This link will be injected into all AI outreach as the primary destination.</p>
                         </div>
@@ -198,14 +221,14 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                         <Compass className="h-6 w-6" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-white tracking-tight">Discovery Context</h2>
-                        <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mt-1">Configure your search parameters.</p>
+                        <h2 className="text-xl font-bold text-white tracking-tight">Search Targets</h2>
+                        <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mt-1">Configure your campaign search parameters.</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Hub Nickname</label>
+                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Campaign Name</label>
                         <input 
                             type="text"
                             placeholder="e.g. Retail Launch"
@@ -215,23 +238,100 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                         />
                     </div>
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Target Industries</label>
+                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Target Country</label>
+                        <select 
+                            value={campaign.targetCountry}
+                            onChange={e => setCampaign({...campaign, targetCountry: e.target.value})}
+                            className="w-full bg-[#121214] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm text-white"
+                        >
+                            <option value="ZW">Zimbabwe</option>
+                            <option value="SA">South Africa</option>
+                            <option value="UK">United Kingdom</option>
+                            <option value="US">United States</option>
+                        </select>
+                    </div>
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between ml-1">
+                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Target Industries</label>
+                            <div className="flex items-center gap-2">
+                                <label className="flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-[9px] font-black uppercase tracking-widest transition-all bg-white/5 hover:bg-white/10 text-zinc-300 cursor-pointer">
+                                    <Upload size={10} />
+                                    <span>Upload List</span>
+                                    <input
+                                        type="file"
+                                        accept=".txt,.csv"
+                                        onChange={(e) => handleFileUpload(e, "industries")}
+                                        className="hidden"
+                                    />
+                                </label>
+                                <AIAssistButton 
+                                    field="Target Industries" 
+                                    currentValue={campaign.industries} 
+                                    context={{ productName: campaign.productName, productDescription: campaign.productDescription }}
+                                    onRefined={(val) => setCampaign(prev => ({...prev, industries: val}))} 
+                                />
+                            </div>
+                        </div>
                         <input 
                             type="text"
-                            placeholder="e.g. Retail, Cafes"
+                            placeholder="e.g. Retail, Cafes, Tech Services"
                             value={campaign.industries}
                             onChange={(e) => setCampaign({...campaign, industries: e.target.value})}
                             className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm text-white placeholder:text-zinc-800"
                         />
+                        <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider ml-1 italic mt-1.5">
+                            Enter target business categories separated by commas, or upload a .txt/.csv list of industries.
+                        </p>
                     </div>
-                    <div className="md:col-span-2 space-y-3">
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Specific Cities / Areas</label>
+                    <div className="space-y-3 md:col-span-2">
+                        <div className="flex items-center justify-between ml-1">
+                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Specific Cities / Areas</label>
+                            <div className="flex items-center gap-2">
+                                <label className="flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-[9px] font-black uppercase tracking-widest transition-all bg-white/5 hover:bg-white/10 text-zinc-300 cursor-pointer">
+                                    <Upload size={10} />
+                                    <span>Upload List</span>
+                                    <input
+                                        type="file"
+                                        accept=".txt,.csv"
+                                        onChange={(e) => handleFileUpload(e, "locations")}
+                                        className="hidden"
+                                    />
+                                </label>
+                                <AIAssistButton 
+                                    field="Target Locations" 
+                                    currentValue={campaign.locations} 
+                                    context={{ targetCountry: campaign.targetCountry }}
+                                    onRefined={(val) => setCampaign(prev => ({...prev, locations: val}))} 
+                                />
+                            </div>
+                        </div>
                         <input 
                             type="text"
-                            placeholder="e.g. Harare, Mutare"
+                            placeholder="e.g. Harare, Mutare, Bulawayo"
                             value={campaign.locations}
                             onChange={(e) => setCampaign({...campaign, locations: e.target.value})}
                             className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm text-white placeholder:text-zinc-800"
+                        />
+                        <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider ml-1 italic mt-1.5">
+                            Enter specific cities/regions separated by commas, or upload a .txt/.csv list of locations.
+                        </p>
+                    </div>
+                    <div className="space-y-3 md:col-span-2">
+                        <div className="flex items-center justify-between ml-1">
+                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Target Pain Points</label>
+                            <AIAssistButton 
+                                field="Target Pain Points" 
+                                currentValue={campaign.targetPainPoints} 
+                                context={{ productName: campaign.productName, productDescription: campaign.productDescription }}
+                                onRefined={(val) => setCampaign(prev => ({...prev, targetPainPoints: val}))} 
+                            />
+                        </div>
+                        <textarea 
+                            rows={3}
+                            placeholder="Describe the specific pain points AI should look for in target prospects..."
+                            value={campaign.targetPainPoints}
+                            onChange={(e) => setCampaign({...campaign, targetPainPoints: e.target.value})}
+                            className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm leading-relaxed text-zinc-300 placeholder:text-zinc-800 resize-none"
                         />
                     </div>
                 </div>
@@ -331,7 +431,7 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                     className="px-14 py-6 rounded-[2px] bg-primary text-white font-black text-xl flex items-center gap-4 transition-all shadow-2xl shadow-primary/20 hover:bg-primary/90"
                 >
                     {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <ShieldCheck size={24} />}
-                    {loading ? "PROCESSING..." : isEdit ? "APPLY HUB REFINEMENT" : "DEPLOY DISCOVERY HUB"}
+                    {loading ? "PROCESSING..." : isEdit ? "SAVE CAMPAIGN CHANGES" : "CREATE LEAD CAMPAIGN"}
                 </motion.button>
             </div>
         </div>
