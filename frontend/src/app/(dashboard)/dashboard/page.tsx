@@ -113,7 +113,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         
         {/* Main Problem-Solving Hub overview */}
-        <div className="md:col-span-8 bento-card p-6 md:p-8 flex flex-col justify-between relative overflow-hidden group rounded-3xl">
+        <div id="tour-dashboard-hub" className="md:col-span-8 bento-card p-6 md:p-8 flex flex-col justify-between relative overflow-hidden group rounded-3xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.03),transparent_50%)] pointer-events-none" />
           
           <div className="space-y-6">
@@ -164,7 +164,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Vertical Core Metrics - Business Impact Focus */}
-        <div className="md:col-span-4 flex flex-col gap-6">
+        <div id="tour-dashboard-stats" className="md:col-span-4 flex flex-col gap-6">
           {/* Estimated Pipeline Value Card */}
           <div className="flex-1 bento-card flex flex-col justify-between p-6 md:p-8 rounded-3xl">
             <div className="flex justify-between items-start">
@@ -213,7 +213,7 @@ export default function DashboardPage() {
         </div>
  
         {/* Live Problem-Solving Ledger / Discoveries */}
-        <div className="md:col-span-12 lg:col-span-8 bento-card space-y-6 p-6 md:p-8 rounded-3xl">
+        <div id="tour-dashboard-leads" className="md:col-span-12 lg:col-span-8 bento-card space-y-6 p-6 md:p-8 rounded-3xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-card-border pb-4 gap-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-card border border-card-border flex items-center justify-center shrink-0">
@@ -294,7 +294,7 @@ export default function DashboardPage() {
            </div>
  
            {/* Sleek Flat Cycle Balance Card */}
-           <div className={cn(
+           <div id="tour-dashboard-credits" className={cn(
               "bento-card p-6 md:p-8 space-y-6 group transition-all rounded-3xl",
               isCycleEmpty ? "bg-red-500/5" : isCycleLow ? "bg-amber-500/5" : ""
            )}>

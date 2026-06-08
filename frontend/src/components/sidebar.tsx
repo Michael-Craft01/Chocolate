@@ -277,6 +277,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              id={`tour-nav-${item.name.toLowerCase().replace(" ", "-")}`}
               title={isCollapsed ? item.name : undefined}
               className={cn(
                 "group flex items-center transition-all duration-300",
@@ -339,6 +340,19 @@ export function Sidebar() {
               )} />
           </div>
         )}
+
+        <button 
+          onClick={() => {
+            localStorage.removeItem("has_seen_dashboard_tour");
+            localStorage.removeItem("has_seen_campaigns_tour");
+            localStorage.removeItem("has_seen_leads_tour");
+            window.location.reload();
+          }} 
+          className={cn( "flex items-center rounded-full transition-all hover:bg-card group text-foreground w-full", isCollapsed ? "justify-center h-10 w-10 mx-auto mt-2" : "gap-3 px-4 py-2 mt-2 text-sm font-semibold" )} 
+        >
+          <Sparkles className="h-4 w-4 text-primary shrink-0 animate-pulse" />
+          {!isCollapsed && "Restart Tour"}
+        </button>
 
         <button onClick={toggleTheme} className={cn( "flex items-center rounded-full transition-all hover:bg-card group text-foreground w-full", isCollapsed ? "justify-center h-10 w-10 mx-auto mt-2" : "gap-3 px-4 py-2 mt-2 text-sm font-semibold" )} >
           {theme === "dark" ? (

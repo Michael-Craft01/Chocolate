@@ -220,6 +220,7 @@ export default function CampaignsPage() {
             </button>
             <Link 
               href="/campaigns/new" 
+              id="tour-campaigns-create"
               className="h-12 px-6 rounded-full bg-primary text-white font-bold text-xs hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 shadow-lg shadow-primary/10"
             >
               <Plus className="h-4 w-4" /> 
@@ -284,7 +285,7 @@ export default function CampaignsPage() {
       </div>
 
       {/* Filter & Search Controls */}
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div id="tour-campaigns-search" className="flex flex-col lg:flex-row gap-4">
         <div className="relative flex-1 group">
           <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
             <Compass className="h-4 w-4 text-foreground opacity-40" />
@@ -318,7 +319,7 @@ export default function CampaignsPage() {
       </div>
  
       {/* Campaigns Data Grid */}
-      <div className="grid grid-cols-1 gap-8">
+      <div id="tour-campaigns-list" className="grid grid-cols-1 gap-8">
         <AnimatePresence mode="popLayout">
           {loading ? (
             [1, 2, 3].map(i => <CardSkeleton key={i} />)

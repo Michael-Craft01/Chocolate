@@ -401,7 +401,7 @@ export default function LeadsPage() {
             />
 
             {/* Export */}
-            <div className="relative">
+            <div id="tour-leads-export" className="relative">
               <button onClick={() => setShowExportOptions(!showExportOptions)}
                 className="h-9 px-4 rounded-lg bg-primary text-white font-semibold text-xs hover:bg-primary-hover active:scale-[0.98] transition-all flex items-center gap-2 shadow-sm cursor-pointer"
               >
@@ -484,7 +484,7 @@ export default function LeadsPage() {
             </div>
 
             {/* Leads List scroll view - Dense and Compact */}
-            <div className="bg-card border border-card-border rounded-xl p-3 shadow-sm h-[580px] overflow-y-auto scrollbar-neural">
+            <div id="tour-leads-feed" className="bg-card border border-card-border rounded-xl p-3 shadow-sm h-[580px] overflow-y-auto scrollbar-neural">
               <AnimatePresence mode="popLayout">
                 {loading ? (
                   <div className="space-y-2 p-2">
@@ -568,7 +568,7 @@ export default function LeadsPage() {
 
           {/* Right Detail Panel — Form-Table Layout */}
           <div className={`lg:col-span-7 ${mobileView === "list" ? "hidden lg:block" : "block"}`}>
-            <div className="sticky top-28 self-start bg-card border border-card-border rounded-xl shadow-sm min-h-[580px] flex flex-col overflow-hidden">
+            <div id="tour-leads-details" className="sticky top-28 self-start bg-card border border-card-border rounded-xl shadow-sm min-h-[580px] flex flex-col overflow-hidden">
 
               <AnimatePresence mode="wait">
                 {activeLead ? (
