@@ -14,7 +14,7 @@ export default function DashboardLayout({
         
         <Sidebar />
         
-        <main className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar relative">
+        <main className="flex-1 overflow-y-auto pt-24 pb-6 px-6 md:p-10 custom-scrollbar relative">
           <div className="w-full">
             {children}
           </div>

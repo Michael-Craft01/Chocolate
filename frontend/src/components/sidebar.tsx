@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { 
   LayoutDashboard, Settings, LogOut, User, ShieldCheck, 
   Home, Shield, Compass, Sparkles, Zap, ChevronRight, X,
-  ArrowRight, Sun, Moon
+  ArrowRight, Sun, Moon, Menu
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -143,12 +143,24 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Toggle Button */}
-      <button onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed bottom-8 right-8 h-16 w-16 rounded-full bg-primary text-white flex items-center justify-center z-[100] shadow-2xl active:scale-95 transition-all border border-card-border"
-      >
-        <Compass className={cn("h-7 w-7", mobileOpen && "animate-spin")} />
-      </button>
+      {/* Mobile Header Bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-sidebar/85 backdrop-blur-md border-b border-card-border flex items-center justify-between px-6 z-[90]">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setMobileOpen(true)}
+            className="p-2 -ml-2 text-foreground hover:bg-card/85 rounded-full transition-colors active:scale-95"
+            aria-label="Open menu"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+          <span className="font-extrabold text-sm tracking-widest text-foreground uppercase">
+            {navItems.find(item => pathname === item.href || pathname.startsWith(`${item.href}/`))?.name || "HyprLead"}
+          </span>
+        </div>
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <img src="/logo.png" alt="Logo" className="h-6 w-6 object-contain" />
+        </Link>
+      </div>
 
       {/* Mobile Overlay */}
       <AnimatePresence>

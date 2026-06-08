@@ -7,19 +7,25 @@ export async function GET(req: NextRequest) {
   if (!user) return authError();
 
   try {
-    // Fetch full user data from Prisma
-    const dbUser = await prisma.user.findUnique({
+    // Auto-upsert the user in our Prisma database to mirror Supabase Auth
+    const dbUser = await prisma.user.upsert({
       where: { id: user.id },
+      update: { email: user.email || undefined },
+      create: {
+        id: user.id,
+        email: user.email,
+        tier: 'FREE',
+        dailyLimit: 25,
+        leadsPerCycle: 15,
+        cyclesRemaining: 1,
+        monthlyCycleLimit: 1,
+      },
       include: { profile: true }
     });
 
-    if (!dbUser) {
-      return NextResponse.json({ error: 'User not found in database' }, { status: 404 });
-    }
-
     return NextResponse.json(dbUser);
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('API Error in /api/me:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
