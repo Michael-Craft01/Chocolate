@@ -39,8 +39,8 @@ const configSchema = z.object({
     PAYNOW_INTEGRATION_ID: z.string().optional(),
     PAYNOW_INTEGRATION_KEY: z.string().optional(),
     
-    // Supabase Config
-    SUPABASE_URL: z.string().url().optional().default('http://localhost:54321'),
+    // Supabase Config (optional — engine runs without it in headless CI mode)
+    SUPABASE_URL: z.string().optional().default('http://localhost:54321'),
     SUPABASE_ANON_KEY: z.string().optional().default('placeholder-anon-key'),
     SUPABASE_JWT_SECRET: z.string().optional().default('placeholder-jwt-secret'),
     
@@ -71,9 +71,9 @@ export const config = parsedConfig.success ? parsedConfig.data : {
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     PAYNOW_INTEGRATION_ID: process.env.PAYNOW_INTEGRATION_ID,
     PAYNOW_INTEGRATION_KEY: process.env.PAYNOW_INTEGRATION_KEY,
-    SUPABASE_URL: process.env.SUPABASE_URL ?? 'http://localhost:54321',
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ?? 'placeholder-anon-key',
-    SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET ?? 'placeholder-jwt-secret',
+    SUPABASE_URL: process.env.SUPABASE_URL || 'http://localhost:54321',
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || 'placeholder-anon-key',
+    SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET || 'placeholder-jwt-secret',
     GEMINI_MODEL: process.env.GEMINI_MODEL ?? 'gemini-1.5-pro',
     ENGINE_TRIGGER_SECRET: process.env.ENGINE_TRIGGER_SECRET ?? 'dev-engine-trigger',
     MAX_CAMPAIGNS_PER_SWEEP: process.env.MAX_CAMPAIGNS_PER_SWEEP ? parseInt(process.env.MAX_CAMPAIGNS_PER_SWEEP, 10) : 50,

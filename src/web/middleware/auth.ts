@@ -13,8 +13,11 @@ export interface AuthenticatedRequest extends Request {
     };
 }
 
-// Use Supabase SDK to verify tokens — handles RS256/HS256 automatically
-const supabase = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+// Guard: createClient throws if URL is empty (e.g. unset GitHub secret injected as "")
+// In RUN_ONCE/CI mode the web server never starts, so auth middleware is never called.
+const supabaseUrl = config.SUPABASE_URL && config.SUPABASE_URL.startsWith('http') ? config.SUPABASE_URL : 'http://localhost:54321';
+const supabaseKey = config.SUPABASE_ANON_KEY || 'placeholder-anon-key';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const authenticate = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     let token: string | undefined;
