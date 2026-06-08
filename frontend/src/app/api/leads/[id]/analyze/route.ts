@@ -11,12 +11,18 @@ const openai = new OpenAI({
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 function extractJson<T>(text: string): T {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
+  const cleanText = text
+    .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
+    .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+    .replace(/<\|channel>thought[\s\S]*?<channel\|>/gi, '')
+    .trim();
+
+  const start = cleanText.indexOf('{');
+  const end = cleanText.lastIndexOf('}');
   if (start === -1 || end === -1 || end <= start) {
     throw new Error('No JSON found in response');
   }
-  return JSON.parse(text.substring(start, end + 1)) as T;
+  return JSON.parse(cleanText.substring(start, end + 1)) as T;
 }
 
 function normalizeAnalysis(parsed: any) {

@@ -36,12 +36,18 @@ function stripThinking(text: string): string {
  * model prepends reasoning prose before the actual JSON object.
  */
 function extractJson<T>(text: string): T {
-    const start = text.lastIndexOf('{');
-    const end   = text.lastIndexOf('}');
+    const cleanText = text
+        .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
+        .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+        .replace(/<\|channel>thought[\s\S]*?<channel\|>/gi, '')
+        .trim();
+
+    const start = cleanText.indexOf('{');
+    const end   = cleanText.lastIndexOf('}');
     if (start === -1 || end === -1 || end <= start) {
-        throw new Error(`No JSON object found in AI response: ${text.slice(0, 200)}`);
+        throw new Error(`No JSON object found in AI response: ${cleanText.slice(0, 200)}`);
     }
-    return JSON.parse(text.substring(start, end + 1)) as T;
+    return JSON.parse(cleanText.substring(start, end + 1)) as T;
 }
 
 /**
