@@ -14,27 +14,27 @@ export default function PricingPage() {
     {
       name: "Free",
       price: "$0",
-      description: "For individual builders exploring the platform.",
+      description: "For individuals starting to explore the platform.",
       features: [
-        "1 Campaign Limit",
-        "Up to 15 Leads / Cycle",
+        "1 Campaign",
+        "Up to 15 Leads / Search",
         "Standard AI analysis",
         "Google Maps integration",
         "CSV Data Export"
       ],
       cta: "Choose Plan",
       color: "bg-white/[0.01] border-zinc-800 hover:border-zinc-700/60 shadow-sm",
-      badge: "Basic Access",
+      badge: "Free trial",
       icon: Compass,
       accent: "text-zinc-400"
     },
     {
       name: "Starter",
       price: isYearly ? "$15" : "$20",
-      description: "For freelancers and small teams who need more freedom.",
+      description: "For freelancers and small teams needing more freedom.",
       features: [
-        "1 Campaign Limit",
-        "Up to 150 Leads / Cycle",
+        "1 Campaign",
+        "Up to 150 Leads / Search",
         "Weekly Automated Searches",
         "Standard search speed",
         "CSV Data Export"
@@ -48,13 +48,13 @@ export default function PricingPage() {
     {
       name: "Professional",
       price: isYearly ? "$39" : "$49",
-      description: "For scaling revenue leaders and professional creators.",
+      description: "For scaling teams and professional creators.",
       features: [
-        "5 Campaigns Limit",
-        "Up to 400 Leads / Cycle",
-        "Every 2 Days Automated Searches",
+        "5 Campaigns",
+        "Up to 400 Leads / Search",
+        "Searches every 2 days",
         "High-speed search priority",
-        "Discord Webhooks Integration"
+        "Discord Integration"
       ],
       cta: "Choose Plan",
       popular: true,
@@ -66,10 +66,10 @@ export default function PricingPage() {
     {
       name: "Elite",
       price: isYearly ? "$240" : "$300",
-      description: "For agencies and large teams requiring high volume growth.",
+      description: "For agencies and large teams requiring high volume.",
       features: [
-        "10 Campaigns Limit",
-        "Up to 800 Leads / Cycle",
+        "10 Campaigns",
+        "Up to 800 Leads / Search",
         "Daily Automated Searches",
         "Maximum search speed",
         "24/7 Priority Support"
@@ -90,19 +90,19 @@ export default function PricingPage() {
       <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-blue/10 dark:bg-blue/5 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse-slow" />
       <div className="absolute bottom-[20%] right-[10%] w-[600px] h-[600px] bg-primary/10 dark:bg-primary/5 rounded-full blur-[150px] pointer-events-none -z-10 animate-pulse-slow" />
 
-      <section className="relative pt-48 pb-32 px-6">
+      <section className="relative pt-32 pb-20 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20 space-y-6">
+          <div className="text-center mb-12 space-y-6">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-display tracking-tight font-black leading-none text-foreground text-7xl md:text-9xl"
+              className="text-display tracking-tight font-black leading-none text-foreground text-4xl md:text-7xl"
             >
               Pricing
             </motion.h1>
             
             {/* Toggle */}
-            <div className="flex items-center justify-center gap-4 mt-12">
+            <div className="flex items-center justify-center gap-4 mt-8">
                <span className={`text-sm font-bold ${!isYearly ? 'text-foreground' : 'text-foreground/50'}`}>Monthly</span>
                <button onClick={() => setIsYearly(!isYearly)}
                 className={`w-14 h-7 rounded-full border p-1 flex items-center transition-all cursor-pointer ${
@@ -117,8 +117,8 @@ export default function PricingPage() {
                <span className={`text-sm font-bold ${isYearly ? 'text-foreground' : 'text-foreground/50'}`}>Yearly</span>
             </div>
           </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
+ 
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
             {plans.map((plan, i) => {
               const TierIcon = plan.icon;
               return (
@@ -127,35 +127,35 @@ export default function PricingPage() {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className={`bento-card p-8 flex flex-col ${plan.color} relative overflow-hidden group`}
+                  className={`bento-card p-6 md:p-8 flex flex-col ${plan.color} relative overflow-hidden group rounded-3xl`}
                 >
                   {plan.popular ? (
                     <div className="absolute top-0 right-0 p-6">
-                       <div className="px-3 py-1 rounded-full bg-primary/20 text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20 flex items-center gap-1">
+                       <div className="px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold border border-primary/20 flex items-center gap-1">
                          <Sparkles className="h-3 w-3 animate-pulse" /> {plan.badge}
                        </div>
                     </div>
                   ) : (
                     <div className="absolute top-0 right-0 p-6">
-                       <div className="px-2.5 py-0.5 rounded-full bg-foreground/5 text-foreground/50 text-[9px] font-bold uppercase tracking-widest border border-foreground/10">
+                       <div className="px-2.5 py-0.5 rounded-full bg-foreground/5 text-foreground/50 text-xs font-bold border border-foreground/10">
                          {plan.badge}
                        </div>
                     </div>
                   )}
-
-                  <div className="space-y-2 mb-8 text-left pt-4">
+ 
+                  <div className="space-y-2 mb-6 text-left pt-4">
                      <div className="flex items-center gap-2">
                        <TierIcon className={`h-4.5 w-4.5 ${plan.accent}`} />
-                       <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground/80 leading-none">{plan.name}</h3>
+                       <h3 className="text-sm font-bold text-foreground/80 leading-none">{plan.name}</h3>
                      </div>
                      <div className="flex items-baseline gap-1 mt-2">
-                        <span className="text-7xl md:text-8xl font-black text-foreground tracking-tight leading-none">{plan.price}</span>
-                        <span className="text-foreground/50 font-black text-[10px] uppercase tracking-widest ml-2">/ month</span>
+                        <span className="text-4xl md:text-5xl font-black text-foreground tracking-tight leading-none">{plan.price}</span>
+                        <span className="text-foreground/50 font-bold text-xs ml-2">/ month</span>
                      </div>
-                     <p className="text-foreground/60 text-[11px] font-semibold leading-relaxed min-h-[32px]">{plan.description}</p>
+                     <p className="text-foreground/60 text-xs font-semibold leading-relaxed min-h-[32px]">{plan.description}</p>
                   </div>
-
-                  <div className="space-y-4 mb-8 flex-grow text-left">
+ 
+                  <div className="space-y-4 mb-6 flex-grow text-left">
                      {plan.features.map((feature, j) => (
                        <div key={j} className="flex items-start gap-3 text-xs font-semibold text-foreground/75 leading-relaxed min-h-[20px]">
                           <Check className={`h-4 w-4 ${plan.accent} shrink-0 mt-0.5`} />
@@ -163,10 +163,10 @@ export default function PricingPage() {
                        </div>
                      ))}
                   </div>
-
+ 
                   <Link 
                     href="/signup" 
-                    className={`w-full h-12 flex items-center justify-center rounded-full text-xs font-black uppercase tracking-wider transition-all mt-auto ${
+                    className={`w-full h-11 flex items-center justify-center rounded-full text-xs font-bold transition-all mt-auto ${
                       plan.popular
                         ? "bg-primary text-white hover:bg-primary/95 hover:scale-[1.02] shadow-md shadow-primary/25"
                         : "bg-transparent border border-foreground/15 hover:border-foreground/30 hover:bg-foreground/5 text-foreground active:scale-98"
@@ -180,22 +180,22 @@ export default function PricingPage() {
           </div>
         </div>
       </section>
-
+ 
       {/* Trust Section */}
-      <section className="py-32 border-t border-card-border relative bg-card/25 backdrop-blur-md text-left">
+      <section className="py-20 border-t border-card-border relative bg-card/25 backdrop-blur-md text-left">
          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid md:grid-cols-4 gap-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                {[
-                 { icon: Shield, title: "Vault Security", desc: "Enterprise-grade encryption for all client data." },
-                 { icon: Network, title: "Cloud Network", desc: "Distributed engine for 100% uptime." },
-                 { icon: Fingerprint, title: "Secure Bypass", desc: "Intelligent discovery that avoids site blocks." },
-                 { icon: Database, title: "Data Integrity", desc: "Verified business contact information only." },
+                 { icon: Shield, title: "Secure Storage", desc: "Secure storage for all your search results." },
+                 { icon: Network, title: "Reliable Systems", desc: "Fast, reliable searches running in the background." },
+                 { icon: Fingerprint, title: "Smart Search", desc: "Smart searches that run smoothly." },
+                 { icon: Database, title: "Verified Data", desc: "Verified email and phone contact details." },
                ].map((item, i) => (
-                 <div key={i} className="space-y-4">
+                 <div key={i} className="space-y-3">
                     <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
                        <item.icon className="h-5 w-5 text-primary" />
                     </div>
-                    <h4 className="text-xs font-black text-foreground uppercase tracking-widest">{item.title}</h4>
+                    <h4 className="text-sm font-bold text-foreground">{item.title}</h4>
                     <p className="text-xs text-foreground/60 leading-relaxed font-semibold">{item.desc}</p>
                  </div>
                ))}

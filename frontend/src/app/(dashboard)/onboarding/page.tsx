@@ -168,7 +168,7 @@ export default function OnboardingPage() {
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between ml-1">
-                                    <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest">Company Name</label>
+                                    <label className="block text-xs font-bold text-white/30">Company Name</label>
                                     <AIAssistButton 
                                         field="Company Name" 
                                         currentValue={formData.companyName} 
@@ -195,13 +195,13 @@ export default function OnboardingPage() {
                             </div>
                         </div>
                     )}
-
+ 
                     {/* Step 2: Identity */}
                     {step === 2 && (
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Your Name</label>
+                                    <label className="block text-xs font-bold text-white/30 mb-2 ml-1">Your Name</label>
                                     <input 
                                         type="text"
                                         placeholder="e.g. Michael"
@@ -211,7 +211,7 @@ export default function OnboardingPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2 ml-1">Your Role</label>
+                                    <label className="block text-xs font-bold text-white/30 mb-2 ml-1">Your Role</label>
                                     <input 
                                         type="text"
                                         placeholder="e.g. Founder"
@@ -227,13 +227,13 @@ export default function OnboardingPage() {
                             </div>
                         </div>
                     )}
-
+ 
                     {/* Step 3: Product */}
                     {step === 3 && (
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between ml-1">
-                                    <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest">Main Product/Service</label>
+                                    <label className="block text-xs font-bold text-white/30">Main Product/Service</label>
                                     <AIAssistButton 
                                         field="Product Name" 
                                         currentValue={formData.productName} 
@@ -251,7 +251,7 @@ export default function OnboardingPage() {
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between ml-1">
-                                    <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest">Product Description</label>
+                                    <label className="block text-xs font-bold text-white/30">Product Description</label>
                                     <AIAssistButton 
                                         field="Value Proposition" 
                                         currentValue={formData.productDescription} 
@@ -274,7 +274,7 @@ export default function OnboardingPage() {
                     {step === 4 && (
                         <div className="space-y-6 text-left">
                             <div className="space-y-2">
-                                <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest mb-2">Target Country</label>
+                                <label className="block text-xs font-bold text-white/30 mb-2">Target Country</label>
                                 <select
                                     value={formData.targetCountry}
                                     onChange={(e) => handleFormUpdate("targetCountry", e.target.value)}
@@ -286,13 +286,13 @@ export default function OnboardingPage() {
                                     <option value="US">United States</option>
                                 </select>
                             </div>
-
+ 
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest">Target Industries</label>
+                                    <label className="block text-xs font-bold text-white/30">Target Industries</label>
                                     <div className="flex items-center gap-3">
                                         {/* File Uploader */}
-                                        <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-widest transition-all bg-white/5 text-zinc-300 hover:bg-white/10 cursor-pointer">
+                                        <label className="flex items-center gap-1.5 px-3 py-1 rounded-sm text-xs font-bold transition-all bg-white/5 text-zinc-300 hover:bg-white/10 cursor-pointer">
                                             <Upload size={10} />
                                             <span>Upload List</span>
                                             <input
@@ -317,15 +317,15 @@ export default function OnboardingPage() {
                                     onChange={(e) => handleFormUpdate("industries", e.target.value)}
                                     className={inputBaseClass}
                                 />
-                                <p className="text-[9px] text-zinc-500">Enter industries separated by commas, or upload a TXT/CSV file.</p>
+                                <p className="text-[10px] text-zinc-500">Enter industries separated by commas, or upload a TXT/CSV file.</p>
                             </div>
-
+ 
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest">Target Cities / Locations</label>
+                                    <label className="block text-xs font-bold text-white/30">Target Cities / Locations</label>
                                     <div className="flex items-center gap-3">
                                         {/* File Uploader */}
-                                        <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-widest transition-all bg-white/5 text-zinc-300 hover:bg-white/10 cursor-pointer">
+                                        <label className="flex items-center gap-1.5 px-3 py-1 rounded-sm text-xs font-bold transition-all bg-white/5 text-zinc-300 hover:bg-white/10 cursor-pointer">
                                             <Upload size={10} />
                                             <span>Upload List</span>
                                             <input
@@ -350,11 +350,11 @@ export default function OnboardingPage() {
                                     onChange={(e) => handleFormUpdate("locations", e.target.value)}
                                     className={inputBaseClass}
                                 />
-                                <p className="text-[9px] text-zinc-500">List specific cities or states to search in, or upload a text file.</p>
+                                <p className="text-[10px] text-zinc-500">List specific cities or states to search in, or upload a text file.</p>
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <label className="block text-xs font-semibold text-white/30 uppercase tracking-widest">Customer Challenges</label>
+                                    <label className="block text-xs font-bold text-white/30">Customer Challenges</label>
                                     <AIAssistButton
                                         field="Target Pain Points"
                                         currentValue={formData.targetPainPoints}
@@ -369,11 +369,11 @@ export default function OnboardingPage() {
                                     onChange={(e) => handleFormUpdate("targetPainPoints", e.target.value)}
                                     className={`${inputBaseClass} resize-none`}
                                 />
-                                <p className="text-[9px] text-zinc-500">Explain what problems the AI agent should address in outreach emails.</p>
+                                <p className="text-[10px] text-zinc-500">Explain what problems the AI agent should address in outreach emails.</p>
                             </div>
                         </div>
                     )}
-
+ 
                     {/* Step 5: Search Settings */}
                     {step === 5 && (
                         <div className="space-y-6">
@@ -389,8 +389,8 @@ export default function OnboardingPage() {
                             <div className="grid grid-cols-1 gap-3">
                                 {[
                                     { id: "manual", label: "Manual Mode", desc: "Scan only when triggered manually. Ideal for conserving search credits." },
-                                    { id: "automatic", label: "Automatic Mode", desc: "Runs sweeps on schedule in the background, consuming 1 credit per sweep." },
-                                    { id: "smart", label: "Smart Automatic", desc: "Runs on schedule, but automatically pauses if the previous search failed or yielded < 20% leads, preventing credit waste on dry queries." },
+                                    { id: "automatic", label: "Automatic Mode", desc: "Runs searches on schedule in the background, using 1 credit per search." },
+                                    { id: "smart", label: "Smart Automatic", desc: "Runs on schedule, but pauses automatically if the previous search failed, preventing credit waste on dry search queries." },
                                 ].map((mode) => (
                                     <button key={mode.id} type="button" onClick={() => setCycleMode(mode.id as typeof cycleMode)}
                                         className={`p-4 rounded-sm border text-left transition-all ${cycleMode === mode.id ? "border-primary bg-primary/10" : "border-white/10 bg-white/[0.02]"}`}

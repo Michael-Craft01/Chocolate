@@ -241,15 +241,15 @@ function BillingContent() {
 
       {/* Header Deck */}
       <div className="text-center space-y-4 pt-10 border-b border-foreground/5 pb-10">
-        <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-primary">
-          <ShieldCheck className="h-4 w-4" /> Plans & Pricing
+        <div className="flex items-center justify-center gap-2 text-xs font-bold text-primary">
+          <ShieldCheck className="h-4 w-4" /> Plans & pricing
         </div>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">Billing Dashboard</h1>
         <p className="text-sm text-foreground/60 max-w-xl mx-auto">
           Select a pipeline growth tier or buy extra search credits for HyprLead AI.
         </p>
         {userTier === null && (
-          <div className="p-3 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 mt-4">
+          <div className="p-3 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold inline-flex items-center gap-2 mt-4">
             <Loader2 className="h-3 w-3 animate-spin" /> Account Sync Delayed - Reconnecting...
           </div>
         )}
@@ -270,10 +270,10 @@ function BillingContent() {
                 }
               }}
               disabled={loading === 'SYNC'}
-              className="px-6 py-2.5 rounded-full bg-foreground/[0.03] hover:bg-foreground/[0.06] border border-foreground/10 text-xs font-bold uppercase tracking-wider text-foreground hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 mx-auto cursor-pointer"
+              className="px-6 py-2.5 rounded-full bg-foreground/[0.03] hover:bg-foreground/[0.06] border border-foreground/10 text-xs font-bold text-foreground hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 mx-auto cursor-pointer"
             >
               {loading === 'SYNC' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 text-primary" />}
-              {loading === 'SYNC' ? "Verifying..." : "Update Account Status"}
+              {loading === 'SYNC' ? "Verifying..." : "Refresh account status"}
             </button>
         </div>
       </div>
@@ -287,7 +287,7 @@ function BillingContent() {
           { label: "Mode", value: stats?.cycles?.automationMode || "MANUAL" },
         ].map((item) => (
           <div key={item.label} className="bento-card !p-5 text-left">
-            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/45">{item.label}</p>
+            <p className="text-[10px] font-bold text-foreground/45">{item.label}</p>
             <p className="mt-2 text-2xl font-black tracking-tight text-foreground">{item.value}</p>
           </div>
         ))}
@@ -297,7 +297,7 @@ function BillingContent() {
       <div className="flex justify-center">
         <div className="bg-foreground/[0.03] p-1.5 rounded-full flex gap-1.5 border border-foreground/5 max-w-sm w-full">
           <button type="button" onClick={() => setGateway("STRIPE")}
-            className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
               gateway === "STRIPE" 
                 ? "bg-primary text-white shadow-md shadow-primary/20" 
                 : "text-foreground/50 hover:text-foreground hover:bg-foreground/[0.03]"
@@ -306,7 +306,7 @@ function BillingContent() {
             <CreditCard className="h-4 w-4" /> Card (Stripe)
           </button>
           <button type="button" onClick={() => setGateway("PAYNOW")}
-            className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
               gateway === "PAYNOW" 
                 ? "bg-primary text-white shadow-md shadow-primary/20" 
                 : "text-foreground/50 hover:text-foreground hover:bg-foreground/[0.03]"
@@ -329,11 +329,11 @@ function BillingContent() {
               }`}
             >
               {tier.popular ? (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-primary/30 flex items-center gap-1.5 z-10">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary px-4 py-1.5 rounded-full text-[10px] font-bold text-white shadow-lg shadow-primary/30 flex items-center gap-1.5 z-10">
                   <Sparkles className="h-3 w-3 animate-pulse" /> {tier.badge}
                 </div>
               ) : (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-foreground/5 border border-foreground/10 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-foreground/50 backdrop-blur-md z-10">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-foreground/5 border border-foreground/10 px-3 py-1 rounded-full text-[10px] font-bold text-foreground/50 backdrop-blur-md z-10">
                   {tier.badge}
                 </div>
               )}
@@ -342,14 +342,14 @@ function BillingContent() {
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
                     <TierIcon className={`h-4.5 w-4.5 ${tier.accent}`} />
-                    <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground/80 leading-none">{tier.name}</h3>
+                    <h3 className="text-[11px] font-bold text-foreground/80 leading-none">{tier.name}</h3>
                   </div>
                   {tier.price > 0 ? (
                     <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-foreground/[0.03] border border-foreground/5">
-                      <span className="text-[9px] font-black uppercase tracking-wider text-foreground/60">{gateway}</span>
+                      <span className="text-[10px] font-bold text-foreground/60">{gateway}</span>
                     </div>
                   ) : (
-                    <div className="px-2 py-0.5 rounded-full bg-foreground/[0.02] border border-foreground/5 text-[9px] font-bold uppercase tracking-wider text-foreground/40">
+                    <div className="px-2 py-0.5 rounded-full bg-foreground/[0.02] border border-foreground/5 text-[10px] font-bold text-foreground/40">
                       Free Access
                     </div>
                   )}
@@ -357,7 +357,7 @@ function BillingContent() {
                 <div className="flex items-baseline gap-1 mt-2">
                   <span className="text-4xl md:text-5xl font-black text-foreground select-none">$</span>
                   <span className="text-7xl md:text-8xl font-black text-foreground tracking-tight leading-none">{tier.price}</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40 ml-2">/ month</span>
+                  <span className="text-[10px] font-bold text-foreground/40 ml-2">/ month</span>
                 </div>
               </div>
 
@@ -374,7 +374,7 @@ function BillingContent() {
 
               <button onClick={() => handleSubscribe(tier.name)}
                 disabled={!!loading || userTier === tier.name.toUpperCase()}
-                className={`w-full h-12 rounded-full text-xs font-black uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-0.5 mt-auto cursor-pointer ${
+                className={`w-full h-12 rounded-full text-xs transition-all flex flex-col items-center justify-center gap-0.5 mt-auto cursor-pointer ${
                   userTier === tier.name.toUpperCase() 
                     ? "bg-primary/10 text-primary border border-primary/20" 
                     : tier.popular 
@@ -385,7 +385,7 @@ function BillingContent() {
                 {loading === tier.name ? (
                   <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processing...</div>
                 ) : userTier === tier.name.toUpperCase() ? (
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider"><Check className="h-4 w-4" /> Current Plan</div>
+                  <div className="flex items-center gap-2 text-xs font-bold"><Check className="h-4 w-4" /> Current plan</div>
                 ) : tier.price === 0 ? (
                   <span>{userTier ? "Downgrade to Free" : "Select Free"}</span>
                 ) : (
@@ -403,7 +403,7 @@ function BillingContent() {
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full -mr-48 -mt-48 group-hover:bg-primary/15 transition-all duration-700 blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
           <div className="space-y-3 max-w-xl text-left">
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-primary font-bold text-xs">
               <CreditCard className="h-4 w-4 animate-pulse" /> Search Packs
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-foreground">Extra Search Credits</h2>
@@ -417,9 +417,9 @@ function BillingContent() {
                 <span className="text-3xl font-black text-foreground">$</span>
                 <span className="text-5xl font-black text-foreground tracking-tight">10</span>
               </div>
-              <p className="text-[10px] text-foreground/50 font-bold uppercase tracking-wider mt-1">5 Search Runs</p>
+              <p className="text-[10px] text-foreground/50 font-bold mt-1">5 Search Runs</p>
             </div>
-            <button onClick={handleBuyCycles} disabled={!!loading} className="w-full sm:w-auto h-12 px-8 rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-xl shadow-foreground/5 hover:scale-[1.02] active:scale-[0.98] cursor-pointer" >
+            <button onClick={handleBuyCycles} disabled={!!loading} className="w-full sm:w-auto h-12 px-8 rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xl shadow-foreground/5 hover:scale-[1.02] active:scale-[0.98] cursor-pointer" >
               {loading === "CYCLE_PACK" && <Loader2 className="h-4 w-4 animate-spin text-background" />}
               {loading === "CYCLE_PACK" ? "Processing..." : "Add Credits"}
             </button>
@@ -434,16 +434,17 @@ function BillingContent() {
             <History className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-foreground">Transaction Log</h2>
-            <p className="text-xs text-foreground/60">Review your past credit packs and subscriptions straight from the database</p>
+            <h2 className="text-lg font-bold text-foreground">Transaction history</h2>
+            <p className="text-xs text-foreground/60">Review your past credit packs and subscriptions in your account</p>
           </div>
         </div>
         
         <div className="bento-card overflow-hidden !p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-foreground/[0.02] text-xs uppercase tracking-wider text-foreground/60 border-b border-foreground/5">
+                <tr className="bg-foreground/[0.02] text-xs text-foreground/60 border-b border-foreground/5">
                   <th className="px-8 py-5 font-bold">Record ID</th>
                   <th className="px-8 py-5 font-bold">Date</th>
                   <th className="px-8 py-5 font-bold">Service</th>
@@ -457,12 +458,12 @@ function BillingContent() {
                   <tr>
                     <td colSpan={6} className="px-8 py-20 text-center text-foreground/50">
                       <Loader2 className="h-6 w-6 animate-spin mx-auto mb-4 text-primary" />
-                      <span className="text-xs font-bold uppercase tracking-wider">Syncing Secure Records...</span>
+                      <span className="text-xs font-bold">Syncing transaction records...</span>
                     </td>
                   </tr>
                 ) : transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-8 py-20 text-center text-foreground/50 text-xs font-bold uppercase tracking-wider">
+                    <td colSpan={6} className="px-8 py-20 text-center text-foreground/50 text-xs font-bold">
                       No billing records found.
                     </td>
                   </tr>
@@ -476,7 +477,7 @@ function BillingContent() {
                         {new Date(tx.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-8 py-4">
-                        <span className="px-3 py-1 rounded-full bg-foreground/[0.04] text-[10px] font-bold uppercase tracking-wider text-foreground/80 border border-foreground/5">
+                        <span className="px-3 py-1 rounded-full bg-foreground/[0.04] text-[10px] font-bold text-foreground/80 border border-foreground/5">
                           {tx.type.replace('_', ' ')}
                         </span>
                       </td>
@@ -484,14 +485,14 @@ function BillingContent() {
                         ${tx.amount.toFixed(2)}
                       </td>
                       <td className="px-8 py-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${
                           tx.gateway === 'PAYNOW' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-blue-500/10 text-blue-600 border-blue-500/20'
                         }`}>
                           {tx.gateway}
                         </span>
                       </td>
                       <td className="px-8 py-4 text-right">
-                        <span className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
+                        <span className={`px-4 py-1 rounded-full text-[10px] font-bold border ${
                           tx.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 
                           tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
                         }`}>
@@ -504,6 +505,58 @@ function BillingContent() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Card List View */}
+          <div className="block md:hidden divide-y divide-foreground/5">
+            {loadingTransactions ? (
+              <div className="p-8 text-center text-foreground/50">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-4 text-primary" />
+                <span className="text-xs font-bold">Syncing transaction records...</span>
+              </div>
+            ) : transactions.length === 0 ? (
+              <div className="p-8 text-center text-foreground/50 text-xs font-bold">
+                No billing records found.
+              </div>
+            ) : (
+              transactions.map((tx) => (
+                <div key={tx.id} className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold text-foreground/60">
+                      {tx.id.substring(0, 12).toUpperCase()}
+                    </span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                      tx.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 
+                      tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
+                    }`}>
+                      {tx.status}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold text-foreground/75">
+                        {new Date(tx.createdAt).toLocaleDateString()}
+                      </p>
+                      <p className="text-xs text-foreground/50">
+                        {tx.type.replace('_', ' ')}
+                      </p>
+                    </div>
+                    
+                    <div className="text-right space-y-1">
+                      <p className="text-sm font-bold text-foreground">
+                        ${tx.amount.toFixed(2)}
+                      </p>
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                        tx.gateway === 'PAYNOW' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+                      }`}>
+                        {tx.gateway}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -512,7 +565,7 @@ function BillingContent() {
 
 export default function BillingPage() {
   return (
-    <Suspense fallback={<BrandedLoader message="Connecting to secure gateway..." />}>
+    <Suspense fallback={<BrandedLoader message="Connecting to billing portal..." />}>
       <BillingContent />
     </Suspense>
   );

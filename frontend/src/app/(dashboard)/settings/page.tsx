@@ -135,8 +135,8 @@ export default function SettingsPage() {
     });
 
     toast.promise(savePromise, {
-      loading: 'Deploying global settings...',
-      success: 'Configuration active. Identity and targeting synced.',
+      loading: 'Saving settings...',
+      success: 'Settings saved and synced.',
       error: (err) => err.message || 'Failed to save settings.'
     });
 
@@ -155,7 +155,7 @@ export default function SettingsPage() {
   };
 
   const inputClass = "w-full bg-foreground/[0.03] hover:bg-foreground/[0.05] focus:bg-background border border-foreground/10 focus:border-primary rounded-lg px-4 py-2.5 transition-all text-sm font-medium text-foreground placeholder:text-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary";
-  const labelClass = "text-xs font-bold uppercase tracking-wider text-foreground/80 block mb-2 ml-1";
+  const labelClass = "text-xs font-bold text-foreground/80 block mb-2 ml-1";
 
   if (loading) {
     return <BrandedLoader message="Syncing configuration..." />;
@@ -166,8 +166,8 @@ export default function SettingsPage() {
       {/* Header Deck */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-10 border-b border-foreground/5 pb-10">
         <div className="space-y-2 text-left">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary">
-            <ShieldCheck className="h-4 w-4" /> {isEditing ? "Modifying Identity" : "Secure Configuration"}
+          <div className="flex items-center gap-2 text-xs font-bold text-primary">
+            <ShieldCheck className="h-4 w-4" /> {isEditing ? "Modifying identity" : "Secure configuration"}
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">Settings</h1>
           <p className="text-sm text-foreground/60">Configure your business identity and campaign preferences for HyprLead AI.</p>
@@ -220,7 +220,7 @@ export default function SettingsPage() {
             { label: "Latest Result", value: stats?.latestCycle ? `${stats.latestCycle.leadsFound}/${stats.latestCycle.maxLeads}` : "None" },
           ].map((item) => (
             <div key={item.label} className="rounded-xl border border-card-border bg-foreground/[0.02] p-4 text-left">
-              <p className="text-[9px] font-black uppercase tracking-widest text-foreground/45">{item.label}</p>
+              <p className="text-[10px] font-bold text-foreground/45">{item.label}</p>
               <p className="mt-1.5 text-lg font-black tracking-tight text-foreground">{item.value}</p>
             </div>
           ))}
@@ -238,7 +238,7 @@ export default function SettingsPage() {
               }))}
               className={`rounded-xl border px-4 py-3 text-left transition-all ${formData.automationMode === mode.value ? "border-primary/40 bg-primary/10" : "border-card-border bg-foreground/[0.02]"}`}
             >
-              <p className="text-xs font-black uppercase tracking-widest text-foreground">{mode.label}</p>
+              <p className="text-xs font-bold text-foreground">{mode.label}</p>
               <p className="mt-1 text-xs font-semibold text-foreground/55 leading-relaxed">{mode.desc}</p>
             </button>
           ))}
@@ -246,7 +246,7 @@ export default function SettingsPage() {
 
         {/* Mode Explanations Info Box */}
         <div className="p-5 rounded-xl border border-card-border bg-foreground/[0.01] text-left space-y-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-foreground/80">Understanding Automation Modes</p>
+          <p className="text-xs font-bold text-foreground/80">Understanding automation modes</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-foreground/70 leading-relaxed">
             <div className="space-y-1.5">
               <span className="font-bold text-foreground block">Manual Mode</span>
@@ -265,7 +265,7 @@ export default function SettingsPage() {
 
         <div className="flex flex-col md:flex-row md:items-center gap-3 rounded-xl border border-card-border bg-foreground/[0.02] p-4">
           <div className="flex-1 text-left">
-            <p className="text-xs font-black uppercase tracking-widest text-foreground">Cycle Schedule</p>
+            <p className="text-xs font-bold text-foreground">Cycle schedule</p>
             <p className="mt-1 text-xs font-semibold text-foreground/55">Used only when mode is Automatic or Smart.</p>
           </div>
           <select
@@ -301,14 +301,14 @@ export default function SettingsPage() {
             // View Mode
             <div className="space-y-6">
               <div className="space-y-1 text-left">
-                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Company Name</span>
+                <span className="text-[10px] font-bold text-foreground/40 ml-1">Company name</span>
                 <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                   {formData.companyName || "Not configured"}
                 </p>
               </div>
 
               <div className="space-y-1 text-left">
-                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Business Website</span>
+                <span className="text-[10px] font-bold text-foreground/40 ml-1">Business website</span>
                 <div>
                   {formData.website ? (
                     <a 
@@ -329,13 +329,13 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1 text-left">
-                  <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Full Name</span>
+                  <span className="text-[10px] font-bold text-foreground/40 ml-1">Full name</span>
                   <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                     {formData.defaultSenderName || "Not configured"}
                   </p>
                 </div>
                 <div className="space-y-1 text-left">
-                  <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Position</span>
+                  <span className="text-[10px] font-bold text-foreground/40 ml-1">Position</span>
                   <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                     {formData.defaultSenderRole || "Not configured"}
                   </p>
@@ -440,14 +440,14 @@ export default function SettingsPage() {
             // View Mode
             <div className="space-y-6">
               <div className="space-y-1 text-left">
-                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Core Profile Industry</span>
+                <span className="text-[10px] font-bold text-foreground/40 ml-1">Core profile industry</span>
                 <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                   {formData.industry || "Not configured"}
                 </p>
               </div>
 
               <div className="space-y-1 text-left">
-                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Target Industries</span>
+                <span className="text-[10px] font-bold text-foreground/40 ml-1">Target industries</span>
                 <div className="flex flex-wrap gap-2 p-3 bg-foreground/[0.02] border border-foreground/5 rounded-lg">
                   {formData.industries && formData.industries.filter(i => i.trim()).length > 0 ? (
                     formData.industries.filter(i => i.trim()).map((ind, idx) => (
@@ -463,7 +463,7 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1 text-left">
-                  <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Default Region</span>
+                  <span className="text-[10px] font-bold text-foreground/40 ml-1">Default region</span>
                   <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                     {formData.targetCountry === "ZW" ? "Zimbabwe" :
                      formData.targetCountry === "SA" ? "South Africa" :
@@ -472,7 +472,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <div className="space-y-1 text-left">
-                  <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Target Country Code</span>
+                  <span className="text-[10px] font-bold text-foreground/40 ml-1">Target country code</span>
                   <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none">
                     {formData.targetCountry || "Not configured"}
                   </p>
@@ -480,7 +480,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-1 text-left">
-                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Target Cities / Locations</span>
+                <span className="text-[10px] font-bold text-foreground/40 ml-1">Target cities / locations</span>
                 <div className="flex flex-wrap gap-2 p-3 bg-foreground/[0.02] border border-foreground/5 rounded-lg">
                   {formData.locations && formData.locations.filter(l => l.trim()).length > 0 ? (
                     formData.locations.filter(l => l.trim()).map((loc, idx) => (
@@ -495,14 +495,14 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-1 text-left">
-                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Target Pain Points</span>
+                <span className="text-[10px] font-bold text-foreground/40 ml-1">Target pain points</span>
                 <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-relaxed whitespace-pre-wrap">
                   {formData.targetPainPoints || "None configured"}
                 </p>
               </div>
 
               <div className="space-y-1 text-left">
-                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em] ml-1">Integration Hook (Discord)</span>
+                <span className="text-[10px] font-bold text-foreground/40 ml-1">Integration hook (Discord)</span>
                 <p className="text-sm font-medium text-foreground bg-foreground/[0.02] border border-foreground/5 rounded-lg px-4 py-2.5 leading-none tracking-widest font-mono truncate">
                   {formData.discordWebhook 
                     ? formData.discordWebhook.replace(/(.{12}).+(.{8})/, "$1••••••••••••••••$2") 
@@ -547,9 +547,9 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <label className={labelClass}>Target Industries</label>
                   <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all bg-foreground/5 hover:bg-foreground/10 text-foreground/70 cursor-pointer">
+                    <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all bg-foreground/5 hover:bg-foreground/10 text-foreground/70 cursor-pointer">
                       <Upload size={10} />
-                      <span>Upload List</span>
+                      <span>Upload list</span>
                       <input
                         type="file"
                         accept=".txt,.csv"
@@ -595,9 +595,9 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <label className={labelClass}>Target Cities / Locations</label>
                     <div className="flex items-center gap-2">
-                      <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all bg-foreground/5 hover:bg-foreground/10 text-foreground/70 cursor-pointer">
+                      <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all bg-foreground/5 hover:bg-foreground/10 text-foreground/70 cursor-pointer">
                         <Upload size={10} />
-                        <span>Upload List</span>
+                        <span>Upload list</span>
                         <input
                           type="file"
                           accept=".txt,.csv"
@@ -675,27 +675,27 @@ export default function SettingsPage() {
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full -mr-48 -mt-48 group-hover:bg-primary/15 transition-all duration-700 blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
           <div className="space-y-3 max-w-xl text-left">
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
-              <Zap className="h-4 w-4 animate-pulse" /> Account Synchronization
+            <div className="flex items-center gap-2 text-primary font-bold text-xs">
+              <Zap className="h-4 w-4 animate-pulse" /> Account settings
             </div>
-            <h3 className="text-2xl font-bold tracking-tight text-foreground">Sync Campaign Identity</h3>
+            <h3 className="text-2xl font-bold tracking-tight text-foreground">Save campaign settings</h3>
             <p className="text-sm text-foreground/75 leading-relaxed">
-              Syncing these settings immediately propagates your core industry profile and region targets to the HyprLead AI search engine.
+              Saving these settings immediately updates your business profile and location preferences.
             </p>
           </div>
           
           {!isEditing ? (
             <button onClick={() => setIsEditing(true)}
-              className="h-10 px-5 bg-foreground text-background hover:bg-foreground/90 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2.5 shadow-xl shadow-foreground/5 hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
+              className="h-10 px-5 bg-foreground text-background hover:bg-foreground/90 text-xs font-bold rounded-lg transition-all flex items-center gap-2.5 shadow-xl shadow-foreground/5 hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
             >
-              Modify Identity <ShieldCheck className="h-3.5 w-3.5" />
+              Edit settings <ShieldCheck className="h-3.5 w-3.5" />
             </button>
           ) : (
             <button onClick={() => handleSave()}
               disabled={saving}
-              className="h-10 px-5 bg-primary hover:bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2.5 shadow-xl shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
+              className="h-10 px-5 bg-primary hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-2.5 shadow-xl shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
             >
-              Sync & Deploy <ShieldCheck className="h-3.5 w-3.5" />
+              Save settings <ShieldCheck className="h-3.5 w-3.5" />
             </button>
           )}
         </div>

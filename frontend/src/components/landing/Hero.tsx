@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Play, CheckCircle2, TrendingUp, BarChart3, Users, Zap, Search, Globe, Shield, Sparkles, Activity, Crosshair, Radar } from "lucide-react";
+import { ArrowRight, Play, Compass, Globe, Shield, Sparkles, Activity, Crosshair, Radar } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import B2BDemoProspector from "./B2BDemoProspector";
@@ -11,14 +11,14 @@ const FloatingTelemetry = () => {
 
   useEffect(() => {
     const data = [
-      "SWEEPING: 18.4k leads",
-      "PAIN UNCOVERED: Wholesale reach",
-      "VERIFYING: founder@scale.com",
-      "SYNCING: CRM pipelines",
-      "EXTRACTING: B2B friction points",
-      "HyprLead AI: Reading structures...",
-      "MX HANDSHAKE: SMTP verified",
-      "DISPATCH: Direct draft ready"
+      "SEARCHING: 18k leads",
+      "CHALLENGE FOUND: Wholesale supply",
+      "VERIFYING: info@company.com",
+      "SAVING: CRM pipeline leads",
+      "EXTRACTING: operational pain points",
+      "HyprLead AI: Analyzing website...",
+      "EMAIL VALID: Address verified",
+      "DRAFT READY: Outreach email prepared"
     ];
 
     const interval = setInterval(() => {
@@ -29,9 +29,9 @@ const FloatingTelemetry = () => {
           x: Math.random() * 80 + 10,
           y: Math.random() * 60 + 20
         };
-        return [...prev.slice(-3), newItem];
+        return [...prev.slice(-2), newItem];
       });
-    }, 2000);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, []);
@@ -49,7 +49,7 @@ const FloatingTelemetry = () => {
             style={{ left: `${item.x}%`, top: `${item.y}%` }}
           >
             <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary/80">{item.text}</span>
+            <span className="text-[10px] font-bold text-primary/80 tracking-wide">{item.text}</span>
           </motion.div>
         ))}
       </AnimatePresence>
@@ -66,13 +66,13 @@ export default function Hero() {
       <div className="hero-glow" />
       
       {/* Telemetry Corner Accents (Outcome-focused) */}
-      <div className="absolute top-40 left-10 telemetry-label flex flex-col gap-1 hidden lg:flex">
-        <span>ENGINE: OPERATIONAL</span>
-        <span>VERIFIED OUTBOUNDS: +18,492</span>
+      <div className="absolute top-40 left-10 telemetry-label flex flex-col gap-1 hidden lg:flex text-xs text-foreground/55 font-bold">
+        <span>Engine Status: Active</span>
+        <span>Verified Leads: +18,492</span>
       </div>
-      <div className="absolute top-40 right-10 telemetry-label text-right flex flex-col gap-1 hidden lg:flex">
-        <span>REPLY RATE: 28.4% OPTIMAL</span>
-        <span>CRMS SYNCED: REAL-TIME</span>
+      <div className="absolute top-40 right-10 telemetry-label text-right flex flex-col gap-1 hidden lg:flex text-xs text-foreground/55 font-bold">
+        <span>Conversion Increase: +4.2x</span>
+        <span>Sync Mode: Live</span>
       </div>
 
       <FloatingTelemetry />
@@ -93,7 +93,7 @@ export default function Hero() {
                 className="h-full w-full object-contain animate-neural drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]"
               />
             </div>
-            <span className="text-xs font-black text-foreground uppercase tracking-[0.2em]">Autonomous Revenue Intelligence</span>
+            <span className="text-xs font-bold text-foreground tracking-wide">Automated Lead Intelligence</span>
           </div>
 
           {/* The Hero Monolith */}
@@ -110,29 +110,39 @@ export default function Hero() {
              <div className="absolute inset-0 bg-primary/10 blur-[80px] rounded-full -z-10" />
           </motion.div>
           
-          <h1 className="text-display mb-10">
-            Autonomous Outbound. <br />
+          <h1 className="text-4xl md:text-display mb-10 leading-tight">
+            Automated Outbound. <br />
             <span className="animate-text-shimmer bg-clip-text text-transparent bg-gradient-to-r from-primary via-emerald-400 to-primary">Infinite Pipeline.</span>
           </h1>
           
-          <p className="max-w-3xl mx-auto text-foreground/80 text-base md:text-lg font-medium mb-12 leading-relaxed">
-            The self-driving B2B sales development engine. Scheduled discovery cycles locate high-intent corporate targets, HyprLead AI uncovers their exact business pain-points, and verified workflows draft hyper-personalized copy.
+          <p className="max-w-3xl mx-auto text-foreground/80 text-sm md:text-lg font-medium mb-12 leading-relaxed px-4">
+            The self-driving B2B lead generation engine. Scheduled background searches find high-intent business profiles, HyprLead AI analyzes their current challenges, and verified workflows draft personalized outreach emails.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24">
-            <Link href="/signup" className="h-14 px-10 rounded-full bg-primary hover:bg-primary-hover text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all relative group">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-24 w-full px-4">
+            <Link href="/signup" className="h-12 w-full sm:w-auto px-8 rounded-full bg-primary hover:bg-primary-hover text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all relative group">
                <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
                <span className="relative z-10 flex items-center gap-2">
-                 Start Free Discovery <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                 Start Free Search <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                </span>
             </Link>
-            <a href="#demo-prospector" className="h-14 px-10 rounded-full bg-foreground/[0.03] hover:bg-foreground/[0.06] text-foreground font-semibold text-xs flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all group cursor-pointer shadow-sm">
-              <Play className="h-3 w-3 fill-foreground group-hover:scale-110 transition-transform" /> Watch Demo Sim
+            <a 
+              href="https://www.linkedin.com/in/michael-ragu-aa215035a/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="h-12 w-full sm:w-auto px-6 rounded-full bg-foreground/[0.03] hover:bg-foreground/[0.06] text-foreground font-semibold text-xs flex items-center justify-center gap-2.5 hover:scale-[1.02] active:scale-[0.98] transition-all group cursor-pointer shadow-sm border border-foreground/5"
+            >
+              <img 
+                src="/developer.png" 
+                alt="Developer Avatar" 
+                className="h-5 w-5 rounded-full object-cover ring-1 ring-primary/30 shrink-0" 
+              />
+              Visit Developer
             </a>
           </div>
         </motion.div>
 
-        {/* B2B Sales Prospector Centerpiece (Interactive Simulator replacing static mockup) */}
+        {/* B2B Sales Prospector Centerpiece */}
         <motion.div
           id="demo-prospector"
           initial={{ opacity: 0, y: 40 }}

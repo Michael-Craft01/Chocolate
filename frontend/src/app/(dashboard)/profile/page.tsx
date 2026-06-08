@@ -93,24 +93,24 @@ export default function ProfilePage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-24 font-sans selection:bg-primary/20">
       
-      {/* Sales Agent Dossier Header */}
+      {/* Account Dossier Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-6 border-b border-card-border pb-6">
         <div className="flex items-center gap-5">
-          <div className="h-16 w-16 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black text-2xl shadow-sm shadow-primary/20 select-none animate-pulse shrink-0">
+          <div className="h-16 w-16 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-bold text-2xl shadow-sm shadow-primary/20 select-none shrink-0">
             {initial}
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-primary/15 border border-primary/20 text-primary text-[8px] font-black uppercase tracking-widest">
-                Growth Agent
+              <span className="px-2.5 py-0.5 rounded-full bg-primary/15 border border-primary/20 text-primary text-[10px] font-bold">
+                Growth account
               </span>
               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-foreground">{profile.email.split('@')[0]}</h1>
-            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest">Sales Account Details</p>
+            <p className="text-[10px] font-bold text-foreground/50">Sales account details</p>
           </div>
         </div>
-
+ 
         <div className="flex items-center gap-3">
           <div className={`px-4 py-2 rounded-full border flex items-center gap-2 shadow-sm ${
             profile.paymentStatus === 'active' 
@@ -118,8 +118,8 @@ export default function ProfilePage() {
               : "bg-amber-500/10 border-amber-500/20 text-amber-500"
           }`}>
             <ShieldCheck className="h-4 w-4 shrink-0" />
-            <span className="text-[10px] font-black uppercase tracking-widest">
-              {profile.paymentStatus === 'active' ? 'Active Enterprise' : 'Basic Account'}
+            <span className="text-[10px] font-bold">
+              {profile.paymentStatus === 'active' ? 'Active enterprise' : 'Basic account'}
             </span>
           </div>
         </div>
@@ -133,14 +133,14 @@ export default function ProfilePage() {
           <div className="space-y-6">
             <div className="flex items-center gap-2.5 text-foreground/80 border-b border-card-border pb-3">
               <Award className="h-4.5 w-4.5 text-primary" />
-              <h2 className="text-[10px] font-black uppercase tracking-widest">Credentials Profile</h2>
+              <h2 className="text-[10px] font-bold text-foreground/75">Credentials profile</h2>
             </div>
             
             <div className="space-y-3">
               <div className="p-4 rounded-2xl bg-background border border-card-border flex items-center gap-3.5 shadow-sm">
                 <Mail className="h-4 w-4 text-primary shrink-0" />
                 <div className="overflow-hidden">
-                  <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Corporate Mail</p>
+                  <p className="text-[8px] font-bold text-foreground/50">Corporate mail</p>
                   <p className="text-xs font-bold text-foreground truncate">{profile.email}</p>
                 </div>
               </div>
@@ -148,22 +148,22 @@ export default function ProfilePage() {
               <div className="p-4 rounded-2xl bg-background border border-card-border flex items-center gap-3.5 shadow-sm">
                 <Crown className="h-4 w-4 text-primary shrink-0" />
                 <div>
-                  <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Active Tier</p>
-                  <p className="text-xs font-black text-primary tracking-widest uppercase">{profile.tier} Plan</p>
+                  <p className="text-[8px] font-bold text-foreground/50">Active tier</p>
+                  <p className="text-xs font-bold text-primary">{profile.tier} Plan</p>
                 </div>
               </div>
               
               <div className="p-4 rounded-2xl bg-background border border-card-border flex items-center gap-3.5 shadow-sm">
                 <Calendar className="h-4 w-4 text-primary shrink-0" />
                 <div>
-                  <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Enrollment</p>
+                  <p className="text-[8px] font-bold text-foreground/50">Enrollment</p>
                   <p className="text-xs font-bold text-foreground">{memberSince}</p>
                 </div>
               </div>
             </div>
           </div>
-
-          <div className="pt-6 text-center text-[9px] font-black text-foreground/40 uppercase tracking-widest">
+ 
+          <div className="pt-6 text-center text-[9px] font-bold text-foreground/40">
             Profile secure · ID: {profile.id.substring(0, 8)}
           </div>
         </div>
@@ -177,17 +177,17 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between border-b border-primary/10 pb-3 mb-6">
                 <div className="flex items-center gap-2.5 text-foreground">
                   <Target className="h-4.5 w-4.5 text-primary" />
-                  <h2 className="text-[10px] font-black uppercase tracking-widest">Quota Performance</h2>
+                  <h2 className="text-[10px] font-bold">Quota performance</h2>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-primary text-white text-[8px] font-black uppercase tracking-[0.25em] shadow-md shadow-primary/20">
-                  {profile.tier === 'FREE' ? 'STARTER LIMIT' : 'ENTERPRISE CAP'}
+                <span className="px-3 py-1 rounded-full bg-primary text-white text-[9px] font-bold shadow-md shadow-primary/20">
+                  {profile.tier === 'FREE' ? 'Starter limit' : 'Enterprise cap'}
                 </span>
               </div>
 
               <div className="space-y-6">
                 <div>
                   <p className="text-3xl font-extrabold tracking-tight text-foreground">
-                    {profile.tier === 'FREE' ? 'Standard Tier Outbounds' : `Professional ${profile.tier} Operations`}
+                    {profile.tier === 'FREE' ? 'Standard Tier Outbounds' : `Professional ${profile.tier} plan`}
                   </p>
                   <p className="text-xs text-foreground/75 font-semibold mt-2 leading-relaxed max-w-xl">
                     {profile.tier === 'FREE' 
@@ -199,7 +199,7 @@ export default function ProfilePage() {
                 {/* Quota Progress Meter */}
                 <div className="space-y-2 p-5 rounded-2xl bg-background border border-card-border shadow-sm">
                   <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Monthly Search Runs</span>
+                    <span className="text-[9px] font-bold text-foreground/50">Monthly Search Runs</span>
                     <span className="text-foreground">
                       <span className="text-primary font-bold">{cyclesRemaining}</span> / <span className="font-bold">{cycleLimit} Remaining</span>
                     </span>
@@ -209,24 +209,23 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-background border border-card-border flex items-center gap-3.5 shadow-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">                  <div className="p-4 rounded-2xl bg-background border border-card-border flex items-center gap-3.5 shadow-sm">
                     <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
                       <ShieldCheck className="h-4.5 w-4.5 text-emerald-500" />
                     </div>
                     <div>
-                      <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Verification Status</p>
-                      <p className="text-xs font-extrabold text-emerald-500 uppercase tracking-wider">Secured Mappings</p>
+                      <p className="text-[8px] font-bold text-foreground/50">Verification status</p>
+                      <p className="text-xs font-bold text-emerald-500">Active</p>
                     </div>
                   </div>
-
+ 
                   <div className="p-4 rounded-2xl bg-background border border-card-border flex items-center gap-3.5 shadow-sm">
                     <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0">
                       <Activity className="h-4.5 w-4.5 text-primary animate-pulse" />
                     </div>
                     <div>
-                      <p className="text-[8px] font-black text-foreground/50 uppercase tracking-widest">Outbound Velocity</p>
-                      <p className="text-xs font-extrabold text-foreground uppercase tracking-wider">Scheduled Searches</p>
+                      <p className="text-[8px] font-bold text-foreground/50">Search volume</p>
+                      <p className="text-xs font-bold text-foreground">Scheduled searches</p>
                     </div>
                   </div>
                 </div>
@@ -235,7 +234,7 @@ export default function ProfilePage() {
 
             <div className="mt-8 border-t border-primary/10 pt-4 flex items-center justify-between">
               <button onClick={() => window.location.href = '/billing'}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary-hover transition-colors group cursor-pointer"
+                className="flex items-center gap-2 text-[10px] font-bold text-primary hover:text-primary-hover transition-colors group cursor-pointer"
               >
                 <CreditCard className="h-4 w-4" /> Manage Subscriptions <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
               </button>
@@ -250,23 +249,23 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 text-foreground/75">
             <History className="h-4.5 w-4.5 text-primary" />
-            <h2 className="text-[10px] font-black uppercase tracking-widest">Billing & Invoices Ledger</h2>
+            <h2 className="text-[10px] font-bold text-foreground/75">Billing & invoices ledger</h2>
           </div>
-          <button onClick={fetchData} className="text-[9px] font-black text-foreground/50 hover:text-primary uppercase tracking-widest transition-colors cursor-pointer" >
+          <button onClick={fetchData} className="text-[10px] font-bold text-foreground/50 hover:text-primary transition-colors cursor-pointer" >
             Sync Ledger
           </button>
         </div>
-
         <div className="bg-card border border-card-border rounded-3xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-card-border bg-background text-[9px] font-black text-foreground/50 uppercase tracking-[0.2em]">
+                <tr className="border-b border-card-border bg-background text-[10px] font-bold text-foreground/55">
                   <th className="px-6 py-4">Transaction ID</th>
-                  <th className="px-6 py-4">Auth Status</th>
+                  <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4">Gateway</th>
-                  <th className="px-6 py-4">Invoiced Amount</th>
-                  <th className="px-6 py-4 text-right">Settlement Date</th>
+                  <th className="px-6 py-4">Amount</th>
+                  <th className="px-6 py-4 text-right">Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-card-border text-xs font-semibold">
@@ -275,7 +274,7 @@ export default function ProfilePage() {
                     <td colSpan={5} className="px-6 py-16 text-center text-foreground/45">
                       <div className="flex flex-col items-center gap-3 opacity-40">
                         <CreditCard className="h-7 w-7 text-primary" />
-                        <p className="text-[9px] font-black uppercase tracking-widest">No invoice history found on this seat.</p>
+                        <p className="text-[10px] font-bold">No invoice history found.</p>
                       </div>
                     </td>
                   </tr>
@@ -288,7 +287,7 @@ export default function ProfilePage() {
                         </span>
                       </td>
                       <td className="px-6 py-3.5">
-                        <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${
+                        <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                           tx.status === 'SUCCESS' 
                             ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
                             : 'bg-amber-500/10 border-amber-500/20 text-amber-500'
@@ -297,7 +296,7 @@ export default function ProfilePage() {
                         </div>
                       </td>
                       <td className="px-6 py-3.5">
-                        <span className="text-[9px] font-black text-foreground/60 uppercase tracking-widest">{tx.gateway}</span>
+                        <span className="text-[10px] font-bold text-foreground/60">{tx.gateway}</span>
                       </td>
                       <td className="px-6 py-3.5">
                         <span className="font-black text-foreground">${tx.amount}</span>
@@ -312,6 +311,45 @@ export default function ProfilePage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="block md:hidden divide-y divide-card-border">
+            {transactions.length === 0 ? (
+              <div className="px-6 py-16 text-center text-foreground/45 flex flex-col items-center gap-3 opacity-40">
+                <CreditCard className="h-7 w-7 text-primary" />
+                <p className="text-[10px] font-bold">No invoice history found.</p>
+              </div>
+            ) : (
+              transactions.map((tx) => (
+                <div key={tx.id} className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold text-foreground/55">
+                      {tx.id.substring(0, 8).toUpperCase()}
+                    </span>
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      tx.status === 'SUCCESS' 
+                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
+                        : 'bg-amber-500/10 border-amber-500/20 text-amber-500'
+                    }`}>
+                      {tx.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold text-foreground/75">
+                        {new Date(tx.createdAt).toLocaleDateString()}
+                      </p>
+                      <span className="text-[10px] font-bold text-foreground/60">{tx.gateway}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-bold text-foreground">${tx.amount}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

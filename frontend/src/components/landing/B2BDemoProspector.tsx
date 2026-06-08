@@ -122,15 +122,15 @@ export default function B2BDemoProspector() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest mb-2">
-            <Sparkles className="h-3 w-3 animate-pulse" /> Live Pipeline Discovery Demo
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold tracking-wide mb-2">
+            <Sparkles className="h-3 w-3 animate-pulse" /> Live demo
           </div>
-          <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">See How AI Discovers Your Target Market</h3>
+          <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">See how AI finds your target market</h3>
         </div>
         
         {phase !== "idle" && (
           <button onClick={resetSweep} className="h-9 px-4 rounded-full bg-white/5 flex items-center gap-2 hover:bg-white/10 text-foreground cursor-pointer text-xs font-bold transition-all active:scale-98" >
-            <RotateCcw className="h-3 w-3" /> Reset Demo
+            <RotateCcw className="h-3 w-3" /> Reset demo
           </button>
         )}
       </div>
@@ -150,7 +150,7 @@ export default function B2BDemoProspector() {
                 <niche.icon className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-wider text-primary">Target Vertical</p>
+                <p className="text-xs font-bold text-primary">Target market</p>
                 <p className="text-sm font-bold text-foreground truncate">{niche.industry}</p>
               </div>
             </button>
@@ -169,21 +169,21 @@ export default function B2BDemoProspector() {
                 <Search className="h-8 w-8 text-primary" />
               </div>
               <div className="space-y-2">
-                <h4 className="text-lg font-bold text-foreground">Target Segment Active</h4>
+                <h4 className="text-lg font-bold text-foreground">Target segment active</h4>
                 <p className="text-xs text-foreground font-medium max-w-xs mx-auto leading-relaxed">
-                  Click below to watch the autonomous scraper crawl geographical hubs, extract deep business pain-points, verify credentials, and write outreach drafts.
+                  Click below to watch the search agent scan geographical regions, analyze business challenges, verify contact emails, and write personalized email drafts.
                 </p>
               </div>
-              <button onClick={startSweep} className="btn-pill-white !bg-primary !text-white hover:!bg-primary-hover !h-12 w-full max-w-[240px] mx-auto text-xs uppercase tracking-widest font-black flex items-center justify-center gap-2 cursor-pointer shadow-md" >
-                <Play className="h-4 w-4 fill-white" /> Start Sweep Cycle
+              <button onClick={startSweep} className="btn-pill-white !bg-primary !text-white hover:!bg-primary-hover !h-12 w-full max-w-[240px] mx-auto text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-md" >
+                <Play className="h-4 w-4 fill-white" /> Start Demo Search
               </button>
             </div>
           ) : (
             <div className="space-y-6 h-full flex flex-col justify-between">
               {/* Progress Flow */}
-              <div className="space-y-5">
-                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-foreground border-b border-card-border pb-2 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-primary animate-ping" /> Scraper Pipeline Logs
+              <div className="space-y-5 text-left">
+                <h4 className="text-xs font-bold text-foreground border-b border-card-border pb-2 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-primary animate-ping" /> Automated Search Logs
                 </h4>
                 
                 {/* Step 1: Mapping & Scrape */}
@@ -194,9 +194,9 @@ export default function B2BDemoProspector() {
                     {phase === "sweeping" ? "↻" : "✓"}
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-foreground">1. Hub Sweep Discovery</p>
+                    <p className="text-xs font-bold text-foreground">1. Local Area Scan</p>
                     {phase === "sweeping" ? (
-                      <p className="text-[10px] text-primary font-mono mt-1">Sweeping coordinate systems... {progress}%</p>
+                      <p className="text-[10px] text-primary font-mono mt-1">Scanning local business records... {progress}%</p>
                     ) : (
                       <p className="text-[10px] text-foreground/75 font-mono mt-0.5">Found: {activeNiche.companyName} ({activeNiche.location})</p>
                     )}
@@ -212,9 +212,9 @@ export default function B2BDemoProspector() {
                     {phase === "sweeping" ? "2" : phase === "analyzing" ? "★" : "✓"}
                   </div>
                   <div>
-                    <p className={`text-xs font-bold ${phase === "sweeping" ? "text-foreground/45" : "text-foreground"}`}>2. Pain-Point Excavation</p>
+                    <p className={`text-xs font-bold ${phase === "sweeping" ? "text-foreground/45" : "text-foreground"}`}>2. Analyzing Challenges</p>
                     {phase === "analyzing" && (
-                      <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">AI extracting website friction...</p>
+                      <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">AI analyzing business challenges...</p>
                     )}
                     {phase !== "sweeping" && phase !== "analyzing" && (
                       <p className="text-[10px] text-foreground/75 font-mono mt-0.5">AI Pinpoint: Outdated funnel & low reach</p>
@@ -231,12 +231,12 @@ export default function B2BDemoProspector() {
                     {phase === "sweeping" || phase === "analyzing" ? "3" : phase === "verifying" ? "⚙" : "✓"}
                   </div>
                   <div>
-                    <p className={`text-xs font-bold ${phase === "sweeping" || phase === "analyzing" ? "text-foreground/45" : "text-foreground"}`}>3. Credentials Verification</p>
+                    <p className={`text-xs font-bold ${phase === "sweeping" || phase === "analyzing" ? "text-foreground/45" : "text-foreground"}`}>3. Contact Verification</p>
                     {phase === "verifying" && (
-                      <p className="text-[10px] text-primary font-mono mt-1">SMTP handshake and domain DNS lookup...</p>
+                      <p className="text-[10px] text-primary font-mono mt-1">Verifying email address validity...</p>
                     )}
                     {phase !== "sweeping" && phase !== "analyzing" && phase !== "verifying" && (
-                      <p className="text-[10px] text-emerald-500 font-mono mt-0.5">100% Verified Inbox Handshake</p>
+                      <p className="text-[10px] text-emerald-500 font-mono mt-0.5">Email address active</p>
                     )}
                   </div>
                 </div>
@@ -250,19 +250,19 @@ export default function B2BDemoProspector() {
                     {phase !== "drafting" && phase !== "completed" ? "4" : "✓"}
                   </div>
                   <div>
-                    <p className={`text-xs font-bold ${phase !== "drafting" && phase !== "completed" ? "text-foreground/45" : "text-foreground"}`}>4. Hyper-Personalized Outbound</p>
+                    <p className={`text-xs font-bold ${phase !== "drafting" && phase !== "completed" ? "text-foreground/45" : "text-foreground"}`}>4. Personalized Outreach</p>
                     {phase === "drafting" && (
-                      <p className="text-[10px] text-primary font-mono mt-1">Copywriting draft rendering...</p>
+                      <p className="text-[10px] text-primary font-mono mt-1">Outreach draft writing...</p>
                     )}
                     {phase === "completed" && (
-                      <p className="text-[10px] text-foreground/75 font-mono mt-0.5">Custom draft prepared</p>
+                      <p className="text-[10px] text-foreground/75 font-mono mt-0.5">Outreach draft prepared</p>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Bottom Dynamic Status */}
-              <div className="pt-4 border-t border-card-border">
+              <div className="pt-4 border-t border-card-border text-left">
                 {phase === "sweeping" && (
                   <div className="w-full bg-card-border h-1.5 rounded-full overflow-hidden">
                     <div className="bg-primary h-full transition-all duration-100" style={{ width: `${progress}%` }} />
@@ -270,22 +270,22 @@ export default function B2BDemoProspector() {
                 )}
                 {phase === "analyzing" && (
                   <div className="flex items-center gap-2 text-xs font-bold text-primary">
-                    <Brain className="h-4 w-4 animate-bounce text-primary" /> Analyzing business web layout...
+                    <Brain className="h-4 w-4 animate-bounce text-primary" /> Analyzing website details...
                   </div>
                 )}
                 {phase === "verifying" && (
                   <div className="flex items-center gap-2 text-xs font-bold text-emerald-500">
-                    <Shield className="h-4 w-4 text-emerald-500 animate-pulse" /> Validating contact credentials...
+                    <Shield className="h-4 w-4 text-emerald-500 animate-pulse" /> Verifying contact emails...
                   </div>
                 )}
                 {phase === "drafting" && (
                   <div className="flex items-center gap-2 text-xs font-bold text-primary">
-                    <Mail className="h-4 w-4 text-primary animate-pulse" /> Writing customized outbound draft...
+                    <Mail className="h-4 w-4 text-primary animate-pulse" /> Writing outreach draft...
                   </div>
                 )}
                 {phase === "completed" && (
                   <div className="flex items-center gap-2 text-xs font-bold text-emerald-500">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Pipeline Target Ready
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Lead Ready
                   </div>
                 )}
               </div>
@@ -302,17 +302,17 @@ export default function B2BDemoProspector() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="h-full flex flex-col justify-between"
+                className="h-full flex flex-col justify-between text-left"
               >
                 <div className="space-y-5">
                   <div className="flex justify-between items-center border-b border-card-border pb-3">
-                    <span className="text-xs font-black uppercase tracking-wider text-foreground">Interactive Simulator Console</span>
-                    <span className="px-2 py-0.5 rounded-full bg-card-border text-foreground text-[10px] font-bold">READY</span>
+                    <span className="text-xs font-bold text-foreground">Interactive Simulator</span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-card-border text-foreground text-[10px] font-bold">READY</span>
                   </div>
                   
                   <div className="space-y-4">
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Company Profile</p>
+                      <p className="text-[10px] font-bold text-primary mb-1">Company profile</p>
                       <p className="text-lg font-bold text-foreground">{activeNiche.companyName}</p>
                       <p className="text-xs text-foreground/60 flex items-center gap-1 font-medium mt-1">
                         <MapPin className="h-3.5 w-3.5 text-primary" /> {activeNiche.location}
@@ -320,19 +320,19 @@ export default function B2BDemoProspector() {
                     </div>
 
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Target Web Assets</p>
+                      <p className="text-[10px] font-bold text-primary mb-1">Target website features</p>
                       <p className="text-xs font-medium text-foreground/80 leading-relaxed bg-card p-3 rounded-xl border border-card-border">{activeNiche.details}</p>
                     </div>
 
-                      <div className="flex items-center gap-2 mt-1">
-                        <activeNiche.icon className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-bold text-foreground">{activeNiche.industry}</span>
-                      </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <activeNiche.icon className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-bold text-foreground">{activeNiche.industry}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="text-[10px] font-bold text-foreground/45 uppercase tracking-widest text-center mt-6">
-                  Select an industry above and sweep to uncover leads
+                <div className="text-[10px] font-bold text-foreground/45 text-center mt-6">
+                  Select an industry above and start a demo search
                 </div>
               </motion.div>
             ) : (
@@ -341,15 +341,15 @@ export default function B2BDemoProspector() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="h-full flex flex-col justify-between space-y-6"
+                className="h-full flex flex-col justify-between space-y-6 text-left"
               >
                 {/* Sweeping state */}
                 {phase === "sweeping" && (
                   <div className="h-full flex flex-col items-center justify-center text-center my-auto space-y-4 py-12">
                     <div className="h-12 w-12 rounded-full border-2 border-dashed border-primary animate-spin" />
                     <div>
-                      <p className="text-sm font-bold text-foreground">Scraper Nodes Executing...</p>
-                      <p className="text-[10px] text-foreground/60 font-mono mt-1">Iterating coordinates around {activeNiche.location}...</p>
+                      <p className="text-sm font-bold text-foreground">Searching target area...</p>
+                      <p className="text-[10px] text-foreground/60 font-mono mt-1">Scanning listings around {activeNiche.location}...</p>
                     </div>
                   </div>
                 )}
@@ -358,18 +358,18 @@ export default function B2BDemoProspector() {
                 {phase === "analyzing" && (
                   <div className="space-y-4">
                     <div className="flex justify-between items-center border-b border-card-border pb-3">
-                      <span className="text-xs font-black uppercase tracking-wider text-primary">Uncovering Target Pain Points</span>
-                      <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black">AI CRAWLING</span>
+                      <span className="text-xs font-bold text-primary">Analyzing business challenges</span>
+                      <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">ANALYZING</span>
                     </div>
 
                     <div className="space-y-4">
                       <div>
-                        <p className="text-[10px] font-black text-foreground/60 uppercase tracking-widest mb-1">Entity Identified</p>
+                        <p className="text-[10px] font-bold text-foreground/60 mb-1">Company found</p>
                         <p className="text-md font-bold text-foreground">{activeNiche.companyName}</p>
                       </div>
                       <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1">
-                          <Brain className="h-3.5 w-3.5 text-primary" /> HyprLead AI Extracted Business Pain Matrix:
+                        <p className="text-[10px] font-bold text-primary flex items-center gap-1">
+                          <Brain className="h-3.5 w-3.5 text-primary" /> AI challenge analysis:
                         </p>
                         <p className="text-xs font-semibold leading-relaxed text-foreground">{activeNiche.painPoint}</p>
                       </div>
@@ -381,8 +381,8 @@ export default function B2BDemoProspector() {
                 {phase === "verifying" && (
                   <div className="space-y-5">
                     <div className="flex justify-between items-center border-b border-card-border pb-3">
-                      <span className="text-xs font-black uppercase tracking-wider text-emerald-500">Contact Credentials Authentication</span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-black">SMTP ACTIVE</span>
+                      <span className="text-xs font-bold text-emerald-500">Verifying Contact Information</span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-bold">VERIFYING</span>
                     </div>
 
                     <div className="space-y-4">
@@ -390,12 +390,12 @@ export default function B2BDemoProspector() {
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4 text-primary" />
                           <div>
-                            <p className="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Target Corporate Email</p>
+                            <p className="text-[9px] font-bold text-foreground/50">Company Email</p>
                             <p className="text-xs font-bold text-foreground font-mono">{activeNiche.email}</p>
                           </div>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest animate-pulse border border-emerald-500/20">
-                          SMTP Handshake OK
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-bold animate-pulse border border-emerald-500/20">
+                          Email Verified
                         </span>
                       </div>
 
@@ -403,12 +403,12 @@ export default function B2BDemoProspector() {
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-primary" />
                           <div>
-                            <p className="text-[9px] font-black text-foreground/50 uppercase tracking-widest">Verified Direct Line</p>
+                            <p className="text-[9px] font-bold text-foreground/50">Verified Phone Number</p>
                             <p className="text-xs font-bold text-foreground font-mono">{activeNiche.phone}</p>
                           </div>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">
-                          CELL PHONE MATCH
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-bold border border-emerald-500/20">
+                          Phone active
                         </span>
                       </div>
                     </div>
@@ -419,18 +419,18 @@ export default function B2BDemoProspector() {
                 {(phase === "drafting" || phase === "completed") && (
                   <div className="space-y-4 flex-1 flex flex-col">
                     <div className="flex justify-between items-center border-b border-card-border pb-3 shrink-0">
-                      <span className="text-xs font-black uppercase tracking-wider text-foreground">AI Personalized Outbound Email Draft</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                      <span className="text-xs font-bold text-foreground">Personalized outreach draft</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                         phase === "completed" ? "bg-emerald-500/10 text-emerald-500" : "bg-primary/10 text-primary animate-pulse"
                       }`}>
-                        {phase === "completed" ? "DRAFT GENERATED" : "WRITING DRAFT"}
+                        {phase === "completed" ? "Draft prepared" : "Writing draft"}
                       </span>
                     </div>
 
                     <div className="flex-1 rounded-xl bg-card border border-card-border p-4 flex flex-col justify-between min-h-[220px]">
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 border-b border-card-border/50 pb-2 text-xs">
-                          <span className="font-bold text-foreground/50 w-16 uppercase text-[9px] tracking-wider">Subject:</span>
+                          <span className="font-bold text-foreground/50 w-16 text-[9px] tracking-wide">Subject:</span>
                           <span className="font-bold text-foreground">{activeNiche.subject}</span>
                         </div>
                         <div className="text-xs leading-relaxed text-foreground/90 font-mono whitespace-pre-wrap">
@@ -445,11 +445,11 @@ export default function B2BDemoProspector() {
                           animate={{ opacity: 1, y: 0 }}
                           className="pt-4 border-t border-card-border/50 flex flex-col sm:flex-row gap-4 items-center justify-between"
                         >
-                          <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider flex items-center gap-1">
-                            🚀 Ready to Sync with CRM and Trigger Dispatch
+                          <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-1">
+                            Ready to save and email
                           </span>
-                          <button onClick={startSweep} className="btn-pill-white !bg-primary !text-white hover:!bg-primary-hover !h-8 !px-4 text-[10px] uppercase tracking-wider font-black flex items-center gap-1.5 cursor-pointer" >
-                            Re-run Sweep <ArrowRight className="h-3 w-3" />
+                          <button onClick={startSweep} className="btn-pill-white !bg-primary !text-white hover:!bg-primary-hover !h-8 !px-4 text-[10px] font-bold flex items-center gap-1.5 cursor-pointer" >
+                            Search Again <ArrowRight className="h-3 w-3" />
                           </button>
                         </motion.div>
                       )}

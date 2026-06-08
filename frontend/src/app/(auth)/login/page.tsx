@@ -262,7 +262,7 @@ export default function LoginPage() {
         className="mx-auto grid min-h-screen w-full max-w-6xl grid-cols-1 items-center gap-10 px-6 py-10 lg:grid-cols-[1.2fr_440px]"
       >
         {/* Left Side: Product Information and Carousel */}
-        <section className="space-y-8 flex flex-col justify-center">
+        <section className="hidden lg:flex flex-col justify-center space-y-8">
           <Link href="/" className="inline-flex items-center gap-3 w-fit group">
             <div className="h-11 w-11 relative shrink-0">
               <img 

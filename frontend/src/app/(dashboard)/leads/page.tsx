@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import {
   ExternalLink, MessageSquare, Filter, FileDown, Phone, Globe, Calendar, Building2, Check, Trash2, 
   ShieldCheck, Shield, ChevronDown, ChevronUp, Zap, Search, RefreshCw, BarChart3, Users, Mail, MapPin, 
-  Brain, Send, Copy, ArrowUpRight, Sparkles, Target, AlertCircle, TrendingUp, Lightbulb, X
+  Brain, Send, Copy, ArrowUpRight, Sparkles, Target, AlertCircle, TrendingUp, Lightbulb, X, ArrowLeft
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/skeleton";
@@ -131,6 +131,7 @@ export default function LeadsPage() {
   const [stats, setStats] = useState<any>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailResult, setEmailResult] = useState<'sent' | 'failed' | null>(null);
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
 
   // Sales intelligence state
   type SalesIntel = {
@@ -229,6 +230,7 @@ export default function LeadsPage() {
     setIntel(null);
     setIntelError(null);
     setShowIntelModal(false);
+    setMobileView("detail");
   };
 
   const openIntelModal = (lead: Lead) => {
@@ -271,6 +273,7 @@ export default function LeadsPage() {
       if (selectedLeadId === id) {
         setSelectedLeadId(null);
         setEditedMessage("");
+        setMobileView("list");
       }
     } catch { alert("Failed to remove lead."); }
   };
@@ -370,9 +373,9 @@ export default function LeadsPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-3 border-b border-card-border pb-6">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-              <ShieldCheck className="h-4 w-4" /> Dedicated Outreach Intelligence
+              <ShieldCheck className="h-4 w-4" /> Dedicated outreach intelligence
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Outbound Command Center</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Outbound leads</h1>
             <p className="text-xs text-muted-foreground font-medium">
               {pagination.totalLeads} total active opportunities · grouped by search runs
             </p>
@@ -448,7 +451,7 @@ export default function LeadsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           
           {/* Left Master Leads Panel */}
-          <div className="lg:col-span-5 flex flex-col space-y-4">
+          <div className={`lg:col-span-5 flex flex-col space-y-4 ${mobileView === "detail" ? "hidden lg:flex" : "flex"}`}>
             
             {/* Search and Filters Hub */}
             <div className="bg-card border border-card-border p-4 rounded-xl space-y-3 shadow-sm">
@@ -564,7 +567,7 @@ export default function LeadsPage() {
           </div>
 
           {/* Right Detail Panel — Form-Table Layout */}
-          <div className="lg:col-span-7">
+          <div className={`lg:col-span-7 ${mobileView === "list" ? "hidden lg:block" : "block"}`}>
             <div className="sticky top-28 self-start bg-card border border-card-border rounded-xl shadow-sm min-h-[580px] flex flex-col overflow-hidden">
 
               <AnimatePresence mode="wait">
@@ -580,6 +583,13 @@ export default function LeadsPage() {
                     {/* Panel Header */}
                     <div className="flex items-center justify-between px-5 py-4 border-b border-card-border">
                       <div className="flex items-center gap-3 min-w-0">
+                        <button
+                          onClick={() => setMobileView("list")}
+                          className="lg:hidden h-8 w-8 rounded-lg bg-card border border-card-border flex items-center justify-center hover:border-card-hover-border text-foreground transition-all cursor-pointer shadow-sm shrink-0 mr-1"
+                          title="Back to leads"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                        </button>
                         <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                           <Building2 className="h-4 w-4 text-primary" />
                         </div>
@@ -614,7 +624,7 @@ export default function LeadsPage() {
 
                       {/* ── Section: Contact Information ── */}
                       <div className="px-5 pt-4 pb-2">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Contact Information</p>
+                        <p className="text-[11px] font-bold text-muted-foreground mb-2">Contact information</p>
                         <div className="border border-card-border rounded-lg overflow-hidden">
                           {[
                             {
@@ -630,7 +640,7 @@ export default function LeadsPage() {
                               icon: Phone,
                               value: activeLead.business.phone || '',
                               mono: true,
-                              badge: activeLead.business.phone ? { text: 'VERIFIED', color: 'text-green-600 bg-green-500/10' } : { text: 'MISSING', color: 'text-muted-foreground bg-muted' },
+                              badge: activeLead.business.phone ? { text: 'Verified', color: 'text-green-600 bg-green-500/10' } : { text: 'Missing', color: 'text-muted-foreground bg-muted' },
                             },
                             {
                               key: 'email',
@@ -638,7 +648,7 @@ export default function LeadsPage() {
                               icon: Mail,
                               value: activeLead.business.email || '',
                               mono: true,
-                              badge: activeLead.business.email ? { text: 'Email Verified', color: 'text-green-600 bg-green-500/10' } : { text: 'MISSING', color: 'text-muted-foreground bg-muted' },
+                              badge: activeLead.business.email ? { text: 'Email verified', color: 'text-green-600 bg-green-500/10' } : { text: 'Missing', color: 'text-muted-foreground bg-muted' },
                             },
                             {
                               key: 'website',
@@ -769,7 +779,7 @@ export default function LeadsPage() {
 
                       {/* ── Section: AI Intelligence ── */}
                       <div className="px-5 pt-3 pb-2">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">AI Intelligence</p>
+                        <p className="text-[11px] font-bold text-muted-foreground mb-2">AI intelligence</p>
                         <div className="border border-card-border rounded-lg overflow-hidden">
                           {/* Industry row */}
                           <div className="flex items-center gap-3 px-4 py-3 bg-background border-b border-card-border">
@@ -813,11 +823,11 @@ export default function LeadsPage() {
                       <div className="px-5 pt-3 pb-2">
                         <div className="rounded-lg bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div className="min-w-0">
-                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1.5">
-                              <Sparkles className="h-3.5 w-3.5" /> AI Sales Explainer
+                            <p className="text-[11px] font-bold text-primary flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5" /> AI sales strategy
                             </p>
                             <p className="text-xs text-foreground/70 font-medium mt-1">
-                              Open a focused sale-path brief for this lead, based on campaign context and findings.
+                              Open a focused sales strategy brief for this lead based on campaign context.
                             </p>
                           </div>
                           <button
@@ -825,7 +835,7 @@ export default function LeadsPage() {
                             className="h-10 px-4 rounded-lg bg-primary text-white text-xs font-bold flex items-center justify-center gap-2 shrink-0 hover:bg-primary-hover transition-colors"
                           >
                             <Sparkles className="h-3.5 w-3.5" />
-                            Explain Sale Path
+                            Explain sales strategy
                           </button>
                         </div>
                       </div>
@@ -833,8 +843,8 @@ export default function LeadsPage() {
                       <div className="hidden">
                         <div className="flex items-center justify-between mb-2">
                           <div>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                              <Sparkles className="h-3 w-3 text-primary" /> AI Sales Path
+                            <p className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
+                              <Sparkles className="h-3 w-3 text-primary" /> AI sales strategy
                             </p>
                             <p className="text-[11px] text-muted-foreground font-medium mt-1">
                               {activeCampaign?.name || "Campaign"} {activeCampaign?.productName ? `-> ${activeCampaign.productName}` : ""} {activeCampaign?.outreachTone ? `-> ${activeCampaign.outreachTone.toLowerCase()} tone` : ""}
@@ -898,12 +908,12 @@ export default function LeadsPage() {
                                       {intel.opportunityScore}
                                     </span>
                                   </div>
-                                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Score</p>
+                                  <p className="text-[10px] font-bold text-muted-foreground">Score</p>
                                 </div>
 
                                 {/* Summary */}
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">What this lead is</p>
+                                  <p className="text-[11px] font-bold text-primary mb-1">What this lead is</p>
                                   <p className="text-xs font-medium text-foreground leading-relaxed">{intel.summary}</p>
                                   {intel.urgencySignal && (
                                     <div className="mt-2 flex items-start gap-1.5">
@@ -918,7 +928,7 @@ export default function LeadsPage() {
                               <div className="px-4 py-3 flex items-center gap-3">
                                 <Target className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                                 <div className="min-w-0">
-                                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                                  <p className="text-[11px] font-bold text-muted-foreground mb-0.5">
                                     Why it matches this campaign
                                   </p>
                                   <p className="text-xs text-foreground font-medium leading-snug">{intel.whyThisLead}</p>
@@ -928,7 +938,7 @@ export default function LeadsPage() {
                               <div className="px-4 py-3 flex items-start gap-3 bg-primary/5">
                                 <Send className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
                                 <div className="min-w-0">
-                                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">How to make it a sale</p>
+                                  <p className="text-[11px] font-bold text-primary mb-0.5">How to make it a sale</p>
                                   <p className="text-xs text-foreground font-semibold leading-snug">{intel.salesApproach}</p>
                                 </div>
                               </div>
@@ -936,8 +946,8 @@ export default function LeadsPage() {
                               {/* Talking Points */}
                               {intel.talkingPoints.length > 0 && (
                                 <div className="px-4 py-3">
-                                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-                                    <TrendingUp className="h-3 w-3" /> Talking Points
+                                  <p className="text-[11px] font-bold text-muted-foreground mb-2 flex items-center gap-1">
+                                    <TrendingUp className="h-3 w-3" /> Talking points
                                   </p>
                                   <ul className="space-y-1.5">
                                     {intel.talkingPoints.map((pt, i) => (
@@ -953,8 +963,8 @@ export default function LeadsPage() {
                               {/* Objection handling */}
                               {intel.likelyObjection && (
                                 <div className="px-4 py-3 space-y-2">
-                                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                                    <AlertCircle className="h-3 w-3" /> Likely Objection
+                                  <p className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
+                                    <AlertCircle className="h-3 w-3" /> Likely objection
                                   </p>
                                   <div className="bg-orange-500/5 border border-orange-500/15 rounded-lg p-2.5">
                                     <p className="text-[11px] text-orange-700 dark:text-orange-400 font-medium italic">"{intel.likelyObjection}"</p>
@@ -972,7 +982,7 @@ export default function LeadsPage() {
                                 <div className="px-4 py-3 flex items-start gap-2 bg-primary/5">
                                   <Lightbulb className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
                                   <div>
-                                    <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">Next Best Action</p>
+                                    <p className="text-[11px] font-bold text-primary mb-0.5">Next best action</p>
                                     <p className="text-xs text-foreground font-semibold leading-snug">{intel.nextBestAction}</p>
                                   </div>
                                 </div>
@@ -985,7 +995,7 @@ export default function LeadsPage() {
                       {/* ── Section: Outreach Message ── */}
                       <div className="px-5 pt-3 pb-5">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Outreach Message</p>
+                          <p className="text-[11px] font-bold text-muted-foreground">Outreach message</p>
                           <button
                             onClick={() => copyField('message', editedMessage)}
                             disabled={!editedMessage}
@@ -1116,8 +1126,8 @@ export default function LeadsPage() {
             >
               <div className="px-6 py-5 border-b border-card-border flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                    <Sparkles className="h-3.5 w-3.5" /> AI Sales Explainer
+                  <p className="text-[11px] font-bold text-primary flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5" /> AI sales strategy
                   </p>
                   <h3 className="text-xl font-bold text-foreground tracking-tight truncate mt-1">{activeLead.business.name}</h3>
                   <p className="text-xs text-muted-foreground font-medium mt-1">
@@ -1164,7 +1174,7 @@ export default function LeadsPage() {
                         <span className="text-lg font-black">{intel.opportunityScore}</span>
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-primary uppercase tracking-widest">What this lead is</p>
+                        <p className="text-[11px] font-bold text-primary">What this lead is</p>
                         <p className="text-sm text-foreground/90 font-medium leading-relaxed mt-1">{intel.summary}</p>
                         {intel.urgencySignal && (
                           <p className="text-xs text-amber-500 font-semibold leading-relaxed mt-3 flex gap-2">
@@ -1176,13 +1186,13 @@ export default function LeadsPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="rounded-xl bg-background p-5">
-                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                        <p className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
                           <Target className="h-3.5 w-3.5" /> Why it matches
                         </p>
                         <p className="text-sm text-foreground/85 font-medium leading-relaxed mt-2">{intel.whyThisLead}</p>
                       </div>
                       <div className="rounded-xl bg-primary/5 p-5">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                        <p className="text-[11px] font-bold text-primary flex items-center gap-2">
                           <Send className="h-3.5 w-3.5" /> How to make it a sale
                         </p>
                         <p className="text-sm text-foreground font-semibold leading-relaxed mt-2">{intel.salesApproach}</p>
@@ -1191,7 +1201,7 @@ export default function LeadsPage() {
 
                     {intel.talkingPoints.length > 0 && (
                       <div className="rounded-xl bg-background p-5">
-                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-3">
+                        <p className="text-[11px] font-bold text-muted-foreground flex items-center gap-2 mb-3">
                           <TrendingUp className="h-3.5 w-3.5" /> Talking points
                         </p>
                         <div className="space-y-2">
@@ -1209,7 +1219,7 @@ export default function LeadsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {intel.likelyObjection && (
                           <div className="rounded-xl bg-orange-500/5 p-5">
-                            <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-2">
+                            <p className="text-[11px] font-bold text-orange-500 flex items-center gap-2">
                               <AlertCircle className="h-3.5 w-3.5" /> Likely objection
                             </p>
                             <p className="text-sm text-foreground/85 italic leading-relaxed mt-2">"{intel.likelyObjection}"</p>
@@ -1220,7 +1230,7 @@ export default function LeadsPage() {
                         )}
                         {intel.nextBestAction && (
                           <div className="rounded-xl bg-primary/5 p-5">
-                            <p className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                            <p className="text-[11px] font-bold text-primary flex items-center gap-2">
                               <Lightbulb className="h-3.5 w-3.5" /> Next best action
                             </p>
                             <p className="text-sm text-foreground font-semibold leading-relaxed mt-2">{intel.nextBestAction}</p>
@@ -1278,27 +1288,27 @@ function ThinLeadRow({ lead, isSelected, onSelect }: ThinLeadRowProps) {
       <div className="flex items-center gap-2 shrink-0">
         {lead.business.phone && (
           <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-semibold shrink-0">
-            CELL
+            Cell
           </span>
         )}
         {lead.business.email && (
           <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-semibold shrink-0">
-            SMTP
+            Email
           </span>
         )}
         {!lead.business.phone && !lead.business.email && lead.business.contactStatus && (
           <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 ${contactStatusClass(lead.business.contactStatus)}`}>
-            {lead.business.bestContactChannel === 'social_profile' ? 'SOCIAL' : lead.business.bestContactChannel === 'contact_page' ? 'PAGE' : 'WEB'}
+            {lead.business.bestContactChannel === 'social_profile' ? 'Social' : lead.business.bestContactChannel === 'contact_page' ? 'Page' : 'Web'}
           </span>
         )}
         {isContacted && (
           <span className="px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 text-[10px] font-semibold shrink-0">
-            SENT
+            Sent
           </span>
         )}
         {isRouteOpened && (
           <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 text-[10px] font-semibold shrink-0">
-            OPENED
+            Opened
           </span>
         )}
       </div>
