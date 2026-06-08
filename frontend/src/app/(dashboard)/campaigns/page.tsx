@@ -335,129 +335,112 @@ export default function CampaignsPage() {
               key={c.id} 
               className="bento-card overflow-hidden group rounded-3xl"
             >
-              <div className="p-6 md:p-8 space-y-8">
+              <div className="p-4 sm:p-6 md:p-8 space-y-5 md:space-y-8">
                 {/* Header Row */}
-                <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
-                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-full bg-card border border-card-border flex items-center justify-center shrink-0">
+                <div className="flex items-start justify-between gap-3">
+                  {/* Left: icon + name + badges */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-card border border-card-border flex items-center justify-center shrink-0">
                       <Briefcase className={cn(
-                        "h-5 w-5 transition-colors",
+                        "h-4 w-4 sm:h-5 sm:w-5 transition-colors",
                         c.status === 'ACTIVE' ? "text-primary" : "text-foreground opacity-40"
                       )} />
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-lg font-bold text-foreground tracking-tight">{c.name}</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight truncate">{c.name}</h3>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
                         <div className={cn(
-                          "px-2.5 py-0.5 rounded-full text-xs font-bold border",
+                          "px-2 py-0.5 rounded-full text-[10px] font-bold border",
                           c.status === 'ACTIVE' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-card border-card-border text-foreground"
                         )}>
                           {c.status.charAt(0) + c.status.slice(1).toLowerCase()}
                         </div>
                         <div className={cn(
-                          "px-2.5 py-0.5 rounded-full text-xs font-bold border",
+                          "px-2 py-0.5 rounded-full text-[10px] font-bold border",
                           cycleBadgeClass(c.cycleRuns?.[0]?.status)
                         )}>
-                          {c.cycleRuns?.[0]?.status ? `Last Run: ${c.cycleRuns?.[0]?.status.toLowerCase()}` : "No runs"}
+                          {c.cycleRuns?.[0]?.status ? c.cycleRuns[0].status.charAt(0) + c.cycleRuns[0].status.slice(1).toLowerCase() : "No runs"}
                         </div>
                       </div>
-                      <p className="text-xs font-medium text-foreground opacity-60">Created {new Date(c.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
- 
-                  {/* Actions Column */}
-                  <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+
+                  {/* Right: primary action button (desktop also shows here) */}
+                  <div className="shrink-0">
                     {isCycleEmpty ? (
                       <Link
                         href="/billing"
-                        className="flex-1 lg:flex-none h-11 px-5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 shadow-md shadow-primary/10"
+                        className="h-9 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 shadow-md shadow-primary/10"
                       >
-                        <CreditCard className="h-3.5 w-3.5" /> Buy credits
+                        <CreditCard className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Buy credits</span>
                       </Link>
                     ) : c.status !== "ACTIVE" ? (
                       <button
                         onClick={() => toggleStatus(c.id, c.status)}
                         disabled={busyCampaignId === c.id}
-                        className="flex-1 lg:flex-none h-11 px-5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 shadow-md shadow-primary/10 disabled:opacity-50 cursor-pointer"
+                        className="h-9 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 shadow-md shadow-primary/10 disabled:opacity-50 cursor-pointer"
                       >
-                        {busyCampaignId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Play className="h-3.5 w-3.5" /> Activate Campaign</>}
+                        {busyCampaignId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Play className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Activate</span></>}
                       </button>
                     ) : c.cycleRuns?.[0]?.status === "RUNNING" || c.cycleRuns?.[0]?.status === "QUEUED" ? (
-                      <div className="flex-1 lg:flex-none h-11 px-5 rounded-full text-xs font-bold flex items-center justify-center gap-2 bg-primary/10 text-primary">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Search running
+                      <div className="h-9 px-4 rounded-full text-xs font-bold flex items-center justify-center gap-2 bg-primary/10 text-primary">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> <span className="hidden sm:inline">Running</span>
                       </div>
                     ) : (
                       <button
                         onClick={() => handleRunCycle(c.id)}
                         disabled={triggering === c.id}
-                        className="flex-1 lg:flex-none h-11 px-5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 disabled:opacity-50 shadow-md shadow-primary/10 cursor-pointer"
+                        className="h-9 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 disabled:opacity-50 shadow-md shadow-primary/10 cursor-pointer"
                       >
-                        {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Zap className="h-3.5 w-3.5" /> Run search</>}
+                        {triggering === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Zap className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Run search</span></>}
                       </button>
                     )}
-                    <button onClick={() => toggleStatus(c.id, c.status)}
-                      disabled={busyCampaignId === c.id}
-                      className={cn(
-                        "flex-1 lg:flex-none h-11 px-5 rounded-full text-xs font-bold transition-all border flex items-center justify-center gap-2 cursor-pointer",
-                        c.status === 'ACTIVE' 
-                          ? "bg-card border-card-border text-foreground hover:bg-card/80" 
-                          : "bg-primary text-white border-primary hover:brightness-110 shadow-md shadow-primary/10"
-                      )}
-                    >
-                      {busyCampaignId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (c.status === 'ACTIVE' ? <><Pause className="h-3.5 w-3.5" /> Pause</> : <><Play className="h-3.5 w-3.5" /> Resume</>)}
-                    </button>
-                    <button onClick={() => handleDelete(c.id, c.name)}
-                      disabled={busyCampaignId === c.id}
-                      className="h-11 w-11 rounded-full bg-card border border-card-border text-foreground hover:text-red-500 hover:border-red-500/30 transition-all flex items-center justify-center cursor-pointer shrink-0 self-center"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
                   </div>
                 </div>
 
-                {/* Info Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-card/50 border border-card-border p-6 rounded-2xl space-y-4 shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <Radar className="h-4 w-4 text-primary/60" />
-                      <span className="text-xs font-bold text-foreground opacity-60">Industry targets</span>
+                {/* Info Grid — horizontal scroll on mobile, grid on desktop */}
+                <div className="flex gap-3 overflow-x-auto pb-1 md:pb-0 md:grid md:grid-cols-3 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+                  <div className="bg-card/50 border border-card-border p-4 rounded-2xl space-y-3 shadow-sm shrink-0 w-[220px] sm:w-auto md:w-auto">
+                    <div className="flex items-center gap-2">
+                      <Radar className="h-3.5 w-3.5 text-primary/60" />
+                      <span className="text-[10px] font-bold text-foreground opacity-60 uppercase tracking-wide">Industries</span>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {c.industries.map((ind, i) => (
-                        <span key={i} className="px-3 py-1 rounded-full bg-card border border-card-border text-xs font-medium text-foreground">{ind}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {c.industries.slice(0, 3).map((ind, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded-full bg-card border border-card-border text-[10px] font-medium text-foreground">{ind}</span>
                       ))}
-                      {c.industries.length === 0 && <span className="text-xs text-foreground opacity-40">All industries</span>}
+                      {c.industries.length > 3 && <span className="px-2 py-0.5 rounded-full bg-card border border-card-border text-[10px] font-medium text-foreground/50">+{c.industries.length - 3}</span>}
+                      {c.industries.length === 0 && <span className="text-[10px] text-foreground opacity-40">All industries</span>}
                     </div>
                   </div>
- 
-                  <div className="bg-card/50 border border-card-border p-6 rounded-2xl space-y-4 shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <MapPin className="h-4 w-4 text-primary/60" />
-                      <span className="text-xs font-bold text-foreground opacity-60">Target locations</span>
+
+                  <div className="bg-card/50 border border-card-border p-4 rounded-2xl space-y-3 shadow-sm shrink-0 w-[220px] sm:w-auto md:w-auto">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-3.5 w-3.5 text-primary/60" />
+                      <span className="text-[10px] font-bold text-foreground opacity-60 uppercase tracking-wide">Locations</span>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {c.locations.map((loc, i) => (
-                        <span key={i} className="px-3 py-1 rounded-full bg-card border border-card-border text-xs font-medium text-foreground">{loc}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {c.locations.slice(0, 3).map((loc, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded-full bg-card border border-card-border text-[10px] font-medium text-foreground">{loc}</span>
                       ))}
-                      {c.locations.length === 0 && <span className="text-xs text-foreground opacity-40">Global coverage</span>}
+                      {c.locations.length > 3 && <span className="px-2 py-0.5 rounded-full bg-card border border-card-border text-[10px] font-medium text-foreground/50">+{c.locations.length - 3}</span>}
+                      {c.locations.length === 0 && <span className="text-[10px] text-foreground opacity-40">Global</span>}
                     </div>
                   </div>
- 
-                  <div className="bg-card/50 border border-card-border p-6 rounded-2xl space-y-4 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Activity className="h-4 w-4 text-primary/60" />
-                        <span className="text-xs font-bold text-foreground opacity-60">Search performance</span>
-                      </div>
+
+                  <div className="bg-card/50 border border-card-border p-4 rounded-2xl space-y-3 shadow-sm shrink-0 w-[200px] sm:w-auto md:w-auto">
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-3.5 w-3.5 text-primary/60" />
+                      <span className="text-[10px] font-bold text-foreground opacity-60 uppercase tracking-wide">Last search</span>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-xs font-medium text-foreground opacity-60">Last search</span>
-                        <span className="text-xs font-bold text-foreground">
-                          {c.cycleRuns?.[0] ? `${c.cycleRuns[0].leadsFound}/${c.cycleRuns[0].maxLeads}` : "None"}
+                        <span className="text-[10px] font-medium text-foreground opacity-60">Leads found</span>
+                        <span className="text-[10px] font-bold text-foreground">
+                          {c.cycleRuns?.[0] ? `${c.cycleRuns[0].leadsFound}/${c.cycleRuns[0].maxLeads}` : "—"}
                         </span>
                       </div>
-                      <div className="h-1.5 w-full bg-border-muted rounded-full overflow-hidden">
+                      <div className="h-1 w-full bg-border-muted rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${c.cycleRuns?.[0]?.maxLeads ? Math.min(100, (c.cycleRuns[0].leadsFound / c.cycleRuns[0].maxLeads) * 100) : 0}%` }}
@@ -468,37 +451,56 @@ export default function CampaignsPage() {
                   </div>
                 </div>
  
-                {/* Footer Metrics & Trigger */}
-                <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-8 border-t border-card-border">
-                  <div className="flex-1 flex gap-10 w-full justify-between sm:justify-start">
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-foreground opacity-40">Total Leads</p>
-                      <p className="text-2xl md:text-3xl font-bold text-foreground">{c._count?.leads || 0}</p>
+                {/* Footer: stats + actions */}
+                <div className="flex items-center justify-between gap-4 pt-4 md:pt-8 border-t border-card-border">
+                  {/* Stats — compact on mobile */}
+                  <div className="flex gap-6">
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-bold text-foreground opacity-40">Total Leads</p>
+                      <p className="text-xl md:text-3xl font-bold text-foreground">{c._count?.leads || 0}</p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-foreground opacity-40">Avg / Search</p>
-                      <p className="text-2xl md:text-3xl font-bold text-foreground">
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-bold text-foreground opacity-40">Avg / Search</p>
+                      <p className="text-xl md:text-3xl font-bold text-foreground">
                         {c.cycleRuns?.length ? Math.round(c.cycleRuns.reduce((sum, cycle) => sum + cycle.leadsFound, 0) / c.cycleRuns.length) : 0}
                       </p>
                     </div>
                   </div>
- 
-                  {/* Actions Area */}
-                  <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
-                    <Button variant="outline" size="sm" onClick={() => router.push(`/campaigns/${c.id}/edit`)}
-                      className="h-10 px-4 bg-card hover:bg-card border border-card-border rounded-full text-xs font-bold transition-all text-foreground cursor-pointer"
+
+                  {/* Action buttons: always visible, compact on mobile */}
+                  <div className="flex items-center gap-2">
+                    {/* Pause / Resume */}
+                    <button onClick={() => toggleStatus(c.id, c.status)}
+                      disabled={busyCampaignId === c.id}
+                      title={c.status === 'ACTIVE' ? 'Pause' : 'Resume'}
+                      className={cn(
+                        "h-9 w-9 rounded-full border flex items-center justify-center transition-all cursor-pointer",
+                        c.status === 'ACTIVE'
+                          ? "bg-card border-card-border text-foreground hover:text-amber-500 hover:border-amber-500/30"
+                          : "bg-primary/10 border-primary/20 text-primary hover:brightness-110"
+                      )}
                     >
-                      <Settings className="h-3.5 w-3.5 mr-2 opacity-60" />
-                      Edit
+                      {busyCampaignId === c.id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : c.status === 'ACTIVE' ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                    </button>
+
+                    {/* Edit */}
+                    <Button variant="outline" size="sm" onClick={() => router.push(`/campaigns/${c.id}/edit`)}
+                      className="h-9 px-3 bg-card hover:bg-card border border-card-border rounded-full text-xs font-bold transition-all text-foreground cursor-pointer"
+                    >
+                      <Settings className="h-3.5 w-3.5 sm:mr-2 opacity-60" />
+                      <span className="hidden sm:inline">Edit</span>
                     </Button>
- 
+
+                    {/* Insights */}
                     <Sheet>
                       <SheetTrigger asChild>
                         <Button variant="outline" size="sm" onClick={() => fetchBrief(c.id)}
-                          className="h-10 px-4 bg-card hover:bg-card border border-card-border rounded-full text-xs font-bold transition-all text-foreground cursor-pointer"
+                          className="h-9 px-3 bg-card hover:bg-card border border-card-border rounded-full text-xs font-bold transition-all text-foreground cursor-pointer"
                         >
-                          <Info className="h-3.5 w-3.5 mr-2 opacity-60" />
-                          Insights
+                          <Info className="h-3.5 w-3.5 sm:mr-2 opacity-60" />
+                          <span className="hidden sm:inline">Insights</span>
                         </Button>
                       </SheetTrigger>
                       <SheetContent className="w-full sm:max-w-lg border-l border-card-border bg-sidebar p-0 overflow-hidden shadow-2xl shadow-primary/10">
@@ -652,8 +654,9 @@ export default function CampaignsPage() {
                       </SheetContent>
                     </Sheet>
 
+                    {/* Delete */}
                     <Button variant="outline" size="sm" disabled={busyCampaignId === c.id} onClick={() => handleDelete(c.id, c.name)}
-                      className="w-11 h-10 border border-card-border bg-card text-foreground hover:text-destructive hover:border-destructive/40 transition-all duration-300 rounded-full flex items-center justify-center cursor-pointer"
+                      className="h-9 w-9 border border-card-border bg-card text-foreground hover:text-destructive hover:border-destructive/40 transition-all duration-300 rounded-full flex items-center justify-center cursor-pointer"
                     >
                       {busyCampaignId === c.id ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
