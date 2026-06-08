@@ -2,13 +2,13 @@
 # Vercel only needs the frontend directory and shared prisma schema.
 # Exclude everything else to speed up deploys and protect secrets.
 
-# Backend engine (not deployed to Vercel)
-src/
-dist/
-scripts/
-scratch/
-debug/
-views/
+# Backend engine (not deployed to Vercel — only the /frontend dir is needed)
+/src/
+/dist/
+/scripts/
+/scratch/
+/debug/
+/views/
 
 # Local dev files
 *.log
