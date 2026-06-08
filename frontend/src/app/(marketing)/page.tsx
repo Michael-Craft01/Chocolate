@@ -21,7 +21,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="relative min-h-screen selection:bg-primary/30 font-sans bg-background text-foreground transition-colors duration-500">
+    <div className="relative min-h-screen selection:bg-primary/30 font-sans bg-transparent text-foreground transition-colors duration-500">
       <Navbar />
 
       <Hero />

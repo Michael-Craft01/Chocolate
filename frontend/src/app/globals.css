@@ -180,6 +180,7 @@ html.dark .bento-card {
   @apply bg-clip-text text-transparent bg-gradient-to-b from-white to-zinc-400;
 }
 
+
 .text-stat {
   @apply text-4xl font-bold tracking-[-0.04em];
   font-feature-settings: "tnum";
@@ -202,12 +203,33 @@ html.dark .bento-card {
   @apply text-xs font-black uppercase tracking-[0.15em] text-foreground;
 }
 
-/* Ambient styling - quiet and restrained */
+.telemetry-label {
+  @apply text-xs font-black uppercase tracking-[0.2em] text-foreground select-none pointer-events-none;
+}
+
+/* Ambient styling - premium dynamic mesh and glow */
 .bg-animated-mesh {
   position: absolute;
   inset: 0;
-  background-color: var(--background);
+  background-image: 
+    radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(4, 120, 87, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(6, 78, 59, 0.12) 0%, transparent 60%);
+  background-size: 200% 200%;
+  animation: mesh-drift-slow 25s ease-in-out infinite alternate;
   z-index: -3;
+}
+
+@keyframes mesh-drift-slow {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 40% 60%;
+  }
+  100% {
+    background-position: 80% 20%;
+  }
 }
 
 .hero-glow {
@@ -215,27 +237,13 @@ html.dark .bento-card {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 50vw;
-  height: 50vh;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.02) 0%, transparent 80%);
-  filter: blur(100px);
+  width: 65vw;
+  height: 65vh;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 80%);
+  filter: blur(120px);
   z-index: -2;
   pointer-events: none;
 }
-
-.telemetry-label {
-  @apply text-xs font-black uppercase tracking-[0.2em] text-foreground select-none pointer-events-none;
-}
-
-/* --- TELEMETRY SCROLLBAR --- */
-.scrollbar-neural::-webkit-scrollbar {
-  width: 3px;
-}
-
-.scrollbar-neural::-webkit-scrollbar-track {
-  background: transparent;
-}
-
 
 /* --- TELEMETRY SCROLLBAR --- */
 .scrollbar-neural::-webkit-scrollbar {

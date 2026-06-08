@@ -37,7 +37,7 @@ const FloatingTelemetry = () => {
   }, []);
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-20 hidden lg:block">
       <AnimatePresence>
         {items.map(item => (
           <motion.div
@@ -59,11 +59,16 @@ const FloatingTelemetry = () => {
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen w-full flex flex-col items-center pt-36 pb-20 overflow-hidden bg-background text-foreground">
+    <section className="relative min-h-screen w-full flex flex-col items-center pt-36 pb-20 overflow-hidden bg-transparent text-foreground">
       {/* Background System */}
       <div className="bg-animated-mesh" />
       <div className="bg-grid absolute inset-0 opacity-10 -z-10" />
       <div className="hero-glow" />
+      
+      {/* Ambient Glowing Blobs for Upgraded Visuals */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[130px] pointer-events-none -z-10" />
+      <div className="absolute top-10 left-10 w-[300px] h-[300px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none -z-10 animate-pulse" />
+      <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-primary/5 rounded-full blur-[110px] pointer-events-none -z-10" />
       
       {/* Telemetry Corner Accents (Outcome-focused) */}
       <div className="absolute top-40 left-10 telemetry-label flex flex-col gap-1 hidden lg:flex text-xs text-foreground/55 font-bold">
