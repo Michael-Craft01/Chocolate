@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Prevent Prisma client from being bundled by webpack (it uses native binaries)
+  serverExternalPackages: ["@prisma/client", "prisma"],
+
   async headers() {
     return [
       {

@@ -55,6 +55,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false); // true when Supabase requires email confirmation
   
   const [activeSlide, setActiveSlide] = useState(0);
 
@@ -95,21 +96,33 @@ export default function SignupPage() {
 
       if (authError) throw authError;
 
-      // Ensure session is established. If signUp didn't return a session, 
-      // we perform an explicit login to force cookie creation.
-      if (!data.session && data.user) {
-        await supabase.auth.signInWithPassword({ email, password });
+      // Case 1: Email confirmation required (Supabase default)
+      // data.session is null, but data.user exists with identities
+      const needsConfirmation = !data.session && data.user;
+      if (needsConfirmation) {
+        setEmailSent(true);
+        return;
       }
 
-      if (data.session || data.user) {
-        // Delay to let cookies settle and avoid middleware race condition
+      // Case 2: Email confirmation disabled — session is immediately available
+      if (data.session) {
         setTimeout(() => {
           router.refresh();
           router.push("/dashboard");
-        }, 1000); // Slightly longer delay for safety
+        }, 500);
       }
     } catch (err: any) {
-      setError(err.message || "Registration failed. Please try again.");
+      const msg = err.message || '';
+      if (
+        msg.toLowerCase().includes('email not confirmed') ||
+        msg.toLowerCase().includes('email_not_confirmed') ||
+        msg.toLowerCase().includes('check your email')
+      ) {
+        // Supabase sent the confirmation email — show the success state
+        setEmailSent(true);
+      } else {
+        setError(msg || 'Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -289,7 +302,22 @@ export default function SignupPage() {
               </p>
             </div>
           
-            {error && (
+            {emailSent && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm"
+              >
+                <p className="font-black text-emerald-400 mb-1">Check your inbox ✉️</p>
+                <p className="font-medium text-emerald-300/80">
+                  We sent a confirmation link to <strong className="text-white">{email}</strong>.
+                  Click it to activate your account, then come back and{" "}
+                  <Link href="/login" className="underline hover:text-white">sign in</Link>.
+                </p>
+              </motion.div>
+            )}
+
+            {!emailSent && error && (
               <motion.div 
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}

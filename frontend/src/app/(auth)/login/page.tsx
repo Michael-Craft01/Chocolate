@@ -74,14 +74,21 @@ function LoginForm() {
     setError(null);
 
     try {
-      const { data, signInError } = await supabase.auth.signInWithPassword({
+      // ⚠️ Supabase returns { data, error } — NOT { data, signInError }
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-      }) as any;
+      });
 
       if (signInError) {
-        if (signInError.message.includes("Email not confirmed")) {
-          throw new Error("Account not verified. Please check your inbox for the verification link.");
+        const msg = signInError.message || '';
+        if (
+          msg.toLowerCase().includes('email not confirmed') ||
+          msg.toLowerCase().includes('email_not_confirmed')
+        ) {
+          throw new Error(
+            'Your email address is not confirmed. Check your inbox for the activation link and click it before signing in.'
+          );
         }
         throw signInError;
       }
@@ -91,7 +98,7 @@ function LoginForm() {
         router.refresh();
       }
     } catch (err: any) {
-      setError(err.message || "Authentication failed. Check your account credentials.");
+      setError(err.message || 'Authentication failed. Check your credentials and try again.');
     } finally {
       setLoading(false);
     }

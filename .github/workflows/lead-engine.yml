@@ -1,24 +1,66 @@
-name: Run Lead Engine
+name: Lead Engine · Scheduled Run
 
 on:
+  # Twice daily: 06:00 UTC and 18:00 UTC
   schedule:
-    # Run every 12 hours (midnight and noon UTC)
-    - cron: "0 0,12 * * *"
-  workflow_dispatch: # Manual trigger
+    - cron: "0 6,18 * * *"
+
+  # Manual trigger from GitHub UI
+  workflow_dispatch:
+    inputs:
+      campaign_id:
+        description: "Specific campaign ID to run (leave empty for all due campaigns)"
+        required: false
+        default: ""
+        type: string
+      dry_run:
+        description: "Dry run (skip real scraping)"
+        required: false
+        default: "false"
+        type: boolean
+
+  # Triggered programmatically by Vercel API route when user clicks "Run Search"
+  # Payload: { campaign_id, user_id, cycle_run_id }
+  repository_dispatch:
+    types: [manual_cycle_trigger]
 
 env:
+  NODE_ENV: production
+  LOG_LEVEL: info
+  RUN_ONCE: "true"
+  DRY_RUN: ${{ inputs.dry_run || 'false' }}
+
+  # ── Triggered campaign (set from dispatch payload or manual input) ──────────
+  # For repository_dispatch: github.event.client_payload.campaign_id
+  # For workflow_dispatch:   inputs.campaign_id
+  # For schedule:            empty (run all due campaigns)
+  CAMPAIGN_ID: ${{ github.event.client_payload.campaign_id || inputs.campaign_id || '' }}
+  CYCLE_RUN_ID: ${{ github.event.client_payload.cycle_run_id || '' }}
+
+  # ── Secrets ────────────────────────────────────────────────────────────────
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   DIRECT_URL: ${{ secrets.DIRECT_URL }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+  RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-  RUN_ONCE: "true"
-  LOG_LEVEL: "info"
+  STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+  STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+  PAYNOW_INTEGRATION_ID: ${{ secrets.PAYNOW_INTEGRATION_ID }}
+  PAYNOW_INTEGRATION_KEY: ${{ secrets.PAYNOW_INTEGRATION_KEY }}
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+  SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
+  ENGINE_TRIGGER_SECRET: ${{ secrets.ENGINE_TRIGGER_SECRET }}
+  FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+  BACKEND_URL: ${{ secrets.BACKEND_URL }}
 
 jobs:
   run-engine:
+    name: Lead Engine Sweep
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Elite tier = 180 min/cycle × potential multi-campaign queue → cap at 4h
+    timeout-minutes: 240
 
     steps:
       - name: Checkout code
@@ -36,28 +78,40 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Install Playwright Chromium
+      - name: Install Playwright Chromium + system deps
         run: npx playwright install chromium --with-deps
+
+      - name: Run database migrations (safe, idempotent)
+        run: npx prisma migrate deploy
+        continue-on-error: true
+
+      - name: Log trigger context
+        run: |
+          echo "Trigger: ${{ github.event_name }}"
+          echo "Campaign ID: ${{ env.CAMPAIGN_ID || 'ALL (scheduled sweep)' }}"
+          echo "Cycle Run ID: ${{ env.CYCLE_RUN_ID || 'none' }}"
 
       - name: Run Lead Engine
         id: engine
-        run: npm run dev
+        run: npm start
         continue-on-error: true
 
-      - name: Notify Discord on Success
+      - name: Notify Discord · Success
         if: steps.engine.outcome == 'success'
         run: |
-          curl -H "Content-Type: application/json" \
-            -d '{"embeds":[{"title":"Lead Engine Complete","description":"Lead engine cycle completed successfully!","color":5763719,"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}' \
-            ${{ secrets.DISCORD_WEBHOOK }}
+          TRIGGER="${{ github.event_name }}"
+          CAMPAIGN="${{ env.CAMPAIGN_ID || 'all campaigns' }}"
+          curl -s -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"✅ Lead Engine · Sweep Complete\",\"description\":\"Trigger: $TRIGGER | Target: $CAMPAIGN\",\"color\":5763719,\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}]}" \
+            "$DISCORD_WEBHOOK" || true
 
-      - name: Notify Discord on Failure
+      - name: Notify Discord · Failure
         if: steps.engine.outcome == 'failure'
         run: |
-          curl -H "Content-Type: application/json" \
-            -d '{"embeds":[{"title":"Lead Engine Failed","description":"Lead engine cycle failed. Check GitHub Actions logs.","color":15548997,"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}' \
-            ${{ secrets.DISCORD_WEBHOOK }}
+          curl -s -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"❌ Lead Engine · Sweep Failed\",\"description\":\"[View logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\",\"color\":15548997,\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}]}" \
+            "$DISCORD_WEBHOOK" || true
 
-      - name: Fail the workflow if engine failed
+      - name: Fail job if engine failed
         if: steps.engine.outcome == 'failure'
         run: exit 1

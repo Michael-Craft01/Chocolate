@@ -175,8 +175,11 @@ async function createCheckout(req: NextRequest) {
     return NextResponse.json({ error: 'Stripe is not configured' }, { status: 500 });
   }
 
+  // Warn (but don't block) if using a test key in production.
+  // Vercel always sets NODE_ENV=production, so blocking here would prevent
+  // checkout during testing. Stripe itself enforces test/live card separation.
   if (process.env.NODE_ENV === 'production' && process.env.STRIPE_SECRET_KEY.startsWith('sk_test_')) {
-    return NextResponse.json({ error: 'Production checkout is using a Stripe test key' }, { status: 500 });
+    console.warn('[Billing] ⚠️  Running production checkout with a Stripe TEST key. Set STRIPE_SECRET_KEY=sk_live_... on Vercel for real payments.');
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);

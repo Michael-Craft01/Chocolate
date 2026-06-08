@@ -1,7 +1,50 @@
-node_modules
-# Keep environment variables out of version control
-.env
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
 
-/generated/prisma
-data/*.db
+# ── Environment variables (NEVER commit) ─────────────────────────────────────
+.env
+.env.local
+.env.*.local
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+*.env
+
+# ── Build outputs ─────────────────────────────────────────────────────────────
 dist/
+frontend/.next/
+frontend/out/
+
+# ── Prisma generated client ───────────────────────────────────────────────────
+/generated/
+frontend/generated/
+prisma/generated/
+
+# ── Database files ────────────────────────────────────────────────────────────
+data/*.db
+data/*.db-journal
+*.db
+*.sqlite
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+output.log
+error.log
+startup_error*.log
+npm-debug.log*
+
+# ── OS & Editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Debug / test artifacts ────────────────────────────────────────────────────
+google_diag.png
+scraper_debug.png
+test-output.txt

@@ -5,10 +5,21 @@ import { createAndRunCampaignCycle } from './services/discoveryEngine.js';
 import { config } from './config.js';
 import cron from 'node-cron';
 
-// Configuration
-const CYCLE_INTERVAL = 12 * 60 * 60 * 1000; // Lightweight AC-BDE scheduler check
+// ── GitHub Actions / CI mode flags ───────────────────────────────────────────
+// RUN_ONCE=true  → run a single sweep then exit (used in scheduled GH Actions)
+// CAMPAIGN_ID=id → run only a specific campaign (used in repository_dispatch)
+// CYCLE_RUN_ID=id → pre-created cycle record to update (from Vercel dispatch)
+const RUN_ONCE = process.env.RUN_ONCE === 'true';
+const TARGET_CAMPAIGN_ID = process.env.CAMPAIGN_ID?.trim() || '';
+const CYCLE_RUN_ID = process.env.CYCLE_RUN_ID?.trim() || '';
 
-function isCycleDue(user: { automationMode: string; autoRunFrequency: string }, lastCycle?: { createdAt: Date; status: string; leadsFound: number; maxLeads: number } | null) {
+// ── Scheduling helpers ───────────────────────────────────────────────────────
+const CYCLE_INTERVAL = 12 * 60 * 60 * 1000; // not used for GH Actions
+
+function isCycleDue(
+    user: { automationMode: string; autoRunFrequency: string },
+    lastCycle?: { createdAt: Date; status: string; leadsFound: number; maxLeads: number } | null
+) {
     if (user.automationMode === 'MANUAL' || user.autoRunFrequency === 'MANUAL') return false;
 
     if (user.automationMode === 'SMART' && lastCycle) {
@@ -65,38 +76,101 @@ async function queueDueDiscoveryCycles(triggerType: 'AUTO' | 'SYSTEM' = 'AUTO') 
     return queued;
 }
 
+// ── Targeted single-campaign run (used by repository_dispatch) ───────────────
+async function runTargetedCampaign(campaignId: string, existingCycleRunId?: string) {
+    logger.info(`[Engine] Targeted run for campaign: ${campaignId}`);
+
+    const campaign = await prisma.campaign.findUnique({
+        where: { id: campaignId },
+        select: { id: true, userId: true, status: true, name: true }
+    });
+
+    if (!campaign) {
+        logger.error(`[Engine] Campaign ${campaignId} not found.`);
+        process.exit(1);
+    }
+
+    if (campaign.status !== 'ACTIVE') {
+        logger.warn(`[Engine] Campaign "${campaign.name}" is ${campaign.status} — skipping.`);
+        process.exit(0);
+    }
+
+    // If Vercel pre-created the cycle record, update it to RUNNING
+    if (existingCycleRunId) {
+        await prisma.cycleRun.update({
+            where: { id: existingCycleRunId },
+            data: { status: 'RUNNING' }
+        }).catch((err: any) => logger.warn({ err }, 'Failed to update pre-created cycle to RUNNING'));
+    }
+
+    try {
+        await createAndRunCampaignCycle(campaign.id, campaign.userId, 'MANUAL');
+        logger.info(`[Engine] Targeted run for campaign ${campaignId} complete.`);
+    } catch (error: any) {
+        logger.error({ err: error }, `[Engine] Targeted run for campaign ${campaignId} failed.`);
+        process.exit(1);
+    }
+}
+
+// ── Main entry point ──────────────────────────────────────────────────────────
 async function startEngine() {
-    logger.info('🚀 Starting Autonomous Lead Generation Engine...');
-    
+    // ── Mode A: GitHub Actions targeted single-campaign dispatch ──────────────
+    if (RUN_ONCE && TARGET_CAMPAIGN_ID) {
+        logger.info(`🚀 Engine started in TARGETED mode (GitHub Actions dispatch). Campaign: ${TARGET_CAMPAIGN_ID}`);
+        await runTargetedCampaign(TARGET_CAMPAIGN_ID, CYCLE_RUN_ID);
+        logger.info('✅ Targeted run complete. Exiting.');
+        await prisma.$disconnect();
+        process.exit(0);
+    }
+
+    // ── Mode B: GitHub Actions scheduled sweep ────────────────────────────────
+    if (RUN_ONCE) {
+        logger.info('🚀 Engine started in RUN_ONCE mode (GitHub Actions scheduled sweep).');
+        const activeCount = await prisma.campaign.count({ where: { status: 'ACTIVE' } });
+
+        if (activeCount > 0) {
+            logger.info(`Found ${activeCount} active campaigns. Queueing due discovery cycles...`);
+            const queued = await queueDueDiscoveryCycles('SYSTEM');
+            logger.info(`Sweep complete. Queued ${queued} campaign cycle(s).`);
+        } else {
+            logger.info('Standby: No active campaigns found.');
+        }
+
+        await prisma.$disconnect();
+        process.exit(0);
+    }
+
+    // ── Mode C: Long-running server (local dev / Railway / Fly.io) ────────────
+    logger.info('🚀 Starting Autonomous Lead Generation Engine (server mode)...');
+
     // 1. Start Web UI/API
     startServer();
 
-    // 2. Initial cycle queue (only if paid work exists)
+    // 2. Initial cycle queue
     const activeCount = await prisma.campaign.count({ where: { status: 'ACTIVE' } });
-    
+
     if (activeCount > 0) {
         logger.info(`Found ${activeCount} active campaigns. Queueing due discovery cycles...`);
         await queueDueDiscoveryCycles('SYSTEM').catch((err: any) => logger.error({ err }, 'Initial cycle queue failed'));
     } else {
-        logger.info('Engine Standby: No active campaigns found. Waiting for user to launch a mission.');
+        logger.info('Engine Standby: No active campaigns. Waiting for user to launch a mission.');
     }
 
-    // 3. Schedule Recurring Hunts with node-cron
+    // 3. Schedule recurring sweeps
     const cronSchedule = config.CRON_SCHEDULE || '0 */6 * * *';
     cron.schedule(cronSchedule, async () => {
         logger.info('⏰ Running scheduled campaign cycle sweep...');
         try {
             const queued = await queueDueDiscoveryCycles('AUTO');
-            logger.info(`AC-BDE scheduler check complete. Queued ${queued} campaign cycle(s).`);
+            logger.info(`Scheduler check complete. Queued ${queued} campaign cycle(s).`);
         } catch (error: any) {
             logger.error({ err: error }, 'Scheduled cycle queue failed');
         }
     });
 
-    logger.info(`Engine operational. Scheduler configured via cron: "${cronSchedule}"`);
+    logger.info(`Engine operational. Cron: "${cronSchedule}"`);
 }
 
-// Handle errors
 process.on('unhandledRejection', (reason, promise) => {
     logger.error({ reason, promise }, 'Unhandled Rejection at Promise');
 });
