@@ -1,7 +1,7 @@
 import prisma from './lib/prisma.js';
 import { logger } from './lib/logger.js';
 import { startServer } from './web/server.js';
-import { createAndRunCampaignCycle } from './services/discoveryEngine.js';
+import { createAndRunCampaignCycle, runCampaignCycle } from './services/discoveryEngine.js';
 import { config } from './config.js';
 import cron from 'node-cron';
 
@@ -95,16 +95,12 @@ async function runTargetedCampaign(campaignId: string, existingCycleRunId?: stri
         process.exit(0);
     }
 
-    // If Vercel pre-created the cycle record, update it to RUNNING
-    if (existingCycleRunId) {
-        await prisma.cycleRun.update({
-            where: { id: existingCycleRunId },
-            data: { status: 'RUNNING' }
-        }).catch((err: any) => logger.warn({ err }, 'Failed to update pre-created cycle to RUNNING'));
-    }
-
     try {
-        await createAndRunCampaignCycle(campaign.id, campaign.userId, 'MANUAL');
+        if (existingCycleRunId) {
+            await runCampaignCycle(existingCycleRunId);
+        } else {
+            await createAndRunCampaignCycle(campaign.id, campaign.userId, 'MANUAL');
+        }
         logger.info(`[Engine] Targeted run for campaign ${campaignId} complete.`);
     } catch (error: any) {
         logger.error({ err: error }, `[Engine] Targeted run for campaign ${campaignId} failed.`);

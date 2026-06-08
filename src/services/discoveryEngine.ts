@@ -448,6 +448,7 @@ export async function runCampaignCycle(cycleRunId: string) {
     let zeroYieldRounds = 0;
     const MAX_ZERO_YIELD_ROUNDS = getZeroYieldRounds(cycle.user?.tier);
     let abortedDueToPause = false;
+    let targetReached = false;
 
     await prisma.cycleRun.update({
         where: { id: cycleRunId },
@@ -480,7 +481,11 @@ export async function runCampaignCycle(cycleRunId: string) {
                     where: { id: campaign.id },
                     select: { status: true }
                 });
-                if (!innerCampaign || innerCampaign.status !== 'ACTIVE' || leadsFound >= cycle.maxLeads || Date.now() >= deadline) {
+                if (leadsFound >= cycle.maxLeads) {
+                    targetReached = true;
+                    break;
+                }
+                if (!innerCampaign || innerCampaign.status !== 'ACTIVE' || Date.now() >= deadline) {
                     abortedDueToPause = true;
                     break;
                 }
@@ -506,18 +511,20 @@ export async function runCampaignCycle(cycleRunId: string) {
                 await sleep(1000);
             }
 
-            if (abortedDueToPause) break;
+            if (abortedDueToPause || targetReached) break;
 
             zeroYieldRounds = roundFound === 0 ? zeroYieldRounds + 1 : 0;
             if (roundFound === 0) await sleep(30000);
         }
 
         if (abortedDueToPause) {
-            logger.info({ cycleRunId }, '[CYCLE] Campaign paused. Leaving cycle run status untouched.');
+            // Campaign was actively paused/deactivated mid-run — leave status untouched so user can inspect
+            logger.info({ cycleRunId }, '[CYCLE] Campaign paused mid-run. Leaving cycle run status untouched.');
             return await prisma.cycleRun.findUnique({ where: { id: cycleRunId } });
         }
 
-        const status = leadsFound > 0 || Date.now() < deadline ? 'COMPLETED' : 'PARTIAL';
+        // targetReached = lead quota filled. Normal completion, even if inner-loop broke early.
+        const status = leadsFound > 0 ? 'COMPLETED' : (Date.now() < deadline ? 'PARTIAL' : 'PARTIAL');
         const completed = await prisma.cycleRun.update({
             where: { id: cycleRunId },
             data: { status, leadsFound, completedAt: new Date() }
