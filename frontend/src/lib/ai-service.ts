@@ -13,7 +13,7 @@ export class AIService {
   private model: string;
 
   constructor() {
-    this.model = process.env.GEMINI_MODEL || 'gemma-4-31b-it';
+    this.model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
     this.openai = new OpenAI({
       apiKey: process.env.GEMINI_API_KEY,
       baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
