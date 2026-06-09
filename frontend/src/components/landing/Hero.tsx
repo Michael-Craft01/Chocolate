@@ -5,6 +5,7 @@ import { ArrowRight, Play, Compass, Globe, Shield, Sparkles, Activity, Crosshair
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import B2BDemoProspector from "./B2BDemoProspector";
+import SocialHeroCarousel from "./SocialHeroCarousel";
 
 const FloatingTelemetry = () => {
   const [items, setItems] = useState<{ id: number, text: string, x: number, y: number }[]>([]);
@@ -61,6 +62,14 @@ export default function Hero() {
   return (
     <section className="relative min-h-screen w-full flex flex-col items-center pt-36 pb-20 overflow-hidden bg-transparent text-foreground">
       {/* Background System */}
+      <div className="absolute inset-0 -z-30 pointer-events-none select-none overflow-hidden">
+        <img 
+          src="/media__1781032543445.jpg" 
+          alt="Summit Background Texture" 
+          className="w-full h-full object-cover opacity-20 filter blur-[1px] grayscale saturate-[30%]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#030504]/70 to-[#030504]" />
+      </div>
       <div className="bg-animated-mesh" />
       <div className="bg-grid absolute inset-0 opacity-10 -z-10" />
       <div className="hero-glow" />
@@ -146,6 +155,11 @@ export default function Hero() {
             </a>
           </div>
         </motion.div>
+
+        {/* Looping Social Activity & Network Carousel */}
+        <div className="w-full py-8">
+          <SocialHeroCarousel />
+        </div>
 
         {/* B2B Sales Prospector Centerpiece */}
         <motion.div
