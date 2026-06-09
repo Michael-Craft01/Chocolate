@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { AIAssistButton } from "@/components/AIAssistButton";
+import { ElaborateButton } from "@/components/ElaborateButton";
 import { NeuralDropdown } from "@/components/NeuralDropdown";
 
 export interface FieldConfig {
@@ -226,14 +226,14 @@ export function QuestionnaireModal({
                                                     (field.type === 'text' || field.type === 'textarea' || field.type === 'list_upload') &&
                                                     !/webhook|password|secret|token|key|api|link|url|website/i.test(field.key)
                                                 )) && (
-                                                    <AIAssistButton
+                                                    <ElaborateButton
                                                         field={field.aiRefineField || field.label}
                                                         currentValue={value}
                                                         context={buildAiContext(
                                                             field.aiRefineContextKeys || 
                                                             Object.keys(data).filter(k => k !== field.key && !/webhook|password|secret|token|key|api|link|url|website/i.test(k))
                                                         )}
-                                                        onRefined={(val) => onChange(prev => ({ ...prev, [field.key]: val }))}
+                                                        onElaborated={(val) => onChange(prev => ({ ...prev, [field.key]: val }))}
                                                     />
                                                 )}
                                             </div>

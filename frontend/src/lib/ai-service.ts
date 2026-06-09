@@ -28,17 +28,29 @@ export class AIService {
   private model: string;
 
   constructor() {
-    const rawModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-    this.model = rawModel.includes('gemma-3') || rawModel.includes('gemma-30') ? 'gemma-4-26b-a4b-it' : rawModel;
+    // Lock to Gemma models only — per product requirement.
+    // gemma-4-26b-a4b-it is the verified working Gemma 4 model.
+    // Any legacy env value that accidentally points to a broken model is rewritten here.
+    const rawModel = process.env.GEMINI_MODEL || 'gemma-4-26b-a4b-it';
+    const ALLOWED_GEMMA = [
+      'gemma-4-26b-a4b-it',
+      'gemma-3-27b-it',
+    ];
+    this.model = ALLOWED_GEMMA.includes(rawModel) ? rawModel : 'gemma-4-26b-a4b-it';
     this.openai = new OpenAI({
       apiKey: process.env.GEMINI_API_KEY,
       baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
     });
   }
 
-  async refineInput(field: string, value: string, context?: any): Promise<string> {
+  async refineInput(field: string, value: string, context?: Record<string, unknown>): Promise<string> {
     if (!process.env.GEMINI_API_KEY) {
       return value || '';
+    }
+
+    // If the input is completely empty, nothing to elaborate
+    if (!value || !value.trim()) {
+      return '';
     }
 
     const isListField =
@@ -48,15 +60,17 @@ export class AIService {
       field.toLowerCase().includes('area');
 
     const systemPrompt = isListField
-      ? 'You are the HyprLead Form Assistant (HyprLead AI Powered). ' +
-        'Your goal is to refine the user input into a clean, comma-separated list of concise B2B categories, industries, or geographic targets (maximum 3 words per item). ' +
-        'Do NOT output full sentences, explanation text, bullet points, or conjunctions like "and/or". ' +
-        'Return ONLY a valid JSON object with a single key "refined" containing the final refined value. ' +
+      ? 'You are the HyprLead AI Assistant. ' +
+        'The user has typed a partial or rough list. Elaborate it into a clean, comma-separated list of specific B2B categories, industries, or geographic targets (maximum 3 words per item). ' +
+        'Add relevant entries the user may have missed but that align with their input. ' +
+        'Do NOT output full sentences, explanation, bullet points, or conjunctions like "and/or". ' +
+        'Return ONLY a valid JSON object with a single key "refined" containing the elaborated value. ' +
         'Do NOT output any reasoning, thoughts, drafts, or markdown.'
-      : 'You are the HyprLead Form Assistant (HyprLead AI Powered). ' +
-        'Your goal is to refine the user input into a high-fidelity, professional description ' +
-        'optimized for a B2B lead discovery engine. ' +
-        'Return ONLY a valid JSON object with a single key "refined" containing the final refined value. ' +
+      : 'You are the HyprLead AI Assistant. ' +
+        'The user has typed a short or rough input. Elaborate it into a detailed, professional, persuasive description ' +
+        'optimised for B2B lead outreach and discovery. Expand vague language, add specifics, and make it compelling. ' +
+        'Maintain the user\'s original intent and tone — just make it richer and more complete. ' +
+        'Return ONLY a valid JSON object with a single key "refined" containing the elaborated value (plain text, no markdown). ' +
         'Do NOT output any reasoning, thoughts, drafts, or markdown.';
 
     try {
@@ -69,11 +83,12 @@ export class AIService {
           },
           {
             role: 'user',
-            content: `FIELD: "${field}"\nUSER INPUT: "${value || 'None provided'}"\nCONTEXT: ${JSON.stringify(context || {})}`,
+            content: `FIELD: "${field}"\nUSER INPUT: "${value}"\nCONTEXT: ${JSON.stringify(context ?? {})}\n\nElaborate the user's input for this field into a high-quality, detailed version.`,
           },
         ],
         response_format: { type: 'json_object' },
-        temperature: 0.1,
+        temperature: 0.4,
+        max_tokens: 600,
       });
 
       const raw = response.choices[0]?.message?.content ?? '';
@@ -85,7 +100,7 @@ export class AIService {
 
       return stripThinking(raw);
     } catch (error) {
-      console.error('AI Refinement failed, returning raw input:', error);
+      console.error('[AIService.refineInput] Elaborate failed, returning raw input:', error);
       return value || '';
     }
   }

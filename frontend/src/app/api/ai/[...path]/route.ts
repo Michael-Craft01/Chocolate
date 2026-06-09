@@ -11,17 +11,43 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
     if (!user) return authError();
 
     try {
-      const { field, value, context } = await req.json();
-      if (!field) {
-        return NextResponse.json({ error: 'Field is required' }, { status: 400 });
+      const body = await req.json();
+      const { field, value, context } = body ?? {};
+
+      // ── Input validation ──────────────────────────────────────────
+      if (!field || typeof field !== 'string') {
+        return NextResponse.json({ error: 'field is required and must be a string' }, { status: 400 });
       }
-      const refined = await aiService.refineInput(field, value, context);
+      if (field.length > 200) {
+        return NextResponse.json({ error: 'field name too long' }, { status: 400 });
+      }
+      if (value && typeof value !== 'string') {
+        return NextResponse.json({ error: 'value must be a string' }, { status: 400 });
+      }
+      const safeValue = typeof value === 'string' ? value.slice(0, 5000) : '';
+
+      // Sanitise field label — strip special chars that could influence the prompt
+      const safeField = field.replace(/[<>{}|`]/g, '').slice(0, 200);
+
+      // Strip any sensitive context keys server-side as a defence-in-depth measure
+      let safeContext: Record<string, unknown> = {};
+      if (context && typeof context === 'object' && !Array.isArray(context)) {
+        const BLOCKED = /webhook|password|secret|token|key|api|bearer|auth|credential/i;
+        for (const [k, v] of Object.entries(context as Record<string, unknown>)) {
+          if (!BLOCKED.test(k)) safeContext[k] = v;
+        }
+      }
+      // ─────────────────────────────────────────────────────────────
+
+      const refined = await aiService.refineInput(safeField, safeValue, safeContext);
       return NextResponse.json({ refined });
-    } catch (error: any) {
-      console.error('[Next AI Service] Refinement failed:', error.message);
-      return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Internal Server Error';
+      console.error('[Next AI /refine] Error for user', user?.id, ':', msg);
+      return NextResponse.json({ error: msg }, { status: 500 });
     }
   }
+
   return handleProxy(req, path);
 }
 

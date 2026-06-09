@@ -8,8 +8,10 @@ const openai = new OpenAI({
   baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
 });
 
-const rawModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const MODEL = rawModel.includes('gemma-3') || rawModel.includes('gemma-30') ? 'gemma-4-26b-a4b-it' : rawModel;
+const ALLOWED_GEMMA_MODELS = new Set(['gemma-4-26b-a4b-it', 'gemma-3-27b-it']);
+const rawModel = process.env.GEMINI_MODEL || 'gemma-4-26b-a4b-it';
+// Strict whitelist: only allow verified Gemma models. Any other value falls back to the safe Gemma 4 model.
+const MODEL = ALLOWED_GEMMA_MODELS.has(rawModel) ? rawModel : 'gemma-4-26b-a4b-it';
 
 function extractJson<T>(text: string): T {
   const cleanText = text

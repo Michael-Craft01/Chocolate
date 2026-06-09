@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,7 +15,7 @@ import {
     Upload
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { AIAssistButton } from "@/components/AIAssistButton";
+import { ElaborateButton } from "@/components/ElaborateButton";
 import { authJson } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -158,7 +158,7 @@ export default function OnboardingPage() {
                             {step === 5 && "Search Settings"}
                         </h1>
                         <p className="text-white/40 text-sm">
-                            Step {step} of {totalSteps} — {step === 1 ? "Business Profile" : step === 2 ? "Your Details" : step === 3 ? "Product Details" : step === 4 ? "Target Market" : "Search Settings"}
+                            Step {step} of {totalSteps} â€” {step === 1 ? "Business Profile" : step === 2 ? "Your Details" : step === 3 ? "Product Details" : step === 4 ? "Target Market" : "Search Settings"}
                         </p>
                         <p className="mt-2 text-xs text-zinc-500">{currentStepHint()}</p>
                     </div>
@@ -169,10 +169,10 @@ export default function OnboardingPage() {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between ml-1">
                                     <label className="block text-xs font-bold text-white/30">Company Name</label>
-                                    <AIAssistButton 
+                                    <ElaborateButton 
                                         field="Company Name" 
                                         currentValue={formData.companyName} 
-                                        onRefined={(val) => handleFormUpdate("companyName", val)} 
+                                        onElaborated={(val) => handleFormUpdate("companyName", val)} 
                                     />
                                 </div>
                                 <input 
@@ -203,11 +203,11 @@ export default function OnboardingPage() {
                                 <div>
                                     <div className="flex items-center justify-between mb-2 ml-1">
                                         <label className="block text-xs font-bold text-white/30">Your Name</label>
-                                        <AIAssistButton 
+                                        <ElaborateButton 
                                             field="Sender Name" 
                                             currentValue={formData.senderName} 
                                             context={{ companyName: formData.companyName }}
-                                            onRefined={(val) => handleFormUpdate("senderName", val)} 
+                                            onElaborated={(val) => handleFormUpdate("senderName", val)} 
                                         />
                                     </div>
                                     <input 
@@ -221,11 +221,11 @@ export default function OnboardingPage() {
                                 <div>
                                     <div className="flex items-center justify-between mb-2 ml-1">
                                         <label className="block text-xs font-bold text-white/30">Your Role</label>
-                                        <AIAssistButton 
+                                        <ElaborateButton 
                                             field="Sender Role" 
                                             currentValue={formData.senderRole} 
                                             context={{ companyName: formData.companyName, senderName: formData.senderName }}
-                                            onRefined={(val) => handleFormUpdate("senderRole", val)} 
+                                            onElaborated={(val) => handleFormUpdate("senderRole", val)} 
                                         />
                                     </div>
                                     <input 
@@ -250,11 +250,11 @@ export default function OnboardingPage() {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between ml-1">
                                     <label className="block text-xs font-bold text-white/30">Main Product/Service</label>
-                                    <AIAssistButton 
+                                    <ElaborateButton 
                                         field="Product Name" 
                                         currentValue={formData.productName} 
                                         context={{ companyName: formData.companyName }}
-                                        onRefined={(val) => handleFormUpdate("productName", val)} 
+                                        onElaborated={(val) => handleFormUpdate("productName", val)} 
                                     />
                                 </div>
                                 <input 
@@ -268,11 +268,11 @@ export default function OnboardingPage() {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between ml-1">
                                     <label className="block text-xs font-bold text-white/30">Product Description</label>
-                                    <AIAssistButton 
+                                    <ElaborateButton 
                                         field="Value Proposition" 
                                         currentValue={formData.productDescription} 
                                         context={{ companyName: formData.companyName, productName: formData.productName }}
-                                        onRefined={(val) => handleFormUpdate("productDescription", val)} 
+                                        onElaborated={(val) => handleFormUpdate("productDescription", val)} 
                                     />
                                 </div>
                                 <textarea 
@@ -318,11 +318,11 @@ export default function OnboardingPage() {
                                                 className="hidden"
                                             />
                                         </label>
-                                        <AIAssistButton
+                                        <ElaborateButton
                                             field="Target Industries"
                                             currentValue={formData.industries}
                                             context={{ productName: formData.productName, productDescription: formData.productDescription }}
-                                            onRefined={(val) => handleFormUpdate("industries", val)}
+                                            onElaborated={(val) => handleFormUpdate("industries", val)}
                                         />
                                     </div>
                                 </div>
@@ -351,11 +351,11 @@ export default function OnboardingPage() {
                                                 className="hidden"
                                             />
                                         </label>
-                                        <AIAssistButton
+                                        <ElaborateButton
                                             field="Target Locations"
                                             currentValue={formData.locations}
                                             context={{ targetCountry: formData.targetCountry }}
-                                            onRefined={(val) => handleFormUpdate("locations", val)}
+                                            onElaborated={(val) => handleFormUpdate("locations", val)}
                                         />
                                     </div>
                                 </div>
@@ -371,11 +371,11 @@ export default function OnboardingPage() {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <label className="block text-xs font-bold text-white/30">Customer Challenges</label>
-                                    <AIAssistButton
+                                    <ElaborateButton
                                         field="Target Pain Points"
                                         currentValue={formData.targetPainPoints}
                                         context={{ productName: formData.productName, productDescription: formData.productDescription }}
-                                        onRefined={(val) => handleFormUpdate("targetPainPoints", val)}
+                                        onElaborated={(val) => handleFormUpdate("targetPainPoints", val)}
                                     />
                                 </div>
                                 <textarea

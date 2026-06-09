@@ -102,7 +102,10 @@ export class AIService {
 
     // ── 1. Form Field Refinement (enforced JSON output) ───────────────────────
 
-    async refineInput(field: string, value: string, context?: any): Promise<string> {
+    async refineInput(field: string, value: string, context?: Record<string, unknown>): Promise<string> {
+        // Skip API call for empty input — nothing to elaborate
+        if (!value || !value.trim()) return '';
+
         const isListField = 
             field.toLowerCase().includes('industry') || 
             field.toLowerCase().includes('location') || 
@@ -110,15 +113,17 @@ export class AIService {
             field.toLowerCase().includes('area');
 
         const systemPrompt = isListField
-            ? 'You are the HyprLead Form Assistant (HyprLead AI Powered). ' +
-              'Your goal is to refine the user input into a clean, comma-separated list of concise B2B categories, industries, or geographic targets (maximum 3 words per item). ' +
-              'Do NOT output full sentences, explanation text, bullet points, or conjunctions like "and/or". ' +
-              'Return ONLY a valid JSON object with a single key "refined" containing the final refined value. ' +
+            ? 'You are the HyprLead AI Assistant. ' +
+              'The user has typed a partial or rough list. Elaborate it into a clean, comma-separated list of specific B2B categories, industries, or geographic targets (maximum 3 words per item). ' +
+              'Add relevant entries the user may have missed but that align with their input. ' +
+              'Do NOT output full sentences, explanation, bullet points, or conjunctions like "and/or". ' +
+              'Return ONLY a valid JSON object with a single key "refined" containing the elaborated value. ' +
               'Do NOT output any reasoning, thoughts, drafts, or markdown.'
-            : 'You are the HyprLead Form Assistant (HyprLead AI Powered). ' +
-              'Your goal is to refine the user input into a high-fidelity, professional description ' +
-              'optimized for a B2B lead discovery engine. ' +
-              'Return ONLY a valid JSON object with a single key "refined" containing the final refined value. ' +
+            : 'You are the HyprLead AI Assistant. ' +
+              'The user has typed a short or rough input. Elaborate it into a detailed, professional, persuasive description ' +
+              'optimised for B2B lead outreach and discovery. Expand vague language, add specifics, and make it compelling. ' +
+              'Maintain the user\'s original intent and tone — just make it richer and more complete. ' +
+              'Return ONLY a valid JSON object with a single key "refined" containing the elaborated value (plain text, no markdown). ' +
               'Do NOT output any reasoning, thoughts, drafts, or markdown.';
 
         return this.withRetry('refineInput', async (model) => {
@@ -131,11 +136,12 @@ export class AIService {
                     },
                     {
                         role: 'user',
-                        content: `FIELD: "${field}"\nUSER INPUT: "${value || 'None provided'}"\nCONTEXT: ${JSON.stringify(context || {})}`,
+                        content: `FIELD: "${field}"\nUSER INPUT: "${value}"\nCONTEXT: ${JSON.stringify(context ?? {})}\n\nElaborate the user's input for this field into a high-quality, detailed version.`,
                     },
                 ],
                 response_format: { type: 'json_object' },
-                temperature: 0.1,
+                temperature: 0.4,
+                max_tokens: 600,
             });
 
             const raw = firstChoiceContent(response);
@@ -550,24 +556,28 @@ JSON SCHEMA:
         operation: (model: string) => Promise<T>,
         maxRetries = 3,
     ): Promise<T> {
-        let lastError: any;
+        let lastError: unknown;
+        // Whitelist of allowed Gemma models — per product requirement.
+        const ALLOWED_GEMMA = new Set(['gemma-4-26b-a4b-it', 'gemma-3-27b-it']);
+        const resolveModel = (m: string) => ALLOWED_GEMMA.has(m) ? m : 'gemma-4-26b-a4b-it';
+
         let currentModel = config.GEMINI_MODEL;
 
         for (let attempt = 0; attempt < maxRetries; attempt++) {
             try {
-                const apiModel = currentModel.includes('gemma-3') || currentModel.includes('gemma-30') ? 'gemma-4-26b-a4b-it' : currentModel;
-                return await operation(apiModel);
-            } catch (err: any) {
+                return await operation(resolveModel(currentModel));
+            } catch (err: unknown) {
                 lastError = err;
+                const apiErr = err as { status?: number; message?: string };
 
-                const isRateLimit   = err.status === 429 || String(err.message).includes('429');
-                const isServerError = err.status >= 500;
+                const isRateLimit   = apiErr.status === 429 || String(apiErr.message).includes('429');
+                const isServerError = typeof apiErr.status === 'number' && apiErr.status >= 500;
                 const isRetryable   = isRateLimit || isServerError;
 
                 if (!isRetryable) {
                     // Hard failure (bad request, auth error, etc.) — don't waste retries
                     logger.error(
-                        { err: err.message, operationName, status: err.status },
+                        { err: apiErr.message, operationName, status: apiErr.status },
                         '[HyprLead AI] Non-retryable error. Aborting.',
                     );
                     throw err;
@@ -585,7 +595,7 @@ JSON SCHEMA:
 
                 const delayMs = Math.pow(2, attempt) * 2000; // 2s → 4s → 8s
                 logger.warn(
-                    { operationName, attempt: attempt + 1, maxRetries, delayMs, status: err.status },
+                    { operationName, attempt: attempt + 1, maxRetries, delayMs, status: apiErr.status },
                     '[HyprLead AI] Retryable error. Backing off...',
                 );
                 await new Promise(r => setTimeout(r, delayMs));
