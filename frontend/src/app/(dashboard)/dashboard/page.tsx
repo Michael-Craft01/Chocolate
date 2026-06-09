@@ -18,7 +18,8 @@ import {
   CheckCircle,
   CreditCard,
   AlertTriangle,
-  Zap
+  Zap,
+  X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -27,9 +28,17 @@ import type { Stats, Lead } from "@/lib/types";
 import type { CycleRun } from "@/lib/types";
 import { fetchCycles } from "@/lib/services/cycles";
 import { Sparkline } from "@/components/Sparkline";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { cn } from "@/lib/utils";
+
+const CAROUSEL_IMAGES = [
+  "/media__1781032543389.jpg",
+  "/media__1781032543415.jpg",
+  "/media__1781032543445.jpg",
+  "/media__1781032543548.jpg",
+  "/media__1781032543586.jpg",
+];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -37,6 +46,7 @@ export default function DashboardPage() {
   const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
   const [recentCycles, setRecentCycles] = useState<CycleRun[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeImage, setActiveImage] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -394,10 +404,87 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-           </div>
+            </div>
+         </div>
+
+        {/* Infinite Image Showcase Carousel */}
+        <div className="md:col-span-12 bento-card p-6 md:p-8 space-y-6 rounded-3xl overflow-hidden relative group">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-card-border pb-4 gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-card border border-card-border flex items-center justify-center shrink-0">
+                <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-foreground tracking-tight">HyprLead Spotlight</h2>
+                <p className="text-xs text-foreground opacity-60">Outreach highlights, panel presentations, and industry focus</p>
+              </div>
+            </div>
+            <span className="text-xs font-bold text-foreground opacity-45">Click image to enlarge</span>
+          </div>
+
+          {/* Scrolling Ticker Container */}
+          <div className="relative overflow-hidden py-4 w-full">
+            {/* Fade overlays at ends for smooth masking */}
+            <div className="absolute top-0 left-0 bottom-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute top-0 right-0 bottom-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+
+            <div className="animate-infinite-ticker gap-6">
+              {[...CAROUSEL_IMAGES, ...CAROUSEL_IMAGES].map((src, index) => (
+                <div 
+                  key={index}
+                  onClick={() => setActiveImage(src)}
+                  className="relative h-64 aspect-[3/4] rounded-2xl overflow-hidden border border-card-border/60 hover:border-primary/40 transition-all duration-300 transform hover:scale-[1.03] cursor-pointer shadow-md group/img shrink-0"
+                >
+                  <img 
+                    src={src} 
+                    alt={`Spotlight slide ${index}`} 
+                    className="w-full h-full object-cover transition-all duration-500 group-hover/img:scale-105" 
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/25 transition-all flex items-center justify-center">
+                    <span className="text-xs font-bold text-white bg-black/60 px-3 py-1.5 rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity">View Full</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
       </div>
+
+      {/* Lightbox Modal Popup */}
+      <AnimatePresence>
+        {activeImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+            onClick={() => setActiveImage(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative max-w-lg md:max-w-2xl w-full flex items-center justify-center overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-zinc-950 p-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={activeImage} 
+                alt="Enlarged spotlight highlight" 
+                className="max-h-[80vh] w-auto object-contain rounded-2xl" 
+              />
+              <button 
+                onClick={() => setActiveImage(null)}
+                className="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/60 border border-white/10 flex items-center justify-center text-white hover:bg-black/80 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                aria-label="Close image popup"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
