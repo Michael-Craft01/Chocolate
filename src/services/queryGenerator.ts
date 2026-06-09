@@ -165,7 +165,7 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
     private async generateQueriesForContext(
         locations: string[],
         industries: string[],
-        country: string,
+        targetCountry: string,
         maxQueries: number,
         campaignId?: string
     ): Promise<QueryData[]> {
@@ -231,7 +231,7 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
                         } as any,
                     });
 
-                    queries.push({ query, location, industry, country, page: cappedPage });
+                    queries.push({ query, location, industry, country: targetCountry, page: cappedPage });
                 }
             }
         }
