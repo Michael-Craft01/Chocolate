@@ -76,7 +76,7 @@ export default function DashboardPage() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="space-y-12 pb-20 px-4 md:px-8 font-sans bg-background selection:bg-primary/20"
+      className="space-y-12 pb-20 px-4 md:px-8 font-sans selection:bg-primary/20"
     >
       {/* Sleek Minimalist Header */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-card-border pb-6 md:pb-8">
