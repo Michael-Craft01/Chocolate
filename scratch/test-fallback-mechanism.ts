@@ -21,14 +21,14 @@ async function runFallbackTest() {
         calls.push(requestedModel);
         console.log(`[MOCK API] Received completion request for model: "${requestedModel}"`);
 
-        if (requestedModel === 'gemma-4-31b-it') {
+        if (requestedModel === 'gemma-4-26b-a4b-it') {
             console.log(`[MOCK API] Simulating 429 Rate Limit error on primary model...`);
             const err = new Error('Rate limit exceeded');
             (err as any).status = 429;
             throw err;
         }
 
-        if (requestedModel === 'gemma-3-27b-it') {
+        if (requestedModel === 'gemini-3.5-flash') {
             console.log(`[MOCK API] Simulating successful completion on fallback model...`);
             return {
                 choices: [
@@ -53,8 +53,8 @@ async function runFallbackTest() {
         console.log(`- Attempt 1 model: "${calls[0]}"`);
         console.log(`- Attempt 2 model: "${calls[1]}"`);
 
-        const hasPrimaryFirst = calls[0] === 'gemma-4-31b-it';
-        const hasFallbackSecond = calls[1] === 'gemma-3-27b-it';
+        const hasPrimaryFirst = calls[0] === 'gemma-4-26b-a4b-it';
+        const hasFallbackSecond = calls[1] === 'gemini-3.5-flash';
         const hasCorrectResult = result === "Food & Beverages";
 
         console.log(`\nVerification Check:`);

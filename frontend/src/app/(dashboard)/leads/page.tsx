@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase";
 import type { Lead, PaginationMeta, Campaign } from "@/lib/types";
 import { fetchLeads as fetchLeadList } from "@/lib/services/leads";
 import { fetchCampaigns } from "@/lib/services/campaigns";
+import { AIAssistButton } from "@/components/AIAssistButton";
 
 // Group leads by calendar day, then by discovery cycle within that day
 function groupLeadsByDayAndSweep(leads: Lead[]) {
@@ -995,7 +996,24 @@ export default function LeadsPage() {
                       {/* ── Section: Outreach Message ── */}
                       <div className="px-5 pt-3 pb-5">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-[11px] font-bold text-muted-foreground">Outreach message</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-[11px] font-bold text-muted-foreground">Outreach message</p>
+                            <AIAssistButton
+                              field="Outreach Message"
+                              currentValue={editedMessage}
+                              context={{
+                                companyName: activeCampaign?.companyName,
+                                senderName: activeCampaign?.senderName,
+                                senderRole: activeCampaign?.senderRole,
+                                productName: activeCampaign?.productName,
+                                productDescription: activeCampaign?.productDescription,
+                                leadBusinessName: activeLead?.business?.name,
+                                leadIndustry: activeLead?.industry,
+                                leadPainPoint: activeLead?.painPoint
+                              }}
+                              onRefined={(val) => setEditedMessage(val)}
+                            />
+                          </div>
                           <button
                             onClick={() => copyField('message', editedMessage)}
                             disabled={!editedMessage}

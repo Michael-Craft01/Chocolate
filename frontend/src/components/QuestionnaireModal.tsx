@@ -222,11 +222,17 @@ export function QuestionnaireModal({
                                                 <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
                                                     {field.label}
                                                 </label>
-                                                {field.aiRefineField && (
+                                                {(field.aiRefineField || (
+                                                    (field.type === 'text' || field.type === 'textarea' || field.type === 'list_upload') &&
+                                                    !/webhook|password|secret|token|key|api|link|url|website/i.test(field.key)
+                                                )) && (
                                                     <AIAssistButton
-                                                        field={field.aiRefineField}
+                                                        field={field.aiRefineField || field.label}
                                                         currentValue={value}
-                                                        context={buildAiContext(field.aiRefineContextKeys)}
+                                                        context={buildAiContext(
+                                                            field.aiRefineContextKeys || 
+                                                            Object.keys(data).filter(k => k !== field.key && !/webhook|password|secret|token|key|api|link|url|website/i.test(k))
+                                                        )}
                                                         onRefined={(val) => onChange(prev => ({ ...prev, [field.key]: val }))}
                                                     />
                                                 )}

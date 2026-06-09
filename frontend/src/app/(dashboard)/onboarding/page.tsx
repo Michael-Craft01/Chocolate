@@ -201,7 +201,15 @@ export default function OnboardingPage() {
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-white/30 mb-2 ml-1">Your Name</label>
+                                    <div className="flex items-center justify-between mb-2 ml-1">
+                                        <label className="block text-xs font-bold text-white/30">Your Name</label>
+                                        <AIAssistButton 
+                                            field="Sender Name" 
+                                            currentValue={formData.senderName} 
+                                            context={{ companyName: formData.companyName }}
+                                            onRefined={(val) => handleFormUpdate("senderName", val)} 
+                                        />
+                                    </div>
                                     <input 
                                         type="text"
                                         placeholder="e.g. Michael"
@@ -211,7 +219,15 @@ export default function OnboardingPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-white/30 mb-2 ml-1">Your Role</label>
+                                    <div className="flex items-center justify-between mb-2 ml-1">
+                                        <label className="block text-xs font-bold text-white/30">Your Role</label>
+                                        <AIAssistButton 
+                                            field="Sender Role" 
+                                            currentValue={formData.senderRole} 
+                                            context={{ companyName: formData.companyName, senderName: formData.senderName }}
+                                            onRefined={(val) => handleFormUpdate("senderRole", val)} 
+                                        />
+                                    </div>
                                     <input 
                                         type="text"
                                         placeholder="e.g. Founder"
