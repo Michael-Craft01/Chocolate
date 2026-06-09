@@ -9,7 +9,7 @@ const openai = new OpenAI({
 });
 
 const rawModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const MODEL = rawModel.includes('gemma-3') || rawModel.includes('gemma-30') ? 'gemma-4-31b-it' : rawModel;
+const MODEL = rawModel.includes('gemma-3') || rawModel.includes('gemma-30') ? 'gemma-4-26b-a4b-it' : rawModel;
 
 function extractJson<T>(text: string): T {
   const cleanText = text

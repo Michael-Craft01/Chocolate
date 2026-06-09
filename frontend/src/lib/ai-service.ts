@@ -29,7 +29,7 @@ export class AIService {
 
   constructor() {
     const rawModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-    this.model = rawModel.includes('gemma-3') || rawModel.includes('gemma-30') ? 'gemma-4-31b-it' : rawModel;
+    this.model = rawModel.includes('gemma-3') || rawModel.includes('gemma-30') ? 'gemma-4-26b-a4b-it' : rawModel;
     this.openai = new OpenAI({
       apiKey: process.env.GEMINI_API_KEY,
       baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
