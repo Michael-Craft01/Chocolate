@@ -264,14 +264,14 @@ export default function LoginPage() {
         {/* Left Side: Product Information and Carousel */}
         <section className="hidden lg:flex flex-col justify-center space-y-8">
           <Link href="/" className="inline-flex items-center gap-3 w-fit group">
-            <div className="h-11 w-11 relative shrink-0">
+            <div className="h-16 w-16 relative shrink-0">
               <img 
                 src="/logo.png" 
                 alt="HyprLead Logo" 
-                className="h-full w-full object-contain drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                className="h-full w-full object-contain drop-shadow-[0_0_25px_rgba(16,185,129,0.4)]"
               />
             </div>
-            <span className="text-2xl font-black tracking-tight text-white">HyprLead</span>
+            <span className="text-3xl font-black tracking-tight text-white">HyprLead</span>
           </Link>
 
           <div className="space-y-4">
@@ -383,14 +383,14 @@ export default function LoginPage() {
         <section className="w-full">
           <div className="mb-8 text-center lg:hidden">
             <Link href="/" className="inline-flex items-center gap-3 justify-center">
-              <div className="h-10 w-10 relative shrink-0">
+              <div className="h-14 w-14 relative shrink-0">
                 <img 
                   src="/logo.png" 
                   alt="HyprLead Logo" 
-                  className="h-full w-full object-contain drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                  className="h-full w-full object-contain drop-shadow-[0_0_25px_rgba(16,185,129,0.4)]"
                 />
               </div>
-              <span className="text-2xl font-black tracking-tight text-white">HyprLead</span>
+              <span className="text-3xl font-black tracking-tight text-white">HyprLead</span>
             </Link>
           </div>
 

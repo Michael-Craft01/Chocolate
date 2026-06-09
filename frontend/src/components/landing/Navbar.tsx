@@ -30,14 +30,14 @@ export default function Navbar() {
     } backdrop-blur-md`}>
       <div className="max-w-7xl mx-auto h-full px-5 sm:px-8 flex items-center justify-between gap-4">
         <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3 group">
-          <div className="h-12 w-12 sm:h-14 sm:w-14 relative shrink-0">
+          <div className="h-16 w-16 sm:h-20 sm:w-20 relative shrink-0">
              <img 
                src="/logo.png" 
                alt="HyprLead Oracle" 
-               className="h-full w-full object-contain animate-neural drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+               className="h-full w-full object-contain animate-neural drop-shadow-[0_0_25px_rgba(16,185,129,0.4)]"
              />
           </div>
-          <span className="text-foreground font-extrabold text-xl tracking-tight truncate">HyprLead</span>
+          <span className="text-foreground font-extrabold text-2xl tracking-tight truncate">HyprLead</span>
         </Link>
         
         <div className="hidden lg:flex items-center gap-10 text-sm font-bold tracking-wide text-foreground/75">

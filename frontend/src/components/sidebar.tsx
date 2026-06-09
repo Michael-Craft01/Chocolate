@@ -158,7 +158,7 @@ export function Sidebar() {
           </span>
         </div>
         <Link href="/dashboard" className="flex items-center gap-2">
-          <img src="/logo.png" alt="Logo" className="h-6 w-6 object-contain" />
+          <img src="/logo.png" alt="Logo" className="h-10 w-10 object-contain" />
         </Link>
       </div>
 
@@ -183,7 +183,7 @@ export function Sidebar() {
                <div className="flex flex-col h-full">
                   <div className="flex h-24 items-center justify-between px-8 border-b border-card-border">
                     <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 font-black text-lg tracking-tighter">
-                      <div className="h-9 w-9 relative">
+                      <div className="h-12 w-12 relative">
                         <img 
                           src="/logo.png" 
                           alt="HyprLead Oracle" 
@@ -257,7 +257,7 @@ export function Sidebar() {
       
       <div className={cn("flex h-20 items-center transition-all duration-300", isCollapsed ? "justify-center" : "px-8")}>
         <Link href="/dashboard" className="flex items-center gap-3 font-black text-lg tracking-tighter">
-          <div className={cn("relative transition-all duration-500", isCollapsed ? "h-8 w-8" : "h-8 w-8")}>
+          <div className={cn("relative transition-all duration-500", isCollapsed ? "h-8 w-8" : "h-11 w-11")}>
             <img 
               src="/logo.png" 
               alt="HyprLead Oracle" 

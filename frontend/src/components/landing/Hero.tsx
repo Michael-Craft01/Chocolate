@@ -91,11 +91,11 @@ export default function Hero() {
         >
           {/* Realigned Badge */}
           <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-card border border-card-border mb-12 backdrop-blur-md shadow-sm">
-            <div className="h-10 w-10 relative">
+            <div className="h-14 w-14 relative">
               <img 
                 src="/logo.png" 
                 alt="HyprLead Oracle" 
-                className="h-full w-full object-contain animate-neural drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                className="h-full w-full object-contain animate-neural drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"
               />
             </div>
             <span className="text-xs font-bold text-foreground tracking-wide">Automated Lead Intelligence</span>
@@ -105,12 +105,12 @@ export default function Hero() {
           <motion.div 
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="h-28 w-28 relative mb-10"
+            className="h-40 w-40 relative mb-10"
           >
              <img 
                src="/logo.png" 
                alt="HyprLead Oracle" 
-               className="h-full w-full object-contain animate-neural drop-shadow-[0_0_80px_rgba(16,185,129,0.6)]"
+               className="h-full w-full object-contain animate-neural drop-shadow-[0_0_100px_rgba(16,185,129,0.7)]"
              />
              <div className="absolute inset-0 bg-primary/10 blur-[80px] rounded-full -z-10" />
           </motion.div>
