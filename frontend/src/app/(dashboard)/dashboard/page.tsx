@@ -38,6 +38,16 @@ const CAROUSEL_IMAGES = [
   "/media__1781032543445.jpg",
   "/media__1781032543548.jpg",
   "/media__1781032543586.jpg",
+  "/media__1781033675597.jpg",
+  "/media__1781033675629.jpg",
+  "/media__1781033675705.jpg",
+  "/media__1781033675749.jpg",
+  "/media__1781033675774.jpg",
+  "/media__1781033715737.jpg",
+  "/media__1781033715765.jpg",
+  "/media__1781033715814.jpg",
+  "/media__1781033715840.jpg",
+  "/media__1781033715853.jpg",
 ];
 
 export default function DashboardPage() {
