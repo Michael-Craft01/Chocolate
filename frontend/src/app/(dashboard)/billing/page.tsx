@@ -15,7 +15,7 @@ const tiers = [
     price: 0,
     features: [
       "1 Campaign Limit",
-      "15 Leads / Cycle",
+      "15 Leads / Search",
       "Manual lead searches",
       "Standard search speed",
       "CSV Data Export"
@@ -30,7 +30,7 @@ const tiers = [
     price: 20,
     features: [
       "1 Campaign Limit",
-      "150 Leads / Cycle",
+      "150 Leads / Search",
       "Automatic weekly searches",
       "Standard search speed",
       "CSV Data Export"
@@ -45,7 +45,7 @@ const tiers = [
     price: 49,
     features: [
       "5 Campaigns Limit",
-      "400 Leads / Cycle",
+      "400 Leads / Search",
       "Automatic searches every 2 days",
       "High-speed search priority",
       "Discord webhooks integration"
@@ -61,7 +61,7 @@ const tiers = [
     price: 300,
     features: [
       "10 Campaigns Limit",
-      "800 Leads / Cycle",
+      "800 Leads / Search",
       "Automatic daily searches",
       "Maximum search speed",
       "24/7 priority support"
@@ -281,9 +281,9 @@ function BillingContent() {
       {/* Gateway Toggle */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: "Cycles Left", value: stats?.cycles?.remaining ?? 0 },
+          { label: "Search Credits Left", value: stats?.cycles?.remaining ?? 0 },
           { label: "Monthly Allowance", value: stats?.cycles?.monthlyLimit ?? 0 },
-          { label: "Leads / Cycle", value: stats?.cycles?.leadsPerCycle ?? 0 },
+          { label: "Leads / Search", value: stats?.cycles?.leadsPerCycle ?? 0 },
           { label: "Mode", value: stats?.cycles?.automationMode || "MANUAL" },
         ].map((item) => (
           <div key={item.label} className="bento-card !p-5 text-left">

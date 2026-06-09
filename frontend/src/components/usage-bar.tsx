@@ -64,7 +64,7 @@ export function UsageBar() {
       <div className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-1.5 text-[10px] font-black text-primary bg-primary/10 px-3 py-1 rounded-[2px] uppercase tracking-widest">
            <Zap className="h-3 w-3 fill-primary" />
-           {usage.leadsPerCycle} Leads / Cycle
+           {usage.leadsPerCycle} Leads / Search
         </div>
         <Link href="/billing" className="text-[10px] font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-1">
           <CreditCard className="h-3 w-3" />

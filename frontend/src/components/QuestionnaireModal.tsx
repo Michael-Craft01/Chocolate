@@ -245,7 +245,7 @@ export function QuestionnaireModal({
                                                     placeholder={field.placeholder}
                                                     value={value}
                                                     onChange={(e) => onChange(prev => ({ ...prev, [field.key]: e.target.value }))}
-                                                    className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white placeholder:text-zinc-800 transition-all focus:outline-none focus:border-primary/40"
+                                                    className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white placeholder:text-zinc-500 transition-all focus:outline-none focus:border-primary/40"
                                                 />
                                             )}
 
@@ -256,7 +256,7 @@ export function QuestionnaireModal({
                                                     placeholder={field.placeholder}
                                                     value={value}
                                                     onChange={(e) => onChange(prev => ({ ...prev, [field.key]: e.target.value }))}
-                                                    className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm leading-relaxed text-zinc-300 placeholder:text-zinc-800 resize-none transition-all focus:outline-none focus:border-primary/40"
+                                                    className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm leading-relaxed text-zinc-300 placeholder:text-zinc-500 resize-none transition-all focus:outline-none focus:border-primary/40"
                                                 />
                                             )}
 
@@ -281,7 +281,7 @@ export function QuestionnaireModal({
                                                             placeholder={field.placeholder}
                                                             value={value}
                                                             onChange={(e) => onChange(prev => ({ ...prev, [field.key]: e.target.value }))}
-                                                            className="flex-1 bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white placeholder:text-zinc-800 transition-all focus:outline-none focus:border-primary/40"
+                                                            className="flex-1 bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white placeholder:text-zinc-500 transition-all focus:outline-none focus:border-primary/40"
                                                         />
                                                         {field.fileUploadKey && (
                                                             <label className="flex items-center gap-2 px-4 bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/10 rounded-[2px] text-xs font-black uppercase tracking-widest cursor-pointer transition-all shrink-0">

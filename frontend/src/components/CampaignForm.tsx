@@ -59,17 +59,17 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
             fields: [
                 {
                     key: "productName",
-                    label: "Offer Title",
+                    label: "Product/Service Name",
                     placeholder: "e.g. Takada POS Suite",
                     type: "text",
-                    helperText: "Define what you are offering to prospects."
+                    helperText: "The name of your main product or service offering."
                 },
                 {
                     key: "ctaLink",
-                    label: "Product Web URL (High Trust Link)",
+                    label: "Product Website URL",
                     placeholder: "https://yourproduct.com",
                     type: "text",
-                    helperText: "This link will be injected into outreach templates as the main call-to-action."
+                    helperText: "The landing page URL. This will be injected into email outreach templates as the main call-to-action."
                 },
                 {
                     key: "productDescription",
@@ -77,7 +77,8 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                     placeholder: "Explain the core benefit. Our AI uses this to qualify leads.",
                     type: "textarea",
                     aiRefineField: "Value Proposition",
-                    aiRefineContextKeys: ["productName"]
+                    aiRefineContextKeys: ["productName"],
+                    helperText: "Describe your product's key features, benefits, and how it solves customer problems in 2-3 sentences."
                 }
             ]
         },
@@ -87,10 +88,10 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
             fields: [
                 {
                     key: "targetMarket",
-                    label: "Target Market Description (AI Query Prompt)",
+                    label: "Ideal Customer Profile (AI Search Prompt)",
                     placeholder: "Describe your ideal target customer in detail (e.g. Specialty coffee shops and artisan bakeries in Harare)...",
                     type: "textarea",
-                    helperText: "Explain the customer profile. AI will automatically select search channels and generate local search queries."
+                    helperText: "Explain your customer profile. The AI will automatically select search channels and generate local search queries."
                 },
                 {
                     key: "targetBusinessSize",
@@ -101,7 +102,8 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                         { value: "SMALL", label: "Small (1-10 employees)" },
                         { value: "MEDIUM", label: "Medium (11-50 employees)" },
                         { value: "LARGE", label: "Large (50+ employees)" }
-                    ]
+                    ],
+                    helperText: "Filter prospects based on their employee count."
                 }
             ]
         },
@@ -111,12 +113,13 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
             fields: [
                 {
                     key: "locations",
-                    label: "Specific Cities / Areas",
+                    label: "Target Cities / Locations",
                     placeholder: "e.g. Harare, Mutare, Bulawayo",
                     type: "list_upload",
                     fileUploadKey: "locations",
                     aiRefineField: "Target Locations",
-                    aiRefineContextKeys: ["targetCountry"]
+                    aiRefineContextKeys: ["targetCountry"],
+                    helperText: "List specific cities or states to search in, or upload a .txt/.csv list."
                 },
                 {
                     key: "industries",
@@ -125,15 +128,17 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                     type: "list_upload",
                     fileUploadKey: "industries",
                     aiRefineField: "Target Industries",
-                    aiRefineContextKeys: ["productName", "productDescription"]
+                    aiRefineContextKeys: ["productName", "productDescription"],
+                    helperText: "List target industries separated by commas, or upload a .txt/.csv list."
                 },
                 {
                     key: "targetPainPoints",
-                    label: "Target Pain Points",
+                    label: "Customer Pain Points",
                     placeholder: "Describe the specific pain points AI should look for in target prospects...",
                     type: "textarea",
                     aiRefineField: "Target Pain Points",
-                    aiRefineContextKeys: ["productName", "productDescription"]
+                    aiRefineContextKeys: ["productName", "productDescription"],
+                    helperText: "Core customer struggles your product solves. The AI agent will search for these pain points on target web pages."
                 }
             ]
         },
@@ -145,19 +150,22 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                     key: "senderName",
                     label: "Sender Name",
                     placeholder: "Your Name",
-                    type: "text"
+                    type: "text",
+                    helperText: "The full name of the sender, used in outreach email signatures."
                 },
                 {
                     key: "senderRole",
-                    label: "Role",
+                    label: "Sender Position / Job Title",
                     placeholder: "e.g. Founder",
-                    type: "text"
+                    type: "text",
+                    helperText: "Your role or job title."
                 },
                 {
                     key: "companyName",
-                    label: "Company",
+                    label: "Company Name",
                     placeholder: "Business Name",
-                    type: "text"
+                    type: "text",
+                    helperText: "The name of your business or company."
                 },
                 {
                     key: "outreachTone",
@@ -173,40 +181,47 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                 },
                 {
                     key: "discordWebhook",
-                    label: "Discord Webhook (Optional)",
+                    label: "Discord Webhook Integration (Optional)",
                     placeholder: "https://discord.com/api/webhooks/...",
                     type: "text",
-                    helperText: "Real-time alerts for newly discovered leads."
+                    helperText: "Receive instant alerts in your Discord channel whenever new qualified leads are found."
                 }
             ]
         }
     ];
-
+ 
     const handleSave = async () => {
         // --- PRE-FLIGHT VALIDATION ---
         if (!campaign.productName.trim()) {
-            toast.error("Offer Title required", { description: "Please define what you are offering." });
+            toast.error("Product/Service Name required", { description: "Please define what you are offering." });
             return;
         }
-
+ 
         if (!campaign.senderName.trim() || !campaign.senderRole.trim() || !campaign.companyName.trim()) {
             toast.error("Identity incomplete", { description: "Please provide your name, role, and company." });
             return;
         }
-
+ 
         const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
         if (campaign.ctaLink.trim() && !urlRegex.test(campaign.ctaLink.trim())) {
             toast.error("Invalid Product URL", { description: "Please enter a valid link (e.g. https://yourproduct.com)" });
             return;
         }
 
+        let cleanCtaLink = campaign.ctaLink.trim();
+        if (cleanCtaLink) {
+            if (!/^https?:\/\//i.test(cleanCtaLink)) {
+                cleanCtaLink = 'https://' + cleanCtaLink;
+            }
+        }
+ 
         setLoading(true);
         setIsModalOpen(false);
         
         const savePromise = (async () => {
             const industries = campaign.industries.split(",").map((i: string) => i.trim()).filter((i: string) => i);
             const locations = campaign.locations.split(",").map((l: string) => l.trim()).filter((l: string) => l);
-
+ 
             const payload: any = {
                 name: campaign.name.trim() || `${campaign.productName} Launch`,
                 senderName: campaign.senderName.trim(),
@@ -218,13 +233,13 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                 industries: industries.length ? industries : ["Business"],
                 locations: locations.length ? locations : ["Harare"],
                 outreachTone: campaign.outreachTone,
-                ctaLink: campaign.ctaLink.trim() || undefined,
+                ctaLink: cleanCtaLink || undefined,
                 discordWebhook: campaign.discordWebhook.trim() || undefined,
                 targetCountry: campaign.targetCountry,
                 targetMarket: campaign.targetMarket.trim() || undefined,
                 targetBusinessSize: campaign.targetBusinessSize,
             };
-
+ 
             if (isEdit && campaignId) {
                 await updateCampaign(campaignId, payload);
             } else {
@@ -232,7 +247,7 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
             }
             router.push("/campaigns");
         })();
-
+ 
         toast.promise(savePromise, {
             loading: isEdit ? 'Saving Campaign Settings...' : 'Initializing Lead Campaign...',
             success: isEdit ? 'Campaign Settings Updated.' : 'Campaign Active. AI search started.',
@@ -243,7 +258,7 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                 return err.message || 'Failed to process campaign request.';
             }
         });
-
+ 
         try {
             await savePromise;
         } catch (err: any) {
@@ -252,7 +267,7 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
             setLoading(false);
         }
     };
-
+ 
     // Helper to count configured fields
     const getSetupProgress = () => {
         let count = 0;
@@ -266,9 +281,9 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
         if (campaign.targetBusinessSize !== "ANY") count++;
         return { count, total };
     };
-
+ 
     const progress = getSetupProgress();
-
+ 
     return (
         <div className="max-w-3xl mx-auto">
             {/* Setup Preview Dashboard Card */}
@@ -287,7 +302,7 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                             Setup Completion: {progress.count} of {progress.total} Core Parameters
                         </p>
                     </div>
-
+ 
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="flex items-center justify-center gap-2.5 h-12 px-6 bg-primary hover:bg-primary/90 text-white rounded-sm text-xs font-black uppercase tracking-widest transition-all active:scale-[0.98] shadow-lg shadow-primary/15 cursor-pointer"
@@ -296,12 +311,12 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                         {progress.count > 0 ? "Resume Setup Assistant" : "Launch Setup Assistant"}
                     </button>
                 </div>
-
+ 
                 {/* Configuration Preview Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2 relative">
                     <div className="space-y-4">
                         <div>
-                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Offer Title</span>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Product/Service Name</span>
                             <p className="text-sm font-bold text-white">
                                 {campaign.productName ? campaign.productName : <span className="text-zinc-800 italic">Not defined yet</span>}
                             </p>

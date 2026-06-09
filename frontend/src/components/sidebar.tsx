@@ -312,7 +312,7 @@ export function Sidebar() {
             
             <div className="space-y-2 relative">
               <div className="flex justify-between text-xs font-semibold text-foreground opacity-60">
-                <span>Cycles</span>
+                <span>Search Credits</span>
                 <span className="text-foreground font-bold">{cyclesRemaining} left</span>
               </div>
               <div className="h-1.5 w-full bg-border-muted rounded-full overflow-hidden">

@@ -34,7 +34,7 @@ export function ElaborateButton({
     const trimmed = (currentValue || '').trim();
 
     if (trimmed.length < minLength) {
-      toast.info(`Type at least ${minLength} characters for Elaborate to work.`);
+      toast.info(`Type at least ${minLength} characters for AI Enhance to work.`);
       return;
     }
 
@@ -65,23 +65,23 @@ export function ElaborateButton({
       if (data.refined && typeof data.refined === 'string') {
         onElaborated(data.refined.trim());
         setSuccess(true);
-        toast.success('Elaborated successfully!');
+        toast.success('Enhanced successfully!');
         setTimeout(() => setSuccess(false), 2500);
       } else {
         throw new Error('Empty response from AI');
       }
     } catch (error: unknown) {
-      console.error('[Elaborate] Failed:', error);
+      console.error('[AI Enhance] Failed:', error);
       setFailed(true);
-      const msg = error instanceof Error ? error.message : 'Elaborate failed';
-      toast.error(msg.includes('401') ? 'Session expired — please log in again.' : 'Elaborate failed. Please try again.');
+      const msg = error instanceof Error ? error.message : 'AI Enhance failed';
+      toast.error(msg.includes('401') ? 'Session expired — please log in again.' : 'AI Enhance failed. Please try again.');
       setTimeout(() => setFailed(false), 3000);
     } finally {
       setLoading(false);
     }
   };
 
-  const label = loading ? 'Elaborating...' : success ? 'Done!' : failed ? 'Failed' : 'Elaborate';
+  const label = loading ? 'Enhancing...' : success ? 'Done!' : failed ? 'Failed' : 'AI Enhance';
   const Icon = loading ? Loader2 : success ? Check : failed ? AlertCircle : Wand2;
 
   return (
@@ -89,8 +89,8 @@ export function ElaborateButton({
       type="button"
       onClick={handleElaborate}
       disabled={loading}
-      title={`Elaborate this field with AI — type something first to get the best result.`}
-      aria-label={`Elaborate ${field} with AI`}
+      title={`Enhance this field with AI — type something first to get the best result.`}
+      aria-label={`Enhance ${field} with AI`}
       className={[
         'flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-widest transition-all select-none',
         success

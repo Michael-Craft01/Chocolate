@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -28,6 +28,7 @@ export default function OnboardingPage() {
         senderName: "",
         senderRole: "",
         companyName: "",
+        website: "",
         // Product
         productName: "",
         productDescription: "",
@@ -79,11 +80,18 @@ export default function OnboardingPage() {
     };
 
     const finishOnboarding = async () => {
+        let cleanWebsite = formData.website.trim();
+        if (cleanWebsite) {
+            if (!/^https?:\/\//i.test(cleanWebsite)) {
+                cleanWebsite = 'https://' + cleanWebsite;
+            }
+        }
+
         await authJson("/api/settings", {
             method: "POST",
             body: JSON.stringify({
                 companyName: formData.companyName,
-                website: "",
+                website: cleanWebsite,
                 industry: formData.industries.split(",")[0]?.trim() || "Business",
                 defaultSenderName: formData.senderName,
                 defaultSenderRole: formData.senderRole,
@@ -181,6 +189,16 @@ export default function OnboardingPage() {
                                     value={formData.companyName}
                                     onChange={(e) => handleFormUpdate("companyName", e.target.value)}
                                     className={`${inputBaseClass} font-medium`}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="block text-xs font-bold text-white/30 ml-1">Business Website URL</label>
+                                <input 
+                                    type="text"
+                                    placeholder="e.g. https://logichq.com"
+                                    value={formData.website}
+                                    onChange={(e) => handleFormUpdate("website", e.target.value)}
+                                    className={inputBaseClass}
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -333,7 +351,7 @@ export default function OnboardingPage() {
                                     onChange={(e) => handleFormUpdate("industries", e.target.value)}
                                     className={inputBaseClass}
                                 />
-                                <p className="text-[10px] text-zinc-500">Enter industries separated by commas, or upload a TXT/CSV file.</p>
+                                <p className="text-[10px] text-zinc-500">Enter industries separated by commas, or upload a TXT/CSV file (comma-separated or line-separated).</p>
                             </div>
  
                             <div className="space-y-2">
@@ -366,7 +384,7 @@ export default function OnboardingPage() {
                                     onChange={(e) => handleFormUpdate("locations", e.target.value)}
                                     className={inputBaseClass}
                                 />
-                                <p className="text-[10px] text-zinc-500">List specific cities or states to search in, or upload a text file.</p>
+                                <p className="text-[10px] text-zinc-500">List specific cities or states to search in, or upload a TXT/CSV file (comma-separated or line-separated).</p>
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">

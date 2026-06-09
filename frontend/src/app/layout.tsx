@@ -28,13 +28,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'HyprLead | Next-Gen Revenue Discovery',
     description: 'Autonomous lead generation engine powered by high-fidelity AI discovery.',
-    images: [{ url: '/logo.png', width: 736, height: 552, alt: 'HyprLead' }],
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'HyprLead' }],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'HyprLead | Next-Gen Revenue Discovery',
     description: 'Autonomous lead generation engine powered by high-fidelity AI discovery.',
-    images: ['/logo.png'],
+    images: ['/og-image.png'],
   },
 };
 
