@@ -9,7 +9,7 @@ async function main() {
   console.log("Using model:", config.GEMINI_MODEL);
   
   const model = genAI.getGenerativeModel({
-    model: config.GEMINI_MODEL,
+    model: 'gemini-2.5-flash',
     generationConfig: {
       temperature: 0.3,
       responseMimeType: "application/json"

@@ -98,12 +98,23 @@ model Campaign {
   outreachTone       OutreachTone   @default(PROFESSIONAL)
   ctaLink            String?
   
+  targetMarket       String?        @db.Text
+  targetBusinessSize BusinessSize   @default(ANY)
+  assignedSources    String[]       @default(["GOOGLE_MAPS"])
+  
   discordWebhook     String?
   leads              Lead[]
   cycleRuns          CycleRun[]
   queryHistory       QueryHistory[]
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
+}
+
+enum BusinessSize {
+  SMALL
+  MEDIUM
+  LARGE
+  ANY
 }
 
 enum OutreachTone {
@@ -129,6 +140,7 @@ model Business {
   email              String?
   description        String?
   contactStatus      String?
+  companySize        String?
   contactPages       Json?
   socialProfiles     Json?
   decisionMakers     Json?

@@ -46,6 +46,7 @@ const configSchema = z.object({
     
     // Scaling & Engine Config
     GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
+    FALLBACK_MODEL: z.string().default('gemma-3-27b-it'),
     ENGINE_TRIGGER_SECRET: z.string().optional().default('dev-engine-trigger'),
     MAX_CAMPAIGNS_PER_SWEEP: z.string().default('50').transform(v => parseInt(v, 10)),
 
@@ -75,6 +76,7 @@ export const config = parsedConfig.success ? parsedConfig.data : {
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || 'placeholder-anon-key',
     SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET || 'placeholder-jwt-secret',
     GEMINI_MODEL: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+    FALLBACK_MODEL: process.env.FALLBACK_MODEL ?? 'gemma-3-27b-it',
     ENGINE_TRIGGER_SECRET: process.env.ENGINE_TRIGGER_SECRET ?? 'dev-engine-trigger',
     MAX_CAMPAIGNS_PER_SWEEP: process.env.MAX_CAMPAIGNS_PER_SWEEP ? parseInt(process.env.MAX_CAMPAIGNS_PER_SWEEP, 10) : 50,
     FRONTEND_URL: process.env.FRONTEND_URL ?? 'http://localhost:3000',

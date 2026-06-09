@@ -12,6 +12,7 @@ export interface AIEnrichment {
     painPoint: string;
     recommendedSolution: string;
     score: number;
+    companySize: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -120,9 +121,9 @@ export class AIService {
               'Return ONLY a valid JSON object with a single key "refined" containing the final refined value. ' +
               'Do NOT output any reasoning, thoughts, drafts, or markdown.';
 
-        return this.withRetry('refineInput', async () => {
+        return this.withRetry('refineInput', async (model) => {
             const response = await this.openai.chat.completions.create({
-                model: this.model,
+                model,
                 messages: [
                     {
                         role: 'system',
@@ -163,7 +164,7 @@ export class AIService {
 
         const systemPrompt =
             'You are the HyprLead Discovery Engine (HyprLead AI Optimized). ' +
-            'Perform high-fidelity business discovery and sector-specific operational friction detection. ' +
+            'Perform high-fidelity business discovery, sector-specific operational friction detection, and size classification. ' +
             'Ground your analysis in the lead\'s specific SECTOR. ' +
             'Do not invent technical software issues (like "API failures") unless the lead is actually in the technology space. ' +
             'Return ONLY a valid JSON object — no prose, no markdown, no reasoning text.';
@@ -178,14 +179,16 @@ export class AIService {
             `1. Clean the Brand Name for professional outreach (remove "Leads", "Inc", "Limited", "Corp", or location suffixes that make it robotic).\n` +
             `2. Identify 3 possible friction points RELEVANT to a "${category || 'SME'}" business.\n` +
             `3. Select the MOST CRITICAL friction point that "${product}" can actually solve.\n` +
-            (imageBuffer ? `4. Analyze the provided website screenshot for design/business presence signals.\n` : '') +
+            `4. Classify the estimated company size based on contextual clues (employee count, local storefront vs multi-location or enterprise scale). Value must be exactly one of: "Small" (1-10 employees/local footprint), "Medium" (11-50 employees/regional scale), or "Large" (50+ employees/enterprise scale).\n` +
+            (imageBuffer ? `5. Analyze the provided website screenshot for design/business presence signals.\n` : '') +
             `\nJSON OUTPUT SCHEMA:\n` +
             `{\n` +
             `  "brandName": "Short clean human name",\n` +
             `  "industry": "Specific vertical",\n` +
             `  "painPoint": "Sector-relevant friction point",\n` +
             `  "recommendedSolution": "${product}",\n` +
-            `  "score": 0.0\n` +
+            `  "score": 0.0,\n` +
+            `  "companySize": "Small"\n` +
             `}`;
 
         // Build content array — inject image using OpenAI vision format if provided
@@ -202,11 +205,11 @@ export class AIService {
             });
         }
 
-        return this.withRetry('enrichLead', async () => {
-            logger.info(`[HyprLead AI] Thinking... Deep-diving into: ${businessName}`);
+        return this.withRetry('enrichLead', async (model) => {
+            logger.info(`[HyprLead AI] Thinking... Deep-diving into: ${businessName} using model ${model}`);
 
             const response = await this.openai.chat.completions.create({
-                model: this.model,
+                model,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user',   content: userContent  },
@@ -222,7 +225,19 @@ export class AIService {
                 painPoint?: string;
                 recommendedSolution?: string;
                 score?: number | string;
+                companySize?: string;
             }>(raw);
+
+            // Clean parsed companySize to make sure it's valid
+            let companySize = 'Small';
+            const parsedSize = String(parsed.companySize || '').trim().toLowerCase();
+            if (parsedSize.includes('large') || parsedSize === 'large') {
+                companySize = 'Large';
+            } else if (parsedSize.includes('medium') || parsedSize === 'medium') {
+                companySize = 'Medium';
+            } else {
+                companySize = 'Small';
+            }
 
             return {
                 brandName:           parsed.brandName           || businessName,
@@ -230,6 +245,7 @@ export class AIService {
                 painPoint:           parsed.painPoint           || 'Operational friction detected',
                 recommendedSolution: parsed.recommendedSolution || product,
                 score:               parseFloat(String(parsed.score ?? '8.5')) || 8.5,
+                companySize,
             };
         });
     }
@@ -270,11 +286,11 @@ export class AIService {
             `SENDER: "${sender}"\n` +
             `MANDATORY LINK (use EXACTLY this, do NOT invent another URL): "${link}"`;
 
-        return this.withRetry('generatePersonalizedMessage', async () => {
-            logger.info(`[HyprLead AI] Generating personalized outreach for ${businessName}`);
+        return this.withRetry('generatePersonalizedMessage', async (model) => {
+            logger.info(`[HyprLead AI] Generating personalized outreach for ${businessName} using model ${model}`);
 
             const response = await this.openai.chat.completions.create({
-                model: this.model,
+                model,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user',   content: userPrompt   },
@@ -356,9 +372,9 @@ JSON SCHEMA:
   "urgencySignal": "One specific reason why reaching out now is timely for this business type"
 }`;
 
-        return this.withRetry('analyzeLead', async () => {
+        return this.withRetry('analyzeLead', async (model) => {
             const response = await this.openai.chat.completions.create({
-                model: this.model,
+                model,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user',   content: userPrompt   },
@@ -402,9 +418,9 @@ JSON SCHEMA:
             `TONE: "${campaign.outreachTone}"\n` +
             `PAIN POINTS: "${campaign.targetPainPoints}"`;
 
-        return this.withRetry('generateMissionBrief', async () => {
+        return this.withRetry('generateMissionBrief', async (model) => {
             const response = await this.openai.chat.completions.create({
-                model: this.model,
+                model,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user',   content: userPrompt   },
@@ -417,14 +433,104 @@ JSON SCHEMA:
         });
     }
 
+    // ── 6. Campaign Source Classification (enforced JSON) ───────────────────
+
+    async classifyCampaignSources(targetMarket: string, productDescription?: string): Promise<string[]> {
+        const systemPrompt =
+            'You are the HyprLead Sourcing Intelligence (HyprLead AI Optimized). ' +
+            'Classify a campaign\'s target market to determine the best lead sources.\n' +
+            'Sources options:\n' +
+            '- GOOGLE_MAPS: Best for local brick-and-mortar, physical storefronts, service providers (e.g., cafes, clinics, plumbers, gyms).\n' +
+            '- APPLE_MAPS: Best for physical retail, consumer-facing storefronts, hotels, restaurants, local shops.\n' +
+            '- GOOGLE_SEARCH: Best for digital companies, SaaS, agencies, B2B services, wholesale, manufacturers, or businesses without a strong physical storefront.\n\n' +
+            'Return ONLY a valid JSON object: {"sources": ["SOURCE1", "SOURCE2"]}.\n' +
+            'Do not output reasoning, thought tags, or extra commentary.';
+
+        const userPrompt =
+            `TARGET MARKET: "${targetMarket}"\n` +
+            `PRODUCT DESCRIPTION: "${productDescription || ''}"`;
+
+        return this.withRetry('classifyCampaignSources', async (model) => {
+            const response = await this.openai.chat.completions.create({
+                model,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user',   content: userPrompt },
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.1,
+            });
+
+            const raw = firstChoiceContent(response);
+            const parsed = extractJson<{ sources?: string[] }>(raw);
+            if (parsed.sources && Array.isArray(parsed.sources)) {
+                // Filter valid sources
+                const valid = parsed.sources.filter(s => ['GOOGLE_MAPS', 'APPLE_MAPS', 'GOOGLE_SEARCH'].includes(s));
+                if (valid.length > 0) return valid;
+            }
+            return ['GOOGLE_MAPS']; // fallback default
+        });
+    }
+
+    // ── 7. Target Market Query Generation (enforced JSON) ───────────────────
+
+    async generateQueriesFromTargetMarket(
+        targetMarket: string,
+        locations: string[],
+        industries: string[],
+        targetBusinessSize: string,
+        count: number = 25
+    ): Promise<Array<{ query: string; location: string; industry: string }>> {
+        const systemPrompt =
+            'You are the HyprLead Query Generator (HyprLead AI Optimized). ' +
+            'Your job is to generate highly effective search queries for local lead generation ' +
+            'optimized for Google Search/Maps or Apple Maps.\n' +
+            'Guidelines:\n' +
+            '- Generate high-value, specific query strings targeting the business types described in the target market.\n' +
+            '- Match the queries with the most appropriate location and industry category from the input list or infer close matches.\n' +
+            '- Vary the query format (e.g., "cafes in Harare", "Harare specialty coffee shop", "artisanal cafe").\n' +
+            '- Return ONLY a valid JSON object matching the schema: {"queries": [{"query": "query string", "location": "Harare", "industry": "Cafes"}]}.\n' +
+            '- Do not output reasoning, thoughts, markdown, or code fences.';
+
+        const userPrompt =
+            `TARGET MARKET DESCRIPTION: "${targetMarket}"\n` +
+            `LOCATIONS LIST: ${JSON.stringify(locations)}\n` +
+            `INDUSTRIES LIST: ${JSON.stringify(industries)}\n` +
+            `TARGET BUSINESS SIZE: "${targetBusinessSize}"\n` +
+            `NUMBER OF QUERIES TO GENERATE: ${count}`;
+
+        return this.withRetry('generateQueriesFromTargetMarket', async (model) => {
+            const response = await this.openai.chat.completions.create({
+                model,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user',   content: userPrompt },
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.3,
+            });
+
+            const raw = firstChoiceContent(response);
+            const parsed = extractJson<{ queries?: Array<{ query: string; location: string; industry: string }> }>(raw);
+            if (parsed.queries && Array.isArray(parsed.queries)) {
+                return parsed.queries.map(q => ({
+                    query: String(q.query).trim(),
+                    location: String(q.location || locations[0] || 'Global').trim(),
+                    industry: String(q.industry || industries[0] || 'Business').trim()
+                }));
+            }
+            return [];
+        });
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     //  Unified Retry with Exponential Backoff
     // ─────────────────────────────────────────────────────────────────────────
 
     async generateText(prompt: string, operationName = 'generateText'): Promise<string> {
-        return this.withRetry(operationName, async () => {
+        return this.withRetry(operationName, async (model) => {
             const response = await this.openai.chat.completions.create({
-                model: this.model,
+                model,
                 messages: [
                     {
                         role: 'system',
@@ -441,14 +547,15 @@ JSON SCHEMA:
 
     private async withRetry<T>(
         operationName: string,
-        operation: () => Promise<T>,
+        operation: (model: string) => Promise<T>,
         maxRetries = 3,
     ): Promise<T> {
         let lastError: any;
+        let currentModel = config.GEMINI_MODEL;
 
         for (let attempt = 0; attempt < maxRetries; attempt++) {
             try {
-                return await operation();
+                return await operation(currentModel);
             } catch (err: any) {
                 lastError = err;
 
@@ -463,6 +570,16 @@ JSON SCHEMA:
                         '[HyprLead AI] Non-retryable error. Aborting.',
                     );
                     throw err;
+                }
+
+                // Switch to fallback model on retryable failure
+                const nextModel = config.FALLBACK_MODEL;
+                if (currentModel !== nextModel) {
+                    logger.warn(
+                        { operationName, fromModel: currentModel, toModel: nextModel },
+                        '[HyprLead AI] Swapping to fallback model on retry'
+                    );
+                    currentModel = nextModel;
                 }
 
                 const delayMs = Math.pow(2, attempt) * 2000; // 2s → 4s → 8s

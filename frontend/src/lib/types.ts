@@ -37,6 +37,9 @@ export interface Campaign {
   outreachTone: "PROFESSIONAL" | "DIRECT" | "FRIENDLY" | "EDUCATIONAL";
   ctaLink?: string;
   discordWebhook?: string;
+  targetMarket?: string;
+  targetBusinessSize: "SMALL" | "MEDIUM" | "LARGE" | "ANY";
+  assignedSources: string[];
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -91,6 +94,7 @@ export interface Lead {
     bestContactChannel?: string;
     contactConfidence?: number;
     contactEvidence?: string[];
+    companySize?: string;
   };
 }
 

@@ -1,27 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
     Briefcase,
     Compass,
-    Loader2,
-    CheckCircle2,
     Shield,
     Zap,
-    ShieldCheck,
     User,
     Link as LinkIcon,
     Globe,
-    Upload
+    Settings,
+    Edit,
+    CheckCircle2,
+    Play
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { authJson, ApiRequestError } from "@/lib/api";
-import { createCampaign, updateCampaign, type CreateCampaignPayload } from "@/lib/services/campaigns";
+import { createCampaign, updateCampaign } from "@/lib/services/campaigns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { AIAssistButton } from "@/components/AIAssistButton";
-import { NeuralDropdown } from "@/components/NeuralDropdown";
+import { QuestionnaireModal, type StepConfig } from "@/components/QuestionnaireModal";
 
 interface CampaignFormProps {
     initialData?: any;
@@ -32,7 +31,7 @@ interface CampaignFormProps {
 export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     
     const [campaign, setCampaign] = useState({
         name: initialData?.name || "",
@@ -48,28 +47,140 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
         ctaLink: initialData?.ctaLink || "",
         discordWebhook: initialData?.discordWebhook || "",
         targetCountry: initialData?.targetCountry || "ZW",
+        targetMarket: initialData?.targetMarket || "",
+        targetBusinessSize: initialData?.targetBusinessSize || "ANY",
+        assignedSources: initialData?.assignedSources || [],
     });
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, fieldKey: "locations" | "industries") => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const text = event.target?.result as string;
-            if (!text) return;
-
-            const parsed = text
-                .split(/[\n\r,;\t]+/)
-                .map(item => item.trim())
-                .filter(item => item.length > 0 && !item.startsWith('"') && !item.endsWith('"'));
-
-            const joined = parsed.join(", ");
-            setCampaign(prev => ({ ...prev, [fieldKey]: joined }));
-            toast.success(`Imported ${parsed.length} items from ${file.name}`);
-        };
-        reader.readAsText(file);
-    };
+    const campaignSteps: StepConfig[] = [
+        {
+            title: "Value Proposition & Offer",
+            description: "Define your product identity and link. This helps the AI qualify high-converting outreach opportunities.",
+            fields: [
+                {
+                    key: "productName",
+                    label: "Offer Title",
+                    placeholder: "e.g. Takada POS Suite",
+                    type: "text",
+                    helperText: "Define what you are offering to prospects."
+                },
+                {
+                    key: "ctaLink",
+                    label: "Product Web URL (High Trust Link)",
+                    placeholder: "https://yourproduct.com",
+                    type: "text",
+                    helperText: "This link will be injected into outreach templates as the main call-to-action."
+                },
+                {
+                    key: "productDescription",
+                    label: "Value Proposition",
+                    placeholder: "Explain the core benefit. Our AI uses this to qualify leads.",
+                    type: "textarea",
+                    aiRefineField: "Value Proposition",
+                    aiRefineContextKeys: ["productName"]
+                }
+            ]
+        },
+        {
+            title: "Target Market Profile",
+            description: "Describe the companies you want to find. The AI agent automatically parses this description to generate queries and route sourcing platforms.",
+            fields: [
+                {
+                    key: "targetMarket",
+                    label: "Target Market Description (AI Query Prompt)",
+                    placeholder: "Describe your ideal target customer in detail (e.g. Specialty coffee shops and artisan bakeries in Harare)...",
+                    type: "textarea",
+                    helperText: "Explain the customer profile. AI will automatically select search channels and generate local search queries."
+                },
+                {
+                    key: "targetBusinessSize",
+                    label: "Target Business Size",
+                    type: "select",
+                    options: [
+                        { value: "ANY", label: "Any Size (No Filter)" },
+                        { value: "SMALL", label: "Small (1-10 employees)" },
+                        { value: "MEDIUM", label: "Medium (11-50 employees)" },
+                        { value: "LARGE", label: "Large (50+ employees)" }
+                    ]
+                }
+            ]
+        },
+        {
+            title: "Target Sourcing Filters",
+            description: "Configure search keywords, locations, and lead pain points to refine the discovery scraper target scope.",
+            fields: [
+                {
+                    key: "locations",
+                    label: "Specific Cities / Areas",
+                    placeholder: "e.g. Harare, Mutare, Bulawayo",
+                    type: "list_upload",
+                    fileUploadKey: "locations",
+                    aiRefineField: "Target Locations",
+                    aiRefineContextKeys: ["targetCountry"]
+                },
+                {
+                    key: "industries",
+                    label: "Target Industries",
+                    placeholder: "e.g. Retail, Cafes, Tech Services",
+                    type: "list_upload",
+                    fileUploadKey: "industries",
+                    aiRefineField: "Target Industries",
+                    aiRefineContextKeys: ["productName", "productDescription"]
+                },
+                {
+                    key: "targetPainPoints",
+                    label: "Target Pain Points",
+                    placeholder: "Describe the specific pain points AI should look for in target prospects...",
+                    type: "textarea",
+                    aiRefineField: "Target Pain Points",
+                    aiRefineContextKeys: ["productName", "productDescription"]
+                }
+            ]
+        },
+        {
+            title: "Sender Identity & Outreach Settings",
+            description: "Synchronize your identity details. These parameters are used to personalize the outreach signatures and webhooks.",
+            fields: [
+                {
+                    key: "senderName",
+                    label: "Sender Name",
+                    placeholder: "Your Name",
+                    type: "text"
+                },
+                {
+                    key: "senderRole",
+                    label: "Role",
+                    placeholder: "e.g. Founder",
+                    type: "text"
+                },
+                {
+                    key: "companyName",
+                    label: "Company",
+                    placeholder: "Business Name",
+                    type: "text"
+                },
+                {
+                    key: "outreachTone",
+                    label: "Outreach Tone",
+                    type: "select",
+                    options: [
+                        { value: "PROFESSIONAL", label: "Professional & Polished" },
+                        { value: "DIRECT", label: "Direct & Concise" },
+                        { value: "FRIENDLY", label: "Friendly & Warm" },
+                        { value: "EDUCATIONAL", label: "Educational & Insightful" }
+                    ],
+                    helperText: "Governs how the AI crafts outreach messages."
+                },
+                {
+                    key: "discordWebhook",
+                    label: "Discord Webhook (Optional)",
+                    placeholder: "https://discord.com/api/webhooks/...",
+                    type: "text",
+                    helperText: "Real-time alerts for newly discovered leads."
+                }
+            ]
+        }
+    ];
 
     const handleSave = async () => {
         // --- PRE-FLIGHT VALIDATION ---
@@ -90,7 +201,7 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
         }
 
         setLoading(true);
-        setError(null);
+        setIsModalOpen(false);
         
         const savePromise = (async () => {
             const industries = campaign.industries.split(",").map((i: string) => i.trim()).filter((i: string) => i);
@@ -110,6 +221,8 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
                 ctaLink: campaign.ctaLink.trim() || undefined,
                 discordWebhook: campaign.discordWebhook.trim() || undefined,
                 targetCountry: campaign.targetCountry,
+                targetMarket: campaign.targetMarket.trim() || undefined,
+                targetBusinessSize: campaign.targetBusinessSize,
             };
 
             if (isEdit && campaignId) {
@@ -134,306 +247,139 @@ export function CampaignForm({ initialData, isEdit, campaignId }: CampaignFormPr
         try {
             await savePromise;
         } catch (err: any) {
-            setError(err.message || "Operation failed.");
+            console.error("Save campaign error:", err);
         } finally {
             setLoading(false);
         }
     };
 
+    // Helper to count configured fields
+    const getSetupProgress = () => {
+        let count = 0;
+        const total = 7; // key fields: productName, senderName, senderRole, companyName, productDescription, targetMarket, targetBusinessSize
+        if (campaign.productName.trim()) count++;
+        if (campaign.senderName.trim()) count++;
+        if (campaign.senderRole.trim()) count++;
+        if (campaign.companyName.trim()) count++;
+        if (campaign.productDescription.trim()) count++;
+        if (campaign.targetMarket.trim()) count++;
+        if (campaign.targetBusinessSize !== "ANY") count++;
+        return { count, total };
+    };
+
+    const progress = getSetupProgress();
+
     return (
-        <div className="grid grid-cols-1 gap-10">
-            {/* MARKET OFFERING SECTION */}
-            <section className="bg-primary/[0.03] p-8 md:p-10 rounded-[2px] border border-primary/20 relative overflow-hidden group">
+        <div className="max-w-3xl mx-auto">
+            {/* Setup Preview Dashboard Card */}
+            <div className="bg-primary/[0.02] border border-white/10 rounded-[2px] p-8 md:p-10 space-y-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
                 
-                <div className="relative space-y-10">
-                    <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-[2px] bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                            <Shield className="h-6 w-6 text-white" />
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5 relative">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary">
+                            <Settings size={12} /> setup console
+                        </div>
+                        <h2 className="text-2xl font-bold text-white tracking-tight">
+                            {isEdit ? "Update Search Settings" : "Configure AI Lead Search"}
+                        </h2>
+                        <p className="text-zinc-500 text-xs font-semibold">
+                            Setup Completion: {progress.count} of {progress.total} Core Parameters
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex items-center justify-center gap-2.5 h-12 px-6 bg-primary hover:bg-primary/90 text-white rounded-sm text-xs font-black uppercase tracking-widest transition-all active:scale-[0.98] shadow-lg shadow-primary/15 cursor-pointer"
+                    >
+                        <Play size={12} className="fill-white" />
+                        {progress.count > 0 ? "Resume Setup Assistant" : "Launch Setup Assistant"}
+                    </button>
+                </div>
+
+                {/* Configuration Preview Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2 relative">
+                    <div className="space-y-4">
+                        <div>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Offer Title</span>
+                            <p className="text-sm font-bold text-white">
+                                {campaign.productName ? campaign.productName : <span className="text-zinc-800 italic">Not defined yet</span>}
+                            </p>
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-white tracking-tight">Market Offering</h2>
-                            <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest mt-1">Define your product identity and link.</p>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Target Market</span>
+                            <p className="text-xs text-zinc-300 leading-relaxed max-w-sm line-clamp-3">
+                                {campaign.targetMarket ? campaign.targetMarket : <span className="text-zinc-800 italic">Not defined yet</span>}
+                            </p>
                         </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-8">
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between ml-1">
-                                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Offer Title</label>
-                                <AIAssistButton 
-                                    field="Product Name" 
-                                    currentValue={campaign.productName} 
-                                    onRefined={(val) => setCampaign(prev => ({...prev, productName: val}))} 
-                                />
-                            </div>
-                            <input 
-                                type="text"
-                                placeholder="e.g. Takada POS Suite"
-                                value={campaign.productName}
-                                onChange={(e) => setCampaign({...campaign, productName: e.target.value})}
-                                className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-lg font-bold text-white placeholder:text-zinc-800"
-                            />
+                        <div>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Target Business Size</span>
+                            <span className="px-2 py-0.5 rounded-[2px] text-[9px] font-black uppercase tracking-widest bg-white/5 border border-white/10 text-zinc-400">
+                                {campaign.targetBusinessSize}
+                            </span>
                         </div>
-
-                        {/* NEW: PRODUCT WEB URL FIELD */}
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                <Globe size={10} className="text-zinc-500" />
-                                Product Web URL (High Trust Link)
-                            </label>
-                            <input 
-                                type="url"
-                                placeholder="https://yourproduct.com"
-                                value={campaign.ctaLink}
-                                onChange={(e) => setCampaign({...campaign, ctaLink: e.target.value})}
-                                className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm text-white placeholder:text-zinc-800"
-                            />
-                            <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider ml-1 italic">This link will be injected into all AI outreach as the primary destination.</p>
-                        </div>
-
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between ml-1">
-                                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Value Proposition</label>
-                                <AIAssistButton 
-                                    field="Value Proposition" 
-                                    currentValue={campaign.productDescription} 
-                                    context={{ productName: campaign.productName }}
-                                    onRefined={(val) => setCampaign(prev => ({...prev, productDescription: val}))} 
-                                />
-                            </div>
-                            <textarea 
-                                rows={4}
-                                placeholder="Explain the core benefit. Our AI will use this to qualify leads."
-                                value={campaign.productDescription}
-                                onChange={(e) => setCampaign({...campaign, productDescription: e.target.value})}
-                                className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm leading-relaxed text-zinc-300 placeholder:text-zinc-800 resize-none"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* TARGETING & CONTEXT */}
-            <section className="bg-white/[0.01] p-8 md:p-10 rounded-[2px] border border-white/5 space-y-8">
-                <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
-                        <Compass className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-white tracking-tight">Search Targets</h2>
-                        <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mt-1">Configure your campaign search parameters.</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Campaign Name</label>
-                        <input 
-                            type="text"
-                            placeholder="e.g. Retail Launch"
-                            value={campaign.name}
-                            onChange={(e) => setCampaign({...campaign, name: e.target.value})}
-                            className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm text-white placeholder:text-zinc-800"
-                        />
-                    </div>
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Target Country</label>
-                        <select 
-                            value={campaign.targetCountry}
-                            onChange={e => setCampaign({...campaign, targetCountry: e.target.value})}
-                            className="w-full bg-[#121214] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm text-white"
-                        >
-                            <option value="ZW">Zimbabwe</option>
-                            <option value="SA">South Africa</option>
-                            <option value="UK">United Kingdom</option>
-                            <option value="US">United States</option>
-                        </select>
-                    </div>
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between ml-1">
-                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Target Industries</label>
-                            <div className="flex items-center gap-2">
-                                <label className="flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-[9px] font-black uppercase tracking-widest transition-all bg-white/5 hover:bg-white/10 text-zinc-300 cursor-pointer">
-                                    <Upload size={10} />
-                                    <span>Upload List</span>
-                                    <input
-                                        type="file"
-                                        accept=".txt,.csv"
-                                        onChange={(e) => handleFileUpload(e, "industries")}
-                                        className="hidden"
-                                    />
-                                </label>
-                                <AIAssistButton 
-                                    field="Target Industries" 
-                                    currentValue={campaign.industries} 
-                                    context={{ productName: campaign.productName, productDescription: campaign.productDescription }}
-                                    onRefined={(val) => setCampaign(prev => ({...prev, industries: val}))} 
-                                />
-                            </div>
-                        </div>
-                        <input 
-                            type="text"
-                            placeholder="e.g. Retail, Cafes, Tech Services"
-                            value={campaign.industries}
-                            onChange={(e) => setCampaign({...campaign, industries: e.target.value})}
-                            className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm text-white placeholder:text-zinc-800"
-                        />
-                        <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider ml-1 italic mt-1.5">
-                            Enter target business categories separated by commas, or upload a .txt/.csv list of industries.
-                        </p>
-                    </div>
-                    <div className="space-y-3 md:col-span-2">
-                        <div className="flex items-center justify-between ml-1">
-                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Specific Cities / Areas</label>
-                            <div className="flex items-center gap-2">
-                                <label className="flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-[9px] font-black uppercase tracking-widest transition-all bg-white/5 hover:bg-white/10 text-zinc-300 cursor-pointer">
-                                    <Upload size={10} />
-                                    <span>Upload List</span>
-                                    <input
-                                        type="file"
-                                        accept=".txt,.csv"
-                                        onChange={(e) => handleFileUpload(e, "locations")}
-                                        className="hidden"
-                                    />
-                                </label>
-                                <AIAssistButton 
-                                    field="Target Locations" 
-                                    currentValue={campaign.locations} 
-                                    context={{ targetCountry: campaign.targetCountry }}
-                                    onRefined={(val) => setCampaign(prev => ({...prev, locations: val}))} 
-                                />
-                            </div>
-                        </div>
-                        <input 
-                            type="text"
-                            placeholder="e.g. Harare, Mutare, Bulawayo"
-                            value={campaign.locations}
-                            onChange={(e) => setCampaign({...campaign, locations: e.target.value})}
-                            className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm text-white placeholder:text-zinc-800"
-                        />
-                        <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider ml-1 italic mt-1.5">
-                            Enter specific cities/regions separated by commas, or upload a .txt/.csv list of locations.
-                        </p>
-                    </div>
-                    <div className="space-y-3 md:col-span-2">
-                        <div className="flex items-center justify-between ml-1">
-                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Target Pain Points</label>
-                            <AIAssistButton 
-                                field="Target Pain Points" 
-                                currentValue={campaign.targetPainPoints} 
-                                context={{ productName: campaign.productName, productDescription: campaign.productDescription }}
-                                onRefined={(val) => setCampaign(prev => ({...prev, targetPainPoints: val}))} 
-                            />
-                        </div>
-                        <textarea 
-                            rows={3}
-                            placeholder="Describe the specific pain points AI should look for in target prospects..."
-                            value={campaign.targetPainPoints}
-                            onChange={(e) => setCampaign({...campaign, targetPainPoints: e.target.value})}
-                            className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 transition-all focus:outline-none focus:border-primary/40 text-sm leading-relaxed text-zinc-300 placeholder:text-zinc-800 resize-none"
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* SYNCED SENDER IDENTITY */}
-            <section className="bg-white/[0.01] p-8 md:p-10 rounded-[2px] border border-white/5 space-y-8">
-                <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
-                        <User className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-white tracking-tight">Verified Identity</h2>
-                        <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mt-1">Sender details for personalization.</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 ml-1">Sender Name</label>
-                        <input 
-                            value={campaign.senderName} 
-                            onChange={(e) => setCampaign({...campaign, senderName: e.target.value})}
-                            placeholder="Your Name"
-                            className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white outline-none focus:border-primary/40 transition-all" 
-                        />
-                    </div>
-                    <div>
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 ml-1">Role</label>
-                        <input 
-                            value={campaign.senderRole} 
-                            onChange={(e) => setCampaign({...campaign, senderRole: e.target.value})}
-                            placeholder="e.g. Founder"
-                            className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white outline-none focus:border-primary/40 transition-all" 
-                        />
-                    </div>
-                    <div>
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 ml-1">Company</label>
-                        <input 
-                            value={campaign.companyName} 
-                            onChange={(e) => setCampaign({...campaign, companyName: e.target.value})}
-                            placeholder="Business Name"
-                            className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white outline-none focus:border-primary/40 transition-all" 
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* OUTREACH INTELLIGENCE */}
-            <section className="bg-white/[0.01] p-8 md:p-10 rounded-[2px] border border-white/5 space-y-8">
-                <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-[2px] bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400">
-                        <Zap className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-white tracking-tight">Outreach Intelligence</h2>
-                        <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mt-1">Configure AI engagement parameters.</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Outreach Tone</label>
-                        <NeuralDropdown 
-                            options={[
-                                { value: "PROFESSIONAL", label: "Professional & Polished" },
-                                { value: "DIRECT", label: "Direct & Concise" },
-                                { value: "FRIENDLY", label: "Friendly & Warm" },
-                                { value: "EDUCATIONAL", label: "Educational & Insightful" }
-                            ]}
-                            value={campaign.outreachTone}
-                            onChange={(val) => setCampaign({...campaign, outreachTone: val as any})}
-                            className="w-full"
-                        />
-                        <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider ml-1">This governs how the AI crafts the outreach messages.</p>
                     </div>
 
                     <div className="space-y-4">
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Discord Webhook (Optional)</label>
-                        <input 
-                            value={campaign.discordWebhook} 
-                            onChange={(e) => setCampaign({...campaign, discordWebhook: e.target.value})}
-                            placeholder="https://discord.com/api/webhooks/..."
-                            className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white outline-none focus:border-primary/40 transition-all" 
-                        />
-                        <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider ml-1">Real-time alerts for newly discovered leads.</p>
+                        <div>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Sender Profile</span>
+                            <p className="text-xs text-zinc-300 leading-relaxed font-semibold">
+                                {campaign.senderName ? (
+                                    `${campaign.senderName} (${campaign.senderRole}) at ${campaign.companyName}`
+                                ) : (
+                                    <span className="text-zinc-800 italic">Not defined yet</span>
+                                )}
+                            </p>
+                        </div>
+                        <div>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Sourcing Filters</span>
+                            <div className="flex flex-wrap gap-2 text-xs text-zinc-400">
+                                <div>
+                                    <span className="text-zinc-600 font-bold uppercase tracking-wider block text-[8px]">Locations</span>
+                                    <span>{campaign.locations || "Harare"}</span>
+                                </div>
+                                <div className="border-l border-white/5 pl-3">
+                                    <span className="text-zinc-600 font-bold uppercase tracking-wider block text-[8px]">Industries</span>
+                                    <span>{campaign.industries || "Business"}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {campaign.assignedSources && campaign.assignedSources.length > 0 && (
+                            <div>
+                                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">AI-Assigned Channels</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {campaign.assignedSources.map((source: string) => (
+                                        <span 
+                                            key={source} 
+                                            className="px-2 py-0.5 rounded-[2px] text-[8px] font-black uppercase tracking-widest bg-primary/15 text-primary border border-primary/25"
+                                        >
+                                            {source.replace('_', ' ')}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </section>
-
-            <div className="flex items-center justify-center pt-10">
-                <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleSave}
-                    disabled={loading}
-                    className="px-14 py-6 rounded-[2px] bg-primary text-white font-black text-xl flex items-center gap-4 transition-all shadow-2xl shadow-primary/20 hover:bg-primary/90"
-                >
-                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <ShieldCheck size={24} />}
-                    {loading ? "PROCESSING..." : isEdit ? "SAVE CAMPAIGN CHANGES" : "CREATE LEAD CAMPAIGN"}
-                </motion.button>
             </div>
+
+            {/* Carousel Questionnaire Modal Portal */}
+            <AnimatePresence>
+                {isModalOpen && (
+                    <QuestionnaireModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        title={isEdit ? "Edit Search Configuration" : "Configure AI Lead Campaign"}
+                        subtitle="HyprLead setup assistant"
+                        steps={campaignSteps}
+                        data={campaign}
+                        onChange={setCampaign}
+                        onSubmit={handleSave}
+                        submitLabel={isEdit ? "SAVE CHANGES" : "LAUNCH CAMPAIGN"}
+                        loading={loading}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

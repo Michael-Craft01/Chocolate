@@ -49,8 +49,15 @@ export function LeadRow({ lead, idx, handleDelete, copyFullIntel, copiedId }: an
             <h3 className="text-sm font-bold text-white truncate">{lead.business.name}</h3>
           </div>
 
-          <div className="flex items-center gap-2 w-1/4 text-zinc-500 text-[11px] font-black uppercase tracking-widest">
-             <MapPin className="h-3 w-3" /> {lead.industry || 'Unknown'}
+          <div className="flex flex-col gap-1 w-1/4 justify-center">
+            <div className="flex items-center gap-2 text-zinc-500 text-[11px] font-black uppercase tracking-widest">
+               <MapPin className="h-3 w-3" /> {lead.industry || 'Unknown'}
+            </div>
+            {lead.business.companySize && (
+              <div className="text-[8px] font-black uppercase tracking-widest text-zinc-400 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded-[2px] w-max mt-0.5">
+                Size: {lead.business.companySize}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-1 w-1/3">

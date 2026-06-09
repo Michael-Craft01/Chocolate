@@ -70,6 +70,7 @@ async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweep
             email: contactBundle.email || business.email || '',
             address: business.address || undefined,
             category: business.category || enrichment.industry || undefined,
+            companySize: enrichment.companySize || business.companySize || undefined,
             contactStatus: contactBundle.contactStatus,
             contactPages: contactBundle.contactPages as Prisma.InputJsonValue,
             socialProfiles: contactBundle.socialProfiles as Prisma.InputJsonValue,
@@ -102,6 +103,7 @@ async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweep
                     email: dbBusiness.email || businessData.email,
                     address: dbBusiness.address || businessData.address,
                     category: dbBusiness.category || businessData.category,
+                    companySize: dbBusiness.companySize || businessData.companySize,
                     contactStatus: mergedBundle.contactStatus,
                     contactPages: mergedBundle.contactPages as Prisma.InputJsonValue,
                     socialProfiles: mergedBundle.socialProfiles as Prisma.InputJsonValue,
@@ -173,15 +175,35 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
     try {
         if (!campaign || campaign.status !== 'ACTIVE') return 0;
         
-        // Industrial Retry for Scraper — pass cardLimit so scroll capacity is fully used
-        const businesses = await withRetry(
-            () => scraper.scrape(queryData.query, queryData.country, queryData.page, cardLimit),
-            { retries: 3, delay: 2000, factor: 2, taskName: `Scrape: ${queryData.query}` }
-        ).catch(() => []);
+        // Fetch and aggregate from all assigned sources
+        let businesses: any[] = [];
+        const sources = campaign.assignedSources && campaign.assignedSources.length > 0 ? campaign.assignedSources : ['GOOGLE_MAPS'];
+        for (const src of sources) {
+            try {
+                const scraped = await withRetry(
+                    () => scraper.scrape(queryData.query, queryData.country, queryData.page, cardLimit, src),
+                    { retries: 3, delay: 2000, factor: 2, taskName: `Scrape: ${queryData.query} on ${src}` }
+                ).catch(() => []);
+                if (scraped && scraped.length > 0) {
+                    businesses = [...businesses, ...scraped];
+                }
+            } catch (err) {
+                logger.error({ err, source: src }, 'Scrape query failed for source');
+            }
+        }
 
         if (!businesses || businesses.length === 0) return 0;
 
-        const results = businesses.slice(0, targetCount);
+        // Deduplicate businesses by name & website
+        const seenBusinesses = new Set<string>();
+        const uniqueBusinesses = businesses.filter(b => {
+            const key = `${b.name.toLowerCase()}|${normalizeWebsite(b.website) || ''}`;
+            if (seenBusinesses.has(key)) return false;
+            seenBusinesses.add(key);
+            return true;
+        });
+
+        const results = uniqueBusinesses.slice(0, targetCount);
 
         const user = await prisma.user.findUnique({ where: { id: campaign.userId } });
         if (!user) return leadsFound;
@@ -246,8 +268,17 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                     enrichment = {
                         brandName: business.name,
                         industry: business.category || 'General',
-                        painPoint: 'efficiency'
+                        painPoint: 'efficiency',
+                        companySize: 'Small'
                     };
+                }
+
+                // Silent Discard Filter
+                const targetSize = campaign.targetBusinessSize || 'ANY';
+                const leadSize = String(enrichment.companySize || 'Small').toUpperCase();
+                if (targetSize !== 'ANY' && leadSize !== targetSize) {
+                    logger.info(`[SILENT DISCARD] Skipping lead ${business.name} - qualified size is ${leadSize} but campaign targets ${targetSize}.`);
+                    continue;
                 }
 
                 const result = await syncLeadToDb(business, enrichment, campaign, sweepId, sweepDate, cycleRunId);

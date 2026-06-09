@@ -16,6 +16,9 @@ export const campaignSchema = z.object({
   outreachTone: z.enum(['PROFESSIONAL', 'DIRECT', 'FRIENDLY', 'EDUCATIONAL']).default('PROFESSIONAL'),
   ctaLink: z.string().url().or(z.literal('')).optional().nullable(),
   discordWebhook: z.string().url().or(z.literal('')).optional().nullable(),
+  targetMarket: z.string().optional().nullable(),
+  targetBusinessSize: z.enum(['SMALL', 'MEDIUM', 'LARGE', 'ANY']).default('ANY'),
+  assignedSources: z.array(z.string()).optional(),
 });
 export const updateCampaignSchema = campaignSchema.partial();
 

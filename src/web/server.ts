@@ -695,8 +695,16 @@ app.get('/api/campaigns/:id', authenticate, async (req: any, res: any) => {
 app.post('/api/campaigns', authenticate, requireActiveSubscription, validate(campaignSchema), async (req: any, res: any) => {
     try {
         const userId = req.user!.id;
+        const payload = { ...req.body };
+        if (payload.targetMarket) {
+            try {
+                payload.assignedSources = await aiService.classifyCampaignSources(payload.targetMarket, payload.productDescription);
+            } catch (err) {
+                logger.error({ err }, 'Failed to classify campaign sources on create, using default');
+            }
+        }
         const campaign = await prisma.campaign.create({
-            data: { ...req.body, userId }
+            data: { ...payload, userId }
         });
         res.status(201).json(campaign);
     } catch (error) {
@@ -708,9 +716,28 @@ app.patch('/api/campaigns/:id', authenticate, requireActiveSubscription, validat
     try {
         const id = String(req.params.id);
         const userId = req.user!.id;
+        const payload = { ...req.body };
+
+        if (payload.targetMarket !== undefined || payload.productDescription !== undefined) {
+            const existing = await prisma.campaign.findFirst({
+                where: { id, userId }
+            });
+            if (existing) {
+                const targetMarket = payload.targetMarket !== undefined ? payload.targetMarket : existing.targetMarket;
+                const productDescription = payload.productDescription !== undefined ? payload.productDescription : existing.productDescription;
+                if (targetMarket) {
+                    try {
+                        payload.assignedSources = await aiService.classifyCampaignSources(targetMarket, productDescription);
+                    } catch (err) {
+                        logger.error({ err }, 'Failed to classify campaign sources on update, using default');
+                    }
+                }
+            }
+        }
+
         const updated = await prisma.campaign.updateMany({
             where: { id, userId },
-            data: req.body
+            data: payload
         });
         res.json(updated);
     } catch (error) {

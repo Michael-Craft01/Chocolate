@@ -361,6 +361,19 @@ export default function CampaignsPage() {
                         )}>
                           {c.cycleRuns?.[0]?.status ? c.cycleRuns[0].status.charAt(0) + c.cycleRuns[0].status.slice(1).toLowerCase() : "No runs"}
                         </div>
+                        {c.assignedSources && c.assignedSources.map((source: string) => (
+                          <div 
+                            key={source} 
+                            className="px-2 py-0.5 rounded-full text-[10px] font-bold border bg-primary/10 border-primary/20 text-primary uppercase"
+                          >
+                            {source.replace('_', ' ')}
+                          </div>
+                        ))}
+                        {c.targetBusinessSize && c.targetBusinessSize !== "ANY" && (
+                          <div className="px-2 py-0.5 rounded-full text-[10px] font-bold border bg-zinc-500/10 border-zinc-500/25 text-zinc-400">
+                            Size: {c.targetBusinessSize}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

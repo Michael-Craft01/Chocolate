@@ -77,6 +77,69 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
 
         const targetCountry = campaign?.targetCountry || 'US';
 
+        if (campaign?.targetMarket) {
+            logger.info({ campaignId: campaign.id }, '🤖 Generating queries using AI Target Market');
+            try {
+                const aiQueries = await aiService.generateQueriesFromTargetMarket(
+                    campaign.targetMarket,
+                    baseLocations,
+                    baseIndustries,
+                    campaign.targetBusinessSize || 'ANY',
+                    count
+                );
+
+                const allHistory = await prisma.queryHistory.findMany({
+                    where: { campaignId: campaign.id }
+                });
+                const historyMap = new Map();
+                allHistory.forEach(h => {
+                    historyMap.set(`${h.location}:${h.industry}`, h);
+                });
+
+                const queries: QueryData[] = [];
+                for (const item of aiQueries) {
+                    const recentHistory = historyMap.get(`${item.location}:${item.industry}`);
+                    const currentPage = (recentHistory?.page || 0) + 1;
+                    const cappedPage = currentPage > 10 ? 1 : currentPage;
+
+                    await prisma.queryHistory.upsert({
+                        where: {
+                            location_industry_campaignId: {
+                                location: item.location,
+                                industry: item.industry,
+                                campaignId: campaign.id
+                            }
+                        },
+                        update: {
+                            query: item.query,
+                            page: cappedPage,
+                            createdAt: new Date()
+                        },
+                        create: {
+                            location: item.location,
+                            industry: item.industry,
+                            query: item.query,
+                            page: cappedPage,
+                            campaignId: campaign.id
+                        }
+                    });
+
+                    queries.push({
+                        query: item.query,
+                        location: item.location,
+                        industry: item.industry,
+                        country: targetCountry,
+                        page: cappedPage
+                    });
+                }
+
+                logger.info(`Generated ${queries.length} AI queries for Campaign: ${campaign.name}`);
+                return queries;
+            } catch (err) {
+                logger.error({ err }, 'AI Query generation failed, falling back to rule-based expansion');
+            }
+        }
+
         const [industries, locations] = await Promise.all([
             this.expandIndustries(baseIndustries),
             this.expandLocations(baseLocations, targetCountry)
