@@ -6,8 +6,12 @@ import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+  process.env.FRONTEND_URL || 
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://hyprlead.app");
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://hyprlead.app"),
+  metadataBase: new URL(baseUrl),
   title: "HyprLead | Lead Generation SaaS",
   description: "Next-generation lead generation engine with AI enrichment.",
   applicationName: "HyprLead",
