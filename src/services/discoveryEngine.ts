@@ -264,8 +264,8 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                     }
                 }
 
-                // Stealth Delay to prevent detection
-                await sleep(500);
+                // Stealth Delay to prevent detection & Gemini API rate limits (15 RPM free tier)
+                await sleep(4000);
             } catch (err) {
                 logger.error({ err }, 'Individual lead processing failed. Continuing batch.');
             }
