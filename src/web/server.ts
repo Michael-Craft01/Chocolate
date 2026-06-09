@@ -712,6 +712,31 @@ app.post('/api/campaigns', authenticate, requireActiveSubscription, validate(cam
     }
 });
 
+async function withPrismaRetry<T>(fn: () => Promise<T>, maxRetries = 3, delay = 500): Promise<T> {
+    let lastErr: any;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await fn();
+        } catch (err: any) {
+            lastErr = err;
+            const isConflict =
+                err.code === 'P2034' ||
+                err.code === 'P2002' ||
+                String(err.message).includes('deadlock') ||
+                String(err.message).includes('conflict') ||
+                String(err.message).includes('serialization') ||
+                String(err.message).includes('transaction');
+
+            if (!isConflict) {
+                throw err;
+            }
+            logger.warn({ attempt: i + 1, delayMs: delay }, '[PRISMA RETRY] Conflict/lock detected. Retrying...');
+            await new Promise((resolve) => setTimeout(resolve, delay + Math.random() * 200));
+        }
+    }
+    throw lastErr;
+}
+
 app.patch('/api/campaigns/:id', authenticate, requireActiveSubscription, validate(updateCampaignSchema), async (req: any, res: any) => {
     try {
         const id = String(req.params.id);
@@ -735,12 +760,15 @@ app.patch('/api/campaigns/:id', authenticate, requireActiveSubscription, validat
             }
         }
 
-        const updated = await prisma.campaign.updateMany({
-            where: { id, userId },
-            data: payload
-        });
+        const updated = await withPrismaRetry(() => 
+            prisma.campaign.updateMany({
+                where: { id, userId },
+                data: payload
+            })
+        );
         res.json(updated);
     } catch (error) {
+        logger.error({ err: error }, 'Failed to update campaign');
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

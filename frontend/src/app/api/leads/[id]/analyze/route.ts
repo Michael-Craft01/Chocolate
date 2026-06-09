@@ -8,7 +8,8 @@ const openai = new OpenAI({
   baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
 });
 
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const rawModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const MODEL = rawModel.includes('gemma-3') || rawModel.includes('gemma-30') ? 'gemma-4-31b-it' : rawModel;
 
 function extractJson<T>(text: string): T {
   const cleanText = text

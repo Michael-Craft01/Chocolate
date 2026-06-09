@@ -1,7 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { aiService } from '@/lib/ai-service';
+import { getAuthUser, authError } from '@/lib/api-auth';
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
+  if (path.length === 1 && path[0] === 'refine') {
+    // Prevent unauthenticated resource consumption in production
+    const user = await getAuthUser(req);
+    if (!user) return authError();
+
+    try {
+      const { field, value, context } = await req.json();
+      if (!field) {
+        return NextResponse.json({ error: 'Field is required' }, { status: 400 });
+      }
+      const refined = await aiService.refineInput(field, value, context);
+      return NextResponse.json({ refined });
+    } catch (error: any) {
+      console.error('[Next AI Service] Refinement failed:', error.message);
+      return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    }
+  }
   return handleProxy(req, path);
 }
 

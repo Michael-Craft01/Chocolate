@@ -555,7 +555,8 @@ JSON SCHEMA:
 
         for (let attempt = 0; attempt < maxRetries; attempt++) {
             try {
-                return await operation(currentModel);
+                const apiModel = currentModel.includes('gemma-3') || currentModel.includes('gemma-30') ? 'gemma-4-31b-it' : currentModel;
+                return await operation(apiModel);
             } catch (err: any) {
                 lastError = err;
 

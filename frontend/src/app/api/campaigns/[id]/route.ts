@@ -34,6 +34,31 @@ export async function GET(
   }
 }
 
+async function withPrismaRetry<T>(fn: () => Promise<T>, maxRetries = 3, delay = 500): Promise<T> {
+  let lastErr: any;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      lastErr = err;
+      const isConflict =
+        err.code === 'P2034' ||
+        err.code === 'P2002' || // Unique constraint during concurrency
+        String(err.message).includes('deadlock') ||
+        String(err.message).includes('conflict') ||
+        String(err.message).includes('serialization') ||
+        String(err.message).includes('transaction');
+
+      if (!isConflict) {
+        throw err;
+      }
+      console.warn(`[PRISMA RETRY] Conflict/lock detected. Retrying attempt ${i + 1}/${maxRetries} after ${delay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, delay + Math.random() * 200));
+    }
+  }
+  throw lastErr;
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -45,23 +70,28 @@ export async function PATCH(
 
   try {
     const body = await req.json();
-    
-    // Check if campaign belongs to user
-    const campaign = await prisma.campaign.findFirst({
-      where: { id, userId: user.id }
-    });
 
-    if (!campaign) {
-      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
-    }
+    const updated = await withPrismaRetry(async () => {
+      // Check if campaign belongs to user
+      const campaign = await prisma.campaign.findFirst({
+        where: { id, userId: user.id }
+      });
 
-    const updated = await prisma.campaign.update({
-      where: { id },
-      data: body
+      if (!campaign) {
+        throw new Error('NOT_FOUND');
+      }
+
+      return prisma.campaign.update({
+        where: { id },
+        data: body
+      });
     });
 
     return NextResponse.json(updated);
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'NOT_FOUND') {
+      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+    }
     console.error('API Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
