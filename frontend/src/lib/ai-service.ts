@@ -9,6 +9,7 @@ function stripThinking(text: string) {
 }
 
 function extractJson<T>(text: string): T {
+  // Strip thinking tags FIRST before looking for JSON
   const cleanText = text
     .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
     .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
@@ -75,7 +76,9 @@ export class AIService {
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: this.model,
+        // Elaborate uses gemma-4-26b-a4b-it — verified working Gemma 4 model.
+        // (gemma-3-27b-it is not available on the Gemini API — use gemma-4-26b-a4b-it instead)
+        model: 'gemma-4-26b-a4b-it',
         messages: [
           {
             role: 'system',
@@ -86,22 +89,35 @@ export class AIService {
             content: `FIELD: "${field}"\nUSER INPUT: "${value}"\nCONTEXT: ${JSON.stringify(context ?? {})}\n\nElaborate the user's input for this field into a high-quality, detailed version.`,
           },
         ],
-        response_format: { type: 'json_object' },
+        // NOTE: response_format json_object is NOT supported by Gemma models on the Gemini API.
+        // We rely on the prompt + extractJson to parse the JSON response instead.
+        // max_tokens must be high enough to include both the <thought> block and the JSON output.
         temperature: 0.4,
-        max_tokens: 600,
+        max_tokens: 2000,
       });
 
       const raw = response.choices[0]?.message?.content ?? '';
-      const parsed = extractJson<{ refined?: string }>(raw);
-
-      if (parsed.refined && typeof parsed.refined === 'string') {
-        return parsed.refined.trim();
+      if (!raw.trim()) {
+        throw new Error('Empty response from AI model');
       }
 
-      return stripThinking(raw);
+      // Try strict JSON parse first
+      try {
+        const parsed = extractJson<{ refined?: string }>(raw);
+        if (parsed.refined && typeof parsed.refined === 'string' && parsed.refined.trim()) {
+          return parsed.refined.trim();
+        }
+      } catch {
+        // JSON parse failed — model returned plain text, use it directly
+        const stripped = stripThinking(raw);
+        if (stripped) return stripped;
+      }
+
+      throw new Error('Could not extract elaborated text from AI response');
     } catch (error) {
-      console.error('[AIService.refineInput] Elaborate failed, returning raw input:', error);
-      return value || '';
+      // Re-throw so the ElaborateButton shows "Failed" instead of silently returning the original value
+      console.error('[AIService.refineInput] Elaborate failed:', error);
+      throw error;
     }
   }
 

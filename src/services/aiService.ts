@@ -126,9 +126,11 @@ export class AIService {
               'Return ONLY a valid JSON object with a single key "refined" containing the elaborated value (plain text, no markdown). ' +
               'Do NOT output any reasoning, thoughts, drafts, or markdown.';
 
-        return this.withRetry('refineInput', async (model) => {
+        return this.withRetry('refineInput', async (_model) => {
             const response = await this.openai.chat.completions.create({
-                model,
+                // Elaborate uses gemma-4-26b-a4b-it — verified working Gemma 4 model.
+                // (gemma-3-27b-it is not available on the Gemini API — use gemma-4-26b-a4b-it instead)
+                model: 'gemma-4-26b-a4b-it',
                 messages: [
                     {
                         role: 'system',
@@ -139,20 +141,31 @@ export class AIService {
                         content: `FIELD: "${field}"\nUSER INPUT: "${value}"\nCONTEXT: ${JSON.stringify(context ?? {})}\n\nElaborate the user's input for this field into a high-quality, detailed version.`,
                     },
                 ],
-                response_format: { type: 'json_object' },
+                // NOTE: response_format json_object is NOT supported by Gemma models on the Gemini API.
+                // We rely on the prompt + extractJson to parse the JSON response instead.
+                // max_tokens must be high enough to include both the <thought> block and the JSON output.
                 temperature: 0.4,
-                max_tokens: 600,
+                max_tokens: 2000,
             });
 
             const raw = firstChoiceContent(response);
-            const parsed = extractJson<{ refined?: string }>(raw);
-
-            if (parsed.refined && typeof parsed.refined === 'string') {
-                return parsed.refined.trim();
+            if (!raw.trim()) {
+                throw new Error('Empty response from AI model');
             }
 
-            // Fallback: clean and return raw text if JSON key is missing
-            return stripThinking(raw);
+            // Try strict JSON parse first
+            try {
+                const parsed = extractJson<{ refined?: string }>(raw);
+                if (parsed.refined && typeof parsed.refined === 'string' && parsed.refined.trim()) {
+                    return parsed.refined.trim();
+                }
+            } catch {
+                // JSON parse failed — model returned plain text, use it directly
+                const stripped = stripThinking(raw);
+                if (stripped) return stripped;
+            }
+
+            throw new Error('Could not extract elaborated text from AI response');
         });
     }
 
