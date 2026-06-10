@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/sidebar";
 import { SubscriptionGuard } from "@/components/subscription-guard";
 import { CommandPalette } from "@/components/CommandPalette";
 import DashboardTour from "@/components/dashboard/DashboardTour";
+import { ActiveCycleListener } from "@/components/dashboard/ActiveCycleListener";
 
 export default function DashboardLayout({
   children,
@@ -11,6 +12,7 @@ export default function DashboardLayout({
   return (
     <SubscriptionGuard>
       <DashboardTour />
+      <ActiveCycleListener />
       <div className="flex h-screen bg-transparent text-white selection:bg-primary/30 font-sans">
         <CommandPalette />
         

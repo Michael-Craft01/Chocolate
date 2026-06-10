@@ -97,6 +97,7 @@ export class AIService {
         this.openai = new OpenAI({
             apiKey:  config.GEMINI_API_KEY,
             baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+            timeout: 30000, // 30 seconds request timeout
         });
     }
 

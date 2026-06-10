@@ -175,9 +175,12 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
     try {
         if (!campaign || campaign.status !== 'ACTIVE') return 0;
         
-        // Fetch and aggregate from all assigned sources
+        // Fetch and aggregate from all assigned sources (automatically expanding default to include all 3 platforms)
         let businesses: any[] = [];
-        const sources = campaign.assignedSources && campaign.assignedSources.length > 0 ? campaign.assignedSources : ['GOOGLE_MAPS'];
+        let sources = campaign.assignedSources && campaign.assignedSources.length > 0 ? campaign.assignedSources : ['GOOGLE_MAPS'];
+        if (sources.length === 1 && sources[0] === 'GOOGLE_MAPS') {
+            sources = ['GOOGLE_MAPS', 'APPLE_MAPS', 'GOOGLE_SEARCH'];
+        }
         for (const src of sources) {
             try {
                 const scraped = await withRetry(
@@ -489,7 +492,7 @@ export async function runCampaignCycle(cycleRunId: string) {
     try {
         logger.info({ cycleRunId, campaignId: campaign.id, maxLeads: cycle.maxLeads }, '[CYCLE] Starting bounded campaign cycle');
 
-        while (leadsFound < cycle.maxLeads && Date.now() < deadline && zeroYieldRounds < MAX_ZERO_YIELD_ROUNDS) {
+        while (leadsFound < cycle.maxLeads && Date.now() < deadline) {
             // Check if campaign was paused or deactivated
             const currentCampaign = await prisma.campaign.findUnique({
                 where: { id: campaign.id },
