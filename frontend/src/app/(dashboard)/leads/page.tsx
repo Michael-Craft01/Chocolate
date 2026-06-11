@@ -1267,6 +1267,7 @@ export default function LeadsPage() {
                           <a
                             href={`mailto:${activeLead.business.email}?subject=${encodeURIComponent('Quick question')}&body=${encodeURIComponent(editedMessage)}`}
                             target="_blank"
+                            onClick={() => handleDispatch(activeLead.id)}
                             className="h-8 px-3 rounded-lg bg-background border border-card-border flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-card-hover-border transition-all cursor-pointer"
                             title="Open in your local email client"
                           >

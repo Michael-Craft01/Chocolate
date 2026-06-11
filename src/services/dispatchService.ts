@@ -112,9 +112,10 @@ export class DispatchService {
             const socialProfiles = Array.isArray(business.socialProfiles) ? business.socialProfiles.filter(Boolean) : [];
             contactUrl = contactPages[0] || socialProfiles[0] || null;
 
-            const hasOpenedRoute = Boolean(whatsappUrl || mailtoUrl || contactUrl);
-            const status = emailSent ? LeadStatus.CONTACTED : hasOpenedRoute ? LeadStatus.CONTACT_ROUTE_OPENED : lead.status;
-            const dispatchedAt = emailSent ? new Date() : lead.dispatchedAt;
+            // Clicking WhatsApp or Mail client links counts as a CONTACTED action immediately as requested
+            const isContactAttempt = emailSent || Boolean(whatsappUrl) || Boolean(mailtoUrl);
+            const status = isContactAttempt ? LeadStatus.CONTACTED : (contactUrl ? LeadStatus.CONTACT_ROUTE_OPENED : lead.status);
+            const dispatchedAt = isContactAttempt ? new Date() : lead.dispatchedAt;
 
             // 3. Track the strongest action we can honestly prove.
             await prisma.lead.update({
