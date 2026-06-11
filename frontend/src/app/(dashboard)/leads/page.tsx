@@ -133,6 +133,7 @@ export default function LeadsPage() {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailResult, setEmailResult] = useState<'sent' | 'failed' | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
+  const [showContactedOnly, setShowContactedOnly] = useState(false);
 
   // Sales intelligence state
   type SalesIntel = {
@@ -175,10 +176,13 @@ export default function LeadsPage() {
       const groups = groupLeadsByDayAndSweep(fetchedLeads);
       if (groups.length > 0) setExpandedDays(new Set([groups[0].dayKey]));
 
-      // Auto-select the first lead to populate the intelligence panel instantly
+      // Auto-select the first lead to populate the intelligence panel instantly based on showContactedOnly state
       if (fetchedLeads.length > 0 && !selectedLeadId) {
-        setSelectedLeadId(fetchedLeads[0].id);
-        setEditedMessage(cleanOutreachMessage(fetchedLeads[0].suggestedMessage || ""));
+        const initialFiltered = fetchedLeads.filter(l => showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED');
+        if (initialFiltered.length > 0) {
+          setSelectedLeadId(initialFiltered[0].id);
+          setEditedMessage(cleanOutreachMessage(initialFiltered[0].suggestedMessage || ""));
+        }
       }
     } catch (err: any) {
       setError(err.message || "Unable to connect to your collection.");
@@ -198,15 +202,22 @@ export default function LeadsPage() {
     return () => clearInterval(interval);
   }, [page, selectedCampaignId]);
 
+  const contactedCount = useMemo(() => leads.filter(l => l.status === 'CONTACTED').length, [leads]);
+  const activeCount = useMemo(() => leads.filter(l => l.status !== 'CONTACTED').length, [leads]);
+
+  const displayedLeads = useMemo(() => {
+    return leads.filter(l => showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED');
+  }, [leads, showContactedOnly]);
+
   const filteredLeads = useMemo(() => {
-    if (!searchQuery) return leads;
+    if (!searchQuery) return displayedLeads;
     const q = searchQuery.toLowerCase();
-    return leads.filter(l =>
+    return displayedLeads.filter(l =>
       l.business.name.toLowerCase().includes(q) ||
       l.industry?.toLowerCase().includes(q) ||
       l.painPoint?.toLowerCase().includes(q)
     );
-  }, [leads, searchQuery]);
+  }, [displayedLeads, searchQuery]);
 
   const dayGroups = useMemo(() => groupLeadsByDayAndSweep(filteredLeads), [filteredLeads]);
 
@@ -285,7 +296,33 @@ export default function LeadsPage() {
         method: "POST",
         body: JSON.stringify({ customMessage: editedMessage, markContacted })
       });
-      setLeads(prev => prev.map(l => l.id === id ? { ...l, status: result.status } : l));
+      setLeads(prev => {
+        const updated = prev.map(l => l.id === id ? { ...l, status: result.status } : l);
+        if (result.status === 'CONTACTED' && !showContactedOnly) {
+          const remainingActive = updated.filter(l => l.status !== 'CONTACTED');
+          if (remainingActive.length > 0) {
+            const currentIndex = prev.findIndex(l => l.id === id);
+            const nextSelect = remainingActive[Math.min(currentIndex, remainingActive.length - 1)];
+            if (nextSelect) {
+              setTimeout(() => {
+                setSelectedLeadId(nextSelect.id);
+                setEditedMessage(cleanOutreachMessage(nextSelect.suggestedMessage || ""));
+              }, 0);
+            } else {
+              setTimeout(() => {
+                setSelectedLeadId(null);
+                setEditedMessage("");
+              }, 0);
+            }
+          } else {
+            setTimeout(() => {
+              setSelectedLeadId(null);
+              setEditedMessage("");
+            }, 0);
+          }
+        }
+        return updated;
+      });
       if (result.whatsappUrl) window.open(result.whatsappUrl, '_blank');
       else if (result.mailtoUrl) window.open(result.mailtoUrl, '_blank');
       else if (result.contactUrl) window.open(result.contactUrl, '_blank');
@@ -303,7 +340,33 @@ export default function LeadsPage() {
         method: "POST",
         body: JSON.stringify({ customMessage: editedMessage })
       });
-      setLeads(prev => prev.map(l => l.id === id ? { ...l, status: result.status } : l));
+      setLeads(prev => {
+        const updated = prev.map(l => l.id === id ? { ...l, status: result.status } : l);
+        if (result.status === 'CONTACTED' && !showContactedOnly) {
+          const remainingActive = updated.filter(l => l.status !== 'CONTACTED');
+          if (remainingActive.length > 0) {
+            const currentIndex = prev.findIndex(l => l.id === id);
+            const nextSelect = remainingActive[Math.min(currentIndex, remainingActive.length - 1)];
+            if (nextSelect) {
+              setTimeout(() => {
+                setSelectedLeadId(nextSelect.id);
+                setEditedMessage(cleanOutreachMessage(nextSelect.suggestedMessage || ""));
+              }, 0);
+            } else {
+              setTimeout(() => {
+                setSelectedLeadId(null);
+                setEditedMessage("");
+              }, 0);
+            }
+          } else {
+            setTimeout(() => {
+              setSelectedLeadId(null);
+              setEditedMessage("");
+            }, 0);
+          }
+        }
+        return updated;
+      });
       setEmailResult(result.emailSent ? 'sent' : 'failed');
       setTimeout(() => setEmailResult(null), 3000);
     } catch {
@@ -376,9 +439,14 @@ export default function LeadsPage() {
             <div className="flex items-center gap-2 text-xs font-semibold text-primary">
               <ShieldCheck className="h-4 w-4" /> Dedicated outreach intelligence
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Outbound leads</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              {showContactedOnly ? "Contacted leads" : "Outbound leads"}
+            </h1>
             <p className="text-xs text-muted-foreground font-medium">
-              {pagination.totalLeads} total active opportunities · grouped by search runs
+              {showContactedOnly 
+                ? `${contactedCount} contacted opportunities` 
+                : `${activeCount} active opportunities · grouped by search runs`
+              }
             </p>
           </div>
 
@@ -388,6 +456,40 @@ export default function LeadsPage() {
               className="h-9 w-9 rounded-lg bg-card border border-card-border flex items-center justify-center hover:border-card-hover-border hover:text-primary text-foreground transition-all cursor-pointer shadow-sm"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-primary" : ""}`} />
+            </button>
+
+            {/* Contacted Leads Toggle Button */}
+            <button
+              onClick={() => {
+                const nextMode = !showContactedOnly;
+                setShowContactedOnly(nextMode);
+                
+                // Automatically select the first lead in the new list view
+                const nextFilteredList = leads.filter(l => nextMode ? l.status === 'CONTACTED' : l.status !== 'CONTACTED');
+                if (nextFilteredList.length > 0) {
+                  setSelectedLeadId(nextFilteredList[0].id);
+                  setEditedMessage(cleanOutreachMessage(nextFilteredList[0].suggestedMessage || ""));
+                } else {
+                  setSelectedLeadId(null);
+                  setEditedMessage("");
+                }
+              }}
+              className={`h-9 px-3.5 rounded-lg border font-semibold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-sm relative group ${
+                showContactedOnly
+                  ? "bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/20"
+                  : "bg-card border-card-border text-foreground hover:border-card-hover-border hover:text-primary"
+              }`}
+              title={showContactedOnly ? "View Active Leads" : "View Contacted Leads"}
+            >
+              <Check className={`h-3.5 w-3.5 transition-transform duration-200 ${showContactedOnly ? "scale-110 text-green-500" : "text-muted-foreground group-hover:text-primary"}`} />
+              <span className="font-semibold">Contacted</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all ${
+                showContactedOnly 
+                  ? "bg-green-500/20 text-green-600 dark:text-green-400" 
+                  : "bg-muted text-muted-foreground group-hover:bg-primary/15 group-hover:text-primary"
+              }`}>
+                {contactedCount}
+              </span>
             </button>
 
             {/* Campaign filter */}
