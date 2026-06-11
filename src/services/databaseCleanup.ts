@@ -45,3 +45,69 @@ export async function cleanupDatabase(): Promise<void> {
         logger.error({ err: error }, 'Database cleanup failed');
     }
 }
+
+export async function cleanupStaleCycles(onStartup = false): Promise<void> {
+    logger.info(`🧹 Starting systematic stale cycle runs cleanup check (onStartup: ${onStartup})...`);
+    try {
+        const now = Date.now();
+        
+        // Find all active cycle runs (QUEUED or RUNNING)
+        const cycleRuns = await prisma.cycleRun.findMany({
+            where: {
+                status: { in: ['QUEUED', 'RUNNING'] }
+            }
+        });
+
+        if (cycleRuns.length === 0) {
+            logger.info('✅ No active cycle runs found.');
+            return;
+        }
+
+        let cleaned = 0;
+        for (const cycle of cycleRuns) {
+            let isStale = false;
+            
+            if (onStartup) {
+                // Server reboot means any previously active cycles are orphaned and cannot resume
+                isStale = true;
+            } else {
+                if (cycle.status === 'QUEUED') {
+                    // Stale if queued for more than 24 hours
+                    isStale = cycle.createdAt.getTime() < now - 24 * 60 * 60 * 1000;
+                } else if (cycle.status === 'RUNNING') {
+                    // Stale if running longer than 24 hours (allowing cycles to take hours for cooldowns/stealth)
+                    const startTime = cycle.startedAt ? cycle.startedAt.getTime() : cycle.createdAt.getTime();
+                    isStale = startTime < now - 24 * 60 * 60 * 1000;
+                }
+            }
+
+            if (isStale) {
+                logger.info(`- Cycle ${cycle.id} (${cycle.status}) was determined stale. Marking as FAILED.`);
+                await prisma.cycleRun.update({
+                    where: { id: cycle.id },
+                    data: {
+                        status: 'FAILED',
+                        failureReason: onStartup ? 'Server restarted / crashed' : 'Execution timed out (24h limit)',
+                        completedAt: new Date()
+                    }
+                });
+
+                // Refund 1 cycle to the user if they had 0 leads found
+                if (cycle.leadsFound === 0) {
+                    logger.info(`  🔄 Refunding 1 cycle to User ${cycle.userId}...`);
+                    await prisma.user.update({
+                        where: { id: cycle.userId },
+                        data: {
+                            cyclesRemaining: { increment: 1 }
+                        }
+                    });
+                }
+                cleaned++;
+            }
+        }
+        
+        logger.info(`🎉 Stale cycle check complete. Cleaned up ${cleaned} run(s).`);
+    } catch (error: any) {
+        logger.error({ err: error.message }, 'Failed to cleanup stale cycle runs');
+    }
+}

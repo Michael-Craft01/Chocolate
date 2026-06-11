@@ -290,6 +290,88 @@ export default function LeadsPage() {
     } catch { alert("Failed to remove lead."); }
   };
 
+  const handleMarkContacted = async (id: string) => {
+    try {
+      await authJson(`/api/leads/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "CONTACTED" })
+      });
+      
+      setLeads(prev => {
+        const updated = prev.map(l => l.id === id ? { ...l, status: "CONTACTED" as any } : l);
+        
+        // If we are currently in "Active" view, auto-advance selection
+        if (!showContactedOnly) {
+          const remainingActive = updated.filter(l => l.status !== 'CONTACTED');
+          if (remainingActive.length > 0) {
+            const currentIndex = prev.findIndex(l => l.id === id);
+            const nextSelect = remainingActive[Math.min(currentIndex, remainingActive.length - 1)];
+            if (nextSelect) {
+              setTimeout(() => {
+                setSelectedLeadId(nextSelect.id);
+                setEditedMessage(cleanOutreachMessage(nextSelect.suggestedMessage || ""));
+              }, 0);
+            } else {
+              setTimeout(() => {
+                setSelectedLeadId(null);
+                setEditedMessage("");
+              }, 0);
+            }
+          } else {
+            setTimeout(() => {
+              setSelectedLeadId(null);
+              setEditedMessage("");
+            }, 0);
+          }
+        }
+        return updated;
+      });
+    } catch (err: any) {
+      alert("Failed to update lead status: " + (err.message || "Unknown error"));
+    }
+  };
+
+  const handleMarkActive = async (id: string) => {
+    try {
+      await authJson(`/api/leads/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "NEW" })
+      });
+      
+      setLeads(prev => {
+        const updated = prev.map(l => l.id === id ? { ...l, status: "NEW" as any } : l);
+        
+        // If we are currently in "Contacted" view, auto-advance selection
+        if (showContactedOnly) {
+          const remainingContacted = updated.filter(l => l.status === 'CONTACTED');
+          if (remainingContacted.length > 0) {
+            const currentIndex = prev.findIndex(l => l.id === id);
+            const nextSelect = remainingContacted[Math.min(currentIndex, remainingContacted.length - 1)];
+            if (nextSelect) {
+              setTimeout(() => {
+                setSelectedLeadId(nextSelect.id);
+                setEditedMessage(cleanOutreachMessage(nextSelect.suggestedMessage || ""));
+              }, 0);
+            } else {
+              setTimeout(() => {
+                setSelectedLeadId(null);
+                setEditedMessage("");
+              }, 0);
+            }
+          } else {
+            setTimeout(() => {
+              setSelectedLeadId(null);
+              setEditedMessage("");
+            }, 0);
+          }
+        }
+        return updated;
+      });
+    } catch (err: any) {
+      alert("Failed to update lead status: " + (err.message || "Unknown error"));
+    }
+  };
+
   const handleDispatch = async (id: string, markContacted = false) => {
     try {
       const result = await authJson<{ emailSent: boolean, whatsappUrl: string | null, mailtoUrl: string | null, contactUrl: string | null, status: Lead["status"] }>(`/api/leads/${id}/dispatch`, { 
@@ -625,6 +707,7 @@ export default function LeadsPage() {
                               lead={lead}
                               isSelected={selectedLeadId === lead.id}
                               onSelect={() => selectLead(lead)}
+                              onToggleStatus={() => lead.status === 'CONTACTED' ? handleMarkActive(lead.id) : handleMarkContacted(lead.id)}
                             />
                           ))}
                         </div>
@@ -640,6 +723,7 @@ export default function LeadsPage() {
                         lead={lead}
                         isSelected={selectedLeadId === lead.id}
                         onSelect={() => selectLead(lead)}
+                        onToggleStatus={() => lead.status === 'CONTACTED' ? handleMarkActive(lead.id) : handleMarkContacted(lead.id)}
                       />
                     ))}
                   </div>
@@ -1190,18 +1274,19 @@ export default function LeadsPage() {
                           </a>
                         )}
 
-                        {/* Mark dispatched */}
-                        {activeLead.status !== 'CONTACTED' && (
-                          <button onClick={() => handleDispatch(activeLead.id, true)}
+                        {/* Mark contacted/active manually */}
+                        {activeLead.status !== 'CONTACTED' ? (
+                          <button onClick={() => handleMarkContacted(activeLead.id)}
                             className="ml-auto h-8 px-4 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-hover shadow-sm transition-all cursor-pointer"
                           >
-                            Confirm Contacted
+                            Mark as Contacted
                           </button>
-                        )}
-                        {activeLead.status === 'CONTACTED' && (
-                          <span className="ml-auto px-3 py-1.5 rounded-lg bg-green-500/10 text-green-600 text-xs font-bold flex items-center gap-1">
-                            <Check className="h-3 w-3" /> Contacted
-                          </span>
+                        ) : (
+                          <button onClick={() => handleMarkActive(activeLead.id)}
+                            className="ml-auto h-8 px-4 rounded-lg bg-zinc-800 border border-card-border hover:bg-zinc-700 text-xs font-semibold shadow-sm transition-all cursor-pointer text-foreground"
+                          >
+                            Mark as Active
+                          </button>
                         )}
                       </div>
                     </div>
@@ -1374,9 +1459,10 @@ interface ThinLeadRowProps {
   lead: Lead;
   isSelected: boolean;
   onSelect: () => void;
+  onToggleStatus?: () => void;
 }
 
-function ThinLeadRow({ lead, isSelected, onSelect }: ThinLeadRowProps) {
+function ThinLeadRow({ lead, isSelected, onSelect, onToggleStatus }: ThinLeadRowProps) {
   const isContacted = lead.status === 'CONTACTED';
   const isRouteOpened = lead.status === 'CONTACT_ROUTE_OPENED';
   return (
@@ -1430,6 +1516,24 @@ function ThinLeadRow({ lead, isSelected, onSelect }: ThinLeadRowProps) {
           <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 text-[10px] font-semibold shrink-0">
             Opened
           </span>
+        )}
+        
+        {/* Quick checkmark toggle button */}
+        {onToggleStatus && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleStatus();
+            }}
+            className={`h-7 w-7 rounded-md flex items-center justify-center border transition-all ${
+              isContacted
+                ? "bg-green-500/15 border-green-500/30 text-green-500 hover:bg-green-500/25"
+                : "bg-[#0f0f11] border-card-border hover:border-primary/40 text-muted-foreground hover:text-primary"
+            }`}
+            title={isContacted ? "Mark as Active" : "Mark as Contacted"}
+          >
+            <Check className="h-3.5 w-3.5" />
+          </button>
         )}
       </div>
     </div>

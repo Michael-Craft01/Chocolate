@@ -476,7 +476,7 @@ export async function runCampaignCycle(cycleRunId: string) {
     }
 
     const startedAt = new Date();
-    const deadline = startedAt.getTime() + cycle.maxRuntimeMs;
+    const deadline = startedAt.getTime() + Math.max(cycle.maxRuntimeMs, 24 * 60 * 60 * 1000); // Allow up to 24 hours
     const sweepId = cycle.id;
     let leadsFound = 0;
     let zeroYieldRounds = 0;

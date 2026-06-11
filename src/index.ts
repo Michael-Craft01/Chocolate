@@ -4,6 +4,7 @@ import { startServer } from './web/server.js';
 import { createAndRunCampaignCycle, runCampaignCycle } from './services/discoveryEngine.js';
 import { config } from './config.js';
 import cron from 'node-cron';
+import { cleanupStaleCycles } from './services/databaseCleanup.js';
 
 // ── GitHub Actions / CI mode flags ───────────────────────────────────────────
 // RUN_ONCE=true  → run a single sweep then exit (used in scheduled GH Actions)
@@ -122,6 +123,10 @@ async function startEngine() {
     // ── Mode B: GitHub Actions scheduled sweep ────────────────────────────────
     if (RUN_ONCE) {
         logger.info('🚀 Engine started in RUN_ONCE mode (GitHub Actions scheduled sweep).');
+        
+        // Clean up stale cycles before queueing
+        await cleanupStaleCycles(false).catch((err: any) => logger.error({ err }, 'Stale cycle cleanup failed in sweep run'));
+
         const activeCount = await prisma.campaign.count({ where: { status: 'ACTIVE' } });
 
         if (activeCount > 0) {
@@ -138,6 +143,9 @@ async function startEngine() {
 
     // ── Mode C: Long-running server (local dev / Railway / Fly.io) ────────────
     logger.info('🚀 Starting Autonomous Lead Generation Engine (server mode)...');
+
+    // Clean up stale cycles on boot to release any blocks
+    await cleanupStaleCycles(true).catch((err: any) => logger.error({ err }, 'Stale cycle cleanup failed on startup'));
 
     // 1. Start Web UI/API
     startServer();
@@ -157,6 +165,9 @@ async function startEngine() {
     cron.schedule(cronSchedule, async () => {
         logger.info('⏰ Running scheduled campaign cycle sweep...');
         try {
+            // Clean up stale cycles periodically
+            await cleanupStaleCycles(false).catch((err: any) => logger.error({ err }, 'Stale cycle cleanup failed in cron'));
+
             const queued = await queueDueDiscoveryCycles('AUTO');
             logger.info(`Scheduler check complete. Queued ${queued} campaign cycle(s).`);
         } catch (error: any) {
