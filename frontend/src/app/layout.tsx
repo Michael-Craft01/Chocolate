@@ -6,9 +6,17 @@ import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-  process.env.FRONTEND_URL || 
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://hyprlead.app");
+const getSanitizedBaseUrl = () => {
+  let url = process.env.NEXT_PUBLIC_APP_URL || 
+    process.env.FRONTEND_URL || 
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://hyprlead.app");
+  if (url && !/^https?:\/\//i.test(url)) {
+    url = `https://${url}`;
+  }
+  return url;
+};
+
+const baseUrl = getSanitizedBaseUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
