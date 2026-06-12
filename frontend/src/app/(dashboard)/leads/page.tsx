@@ -135,6 +135,7 @@ export default function LeadsPage() {
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [showContactedOnly, setShowContactedOnly] = useState(false);
   const [showEmailsOnly, setShowEmailsOnly] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<"ALL" | "SMALL" | "MEDIUM" | "LARGE">("ALL");
 
   // Sales intelligence state
   type SalesIntel = {
@@ -182,7 +183,9 @@ export default function LeadsPage() {
         const initialFiltered = fetchedLeads.filter(l => {
           const matchesStatus = showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
           const matchesEmail = showEmailsOnly ? Boolean(l.business.email) : true;
-          return matchesStatus && matchesEmail;
+          const leadSize = String(l.business.companySize || 'Small').toUpperCase();
+          const matchesSize = selectedSize === "ALL" ? true : leadSize === selectedSize;
+          return matchesStatus && matchesEmail && matchesSize;
         });
         if (initialFiltered.length > 0) {
           setSelectedLeadId(initialFiltered[0].id);
@@ -214,9 +217,11 @@ export default function LeadsPage() {
     return leads.filter(l => {
       const matchesStatus = showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
       const matchesEmail = showEmailsOnly ? Boolean(l.business.email) : true;
-      return matchesStatus && matchesEmail;
+      const leadSize = String(l.business.companySize || 'Small').toUpperCase();
+      const matchesSize = selectedSize === "ALL" ? true : leadSize === selectedSize;
+      return matchesStatus && matchesEmail && matchesSize;
     });
-  }, [leads, showContactedOnly, showEmailsOnly]);
+  }, [leads, showContactedOnly, showEmailsOnly, selectedSize]);
 
   const filteredLeads = useMemo(() => {
     if (!searchQuery) return displayedLeads;
@@ -311,7 +316,7 @@ export default function LeadsPage() {
         
         // If we are currently in "Active" view, auto-advance selection
         if (!showContactedOnly) {
-          const remainingActive = updated.filter(l => l.status !== 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true));
+          const remainingActive = updated.filter(l => l.status !== 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true) && (selectedSize === "ALL" ? true : String(l.business.companySize || 'Small').toUpperCase() === selectedSize));
           if (remainingActive.length > 0) {
             const currentIndex = prev.findIndex(l => l.id === id);
             const nextSelect = remainingActive[Math.min(currentIndex, remainingActive.length - 1)];
@@ -352,7 +357,7 @@ export default function LeadsPage() {
         
         // If we are currently in "Contacted" view, auto-advance selection
         if (showContactedOnly) {
-          const remainingContacted = updated.filter(l => l.status === 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true));
+          const remainingContacted = updated.filter(l => l.status === 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true) && (selectedSize === "ALL" ? true : String(l.business.companySize || 'Small').toUpperCase() === selectedSize));
           if (remainingContacted.length > 0) {
             const currentIndex = prev.findIndex(l => l.id === id);
             const nextSelect = remainingContacted[Math.min(currentIndex, remainingContacted.length - 1)];
@@ -390,7 +395,7 @@ export default function LeadsPage() {
       setLeads(prev => {
         const updated = prev.map(l => l.id === id ? { ...l, status: result.status } : l);
         if (result.status === 'CONTACTED' && !showContactedOnly) {
-          const remainingActive = updated.filter(l => l.status !== 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true));
+          const remainingActive = updated.filter(l => l.status !== 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true) && (selectedSize === "ALL" ? true : String(l.business.companySize || 'Small').toUpperCase() === selectedSize));
           if (remainingActive.length > 0) {
             const currentIndex = prev.findIndex(l => l.id === id);
             const nextSelect = remainingActive[Math.min(currentIndex, remainingActive.length - 1)];
@@ -434,7 +439,7 @@ export default function LeadsPage() {
       setLeads(prev => {
         const updated = prev.map(l => l.id === id ? { ...l, status: result.status } : l);
         if (result.status === 'CONTACTED' && !showContactedOnly) {
-          const remainingActive = updated.filter(l => l.status !== 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true));
+          const remainingActive = updated.filter(l => l.status !== 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true) && (selectedSize === "ALL" ? true : String(l.business.companySize || 'Small').toUpperCase() === selectedSize));
           if (remainingActive.length > 0) {
             const currentIndex = prev.findIndex(l => l.id === id);
             const nextSelect = remainingActive[Math.min(currentIndex, remainingActive.length - 1)];
@@ -559,7 +564,9 @@ export default function LeadsPage() {
                 const nextFilteredList = leads.filter(l => {
                   const matchesStatus = nextMode ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
                   const matchesEmail = showEmailsOnly ? Boolean(l.business.email) : true;
-                  return matchesStatus && matchesEmail;
+                  const leadSize = String(l.business.companySize || 'Small').toUpperCase();
+                  const matchesSize = selectedSize === "ALL" ? true : leadSize === selectedSize;
+                  return matchesStatus && matchesEmail && matchesSize;
                 });
                 if (nextFilteredList.length > 0) {
                   setSelectedLeadId(nextFilteredList[0].id);
@@ -597,7 +604,9 @@ export default function LeadsPage() {
                 const nextFilteredList = leads.filter(l => {
                   const matchesStatus = showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
                   const matchesEmail = nextMode ? Boolean(l.business.email) : true;
-                  return matchesStatus && matchesEmail;
+                  const leadSize = String(l.business.companySize || 'Small').toUpperCase();
+                  const matchesSize = selectedSize === "ALL" ? true : leadSize === selectedSize;
+                  return matchesStatus && matchesEmail && matchesSize;
                 });
                 if (nextFilteredList.length > 0) {
                   setSelectedLeadId(nextFilteredList[0].id);
@@ -624,6 +633,38 @@ export default function LeadsPage() {
                 {leads.filter(l => (showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED') && l.business.email).length}
               </span>
             </button>
+
+            {/* Company Size Filter */}
+            <NeuralDropdown
+              icon={<Building2 className="h-3.5 w-3.5" />}
+              options={[
+                { value: "ALL", label: "All Sizes" },
+                { value: "SMALL", label: "Small" },
+                { value: "MEDIUM", label: "Medium" },
+                { value: "LARGE", label: "Large" }
+              ]}
+              value={selectedSize}
+              onChange={val => {
+                const nextSize = val as "ALL" | "SMALL" | "MEDIUM" | "LARGE";
+                setSelectedSize(nextSize);
+                
+                // Automatically select the first lead in the new list view that matches the criteria
+                const nextFilteredList = leads.filter(l => {
+                  const matchesStatus = showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
+                  const matchesEmail = showEmailsOnly ? Boolean(l.business.email) : true;
+                  const leadSize = String(l.business.companySize || 'Small').toUpperCase();
+                  const matchesSize = nextSize === "ALL" ? true : leadSize === nextSize;
+                  return matchesStatus && matchesEmail && matchesSize;
+                });
+                if (nextFilteredList.length > 0) {
+                  setSelectedLeadId(nextFilteredList[0].id);
+                  setEditedMessage(cleanOutreachMessage(nextFilteredList[0].suggestedMessage || ""));
+                } else {
+                  setSelectedLeadId(null);
+                  setEditedMessage("");
+                }
+              }}
+            />
 
             {/* Campaign filter */}
             <NeuralDropdown

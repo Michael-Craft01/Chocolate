@@ -280,10 +280,22 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
                     };
                 }
 
-                // Silent Discard Filter
+                // Silent Discard Filter (Soft-Threshold range matching)
                 const targetSize = campaign.targetBusinessSize || 'ANY';
                 const leadSize = String(enrichment.companySize || 'Small').toUpperCase();
-                if (targetSize !== 'ANY' && leadSize !== targetSize) {
+                
+                let isMatch = false;
+                if (targetSize === 'ANY') {
+                    isMatch = true;
+                } else if (targetSize === 'SMALL') {
+                    isMatch = (leadSize === 'SMALL');
+                } else if (targetSize === 'MEDIUM') {
+                    isMatch = (leadSize === 'SMALL' || leadSize === 'MEDIUM');
+                } else if (targetSize === 'LARGE') {
+                    isMatch = (leadSize === 'MEDIUM' || leadSize === 'LARGE');
+                }
+
+                if (!isMatch) {
                     logger.info(`[SILENT DISCARD] Skipping lead ${business.name} - qualified size is ${leadSize} but campaign targets ${targetSize}.`);
                     continue;
                 }
