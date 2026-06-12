@@ -117,11 +117,11 @@ export class ContactExtractor {
             const extractEmail = async (): Promise<string | null> => {
                 return page.evaluate((): string | null => {
                     // S1: mailto: links
-                    const mailLink = document.querySelector('a[href^="mailto:"]');
-                    if (mailLink) {
-                        const href = (mailLink as HTMLAnchorElement).href;
+                    const mailLinks = Array.from(document.querySelectorAll('a[href^="mailto:"]'));
+                    for (const a of mailLinks) {
+                        const href = (a as HTMLAnchorElement).href;
                         const raw = href.replace('mailto:', '').split('?')[0]!.trim();
-                        if (raw.includes('@') && !raw.includes('example') && !raw.includes('sentry')) return raw;
+                        if (raw.includes('@') && !raw.includes('example') && !raw.includes('sentry') && !raw.includes('wixpress')) return raw;
                     }
 
                     // S2: JSON-LD
@@ -131,7 +131,10 @@ export class ContactExtractor {
                             const data = JSON.parse(s.textContent || '{}');
                             const find = (obj: any): string | null => {
                                 if (!obj || typeof obj !== 'object') return null;
-                                if (obj.email && String(obj.email).includes('@')) return String(obj.email);
+                                if (obj.email && String(obj.email).includes('@')) {
+                                    const raw = String(obj.email).trim();
+                                    if (!raw.includes('example') && !raw.includes('sentry')) return raw;
+                                }
                                 for (const v of Object.values(obj)) { const r = find(v); if (r) return r; }
                                 return null;
                             };
@@ -143,7 +146,13 @@ export class ContactExtractor {
                     // S3: Text regex
                     const text = document.body?.innerText || '';
                     const m = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g);
-                    return m?.find(e => !e.includes('example') && !e.includes('sentry') && !e.includes('wixpress') && !e.includes('schema')) || null;
+                    const foundInText = m?.find(e => !e.includes('example') && !e.includes('sentry') && !e.includes('wixpress') && !e.includes('schema'));
+                    if (foundInText) return foundInText;
+
+                    // S4: Raw HTML source search (documentElement.innerHTML)
+                    const html = document.documentElement?.innerHTML || '';
+                    const mHtml = html.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g);
+                    return mHtml?.find(e => !e.includes('example') && !e.includes('sentry') && !e.includes('wixpress') && !e.includes('schema') && !e.endsWith('.png') && !e.endsWith('.jpg') && !e.endsWith('.webp')) || null;
                 }).catch(() => null);
             };
 
@@ -207,29 +216,77 @@ export class ContactExtractor {
             socialProfiles = routeIntel.socialProfiles;
             decisionMakers = routeIntel.decisionMakers;
 
-            // If direct contacts are still missing, try the contact/about sub-page.
-            if (!phone || !email) {
-                const contactLink = await page.evaluate((): string | null => {
-                    const links = Array.from(document.querySelectorAll('a[href]'));
-                    const target = links.find(a => {
-                        const text = ((a as HTMLAnchorElement).innerText || a.textContent || '').toLowerCase();
-                        const href = (a as HTMLAnchorElement).href.toLowerCase();
-                        return (text.includes('contact') || text.includes('reach us') || text.includes('get in touch'))
-                            || (href.includes('/contact') || href.includes('/reach-us'));
-                    });
-                    return target ? (target as HTMLAnchorElement).href : null;
-                }).catch(() => null);
+            // If email is missing, try scanning candidate sub-pages in prioritized order
+            if (!email) {
+                const candidateLinks = await page.evaluate(() => {
+                    const links = Array.from(document.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+                    const contactKeywords = ['contact', 'about', 'team', 'staff', 'reach', 'info', 'support', 'privacy', 'terms', 'help'];
+                    
+                    const candidates: string[] = [];
+                    for (const a of links) {
+                        const text = ((a.innerText || '') + ' ' + (a.textContent || '')).toLowerCase();
+                        const href = (a.href || '').toLowerCase();
+                        
+                        if (!href.startsWith('http') || href.includes('google.com') || href.includes('facebook.com') || href.includes('linkedin.com')) {
+                            continue;
+                        }
+                        
+                        let match = false;
+                        for (const k of contactKeywords) {
+                            if (text.includes(k) || href.includes(k.replace(/\s/g, '-')) || href.includes(k.replace(/\s/g, ''))) {
+                                match = true;
+                                break;
+                            }
+                        }
+                        
+                        if (match) {
+                            candidates.push(a.href);
+                        }
+                    }
+                    
+                    const seen = new Set<string>();
+                    const uniqueCandidates: string[] = [];
+                    for (const c of candidates) {
+                        const trimmed = c.trim();
+                        if (trimmed && !seen.has(trimmed)) {
+                            seen.add(trimmed);
+                            uniqueCandidates.push(trimmed);
+                        }
+                    }
+                    return uniqueCandidates;
+                }).catch((err) => {
+                    logger.error(`[HUNGRY] [ERROR] candidateLinks evaluate failed: ${err.message}`);
+                    return [];
+                });
 
-                if (contactLink && !contactLink.includes('google.com') && contactLink !== url) {
-                    logger.info(`[HUNGRY] Scanning contact sub-page: ${contactLink}`);
-                    await page.goto(contactLink, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
-                    await page.waitForTimeout(1000);
-                    phone = phone || await extractPhone();
-                    email = email || await extractEmail();
-                    const contactRouteIntel = await extractRouteIntel();
-                    contactPages = Array.from(new Set([...contactPages, contactLink, ...contactRouteIntel.contactPages]));
-                    socialProfiles = Array.from(new Set([...socialProfiles, ...contactRouteIntel.socialProfiles]));
-                    decisionMakers = [...decisionMakers, ...contactRouteIntel.decisionMakers].slice(0, 8);
+                const pagesToScan = candidateLinks.filter(link => {
+                    const cleanLink = link.replace(/\/$/, '');
+                    const cleanUrl = url.replace(/\/$/, '');
+                    return cleanLink !== cleanUrl;
+                }).slice(0, 4);
+
+                logger.info(`[HUNGRY] Email missing on home page. Sourcing ${pagesToScan.length} candidate sub-pages...`);
+
+                for (const subPage of pagesToScan) {
+                    if (email) break;
+                    logger.info(`[HUNGRY] Scanning sub-page: ${subPage}`);
+                    try {
+                        await page.goto(subPage, { waitUntil: 'domcontentloaded', timeout: 12000 }).catch(() => {});
+                        await page.waitForTimeout(800);
+                        
+                        const subEmail = await extractEmail();
+                        if (subEmail) {
+                            email = subEmail;
+                            logger.info(`[HUNGRY] ✅ Email found on sub-page ${subPage}: ${email}`);
+                        }
+                        phone = phone || await extractPhone();
+                        const subIntel = await extractRouteIntel();
+                        contactPages = Array.from(new Set([...contactPages, subPage, ...subIntel.contactPages]));
+                        socialProfiles = Array.from(new Set([...socialProfiles, ...subIntel.socialProfiles]));
+                        decisionMakers = [...decisionMakers, ...subIntel.decisionMakers].slice(0, 8);
+                    } catch (e: any) {
+                        logger.warn(`[HUNGRY] Sub-page scan failed for ${subPage}: ${e.message}`);
+                    }
                 }
             }
 

@@ -134,6 +134,7 @@ export default function LeadsPage() {
   const [emailResult, setEmailResult] = useState<'sent' | 'failed' | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [showContactedOnly, setShowContactedOnly] = useState(false);
+  const [showEmailsOnly, setShowEmailsOnly] = useState(false);
 
   // Sales intelligence state
   type SalesIntel = {
@@ -178,7 +179,11 @@ export default function LeadsPage() {
 
       // Auto-select the first lead to populate the intelligence panel instantly based on showContactedOnly state
       if (fetchedLeads.length > 0 && !selectedLeadId) {
-        const initialFiltered = fetchedLeads.filter(l => showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED');
+        const initialFiltered = fetchedLeads.filter(l => {
+          const matchesStatus = showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
+          const matchesEmail = showEmailsOnly ? Boolean(l.business.email) : true;
+          return matchesStatus && matchesEmail;
+        });
         if (initialFiltered.length > 0) {
           setSelectedLeadId(initialFiltered[0].id);
           setEditedMessage(cleanOutreachMessage(initialFiltered[0].suggestedMessage || ""));
@@ -206,8 +211,12 @@ export default function LeadsPage() {
   const activeCount = useMemo(() => leads.filter(l => l.status !== 'CONTACTED').length, [leads]);
 
   const displayedLeads = useMemo(() => {
-    return leads.filter(l => showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED');
-  }, [leads, showContactedOnly]);
+    return leads.filter(l => {
+      const matchesStatus = showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
+      const matchesEmail = showEmailsOnly ? Boolean(l.business.email) : true;
+      return matchesStatus && matchesEmail;
+    });
+  }, [leads, showContactedOnly, showEmailsOnly]);
 
   const filteredLeads = useMemo(() => {
     if (!searchQuery) return displayedLeads;
@@ -302,7 +311,7 @@ export default function LeadsPage() {
         
         // If we are currently in "Active" view, auto-advance selection
         if (!showContactedOnly) {
-          const remainingActive = updated.filter(l => l.status !== 'CONTACTED');
+          const remainingActive = updated.filter(l => l.status !== 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true));
           if (remainingActive.length > 0) {
             const currentIndex = prev.findIndex(l => l.id === id);
             const nextSelect = remainingActive[Math.min(currentIndex, remainingActive.length - 1)];
@@ -343,7 +352,7 @@ export default function LeadsPage() {
         
         // If we are currently in "Contacted" view, auto-advance selection
         if (showContactedOnly) {
-          const remainingContacted = updated.filter(l => l.status === 'CONTACTED');
+          const remainingContacted = updated.filter(l => l.status === 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true));
           if (remainingContacted.length > 0) {
             const currentIndex = prev.findIndex(l => l.id === id);
             const nextSelect = remainingContacted[Math.min(currentIndex, remainingContacted.length - 1)];
@@ -381,7 +390,7 @@ export default function LeadsPage() {
       setLeads(prev => {
         const updated = prev.map(l => l.id === id ? { ...l, status: result.status } : l);
         if (result.status === 'CONTACTED' && !showContactedOnly) {
-          const remainingActive = updated.filter(l => l.status !== 'CONTACTED');
+          const remainingActive = updated.filter(l => l.status !== 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true));
           if (remainingActive.length > 0) {
             const currentIndex = prev.findIndex(l => l.id === id);
             const nextSelect = remainingActive[Math.min(currentIndex, remainingActive.length - 1)];
@@ -425,7 +434,7 @@ export default function LeadsPage() {
       setLeads(prev => {
         const updated = prev.map(l => l.id === id ? { ...l, status: result.status } : l);
         if (result.status === 'CONTACTED' && !showContactedOnly) {
-          const remainingActive = updated.filter(l => l.status !== 'CONTACTED');
+          const remainingActive = updated.filter(l => l.status !== 'CONTACTED' && (showEmailsOnly ? Boolean(l.business.email) : true));
           if (remainingActive.length > 0) {
             const currentIndex = prev.findIndex(l => l.id === id);
             const nextSelect = remainingActive[Math.min(currentIndex, remainingActive.length - 1)];
@@ -547,7 +556,11 @@ export default function LeadsPage() {
                 setShowContactedOnly(nextMode);
                 
                 // Automatically select the first lead in the new list view
-                const nextFilteredList = leads.filter(l => nextMode ? l.status === 'CONTACTED' : l.status !== 'CONTACTED');
+                const nextFilteredList = leads.filter(l => {
+                  const matchesStatus = nextMode ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
+                  const matchesEmail = showEmailsOnly ? Boolean(l.business.email) : true;
+                  return matchesStatus && matchesEmail;
+                });
                 if (nextFilteredList.length > 0) {
                   setSelectedLeadId(nextFilteredList[0].id);
                   setEditedMessage(cleanOutreachMessage(nextFilteredList[0].suggestedMessage || ""));
@@ -571,6 +584,44 @@ export default function LeadsPage() {
                   : "bg-muted text-muted-foreground group-hover:bg-primary/15 group-hover:text-primary"
               }`}>
                 {contactedCount}
+              </span>
+            </button>
+
+            {/* Email Only Toggle Button */}
+            <button
+              onClick={() => {
+                const nextMode = !showEmailsOnly;
+                setShowEmailsOnly(nextMode);
+                
+                // Automatically select the first lead in the new list view that matches the criteria
+                const nextFilteredList = leads.filter(l => {
+                  const matchesStatus = showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
+                  const matchesEmail = nextMode ? Boolean(l.business.email) : true;
+                  return matchesStatus && matchesEmail;
+                });
+                if (nextFilteredList.length > 0) {
+                  setSelectedLeadId(nextFilteredList[0].id);
+                  setEditedMessage(cleanOutreachMessage(nextFilteredList[0].suggestedMessage || ""));
+                } else {
+                  setSelectedLeadId(null);
+                  setEditedMessage("");
+                }
+              }}
+              className={`h-9 px-3.5 rounded-lg border font-semibold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-sm relative group ${
+                showEmailsOnly
+                  ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                  : "bg-card border-card-border text-foreground hover:border-card-hover-border hover:text-primary"
+              }`}
+              title={showEmailsOnly ? "Show All Leads" : "Show Only Leads with Emails"}
+            >
+              <Mail className={`h-3.5 w-3.5 transition-transform duration-200 ${showEmailsOnly ? "scale-110 text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
+              <span className="font-semibold">Has Email</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all ${
+                showEmailsOnly 
+                  ? "bg-primary/20 text-primary" 
+                  : "bg-muted text-muted-foreground group-hover:bg-primary/15 group-hover:text-primary"
+              }`}>
+                {leads.filter(l => (showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED') && l.business.email).length}
               </span>
             </button>
 
