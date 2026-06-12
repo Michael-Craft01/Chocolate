@@ -21,7 +21,7 @@ export class QueryGenerator {
         try {
             const prompt = `<start_of_turn>user
 SYSTEM: You are a geographical intelligence agent.
-TASK: For the following locations in ${country}, suggest 10 neighboring suburbs, industrial zones, or satellite towns.
+TASK: For the following locations in ${country}, suggest 15 neighboring suburbs, industrial zones, or satellite towns.
 LOCATIONS: ${baseLocations.join(', ')}
 
 FORMAT: Respond with a comma-separated list only.
@@ -42,7 +42,7 @@ FORMAT: Respond with a comma-separated list only.
         try {
             const prompt = `<start_of_turn>user
 SYSTEM: You are a market intelligence strategist.
-TASK: Expand these base industries into 5 broad, commonly searched local business categories.
+TASK: Expand these base industries into 12 broad, commonly searched local business categories.
 BASE INDUSTRIES: ${baseIndustries.join(', ')}
 
 FORMAT: Respond with a comma-separated list of niches only. No other text.

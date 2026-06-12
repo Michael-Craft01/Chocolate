@@ -84,6 +84,88 @@ function firstChoiceContent(response: OpenAI.Chat.ChatCompletion): string {
     return response.choices[0]?.message?.content ?? '';
 }
 
+/**
+ * Robustly sanitizes list outputs from the AI model to guarantee they consist
+ * ONLY of a clean, deduplicated, comma-separated list of short categories.
+ * Drops conversational headers, markdown formatting, lists, numbering, and trailing prose.
+ */
+export function sanitizeRefinedList(input: string): string {
+    if (!input) return '';
+    
+    let cleanInput = input.trim();
+
+    // 1. Remove reasoning thought blocks if any remaining (safety fallback)
+    cleanInput = cleanInput
+        .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
+        .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+        .trim();
+
+    // 2. Strip conversational header prose ending in colon (e.g. "Here is your refined list of industries:")
+    const headerRegex = /^(sure|certainly|here\s+(is|are)|refined|expanded|suggested|list\s+of|based\s+on|industries|locations|target\s+markets|niches)[\s\S]*?:/i;
+    if (headerRegex.test(cleanInput)) {
+        cleanInput = cleanInput.replace(headerRegex, '').trim();
+    }
+
+    // 3. Strip conversational footer prose starting with common phrases
+    const footerRegex = /(hope\s+this\s+helps|let\s+me\s+know|if\s+you\s+need|anything\s+else|this\s+should\s+help|here\s+are\s+the|is\s+a\s+list|good\s+luck)[\s\S]*$/i;
+    cleanInput = cleanInput.replace(footerRegex, '').trim();
+
+    // 4. Split by commas, semicolons, or newlines
+    const rawItems = cleanInput.split(/[,\n;]/);
+    const cleanedItems: string[] = [];
+    const seen = new Set<string>();
+
+    for (let item of rawItems) {
+        // Strip leading list characters, bullets, or numbers
+        // e.g. "- Software", "* Software", "1. Software", "• Software", "1) Software"
+        item = item.trim().replace(/^[-*•\d+.)]+\s*/, '').trim();
+        if (!item) continue;
+
+        // Strip surrounding quotes
+        item = item.replace(/^["']|["']$/g, '').trim();
+
+        // Skip common conversational filler items
+        if (/^(sure|certainly|okay|yes|here\s+it\s+is|this\s+list)$/i.test(item)) continue;
+
+        // Heuristics for sentence skipping:
+        // Skip items that are too long (e.g. > 6 words) or contain ending punctuation (like period, exclamation, question mark)
+        const wordCount = item.split(/\s+/).length;
+        if (wordCount > 6) continue;
+        if (/[.!?]$/.test(item)) {
+            // Strip terminal punctuation if it's a short valid industry, else skip if it's a sentence
+            if (wordCount <= 3) {
+                item = item.replace(/[.!?]+$/, '').trim();
+            } else {
+                continue;
+            }
+        }
+
+        // Skip items that end with colon
+        if (item.endsWith(':')) continue;
+
+        const lowerKey = item.toLowerCase();
+        if (!seen.has(lowerKey)) {
+            seen.add(lowerKey);
+
+            // Clean/normalize casing (capitalize first letter of each word, except minor prepositions/conjunctions)
+            const capitalized = item
+                .split(/\s+/)
+                .map(word => {
+                    const lWord = word.toLowerCase();
+                    if (lWord === 'and' || lWord === 'or' || lWord === 'of' || lWord === 'for' || lWord === 'in') {
+                        return lWord;
+                    }
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                })
+                .join(' ');
+
+            cleanedItems.push(capitalized);
+        }
+    }
+
+    return cleanedItems.join(', ');
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  AIService — single OpenAI-compat client for ALL AI calls
 // ─────────────────────────────────────────────────────────────────────────────
@@ -115,11 +197,13 @@ export class AIService {
 
         const systemPrompt = isListField
             ? 'You are the HyprLead AI Assistant. ' +
-              'The user has typed a partial or rough list. Elaborate it into a clean, comma-separated list of specific B2B categories, industries, or geographic targets (maximum 3 words per item). ' +
-              'Add relevant entries the user may have missed but that align with their input. ' +
-              'Do NOT output full sentences, explanation, bullet points, or conjunctions like "and/or". ' +
-              'Return ONLY a valid JSON object with a single key "refined" containing the elaborated value. ' +
-              'Do NOT output any reasoning, thoughts, drafts, or markdown.'
+              'The user has typed a partial or rough list of target markets, industries, or locations. ' +
+              'Your job is to expand and elaborate it into a clean, comma-separated list of specific B2B categories, industries, or geographic targets (maximum 3 words per item). ' +
+              'Add relevant, high-value B2B categories and sectors the user may have missed that align with their input. ' +
+              'CRITICAL: Return ONLY a valid JSON object matching this structure: {"refined": "item1, item2, item3"}. ' +
+              'Do NOT wrap the value in lists, bullets (- or *), or numbers (1., 2.). Do NOT include conversational prefixes, introductory prose, or conclusion chat ' +
+              '(do not say "Sure, here are...", "Hope this helps", "Refined list:", etc.). Just return the raw comma-separated items inside the JSON key. ' +
+              'Do NOT output any reasoning blocks, thought tags, drafts, or markdown.'
             : 'You are the HyprLead AI Assistant. ' +
               'The user has typed a short or rough input. Elaborate it into a detailed, professional, persuasive description ' +
               'optimised for B2B lead outreach and discovery. Expand vague language, add specifics, and make it compelling. ' +
@@ -155,18 +239,26 @@ export class AIService {
             }
 
             // Try strict JSON parse first
+            let result = '';
             try {
                 const parsed = extractJson<{ refined?: string }>(raw);
                 if (parsed.refined && typeof parsed.refined === 'string' && parsed.refined.trim()) {
-                    return parsed.refined.trim();
+                    result = parsed.refined.trim();
                 }
             } catch {
                 // JSON parse failed — model returned plain text, use it directly
                 const stripped = stripThinking(raw);
-                if (stripped) return stripped;
+                if (stripped) result = stripped;
             }
 
-            throw new Error('Could not extract elaborated text from AI response');
+            if (!result) {
+                throw new Error('Could not extract elaborated text from AI response');
+            }
+
+            if (isListField) {
+                return sanitizeRefinedList(result);
+            }
+            return result;
         });
     }
 
