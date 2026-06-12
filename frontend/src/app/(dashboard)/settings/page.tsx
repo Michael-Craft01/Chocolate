@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { QuestionnaireModal, type StepConfig } from "@/components/QuestionnaireModal";
 import { AnimatePresence } from "framer-motion";
 import type { Stats } from "@/lib/types";
+import Link from "next/link";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -251,7 +252,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-2 text-xs font-bold text-primary">
             <ShieldCheck className="h-4 w-4" /> Secure configuration
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white">Settings</h1>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">Settings</h1>
           <p className="text-sm text-zinc-500">Configure your business identity and campaign preferences for HyprLead AI.</p>
         </div>
         
@@ -271,7 +272,7 @@ export default function SettingsPage() {
             <Zap size={22} />
           </div>
           <div className="text-left">
-            <h2 className="text-lg font-bold text-white">Automation Controls</h2>
+            <h2 className="text-lg font-bold text-foreground">Automation Controls</h2>
             <p className="text-xs text-zinc-500">Control how automatic campaign searches spend your balance.</p>
           </div>
         </div>
@@ -284,7 +285,7 @@ export default function SettingsPage() {
           ].map((item) => (
             <div key={item.label} className="rounded-sm border border-white/5 bg-white/[0.02] p-4 text-left">
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{item.label}</p>
-              <p className="mt-1.5 text-lg font-black tracking-tight text-white">{item.value}</p>
+              <p className="mt-1.5 text-lg font-black tracking-tight text-foreground">{item.value}</p>
             </div>
           ))}
         </div>
@@ -310,7 +311,7 @@ export default function SettingsPage() {
 
         <div className="flex flex-col md:flex-row md:items-center gap-3 rounded-sm border border-white/5 bg-white/[0.02] p-4">
           <div className="flex-1 text-left">
-            <p className="text-xs font-bold text-white">Cycle schedule</p>
+            <p className="text-xs font-bold text-foreground">Cycle schedule</p>
             <p className="mt-1 text-xs font-semibold text-zinc-500">Frequency configuration: {formData.autoRunFrequency}</p>
           </div>
         </div>
@@ -326,7 +327,7 @@ export default function SettingsPage() {
               <Building2 size={22} />
             </div>
             <div className="text-left">
-              <h2 className="text-lg font-bold text-white">Business Identity</h2>
+              <h2 className="text-lg font-bold text-foreground">Business Identity</h2>
               <p className="text-xs text-zinc-500">Configure your company persona and outreach credentials</p>
             </div>
           </div>
@@ -392,7 +393,7 @@ export default function SettingsPage() {
               <Target size={22} />
             </div>
             <div className="text-left">
-              <h2 className="text-lg font-bold text-white">Campaign Targeting</h2>
+              <h2 className="text-lg font-bold text-foreground">Campaign Targeting</h2>
               <p className="text-xs text-zinc-500">Configure your default search scopes and vertical markets</p>
             </div>
           </div>
@@ -461,7 +462,12 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-1 text-left">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Integration hook (Discord)</span>
+              <div className="flex justify-between items-center pr-1">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Integration hook (Discord)</span>
+                <Link href="/docs/discord" className="text-[10px] text-primary hover:underline font-bold uppercase tracking-widest">
+                  Setup Guide
+                </Link>
+              </div>
               <p className="text-sm font-semibold text-zinc-300 bg-white/[0.02] border border-white/5 rounded-sm px-4 py-3 leading-none tracking-widest font-mono truncate">
                 {formData.discordWebhook 
                   ? formData.discordWebhook.replace(/(.{12}).+(.{8})/, "$1••••••••••••••••$2") 
@@ -486,7 +492,7 @@ export default function SettingsPage() {
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full -mr-48 -mt-48 group-hover:bg-primary/15 transition-all duration-700 blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
           <div className="space-y-3 max-w-xl text-left">
-            <h3 className="text-2xl font-bold tracking-tight text-white">Save global configurations</h3>
+            <h3 className="text-2xl font-bold tracking-tight text-foreground">Save global configurations</h3>
             <p className="text-sm text-zinc-400 leading-relaxed">
               Launch the interactive setup assistant to edit these identity values or global location targets.
             </p>

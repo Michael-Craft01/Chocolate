@@ -163,17 +163,17 @@ export function QuestionnaireModal({
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ type: "spring", duration: 0.5 }}
-                className="relative bg-[#0d0d0f] border border-white/10 rounded-[2px] w-full max-w-2xl overflow-hidden shadow-2xl z-10 flex flex-col max-h-[90vh]"
+                className="relative bg-card border border-card-border rounded-[2px] w-full max-w-2xl overflow-hidden shadow-2xl z-10 flex flex-col max-h-[90vh]"
             >
                 {/* Header */}
-                <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <div className="p-6 border-b border-card-border flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
+                        <h2 className="text-xl font-bold text-foreground tracking-tight">{title}</h2>
                         {subtitle && <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-1">{subtitle}</p>}
                     </div>
                     <button 
                         onClick={onClose}
-                        className="p-1 rounded-sm text-zinc-500 hover:text-white hover:bg-white/5 transition-all cursor-pointer"
+                        className="p-1 rounded-sm text-zinc-500 hover:text-foreground hover:bg-white/5 transition-all cursor-pointer"
                     >
                         <X size={20} />
                     </button>
@@ -207,7 +207,7 @@ export function QuestionnaireModal({
                                 <span className="text-[10px] font-black tracking-widest text-primary uppercase">
                                     Step {currentStep + 1} of {steps.length}
                                 </span>
-                                <h3 className="text-2xl font-black text-white leading-tight">{currentStepConfig.title}</h3>
+                                <h3 className="text-2xl font-black text-foreground leading-tight">{currentStepConfig.title}</h3>
                                 <p className="text-sm text-zinc-400 leading-relaxed">{currentStepConfig.description}</p>
                             </div>
 
@@ -245,7 +245,7 @@ export function QuestionnaireModal({
                                                     placeholder={field.placeholder}
                                                     value={value}
                                                     onChange={(e) => onChange(prev => ({ ...prev, [field.key]: e.target.value }))}
-                                                    className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white placeholder:text-zinc-500 transition-all focus:outline-none focus:border-primary/40"
+                                                    className="w-full bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-foreground placeholder:text-zinc-500 transition-all focus:outline-none focus:border-primary/40"
                                                 />
                                             )}
 
@@ -281,7 +281,7 @@ export function QuestionnaireModal({
                                                             placeholder={field.placeholder}
                                                             value={value}
                                                             onChange={(e) => onChange(prev => ({ ...prev, [field.key]: e.target.value }))}
-                                                            className="flex-1 bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-white placeholder:text-zinc-500 transition-all focus:outline-none focus:border-primary/40"
+                                                            className="flex-1 bg-white/[0.03] border border-white/10 rounded-[2px] p-4 text-sm text-foreground placeholder:text-zinc-500 transition-all focus:outline-none focus:border-primary/40"
                                                         />
                                                         {field.fileUploadKey && (
                                                             <label className="flex items-center gap-2 px-4 bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/10 rounded-[2px] text-xs font-black uppercase tracking-widest cursor-pointer transition-all shrink-0">

@@ -127,7 +127,7 @@ export default function OnboardingPage() {
     };
 
     return (
-        <div className="min-h-screen bg-transparent text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-transparent text-foreground flex flex-col items-center justify-center p-6 relative overflow-hidden">
             {/* Background Glow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-sm pointer-events-none" />
             
@@ -255,7 +255,7 @@ export default function OnboardingPage() {
                                     />
                                 </div>
                             </div>
-                            <div className="p-4 rounded-sm bg-blue-500/5 border border-blue-500/20 text-blue-200/70 text-sm flex gap-3">
+                            <div className="p-4 rounded-sm bg-blue-500/5 border border-blue-500/20 text-blue-700 dark:text-blue-200/70 text-sm flex gap-3">
                                 <MessageSquare size={20} className="shrink-0" />
                                 <p>We use these details to sign off your automated messages professionally.</p>
                             </div>
@@ -312,7 +312,7 @@ export default function OnboardingPage() {
                                 <select
                                     value={formData.targetCountry}
                                     onChange={(e) => handleFormUpdate("targetCountry", e.target.value)}
-                                    className={`${inputBaseClass} bg-[#121214]`}
+                                    className={`${inputBaseClass} bg-card text-foreground`}
                                 >
                                     <option value="ZW">Zimbabwe</option>
                                     <option value="SA">South Africa</option>

@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss";
 
 @theme {
   --color-background: var(--background);
@@ -27,6 +27,21 @@
   --radius-full: 9999px;
   --radius-pill: 5px;
   --radius-card: 5px;
+
+  /* Custom Zinc scale variables mapping */
+  --color-zinc-50: var(--zinc-50);
+  --color-zinc-100: var(--zinc-100);
+  --color-zinc-200: var(--zinc-200);
+  --color-zinc-300: var(--zinc-300);
+  --color-zinc-400: var(--zinc-400);
+  --color-zinc-500: var(--zinc-500);
+  --color-zinc-550: var(--zinc-550);
+  --color-zinc-600: var(--zinc-600);
+  --color-zinc-650: var(--zinc-650);
+  --color-zinc-700: var(--zinc-700);
+  --color-zinc-800: var(--zinc-800);
+  --color-zinc-900: var(--zinc-900);
+  --color-zinc-950: var(--zinc-950);
 }
 
 :root {
@@ -40,6 +55,21 @@
   --border-muted: #e2e8f0;
   --card-hover-border: #cbd5e1;
   --primary: #10b981;
+
+  /* Adaptive Zinc palette - Light Mode (Inverted values) */
+  --zinc-50: #0f172a;
+  --zinc-100: #1e293b;
+  --zinc-200: #334155;
+  --zinc-300: #475569;
+  --zinc-400: #64748b;
+  --zinc-500: #94a3b8;
+  --zinc-550: #94a3b8;
+  --zinc-600: #cbd5e1;
+  --zinc-650: #e2e8f0;
+  --zinc-700: #e2e8f0;
+  --zinc-800: #f1f5f9;
+  --zinc-900: #f8fafc;
+  --zinc-950: #ffffff;
 }
 
 html.dark {
@@ -52,18 +82,41 @@ html.dark {
   --text-secondary: #cbd5e1;
   --border-muted: rgba(255, 255, 255, 0.05);
   --card-hover-border: rgba(255, 255, 255, 0.15);
+
+  /* Adaptive Zinc palette - Dark Mode (Default values) */
+  --zinc-50: #f8fafc;
+  --zinc-100: #f1f5f9;
+  --zinc-200: #e2e8f0;
+  --zinc-300: #cbd5e1;
+  --zinc-400: #94a3b8;
+  --zinc-500: #64748b;
+  --zinc-550: #64748b;
+  --zinc-600: #475569;
+  --zinc-650: #334155;
+  --zinc-700: #334155;
+  --zinc-800: #1e293b;
+  --zinc-900: #111827;
+  --zinc-950: #030504;
 }
 
 @layer base {
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/30 overflow-x-hidden;
+    background-color: var(--background);
+    background-image: 
+      radial-gradient(circle at 75% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 20% 80%, rgba(4, 120, 87, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(6, 78, 59, 0.03) 0%, transparent 60%);
+    background-attachment: fixed;
+    background-size: cover;
+  }
+
+  html.dark body {
     background-color: #030504;
     background-image: 
       radial-gradient(circle at 75% 20%, rgba(16, 185, 129, 0.18) 0%, transparent 50%),
       radial-gradient(circle at 20% 80%, rgba(4, 120, 87, 0.12) 0%, transparent 50%),
       radial-gradient(circle at 50% 50%, rgba(6, 78, 59, 0.16) 0%, transparent 60%);
-    background-attachment: fixed;
-    background-size: cover;
   }
 
   /* --- NEURAL IMMERSION --- */
@@ -76,11 +129,16 @@ html.dark {
     height: 100vh;
     background: url('/logo.png') no-repeat center center;
     background-size: cover;
-    filter: blur(100px) saturate(250%);
-    opacity: 0.4;
+    filter: blur(100px) saturate(200%);
+    opacity: 0.08;
     pointer-events: none;
     z-index: -1;
     animation: aura-sway 40s ease-in-out infinite alternate;
+  }
+
+  html.dark .neural-aura {
+    filter: blur(100px) saturate(250%);
+    opacity: 0.4;
   }
 
   @keyframes aura-sway {
@@ -165,21 +223,31 @@ html.dark .bento-card {
 }
 
 .btn-pill-glass {
-  @apply h-11 px-6 rounded-full bg-white/5 text-white font-bold text-xs transition-all hover:bg-white/10 active:scale-98 flex items-center justify-center gap-2;
+  @apply h-11 px-6 rounded-full bg-white/5 text-foreground font-bold text-xs transition-all border border-card-border hover:bg-white/10 active:scale-98 flex items-center justify-center gap-2;
+}
+html.dark .btn-pill-glass {
+  @apply border-0 text-white;
 }
 
 /* Gridded Background */
 .bg-grid {
   background-image: 
+    linear-gradient(rgba(9, 9, 11, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.015) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+html.dark .bg-grid {
+  background-image: 
     linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
-  background-size: 32px 32px;
 }
 
 .gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-b from-white to-zinc-400;
+  @apply bg-clip-text text-transparent bg-gradient-to-b from-zinc-900 to-zinc-650;
 }
-
+html.dark .gradient-text {
+  @apply bg-gradient-to-b from-white to-zinc-400;
+}
 
 .text-stat {
   @apply text-4xl font-bold tracking-[-0.04em];
@@ -212,12 +280,18 @@ html.dark .bento-card {
   position: absolute;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 20% 80%, rgba(4, 120, 87, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(6, 78, 59, 0.12) 0%, transparent 60%);
+    radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(4, 120, 87, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(6, 78, 59, 0.03) 0%, transparent 60%);
   background-size: 200% 200%;
   animation: mesh-drift-slow 25s ease-in-out infinite alternate;
   z-index: -3;
+}
+html.dark .bg-animated-mesh {
+  background-image: 
+    radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(4, 120, 87, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(6, 78, 59, 0.12) 0%, transparent 60%);
 }
 
 @keyframes mesh-drift-slow {
@@ -255,8 +329,11 @@ html.dark .bento-card {
 }
 
 .scrollbar-neural::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(9, 9, 11, 0.05);
   border-radius: 4px;
+}
+html.dark .scrollbar-neural::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .scrollbar-neural:hover::-webkit-scrollbar-thumb {
@@ -349,3 +426,40 @@ input:focus, select:focus, textarea:focus {
   animation-play-state: paused;
 }
 
+/* Light mode overrides for transparent white classes to prevent them from vanishing/looking broken */
+html:not(.dark) .bg-white\/5 {
+  background-color: rgba(9, 9, 11, 0.04) !important;
+}
+html:not(.dark) .bg-white\/10 {
+  background-color: rgba(9, 9, 11, 0.08) !important;
+}
+html:not(.dark) .bg-white\/\[0\.03\] {
+  background-color: rgba(9, 9, 11, 0.03) !important;
+}
+html:not(.dark) .bg-white\/\[0\.02\] {
+  background-color: rgba(9, 9, 11, 0.02) !important;
+}
+html:not(.dark) .bg-white\/\[0\.01\] {
+  background-color: rgba(9, 9, 11, 0.01) !important;
+}
+html:not(.dark) .border-white\/5 {
+  border-color: rgba(9, 9, 11, 0.05) !important;
+}
+html:not(.dark) .border-white\/10 {
+  border-color: rgba(9, 9, 11, 0.1) !important;
+}
+html:not(.dark) .border-white\/20 {
+  border-color: rgba(9, 9, 11, 0.18) !important;
+}
+html:not(.dark) .text-white\/30 {
+  color: rgba(9, 9, 11, 0.4) !important;
+}
+html:not(.dark) .text-white\/40 {
+  color: rgba(9, 9, 11, 0.5) !important;
+}
+html:not(.dark) .text-white\/60 {
+  color: rgba(9, 9, 11, 0.65) !important;
+}
+html:not(.dark) .text-white\/80 {
+  color: rgba(9, 9, 11, 0.85) !important;
+}

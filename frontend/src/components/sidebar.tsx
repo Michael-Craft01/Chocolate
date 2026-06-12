@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { 
   LayoutDashboard, Settings, LogOut, User, ShieldCheck, 
   Home, Shield, Compass, Sparkles, Zap, ChevronRight, X,
-  ArrowRight, Sun, Moon, Menu
+  ArrowRight, Sun, Moon, Menu, MessageSquare
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -27,6 +27,7 @@ const navItems = [
   { name: "Billing", href: "/billing", icon: ShieldCheck },
   { name: "Profile", href: "/profile", icon: User },
   { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Discord Guide", href: "/docs/discord", icon: MessageSquare },
 ];
 
 export function Sidebar() {

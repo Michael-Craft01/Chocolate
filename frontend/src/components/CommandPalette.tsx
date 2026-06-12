@@ -70,22 +70,22 @@ export function CommandPalette() {
               initial={{ opacity: 0, scale: 0.98, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98, y: -10 }}
-              className="relative w-full max-w-2xl bg-[#0a0a0b]/80 border border-white/10 rounded-2xl overflow-hidden shadow-[0_0_50px_-12px_rgba(59,130,246,0.25)] backdrop-blur-2xl"
+              className="relative w-full max-w-2xl bg-card/85 border border-card-border rounded-2xl overflow-hidden shadow-[0_0_50px_-12px_rgba(59,130,246,0.25)] backdrop-blur-2xl"
             >
-              <div className="flex items-center px-6 h-16 border-b border-white/5 gap-4">
+              <div className="flex items-center px-6 h-16 border-b border-card-border gap-4">
                 <Search className="h-5 w-5 text-primary" />
                 <input
                   autoFocus
                   placeholder="Search for campaigns, leads, or settings..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-none outline-none text-[13px] font-medium text-white placeholder:text-zinc-500"
+                  className="flex-1 bg-transparent border-none outline-none text-[13px] font-medium text-foreground placeholder:text-zinc-500"
                 />
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm bg-white/5 border border-white/5">
                     <span className="text-[9px] font-black text-zinc-500">ESC</span>
                   </div>
-                  <button onClick={() => setOpen(false)} className="p-2 hover:bg-white/5 rounded-sm transition-colors text-zinc-500 hover:text-white">
+                  <button onClick={() => setOpen(false)} className="p-2 hover:bg-white/5 rounded-sm transition-colors text-zinc-500 hover:text-foreground">
                     <X className="h-4 w-4" />
                   </button>
                 </div>
@@ -105,7 +105,7 @@ export function CommandPalette() {
                         { name: "Settings", href: "/settings", icon: Settings },
                       ].map((item) => (
                         <button key={item.href} onClick={() => navigate(item.href)}
-                          className="flex items-center gap-3 p-4 rounded-xl hover:bg-white/[0.03] border border-transparent hover:border-white/5 transition-all text-zinc-400 hover:text-white group"
+                          className="flex items-center gap-3 p-4 rounded-xl hover:bg-zinc-950/5 dark:hover:bg-white/[0.03] border border-transparent hover:border-card-border transition-all text-zinc-500 dark:text-zinc-400 hover:text-foreground dark:hover:text-white group"
                         >
                           <item.icon className="h-4 w-4 text-zinc-500 group-hover:text-primary transition-colors" />
                           <span className="text-[10px] font-black uppercase tracking-widest">{item.name}</span>
@@ -126,7 +126,7 @@ export function CommandPalette() {
                             <res.icon className="h-4 w-4 text-zinc-500 group-hover:text-primary" />
                           </div>
                           <div className="text-left">
-                            <p className="text-[13px] font-bold text-white tracking-tight">{res.name}</p>
+                            <p className="text-[13px] font-bold text-foreground tracking-tight">{res.name}</p>
                             <p className="text-[9px] text-zinc-500 font-black uppercase tracking-[0.15em] mt-0.5">{res.type}</p>
                           </div>
                         </div>

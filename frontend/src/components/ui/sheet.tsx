@@ -68,12 +68,12 @@ export function SheetContent({
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className={cn(
-              "fixed right-0 top-0 h-screen w-full max-w-xl bg-[#0A0A0A] border-l border-white/5 z-[101] shadow-2xl overflow-y-auto p-8 font-sans selection:bg-primary/20",
+              "fixed right-0 top-0 h-screen w-full max-w-xl bg-card border-l border-card-border z-[101] shadow-2xl overflow-y-auto p-8 font-sans selection:bg-primary/20",
               className
             )}
           >
             <button onClick={() => setOpen(false)}
-              className="absolute top-6 right-6 h-10 w-10 rounded-sm bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+              className="absolute top-6 right-6 h-10 w-10 rounded-sm bg-zinc-950/5 border border-zinc-950/10 text-zinc-500 hover:text-zinc-950 dark:bg-white/5 dark:border-white/10 dark:text-zinc-400 dark:hover:text-white flex items-center justify-center transition-colors"
             >
               <X size={20} />
             </button>
@@ -96,7 +96,7 @@ export function SheetHeader({ children, className }: { children: React.ReactNode
 }
 
 export function SheetTitle({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <h2 className={cn("text-3xl font-black tracking-tight text-white", className)}>{children}</h2>;
+  return <h2 className={cn("text-3xl font-black tracking-tight text-foreground", className)}>{children}</h2>;
 }
 
 export function SheetDescription({ children, className }: { children: React.ReactNode; className?: string }) {

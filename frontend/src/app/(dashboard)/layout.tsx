@@ -13,7 +13,7 @@ export default function DashboardLayout({
     <SubscriptionGuard>
       <DashboardTour />
       <ActiveCycleListener />
-      <div className="flex h-screen bg-transparent text-white selection:bg-primary/30 font-sans">
+      <div className="flex h-screen bg-transparent text-foreground selection:bg-primary/30 font-sans">
         <CommandPalette />
         
         <Sidebar />

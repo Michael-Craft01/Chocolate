@@ -12,10 +12,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", ...props }, ref) => {
     const variants = {
       primary: "bg-primary text-white hover:bg-primary/90 shadow-xl shadow-primary/20 glow-primary",
-      outline: "bg-transparent text-white hover:bg-white/5",
-      ghost: "bg-transparent text-zinc-400 hover:text-white hover:bg-white/5",
+      outline: "bg-transparent text-foreground hover:bg-zinc-950/5 dark:hover:bg-white/5 border border-card-border",
+      ghost: "bg-transparent text-zinc-550 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-950/5 dark:hover:bg-white/5",
       danger: "bg-red-500/10 text-red-500 hover:bg-red-500/20",
-      secondary: "bg-white/5 text-zinc-300 hover:text-white",
+      secondary: "bg-zinc-950/5 dark:bg-white/5 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white",
     };
 
     const sizes = {

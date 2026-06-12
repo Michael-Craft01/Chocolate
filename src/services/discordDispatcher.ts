@@ -77,8 +77,7 @@ export class DiscordDispatcher {
             description: `**Suggested Attack Plan**\n\`\`\`${lead.message}\`\`\``,
             color: embedColor, // Match color to tier
         };
-
-        const components: any[] = [];
+        const components: any[] = [];
         const buttonRow = {
             type: 1,
             components: [] as any[],
@@ -93,10 +92,20 @@ export class DiscordDispatcher {
                 buttonRow.components.push({
                     type: 2,
                     style: 5,
-                    label: 'Chat on WhatsApp',
+                    label: 'Contact on WhatsApp',
                     url: waUrl,
                 });
             }
+        }
+
+        // Email button
+        if (lead.email) {
+            buttonRow.components.push({
+                type: 2,
+                style: 5,
+                label: 'Contact via Email',
+                url: `mailto:${lead.email}`,
+            });
         }
 
         // Website button
