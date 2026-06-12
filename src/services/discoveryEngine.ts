@@ -206,13 +206,17 @@ export async function processLeadsForQuery(campaign: any, queryData: QueryData, 
             return true;
         });
 
-        const results = uniqueBusinesses.slice(0, targetCount);
+        const results = uniqueBusinesses;
 
         const user = await prisma.user.findUnique({ where: { id: campaign.userId } });
         if (!user) return leadsFound;
 
         for (const business of results) {
             try {
+                if (leadsFound >= targetCount) {
+                    logger.info(`🎯 [YIELD LIMIT] Reached target count of ${targetCount} leads. Stopping query batch.`);
+                    break;
+                }
                 if (user.leadsFoundToday >= user.dailyLimit && user.creditBalance <= 0) break;
 
                 let visualIntel: Buffer | null = null;
