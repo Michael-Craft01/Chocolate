@@ -214,7 +214,7 @@ export class DispatchService {
                 name: business.name,
                 industry: lead.industry || business.category || 'General',
                 painPoint: lead.painPoint || 'efficiency',
-                message: lead.suggestedMessage,
+                message: cleanOutreachMessage(lead.suggestedMessage),
                 website: business.website,
                 phone: business.phone,
                 email: business.email,
@@ -222,7 +222,8 @@ export class DispatchService {
                 bestContactChannel: business.bestContactChannel,
                 contactPages: Array.isArray(business.contactPages) ? business.contactPages as string[] : [],
                 socialProfiles: Array.isArray(business.socialProfiles) ? business.socialProfiles as string[] : [],
-                location: `${campaign.locations[0] || 'Unknown'}, ${campaign.targetCountry || 'ZW'}`
+                location: `${campaign.locations[0] || 'Unknown'}, ${campaign.targetCountry || 'ZW'}`,
+                companyName: campaign.companyName
             };
 
             logger.info(`[DISPATCH] Automatically sending lead "${business.name}" to campaign Discord webhook`);

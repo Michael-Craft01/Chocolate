@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { config } from '../config.js';
 import { logger } from '../lib/logger.js';
+import { cleanOutreachMessage } from './aiService.js';
 
 export interface LeadPayload {
     name: string;
@@ -16,6 +17,7 @@ export interface LeadPayload {
     contactPages?: string[];
     socialProfiles?: string[];
     location: string;
+    companyName?: string | null;
 }
 
 export class DiscordDispatcher {
@@ -35,8 +37,6 @@ export class DiscordDispatcher {
             logger.warn('No Discord webhook configured for dispatch');
             return false;
         }
-
-        const truncate = (str: string, max: number) => str.length > max ? str.substring(0, max - 3) + '...' : str;
 
         const funQuotes = [
             "Neural link established. Target identified. 🧠",
@@ -73,43 +73,83 @@ export class DiscordDispatcher {
             timestamp: new Date().toISOString(),
         };
 
+        const outreachMessage = cleanOutreachMessage(lead.message || '');
         const messageEmbed = {
-            description: `**Suggested Attack Plan**\n\`\`\`${lead.message}\`\`\``,
+            description: `**Suggested Attack Plan**\n\`\`\`${outreachMessage}\`\`\``,
             color: embedColor, // Match color to tier
         };
-        const components: any[] = [];
+        const components: any[] = [];
         const buttonRow = {
             type: 1,
             components: [] as any[],
         };
 
-        // WhatsApp button
+        // WhatsApp button with pre-filled message (Safe 512 length constraint)
         if (lead.phone) {
             const cleanPhone = lead.phone.replace(/\D/g, '');
             if (cleanPhone.length >= 7) {
-                const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}`;
+                const baseUrl = `https://wa.me/${cleanPhone}?text=`;
+                const maxTextLen = 512 - baseUrl.length - 15; // leave safety margin
+                let textToSend = '';
+                if (maxTextLen > 0) {
+                    textToSend = outreachMessage;
+                    if (encodeURIComponent(textToSend).length > maxTextLen) {
+                        while (textToSend.length > 0 && encodeURIComponent(textToSend + '...').length > maxTextLen) {
+                            textToSend = textToSend.substring(0, textToSend.length - 1);
+                        }
+                        textToSend = textToSend + '...';
+                    }
+                }
+                const waUrl = baseUrl + encodeURIComponent(textToSend);
 
                 buttonRow.components.push({
                     type: 2,
                     style: 5,
-                    label: 'Contact on WhatsApp',
+                    label: 'WhatsApp',
                     url: waUrl,
                 });
             }
         }
 
-        // Email button
+        // Email button with pre-filled message (Safe 512 length constraint)
         if (lead.email) {
+            const senderCompany = lead.companyName || 'HyprLead';
+            const subject = `Outreach from ${senderCompany}`;
+            const baseUrl = `mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=`;
+            const maxBodyLen = 512 - baseUrl.length - 15; // safety margin
+            let bodyToSend = '';
+            if (maxBodyLen > 0) {
+                bodyToSend = outreachMessage;
+                if (encodeURIComponent(bodyToSend).length > maxBodyLen) {
+                    while (bodyToSend.length > 0 && encodeURIComponent(bodyToSend + '...').length > maxBodyLen) {
+                        bodyToSend = bodyToSend.substring(0, bodyToSend.length - 1);
+                    }
+                    bodyToSend = bodyToSend + '...';
+                }
+            }
+            const mailtoUrl = baseUrl + encodeURIComponent(bodyToSend);
+
             buttonRow.components.push({
                 type: 2,
                 style: 5,
-                label: 'Contact via Email',
-                url: `mailto:${lead.email}`,
+                label: 'Email',
+                url: mailtoUrl,
             });
         }
 
-        // Website button
-        if (validWebsite) {
+        // Direct Call button
+        if (lead.phone) {
+            const cleanPhone = lead.phone.replace(/[^\d+]/g, '');
+            buttonRow.components.push({
+                type: 2,
+                style: 5,
+                label: 'Call Lead',
+                url: `tel:${cleanPhone}`,
+            });
+        }
+
+        // Website button (if room in row)
+        if (validWebsite && buttonRow.components.length < 5) {
             buttonRow.components.push({
                 type: 2,
                 style: 5,
@@ -118,8 +158,9 @@ export class DiscordDispatcher {
             });
         }
 
+        // Contact Route button (if room in row)
         const contactUrl = lead.contactPages?.[0] || lead.socialProfiles?.[0];
-        if (contactUrl) {
+        if (contactUrl && buttonRow.components.length < 5) {
             buttonRow.components.push({
                 type: 2,
                 style: 5,
@@ -129,6 +170,8 @@ export class DiscordDispatcher {
         }
 
         if (buttonRow.components.length > 0) {
+            // Discord limits action row to max 5 components
+            buttonRow.components = buttonRow.components.slice(0, 5);
             components.push(buttonRow);
         }
 
