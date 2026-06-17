@@ -292,11 +292,18 @@ export default function CampaignsPage() {
                         )}>
                           {c.status.charAt(0) + c.status.slice(1).toLowerCase()}
                         </div>
-                        <div className={cn(
-                          "px-2 py-0.5 rounded-full text-[10px] font-bold border",
-                          cycleBadgeClass(c.cycleRuns?.[0]?.status)
-                        )}>
+                        <div 
+                          title={c.cycleRuns?.[0]?.status === 'FAILED' ? (c.cycleRuns[0].failureReason || "Discovery run failed") : undefined}
+                          className={cn(
+                            "px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1",
+                            cycleBadgeClass(c.cycleRuns?.[0]?.status),
+                            c.cycleRuns?.[0]?.status === 'FAILED' ? "cursor-help" : ""
+                          )}
+                        >
                           {c.cycleRuns?.[0]?.status ? c.cycleRuns[0].status.charAt(0) + c.cycleRuns[0].status.slice(1).toLowerCase() : "No runs"}
+                          {c.cycleRuns?.[0]?.status === 'FAILED' && (
+                            <AlertTriangle className="h-2.5 w-2.5 text-red-500 shrink-0" />
+                          )}
                         </div>
                       </div>
                     </div>

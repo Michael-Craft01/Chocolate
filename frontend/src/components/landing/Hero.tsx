@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Play, Compass, Globe, Shield, Sparkles, Activity, Crosshair, Radar } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import SocialHeroCarousel from "./SocialHeroCarousel";
+import SocialImageMarquee from "./SocialImageMarquee";
 import FeaturesCarousel from "./FeaturesCarousel";
 
 const FloatingTelemetry = () => {
@@ -148,7 +148,7 @@ export default function Hero() {
 
         {/* Looping Social Activity & Network Carousel */}
         <div className="w-full py-8">
-          <SocialHeroCarousel />
+          <SocialImageMarquee />
         </div>
 
         <div className="py-24 border-t border-card-border mt-24 text-center space-y-12 max-w-5xl mx-auto">
