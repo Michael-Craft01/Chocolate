@@ -342,28 +342,6 @@ export function Sidebar() {
           </div>
         )}
 
-        <button 
-          onClick={() => {
-            localStorage.removeItem("has_seen_dashboard_tour");
-            localStorage.removeItem("has_seen_campaigns_tour");
-            localStorage.removeItem("has_seen_leads_tour");
-            window.location.reload();
-          }} 
-          className={cn( "flex items-center rounded-full transition-all hover:bg-card group text-foreground w-full", isCollapsed ? "justify-center h-10 w-10 mx-auto mt-2" : "gap-3 px-4 py-2 mt-2 text-sm font-semibold" )} 
-        >
-          <Sparkles className="h-4 w-4 text-primary shrink-0 animate-pulse" />
-          {!isCollapsed && "Restart Tour"}
-        </button>
-
-        <button onClick={toggleTheme} className={cn( "flex items-center rounded-full transition-all hover:bg-card group text-foreground w-full", isCollapsed ? "justify-center h-10 w-10 mx-auto mt-2" : "gap-3 px-4 py-2 mt-2 text-sm font-semibold" )} >
-          {theme === "dark" ? (
-            <Sun className="h-4 w-4 text-amber-500 shrink-0" />
-          ) : (
-            <Moon className="h-4 w-4 text-blue-500 shrink-0" />
-          )}
-          {!isCollapsed && (theme === "dark" ? "Light Mode" : "Dark Mode")}
-        </button>
- 
         <button onClick={handleSignOut} className={cn( "flex items-center rounded-full transition-all hover:bg-card group text-foreground w-full", isCollapsed ? "justify-center h-10 w-10 mx-auto mt-2" : "gap-3 px-4 py-2 mt-1 text-sm font-semibold" )} >
           <LogOut className="h-4 w-4 group-hover:translate-x-0.5 transition-transform shrink-0" />
           {!isCollapsed && "Sign Out"}

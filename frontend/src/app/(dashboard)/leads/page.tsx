@@ -532,18 +532,9 @@ export default function LeadsPage() {
         {/* Clean, Simple Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-3 border-b border-card-border pb-6">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-              <ShieldCheck className="h-4 w-4" /> Dedicated outreach intelligence
-            </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-              {showContactedOnly ? "Contacted leads" : "Outbound leads"}
+              {showContactedOnly ? "Contacted" : "Outbound"}
             </h1>
-            <p className="text-xs text-muted-foreground font-medium">
-              {showContactedOnly 
-                ? `${contactedCount} contacted opportunities` 
-                : `${activeCount} active opportunities · grouped by search runs`
-              }
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

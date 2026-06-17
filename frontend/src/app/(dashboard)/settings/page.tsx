@@ -71,6 +71,14 @@ export default function SettingsPage() {
           };
           setFormData(loaded);
           setSavedData(loaded);
+
+          // Auto-launch Setup Assistant if setup parameter is present
+          if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("setup") === "true") {
+              setIsEditing(true);
+            }
+          }
         }
       } catch (error) {
         console.error("Failed to load settings:", error);

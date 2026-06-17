@@ -695,6 +695,16 @@ app.get('/api/campaigns/:id', authenticate, async (req: any, res: any) => {
 app.post('/api/campaigns', authenticate, requireActiveSubscription, validate(campaignSchema), async (req: any, res: any) => {
     try {
         const userId = req.user!.id;
+        
+        // Ensure user has completed settings onboarding
+        const profile = await prisma.profile.findUnique({ where: { userId } });
+        if (!profile || !profile.onboardingComplete) {
+            return res.status(400).json({ 
+                error: 'Setup Required', 
+                details: 'Please configure your Business Identity Profile in settings before creating a campaign.' 
+            });
+        }
+
         const payload = { ...req.body };
         if (payload.targetMarket) {
             try {

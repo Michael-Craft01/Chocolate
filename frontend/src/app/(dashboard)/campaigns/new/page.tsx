@@ -7,9 +7,13 @@ import {
     CheckCircle2,
     ShieldCheck,
     ArrowLeft,
-    Zap
+    Zap,
+    Settings,
+    ArrowRight,
+    ChevronRight
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { authJson } from "@/lib/api";
 import { CampaignForm } from "@/components/CampaignForm";
 import { cn } from "@/lib/utils";
@@ -17,6 +21,7 @@ import { cn } from "@/lib/utils";
 export default function NewCampaignPage() {
     const router = useRouter();
     const [fetchingProfile, setFetchingProfile] = useState(true);
+    const [profileConfigured, setProfileConfigured] = useState(true);
     const [stats, setStats] = useState<{count: number, limit: number} | null>(null);
     const [initialData, setInitialData] = useState<any>(null);
 
@@ -40,8 +45,9 @@ export default function NewCampaignPage() {
 
     const loadInitialData = async () => {
         try {
-            const data = await authJson<any>("/api/me");
+            const data = await authJson<any>("/api/settings");
             if (data.profile) {
+                setProfileConfigured(data.profile.onboardingComplete);
                 setInitialData({
                     senderName: data.profile.defaultSenderName || "",
                     senderRole: data.profile.defaultSenderRole || "",
@@ -62,6 +68,37 @@ export default function NewCampaignPage() {
             <div className="h-screen flex flex-col items-center justify-center gap-4 bg-transparent">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-zinc-500 font-medium">Syncing with Company Profile...</p>
+            </div>
+        );
+    }
+
+    if (!profileConfigured) {
+        return (
+            <div className="min-h-[75vh] flex flex-col items-center justify-center text-center px-4 font-sans select-none">
+                <div className="max-w-md w-full bg-card border border-card-border p-8 rounded-3xl space-y-6 relative overflow-hidden shadow-2xl">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.05),transparent_50%)] pointer-events-none" />
+                    
+                    <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto shadow-inner">
+                        <Settings size={28} className="animate-pulse" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-black text-foreground tracking-tight">Business Profile Required</h2>
+                        <p className="text-zinc-550 text-xs leading-relaxed max-w-sm mx-auto">
+                            Configure your Business Identity Profile in settings before you can start searching for leads.
+                        </p>
+                    </div>
+                    
+                    <div className="pt-2">
+                        <Link
+                            href="/settings?setup=true"
+                            className="inline-flex h-11 px-6 rounded-full bg-primary hover:brightness-110 active:scale-98 text-white font-bold text-xs transition-all items-center justify-center gap-2 shadow-lg shadow-primary/10 cursor-pointer"
+                        >
+                            Configure Settings
+                            <ArrowRight size={14} />
+                        </Link>
+                    </div>
+                </div>
             </div>
         );
     }

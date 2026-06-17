@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Play, Compass, Globe, Shield, Sparkles, Activity, Crosshair, Radar } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import B2BDemoProspector from "./B2BDemoProspector";
 import SocialHeroCarousel from "./SocialHeroCarousel";
+import FeaturesCarousel from "./FeaturesCarousel";
 
 const FloatingTelemetry = () => {
   const [items, setItems] = useState<{ id: number, text: string, x: number, y: number }[]>([]);
@@ -98,17 +98,7 @@ export default function Hero() {
           transition={{ duration: 0.6 }}
           className="flex flex-col items-center"
         >
-          {/* Realigned Badge */}
-          <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-card border border-card-border mb-12 backdrop-blur-md shadow-sm">
-            <div className="h-14 w-14 relative">
-              <img 
-                src="/logo.png" 
-                alt="HyprLead Oracle" 
-                className="h-full w-full object-contain animate-neural drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"
-              />
-            </div>
-            <span className="text-xs font-bold text-foreground tracking-wide">Automated Lead Intelligence</span>
-          </div>
+
 
           {/* The Hero Monolith */}
           <motion.div 
@@ -161,20 +151,19 @@ export default function Hero() {
           <SocialHeroCarousel />
         </div>
 
-        {/* B2B Sales Prospector Centerpiece */}
-        <motion.div
-          id="demo-prospector"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="mt-16 relative w-full"
-        >
-          {/* Ambient Glows */}
-          <div className="absolute -top-20 -left-20 w-80 h-80 bg-primary/5 rounded-full blur-[100px] opacity-40 pointer-events-none" />
-          <div className="absolute -top-20 -right-20 w-80 h-80 bg-primary/5 rounded-full blur-[100px] opacity-40 pointer-events-none" />
-          
-          <B2BDemoProspector />
-        </motion.div>
+        <div className="py-24 border-t border-card-border mt-24 text-center space-y-12 max-w-5xl mx-auto">
+          <div className="space-y-6 max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-foreground leading-tight">
+              Self-Driving Outbound. <br />
+              <span className="text-primary">More Meetings, Zero Effort.</span>
+            </h2>
+            <p className="text-zinc-500 text-sm md:text-base leading-relaxed font-medium">
+              HyprLead automatically crawls business networks, qualifies prospective companies based on your criteria, extracts decision-makers, and drafts highly tailored emails. All running in the background, keeping your calendar full.
+            </p>
+          </div>
+
+          <FeaturesCarousel />
+        </div>
       </div>
     </section>
   );
