@@ -2,11 +2,26 @@
 
 import { motion } from "framer-motion";
 
-export function Sparkline({ color = "#3b82f6" }: { color?: string }) {
-  // Mock data points
-  const points = [10, 40, 30, 70, 50, 90, 80, 100];
-  const step = 100 / (points.length - 1);
-  const pathData = points.map((p, i) => `${i * step},${100 - p}`).join(" L ");
+export function Sparkline({ color = "#3b82f6", points }: { color?: string; points?: number[] }) {
+  let pointsToUse = points || [10, 40, 30, 70, 50, 90, 80, 100];
+  if (pointsToUse.length < 2) {
+    pointsToUse = [pointsToUse[0] || 0, pointsToUse[0] || 0];
+  }
+  const max = Math.max(...pointsToUse);
+  const min = Math.min(...pointsToUse);
+  const range = max - min;
+
+  const step = 100 / (pointsToUse.length - 1);
+  const pathData = pointsToUse.map((p, i) => {
+    const x = i * step;
+    let y;
+    if (range === 0) {
+      y = p === 0 ? 90 : 50;
+    } else {
+      y = 90 - ((p - min) / range) * 80;
+    }
+    return `${x},${y}`;
+  }).join(" L ");
 
   return (
     <div className="h-10 w-24">

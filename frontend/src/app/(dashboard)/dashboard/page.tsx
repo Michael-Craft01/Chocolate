@@ -57,9 +57,34 @@ export default function DashboardPage() {
   const isCycleEmpty = cycleRemaining <= 0;
   const isCycleLow = !isCycleEmpty && cycleRemaining <= Math.max(2, Math.ceil(cycleLimit * 0.15));
   
-  // High-fidelity static/mock metrics
-  const totalLeads = 119;
-  const estimatedRevenue = 142800;
+  const totalLeads = stats?.totalLeads || 0;
+  const estimatedRevenue = totalLeads * 1200;
+
+  // Dynamic smart marketing copy
+  const totalCampaigns = stats?.totalCampaigns || 0;
+  const activeCampaigns = stats?.activeCampaigns || 0;
+
+  let hubTitle = "Sales Engine Active";
+  let hubDesc = "Autonomous scraping is online. The system is sweeping targets and feeding fresh, enriched prospects directly to your sales pipeline.";
+  let hubCTA = "View Campaigns";
+  let hubHref = "/campaigns";
+
+  if (totalCampaigns === 0) {
+    hubTitle = "Launch Your First Campaign";
+    hubDesc = "Your lead discovery engine is currently idling. Create a targeted search campaign specifying your ideal industries, cities, and value proposition to start gathering leads.";
+    hubCTA = "Create New Campaign";
+    hubHref = "/campaigns/new";
+  } else if (activeCampaigns === 0) {
+    hubTitle = "Campaign Scanner is Offline";
+    hubDesc = "You have campaigns configured, but they are all paused. Activate a campaign or run a manual search cycle to restart background prospect harvesting.";
+    hubCTA = "Manage Campaigns";
+    hubHref = "/campaigns";
+  } else if (totalLeads === 0) {
+    hubTitle = "Enriching Search Grid";
+    hubDesc = "Your campaign is active and scanning local grids in the background! The scraper is compiling prospects. Verify your targeting settings or refine your pitch criteria.";
+    hubCTA = "Optimize Campaign Settings";
+    hubHref = "/campaigns";
+  }
 
   return (
     <motion.div 
@@ -92,33 +117,33 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         
         {/* Main Hub Card */}
-        <div id="tour-dashboard-hub" className="md:col-span-8 bento-card p-6 md:p-8 flex flex-col justify-between relative overflow-hidden group rounded-3xl">
+        <div id="tour-dashboard-hub" className="md:col-span-8 bento-card p-6 md:p-8 flex flex-col justify-between relative overflow-hidden group rounded-3xl bg-card">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.03),transparent_50%)] pointer-events-none" />
           
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                <Cpu className="h-5 w-5 animate-pulse" />
+                <Cpu className={cn("h-5 w-5", activeCampaigns > 0 ? "animate-pulse" : "")} />
               </div>
-              <h2 className="text-xl font-bold tracking-tight text-foreground">Campaigns</h2>
+              <h2 className="text-xl font-bold tracking-tight text-foreground">{hubTitle}</h2>
             </div>
             
-            <p className="text-sm text-foreground opacity-70 leading-relaxed max-w-md">
-              Search, enrich, and personalize emails automatically.
+            <p className="text-sm text-foreground opacity-70 leading-relaxed max-w-lg">
+              {hubDesc}
             </p>
           </div>
  
           <div className="pt-6 flex items-center justify-between gap-4">
             <Link 
-              href="/campaigns/new" 
+              href={hubHref} 
               className="inline-flex h-11 px-6 rounded-full bg-primary text-white font-bold text-xs hover:brightness-110 active:scale-98 transition-all items-center justify-center gap-2 shadow-md shadow-primary/10"
             >
-              New Campaign
+              {hubCTA}
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
-
+ 
         {/* Vertical Core Metrics - Responsive Grid side-by-side on mobile */}
         <div id="tour-dashboard-stats" className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-6 md:col-span-4">
           {/* Estimated Pipeline Value Card */}
@@ -136,7 +161,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-end justify-between mt-6">
               <div className="h-8 w-24">
-                <Sparkline color="#10b981" />
+                <Sparkline color="#10b981" points={stats?.dailyTrend} />
               </div>
             </div>
           </div>
@@ -156,7 +181,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-end justify-between mt-6">
               <div className="h-8 w-24">
-                <Sparkline color="#10b981" />
+                <Sparkline color="#10b981" points={stats?.dailyTrend} />
               </div>
             </div>
           </div>
@@ -205,9 +230,23 @@ export default function DashboardPage() {
                 </div>
               </div>
             )) : (
-              <div className="py-16 text-center">
-                 <p className="text-xs font-semibold text-foreground opacity-40">Ready to search campaigns...</p>
-              </div>
+              <div className="py-12 px-6 text-center border border-dashed border-card-border rounded-2xl bg-card/10 space-y-4">
+                 <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <Target className="h-6 w-6" />
+                 </div>
+                 <div className="space-y-1.5 max-w-md mx-auto">
+                    <h3 className="text-sm font-bold text-foreground">No Verified Prospects Yet</h3>
+                    <p className="text-xs text-foreground opacity-60 leading-relaxed">
+                      Our system performs deep multi-platform searches (Google Maps, Apple Maps, Google Search) to scrape emails, phone numbers, and social handles, then runs visual AI analysis to auto-draft personalized emails.
+                    </p>
+                 </div>
+                 <Link href={totalCampaigns === 0 ? "/campaigns/new" : "/campaigns"}
+                   className="inline-flex h-9 px-5 rounded-full bg-primary text-white text-xs font-bold items-center justify-center gap-1.5 hover:brightness-110 transition-all cursor-pointer"
+                 >
+                    {totalCampaigns === 0 ? "Launch First Campaign" : "Trigger Search Cycle"}
+                    <ArrowRight className="h-3 w-3" />
+                 </Link>
+               </div>
             )}
           </div>
         </div>

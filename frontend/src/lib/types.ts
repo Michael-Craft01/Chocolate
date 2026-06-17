@@ -2,6 +2,9 @@ export interface Stats {
   totalLeads: number;
   leadsToday: number;
   totalBusinesses: number;
+  totalCampaigns?: number;
+  activeCampaigns?: number;
+  dailyTrend: number[];
   tier: string;
   quota: {
     used: number;

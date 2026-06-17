@@ -523,172 +523,227 @@ export default function LeadsPage() {
     });
   };
 
+  const handleViewModeChange = (contactedMode: boolean) => {
+    if (showContactedOnly === contactedMode) return;
+    setShowContactedOnly(contactedMode);
+    
+    // Automatically select the first lead in the new list view
+    const nextFilteredList = leads.filter(l => {
+      const matchesStatus = contactedMode ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
+      const matchesEmail = showEmailsOnly ? Boolean(l.business.email) : true;
+      const leadSize = String(l.business.companySize || 'Small').toUpperCase();
+      const matchesSize = selectedSize === "ALL" ? true : leadSize === selectedSize;
+      return matchesStatus && matchesEmail && matchesSize;
+    });
+    if (nextFilteredList.length > 0) {
+      setSelectedLeadId(nextFilteredList[0].id);
+      setEditedMessage(cleanOutreachMessage(nextFilteredList[0].suggestedMessage || ""));
+    } else {
+      setSelectedLeadId(null);
+      setEditedMessage("");
+    }
+  };
+
   const totalSweeps = dayGroups.reduce((n, d) => n + d.sweeps.length, 0);
 
   return (
     <div className="min-h-screen pb-24 font-sans selection:bg-primary/20">
       <div className="max-w-7xl mx-auto space-y-6 relative">
 
-        {/* Clean, Simple Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-3 border-b border-card-border pb-6">
-          <div className="space-y-1">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-              {showContactedOnly ? "Contacted" : "Outbound"}
-            </h1>
+        {/* Dynamic Header & Smart Control Panel */}
+        <div className="space-y-4 pt-3 border-b border-card-border pb-6">
+          {/* Header Row */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+                {showContactedOnly ? "Contacted" : "Outbound"}
+              </h1>
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 backdrop-blur-md">
+                {showContactedOnly ? contactedCount : activeCount} leads
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Refresh */}
+              <button 
+                onClick={() => fetchData(true)}
+                className="h-9 w-9 rounded-lg bg-card border border-card-border flex items-center justify-center hover:border-card-hover-border hover:text-primary text-foreground transition-all cursor-pointer shadow-sm"
+                title="Refresh leads"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-primary" : ""}`} />
+              </button>
+
+              {/* Export */}
+              <div id="tour-leads-export" className="relative">
+                <button onClick={() => setShowExportOptions(!showExportOptions)}
+                  className="h-9 px-4 rounded-lg bg-primary text-white font-semibold text-xs hover:bg-primary-hover active:scale-[0.98] transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+                >
+                  <FileDown className="h-3.5 w-3.5" /> Export
+                </button>
+                <AnimatePresence>
+                  {showExportOptions && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
+                      className="absolute right-0 mt-2 w-44 bg-card border border-card-border rounded-lg overflow-hidden z-50 shadow-lg"
+                    >
+                      {["CSV", "Excel", "JSON"].map(f => (
+                        <button key={f} onClick={() => exportLeads(f.toLowerCase())}
+                          className="w-full px-4 py-2.5 text-left text-xs font-medium text-foreground hover:bg-foreground/5 transition-colors border-b border-card-border last:border-0 cursor-pointer"
+                        >Export as {f}</button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Refresh */}
-            <button onClick={() => fetchData(true)}
-              className="h-9 w-9 rounded-lg bg-card border border-card-border flex items-center justify-center hover:border-card-hover-border hover:text-primary text-foreground transition-all cursor-pointer shadow-sm"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-primary" : ""}`} />
-            </button>
-
-            {/* Contacted Leads Toggle Button */}
-            <button
-              onClick={() => {
-                const nextMode = !showContactedOnly;
-                setShowContactedOnly(nextMode);
+          {/* Secondary Toolbar Controls Panel */}
+          <div className="bg-card/30 backdrop-blur-sm border border-card-border p-2 md:p-3 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+            {/* View / Quick Filters Switcher (Left Side) */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Segmented Switch for Active vs Contacted */}
+              <div className="bg-muted/50 p-1 rounded-lg flex items-center gap-1 relative border border-card-border/50">
+                {/* Active Tab */}
+                <button
+                  onClick={() => handleViewModeChange(false)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    !showContactedOnly
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span>Active</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                    !showContactedOnly 
+                      ? "bg-primary/15 text-primary" 
+                      : "bg-muted text-muted-foreground"
+                  }`}>
+                    {activeCount}
+                  </span>
+                </button>
                 
-                // Automatically select the first lead in the new list view
-                const nextFilteredList = leads.filter(l => {
-                  const matchesStatus = nextMode ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
-                  const matchesEmail = showEmailsOnly ? Boolean(l.business.email) : true;
-                  const leadSize = String(l.business.companySize || 'Small').toUpperCase();
-                  const matchesSize = selectedSize === "ALL" ? true : leadSize === selectedSize;
-                  return matchesStatus && matchesEmail && matchesSize;
-                });
-                if (nextFilteredList.length > 0) {
-                  setSelectedLeadId(nextFilteredList[0].id);
-                  setEditedMessage(cleanOutreachMessage(nextFilteredList[0].suggestedMessage || ""));
-                } else {
-                  setSelectedLeadId(null);
-                  setEditedMessage("");
-                }
-              }}
-              className={`h-9 px-3.5 rounded-lg border font-semibold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-sm relative group ${
-                showContactedOnly
-                  ? "bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/20"
-                  : "bg-card border-card-border text-foreground hover:border-card-hover-border hover:text-primary"
-              }`}
-              title={showContactedOnly ? "View Active Leads" : "View Contacted Leads"}
-            >
-              <Check className={`h-3.5 w-3.5 transition-transform duration-200 ${showContactedOnly ? "scale-110 text-green-500" : "text-muted-foreground group-hover:text-primary"}`} />
-              <span className="font-semibold">Contacted</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all ${
-                showContactedOnly 
-                  ? "bg-green-500/20 text-green-600 dark:text-green-400" 
-                  : "bg-muted text-muted-foreground group-hover:bg-primary/15 group-hover:text-primary"
-              }`}>
-                {contactedCount}
-              </span>
-            </button>
+                {/* Contacted Tab */}
+                <button
+                  onClick={() => handleViewModeChange(true)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    showContactedOnly
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span>Contacted</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                    showContactedOnly 
+                      ? "bg-green-500/15 text-green-500" 
+                      : "bg-muted text-muted-foreground"
+                  }`}>
+                    {contactedCount}
+                  </span>
+                </button>
+              </div>
 
-            {/* Email Only Toggle Button */}
-            <button
-              onClick={() => {
-                const nextMode = !showEmailsOnly;
-                setShowEmailsOnly(nextMode);
-                
-                // Automatically select the first lead in the new list view that matches the criteria
-                const nextFilteredList = leads.filter(l => {
-                  const matchesStatus = showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
-                  const matchesEmail = nextMode ? Boolean(l.business.email) : true;
-                  const leadSize = String(l.business.companySize || 'Small').toUpperCase();
-                  const matchesSize = selectedSize === "ALL" ? true : leadSize === selectedSize;
-                  return matchesStatus && matchesEmail && matchesSize;
-                });
-                if (nextFilteredList.length > 0) {
-                  setSelectedLeadId(nextFilteredList[0].id);
-                  setEditedMessage(cleanOutreachMessage(nextFilteredList[0].suggestedMessage || ""));
-                } else {
-                  setSelectedLeadId(null);
-                  setEditedMessage("");
-                }
-              }}
-              className={`h-9 px-3.5 rounded-lg border font-semibold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-sm relative group ${
-                showEmailsOnly
-                  ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
-                  : "bg-card border-card-border text-foreground hover:border-card-hover-border hover:text-primary"
-              }`}
-              title={showEmailsOnly ? "Show All Leads" : "Show Only Leads with Emails"}
-            >
-              <Mail className={`h-3.5 w-3.5 transition-transform duration-200 ${showEmailsOnly ? "scale-110 text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
-              <span className="font-semibold">Has Email</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all ${
-                showEmailsOnly 
-                  ? "bg-primary/20 text-primary" 
-                  : "bg-muted text-muted-foreground group-hover:bg-primary/15 group-hover:text-primary"
-              }`}>
-                {leads.filter(l => (showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED') && l.business.email).length}
-              </span>
-            </button>
-
-            {/* Company Size Filter */}
-            <NeuralDropdown
-              icon={<Building2 className="h-3.5 w-3.5" />}
-              options={[
-                { value: "ALL", label: "All Sizes" },
-                { value: "SMALL", label: "Small" },
-                { value: "MEDIUM", label: "Medium" },
-                { value: "LARGE", label: "Large" }
-              ]}
-              value={selectedSize}
-              onChange={val => {
-                const nextSize = val as "ALL" | "SMALL" | "MEDIUM" | "LARGE";
-                setSelectedSize(nextSize);
-                
-                // Automatically select the first lead in the new list view that matches the criteria
-                const nextFilteredList = leads.filter(l => {
-                  const matchesStatus = showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
-                  const matchesEmail = showEmailsOnly ? Boolean(l.business.email) : true;
-                  const leadSize = String(l.business.companySize || 'Small').toUpperCase();
-                  const matchesSize = nextSize === "ALL" ? true : leadSize === nextSize;
-                  return matchesStatus && matchesEmail && matchesSize;
-                });
-                if (nextFilteredList.length > 0) {
-                  setSelectedLeadId(nextFilteredList[0].id);
-                  setEditedMessage(cleanOutreachMessage(nextFilteredList[0].suggestedMessage || ""));
-                } else {
-                  setSelectedLeadId(null);
-                  setEditedMessage("");
-                }
-              }}
-            />
-
-            {/* Campaign filter */}
-            <NeuralDropdown
-              icon={<Filter className="h-3.5 w-3.5" />}
-              options={[
-                { value: "ALL", label: "All Campaigns" },
-                ...campaigns.map(c => ({ value: c.id, label: c.name }))
-              ]}
-              value={selectedCampaignId}
-              onChange={val => { setSelectedCampaignId(val); setPage(1); }}
-            />
-
-            {/* Export */}
-            <div id="tour-leads-export" className="relative">
-              <button onClick={() => setShowExportOptions(!showExportOptions)}
-                className="h-9 px-4 rounded-lg bg-primary text-white font-semibold text-xs hover:bg-primary-hover active:scale-[0.98] transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+              {/* Email Toggle Button */}
+              <button
+                onClick={() => {
+                  const nextMode = !showEmailsOnly;
+                  setShowEmailsOnly(nextMode);
+                  
+                  // Automatically select the first lead in the new list view that matches the criteria
+                  const nextFilteredList = leads.filter(l => {
+                    const matchesStatus = showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
+                    const matchesEmail = nextMode ? Boolean(l.business.email) : true;
+                    const leadSize = String(l.business.companySize || 'Small').toUpperCase();
+                    const matchesSize = selectedSize === "ALL" ? true : leadSize === selectedSize;
+                    return matchesStatus && matchesEmail && matchesSize;
+                  });
+                  if (nextFilteredList.length > 0) {
+                    setSelectedLeadId(nextFilteredList[0].id);
+                    setEditedMessage(cleanOutreachMessage(nextFilteredList[0].suggestedMessage || ""));
+                  } else {
+                    setSelectedLeadId(null);
+                    setEditedMessage("");
+                  }
+                }}
+                className={`h-8 px-3 rounded-lg border font-semibold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-sm relative group ${
+                  showEmailsOnly
+                    ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                    : "bg-card border-card-border text-foreground hover:border-card-hover-border hover:text-primary"
+                }`}
+                title={showEmailsOnly ? "Show All Leads" : "Show Only Leads with Emails"}
               >
-                <FileDown className="h-3.5 w-3.5" /> Export
+                <Mail className={`h-3.5 w-3.5 transition-transform duration-200 ${showEmailsOnly ? "scale-110 text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
+                <span className="font-semibold">Has Email</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all ${
+                  showEmailsOnly 
+                    ? "bg-primary/20 text-primary" 
+                    : "bg-muted text-muted-foreground group-hover:bg-primary/15 group-hover:text-primary"
+                }`}>
+                  {leads.filter(l => (showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED') && l.business.email).length}
+                </span>
               </button>
-              <AnimatePresence>
-                {showExportOptions && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
-                    className="absolute right-0 mt-2 w-44 bg-card border border-card-border rounded-lg overflow-hidden z-50 shadow-lg"
-                  >
-                    {["CSV", "Excel", "JSON"].map(f => (
-                      <button key={f} onClick={() => exportLeads(f.toLowerCase())}
-                        className="w-full px-4 py-2.5 text-left text-xs font-medium text-foreground hover:bg-foreground/5 transition-colors border-b border-card-border last:border-0 cursor-pointer"
-                      >Export as {f}</button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            </div>
+
+            {/* Dropdown Filters (Right Side) */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Company Size Filter */}
+              <NeuralDropdown
+                icon={<Building2 className="h-3.5 w-3.5" />}
+                options={[
+                  { value: "ALL", label: "All Sizes" },
+                  { value: "SMALL", label: "Small" },
+                  { value: "MEDIUM", label: "Medium" },
+                  { value: "LARGE", label: "Large" }
+                ]}
+                value={selectedSize}
+                onChange={val => {
+                  const nextSize = val as "ALL" | "SMALL" | "MEDIUM" | "LARGE";
+                  setSelectedSize(nextSize);
+                  
+                  // Automatically select the first lead in the new list view that matches the criteria
+                  const nextFilteredList = leads.filter(l => {
+                    const matchesStatus = showContactedOnly ? l.status === 'CONTACTED' : l.status !== 'CONTACTED';
+                    const matchesEmail = showEmailsOnly ? Boolean(l.business.email) : true;
+                    const leadSize = String(l.business.companySize || 'Small').toUpperCase();
+                    const matchesSize = nextSize === "ALL" ? true : leadSize === nextSize;
+                    return matchesStatus && matchesEmail && matchesSize;
+                  });
+                  if (nextFilteredList.length > 0) {
+                    setSelectedLeadId(nextFilteredList[0].id);
+                    setEditedMessage(cleanOutreachMessage(nextFilteredList[0].suggestedMessage || ""));
+                  } else {
+                    setSelectedLeadId(null);
+                    setEditedMessage("");
+                  }
+                }}
+              />
+
+              {/* Campaign filter */}
+              <NeuralDropdown
+                icon={<Filter className="h-3.5 w-3.5" />}
+                options={[
+                  { value: "ALL", label: "All Campaigns" },
+                  ...campaigns.map(c => ({ value: c.id, label: c.name }))
+                ]}
+                value={selectedCampaignId}
+                onChange={val => { setSelectedCampaignId(val); setPage(1); }}
+              />
+
+              {/* Clear Filters Button if any filters are active */}
+              {(selectedSize !== "ALL" || selectedCampaignId !== "ALL" || showEmailsOnly) && (
+                <button
+                  onClick={() => {
+                    setSelectedSize("ALL");
+                    setSelectedCampaignId("ALL");
+                    setShowEmailsOnly(false);
+                    setPage(1);
+                  }}
+                  className="h-8 w-8 rounded-lg bg-card/60 border border-card-border flex items-center justify-center hover:border-red-500/30 hover:text-red-500 text-muted-foreground transition-all cursor-pointer shadow-sm"
+                  title="Clear active filters"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           </div>
         </div>

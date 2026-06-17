@@ -395,6 +395,9 @@ app.get('/api/stats', authenticate, async (req: any, res: any) => {
             where: { createdAt: { gte: startOfToday }, campaign: { userId } }
         });
 
+        const totalCampaigns = await prisma.campaign.count({ where: { userId } });
+        const activeCampaigns = await prisma.campaign.count({ where: { userId, status: 'ACTIVE' } });
+
         const [user, latestCycle] = await Promise.all([
             prisma.user.findUnique({ where: { id: userId } }),
             prisma.cycleRun.findFirst({
@@ -403,10 +406,49 @@ app.get('/api/stats', authenticate, async (req: any, res: any) => {
                 include: { campaign: { select: { id: true, name: true, status: true } } }
             })
         ]);
+
+        // Calculate the last 7 days daily trend of leads
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // Includes today + 6 past days = 7 days total
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const leadsList = await prisma.lead.findMany({
+            where: {
+                campaign: { userId },
+                createdAt: { gte: sevenDaysAgo }
+            },
+            select: { createdAt: true }
+        });
+
+        // Initialize counts map for the last 7 days
+        const dailyCounts: Record<string, number> = {};
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const key = d.toISOString().split('T')[0] || '';
+            dailyCounts[key] = 0;
+        }
+
+        // Aggregate leads count by day
+        leadsList.forEach(l => {
+            const key = l.createdAt.toISOString().split('T')[0] || '';
+            if (dailyCounts[key] !== undefined) {
+                dailyCounts[key] = (dailyCounts[key] || 0) + 1;
+            }
+        });
+
+        // Map counts to chronological order (oldest to newest)
+        const dailyTrend = Object.keys(dailyCounts)
+            .sort()
+            .map(key => dailyCounts[key]);
+
         res.json({
             totalBusinesses,
             totalLeads,
             leadsToday,
+            totalCampaigns,
+            activeCampaigns,
+            dailyTrend,
             tier: user?.tier || 'FREE',
             quota: {
                 used: user?.leadsFoundToday || 0,
