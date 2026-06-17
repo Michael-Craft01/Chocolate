@@ -18,6 +18,7 @@ import { authJson } from "@/lib/api";
 import { BrandedLoader } from "@/components/BrandedLoader";
 import { toast } from "sonner";
 import { QuestionnaireModal, type StepConfig } from "@/components/QuestionnaireModal";
+import { NeuralDropdown } from "@/components/NeuralDropdown";
 import { AnimatePresence } from "framer-motion";
 import type { Stats } from "@/lib/types";
 import Link from "next/link";
@@ -122,6 +123,58 @@ export default function SettingsPage() {
       setFormData(savedData);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const updateAutomationSetting = async (key: "automationMode" | "autoRunFrequency", value: string) => {
+    const newFormData = { ...formData, [key]: value };
+    
+    // Auto-align manual settings if manual mode/frequency is picked
+    if (key === "automationMode" && value === "MANUAL") {
+      newFormData.autoRunFrequency = "MANUAL";
+    } else if (key === "autoRunFrequency" && value === "MANUAL") {
+      newFormData.automationMode = "MANUAL";
+    } else if (key === "automationMode" && (value === "AUTOMATIC" || value === "SMART") && newFormData.autoRunFrequency === "MANUAL") {
+      newFormData.autoRunFrequency = "DAILY"; // Default back to Daily if they enable automation
+    } else if (key === "autoRunFrequency" && value !== "MANUAL" && newFormData.automationMode === "MANUAL") {
+      newFormData.automationMode = "AUTOMATIC"; // Default back to Automatic if they select a frequency
+    }
+
+    setFormData({ ...newFormData });
+
+    const payload = {
+      companyName: newFormData.companyName,
+      website: newFormData.website,
+      industry: newFormData.industry,
+      defaultSenderName: newFormData.defaultSenderName,
+      defaultSenderRole: newFormData.defaultSenderRole,
+      targetCountry: newFormData.targetCountry,
+      locations: newFormData.locations.split(",").map(l => l.trim()).filter(Boolean),
+      industries: newFormData.industries.split(",").map(i => i.trim()).filter(Boolean),
+      targetPainPoints: newFormData.targetPainPoints,
+      discordWebhook: newFormData.discordWebhook,
+      automationMode: newFormData.automationMode,
+      autoRunFrequency: newFormData.autoRunFrequency
+    };
+
+    const updatePromise = authJson("/api/settings", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    toast.promise(updatePromise, {
+      loading: 'Updating automation settings...',
+      success: 'Automation configuration synced.',
+      error: 'Failed to update automation controls.'
+    });
+
+    try {
+      await updatePromise;
+      setSavedData({ ...newFormData });
+    } catch (error) {
+      console.error("Failed to update settings:", error);
+      // Revert state
+      setFormData(savedData);
     }
   };
 
@@ -284,18 +337,50 @@ export default function SettingsPage() {
             <p className="text-xs text-zinc-500">Control how automatic campaign searches spend your balance.</p>
           </div>
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[
-            { label: "Mode", value: formData.automationMode },
-            { label: "Searches Left", value: stats?.cycles?.remaining ?? 0 },
-            { label: "Leads / Search", value: stats?.cycles?.leadsPerCycle ?? 0 },
-            { label: "Latest Result", value: stats?.latestCycle ? `${stats.latestCycle.leadsFound}/${stats.latestCycle.maxLeads}` : "None" },
-          ].map((item) => (
-            <div key={item.label} className="rounded-sm border border-white/5 bg-white/[0.02] p-4 text-left">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{item.label}</p>
-              <p className="mt-1.5 text-lg font-black tracking-tight text-foreground">{item.value}</p>
-            </div>
-          ))}
+          {/* Automation Mode Dropdown */}
+          <div className="rounded-sm border border-white/5 bg-white/[0.02] p-4 text-left flex flex-col justify-between min-h-[96px] relative z-[40]">
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Automation Mode</p>
+            <NeuralDropdown
+              options={[
+                { value: "MANUAL", label: "Manual Mode" },
+                { value: "AUTOMATIC", label: "Automatic Sweeps" },
+                { value: "SMART", label: "Smart Auto (Pause Low Yield)" }
+              ]}
+              value={formData.automationMode}
+              onChange={(val) => updateAutomationSetting("automationMode", val)}
+              className="w-full"
+            />
+          </div>
+
+          {/* Scan Frequency Dropdown */}
+          <div className="rounded-sm border border-white/5 bg-white/[0.02] p-4 text-left flex flex-col justify-between min-h-[96px] relative z-[40]">
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Scan Frequency</p>
+            <NeuralDropdown
+              options={[
+                { value: "MANUAL", label: "Manual Execution" },
+                { value: "WEEKLY", label: "Weekly Run" },
+                { value: "EVERY_2_DAYS", label: "Run Every 2 Days" },
+                { value: "DAILY", label: "Daily Execution" }
+              ]}
+              value={formData.autoRunFrequency}
+              onChange={(val) => updateAutomationSetting("autoRunFrequency", val)}
+              className="w-full"
+            />
+          </div>
+
+          {/* Searches Left */}
+          <div className="rounded-sm border border-white/5 bg-white/[0.02] p-4 text-left flex flex-col justify-between min-h-[96px]">
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Searches Left</p>
+            <p className="text-lg font-black tracking-tight text-foreground">{stats?.cycles?.remaining ?? 0}</p>
+          </div>
+
+          {/* Leads / Search */}
+          <div className="rounded-sm border border-white/5 bg-white/[0.02] p-4 text-left flex flex-col justify-between min-h-[96px]">
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Leads / Search</p>
+            <p className="text-lg font-black tracking-tight text-foreground">{stats?.cycles?.leadsPerCycle ?? 0}</p>
+          </div>
         </div>
 
         {/* Mode Explanations Info Box */}
@@ -319,8 +404,11 @@ export default function SettingsPage() {
 
         <div className="flex flex-col md:flex-row md:items-center gap-3 rounded-sm border border-white/5 bg-white/[0.02] p-4">
           <div className="flex-1 text-left">
-            <p className="text-xs font-bold text-foreground">Cycle schedule</p>
-            <p className="mt-1 text-xs font-semibold text-zinc-500">Frequency configuration: {formData.autoRunFrequency}</p>
+            <p className="text-xs font-bold text-foreground">Latest Run Performance</p>
+            <p className="mt-1 text-xs font-semibold text-zinc-500">
+              Yield: {stats?.latestCycle ? `${stats.latestCycle.leadsFound} new leads found out of ${stats.latestCycle.maxLeads} targeted` : "No cycles executed yet."}
+              {stats?.latestCycle?.completedAt ? ` (Completed: ${new Date(stats.latestCycle.completedAt).toLocaleString()})` : ""}
+            </p>
           </div>
         </div>
       </div>

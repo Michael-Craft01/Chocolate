@@ -50,6 +50,7 @@ export async function cleanupStaleCycles(onStartup = false): Promise<void> {
     logger.info(`🧹 Starting systematic stale cycle runs cleanup check (onStartup: ${onStartup})...`);
     try {
         const now = Date.now();
+        const isDev = process.env.NODE_ENV === 'development';
         
         // Find all active cycle runs (QUEUED or RUNNING)
         const cycleRuns = await prisma.cycleRun.findMany({
@@ -66,18 +67,39 @@ export async function cleanupStaleCycles(onStartup = false): Promise<void> {
         let cleaned = 0;
         for (const cycle of cycleRuns) {
             let isStale = false;
+            let failureReason = 'Execution timed out (24h limit)';
             
             if (onStartup) {
-                // Server reboot means any previously active cycles are orphaned and cannot resume
-                isStale = true;
+                if (isDev) {
+                    // In development, reset RUNNING/QUEUED cycles back to QUEUED on startup to allow auto-resume
+                    logger.info(`🔄 [DEV] Resetting cycle ${cycle.id} (${cycle.status}) to QUEUED for auto-resume`);
+                    await prisma.cycleRun.update({
+                        where: { id: cycle.id },
+                        data: { status: 'QUEUED' }
+                    });
+                    continue;
+                } else {
+                    // Production Startup Cleanup logic (Multi-Instance Safe)
+                    if (cycle.status === 'QUEUED') {
+                        // Queued cycles are safe; let workers pick them up
+                        isStale = false;
+                    } else if (cycle.status === 'RUNNING') {
+                        // Heartbeat-based staleness. If updated within last 5 minutes, it is active on another instance.
+                        const lastActive = cycle.updatedAt ? cycle.updatedAt.getTime() : cycle.createdAt.getTime();
+                        isStale = lastActive < now - 5 * 60 * 1000;
+                        failureReason = 'Server restarted / crashed';
+                    }
+                }
             } else {
+                // Routine Sweep Cleanup logic
                 if (cycle.status === 'QUEUED') {
                     // Stale if queued for more than 24 hours
                     isStale = cycle.createdAt.getTime() < now - 24 * 60 * 60 * 1000;
                 } else if (cycle.status === 'RUNNING') {
-                    // Stale if running longer than 24 hours (allowing cycles to take hours for cooldowns/stealth)
-                    const startTime = cycle.startedAt ? cycle.startedAt.getTime() : cycle.createdAt.getTime();
-                    isStale = startTime < now - 24 * 60 * 60 * 1000;
+                    // Stale if running longer than 24 hours (fallback check) OR no heartbeat for 15 minutes
+                    const lastActive = cycle.updatedAt ? cycle.updatedAt.getTime() : (cycle.startedAt ? cycle.startedAt.getTime() : cycle.createdAt.getTime());
+                    isStale = lastActive < now - 15 * 60 * 1000;
+                    failureReason = 'Execution timed out / heartbeat lost';
                 }
             }
 
@@ -87,14 +109,14 @@ export async function cleanupStaleCycles(onStartup = false): Promise<void> {
                     where: { id: cycle.id },
                     data: {
                         status: 'FAILED',
-                        failureReason: onStartup ? 'Server restarted / crashed' : 'Execution timed out (24h limit)',
+                        failureReason,
                         completedAt: new Date()
                     }
                 });
 
-                // Refund 1 cycle to the user if they had 0 leads found
-                if (cycle.leadsFound === 0) {
-                    logger.info(`  🔄 Refunding 1 cycle to User ${cycle.userId}...`);
+                // Refund 1 cycle to the user if they didn't complete successfully (full quota)
+                if (cycle.leadsFound < cycle.maxLeads) {
+                    logger.info(`  🔄 Refunding 1 cycle to User ${cycle.userId} (leads: ${cycle.leadsFound}/${cycle.maxLeads})...`);
                     await prisma.user.update({
                         where: { id: cycle.userId },
                         data: {

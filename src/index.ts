@@ -150,6 +150,21 @@ async function startEngine() {
     // 1. Start Web UI/API
     startServer();
 
+    // 1.5 Auto-resume any QUEUED/re-queued cycles in database
+    try {
+        const queuedRuns = await prisma.cycleRun.findMany({
+            where: { status: 'QUEUED' }
+        });
+        if (queuedRuns.length > 0) {
+            logger.info(`🔄 Found ${queuedRuns.length} QUEUED cycle run(s) on startup. Triggering auto-resume...`);
+            for (const run of queuedRuns) {
+                runCampaignCycle(run.id).catch((err: any) => logger.error({ err, cycleId: run.id }, 'Failed to resume queued cycle on startup'));
+            }
+        }
+    } catch (err: any) {
+        logger.error({ err: err.message }, 'Failed to query or resume queued cycles on startup');
+    }
+
     // 2. Initial cycle queue
     const activeCount = await prisma.campaign.count({ where: { status: 'ACTIVE' } });
 

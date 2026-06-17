@@ -494,7 +494,7 @@ export async function runCampaignCycle(cycleRunId: string) {
     const startedAt = new Date();
     const deadline = startedAt.getTime() + Math.max(cycle.maxRuntimeMs, 24 * 60 * 60 * 1000); // Allow up to 24 hours
     const sweepId = cycle.id;
-    let leadsFound = 0;
+    let leadsFound = cycle.leadsFound;
     let zeroYieldRounds = 0;
     const MAX_ZERO_YIELD_ROUNDS = getZeroYieldRounds(cycle.user?.tier);
     let abortedDueToPause = false;
@@ -505,7 +505,21 @@ export async function runCampaignCycle(cycleRunId: string) {
         data: { status: 'RUNNING', startedAt, failureReason: null }
     });
 
+    let heartbeatInterval: NodeJS.Timeout | undefined;
+
     try {
+        // Start background heartbeat to prevent multi-instance / crash detection false positives
+        heartbeatInterval = setInterval(async () => {
+            try {
+                await prisma.cycleRun.update({
+                    where: { id: cycleRunId },
+                    data: { updatedAt: new Date() }
+                });
+            } catch (err) {
+                logger.debug({ err, cycleRunId }, '[CYCLE] Heartbeat update failed');
+            }
+        }, 30000);
+
         logger.info({ cycleRunId, campaignId: campaign.id, maxLeads: cycle.maxLeads }, '[CYCLE] Starting bounded campaign cycle');
 
         while (leadsFound < cycle.maxLeads && Date.now() < deadline) {
@@ -593,6 +607,10 @@ export async function runCampaignCycle(cycleRunId: string) {
                 completedAt: new Date()
             }
         });
+    } finally {
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+        }
     }
 }
 
