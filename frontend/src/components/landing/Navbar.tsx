@@ -4,101 +4,86 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase";
-import { Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, Sun, Moon } from "lucide-react";
 
 export default function Navbar() {
   const [session, setSession] = useState<Session | null>(null);
-  const [scrolled, setScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
     const supabase = createClient();
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
 
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const activeTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+    setTheme(activeTheme);
   }, []);
 
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+    if (nextTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
+
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-      scrolled ? 'h-20 bg-background/80 border-b border-card-border shadow-sm' : 'h-24 bg-transparent'
-    } backdrop-blur-md`}>
-      <div className="max-w-7xl mx-auto h-full px-5 sm:px-8 flex items-center justify-between gap-4">
-        <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3 group">
-          <div className="h-16 w-16 sm:h-20 sm:w-20 relative shrink-0">
-             <img 
-               src="/logo.png" 
-               alt="HyprLead Oracle" 
-               className="h-full w-full object-contain animate-neural drop-shadow-[0_0_25px_rgba(16,185,129,0.4)]"
-             />
-          </div>
-          <span className="text-foreground font-extrabold text-2xl tracking-tight truncate">HyprLead</span>
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border bg-background/95 backdrop-blur">
+      <div className="max-w-6xl mx-auto h-full px-6 flex items-center justify-between">
+        <Link href="/" className="font-bold text-base tracking-tight text-foreground flex items-center gap-2">
+          <span>HyprLead</span>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground">Open</span>
         </Link>
         
-        <div className="hidden lg:flex items-center gap-10 text-sm font-bold tracking-wide text-foreground/75">
-          <Link href="/#features" className="hover:text-primary transition-all relative group/link">
-            Features
-            <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary group-hover/link:w-full transition-all duration-300" />
-          </Link>
-          <Link href="/how-it-works" className="hover:text-primary transition-all relative group/link">
-            How it works
-            <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary group-hover/link:w-full transition-all duration-300" />
-          </Link>
-          <Link href="/engine" className="hover:text-primary transition-all relative group/link">
-            Engine
-            <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary group-hover/link:w-full transition-all duration-300" />
-          </Link>
+        <div className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+          <Link href="/#features" className="hover:text-foreground transition-colors">Features</Link>
+          <Link href="/how-it-works" className="hover:text-foreground transition-colors">How it works</Link>
+          <Link href="/engine" className="hover:text-foreground transition-colors">Engine</Link>
         </div>
 
-        <div className="flex shrink-0 items-center gap-4 sm:gap-8">
-          <Link href="/login" className="hidden sm:inline text-sm font-bold tracking-wide text-foreground/75 hover:text-primary transition-colors">Sign In</Link>
-          <Link href={session ? "/dashboard" : "/signup"} className="btn-pill-white !bg-primary hover:!bg-primary-hover !text-white shadow-sm !h-10 !px-5 sm:!px-6 text-xs font-bold tracking-wide cursor-pointer flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleTheme}
+            className="h-8 w-8 rounded-md border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors cursor-pointer"
+            title="Toggle theme"
+          >
+            {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+          </button>
+
+          <Link href="/login" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors hidden sm:inline">
+            Sign In
+          </Link>
+
+          <Link 
+            href={session ? "/dashboard" : "/signup"} 
+            className="h-8 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium flex items-center justify-center transition-colors cursor-pointer"
+          >
             {session ? 'Dashboard' : 'Get Started'}
           </Link>
+
           <button 
             onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden p-2 -mr-2 text-foreground hover:bg-card/50 rounded-full transition-colors active:scale-95 cursor-pointer"
+            className="md:hidden p-1.5 text-foreground hover:bg-muted rounded-md transition-colors"
             aria-label="Toggle menu"
           >
-            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-background/95 backdrop-blur-lg border-b border-card-border overflow-hidden absolute top-full left-0 right-0 z-40"
-          >
-            <div className="px-6 py-8 flex flex-col gap-6 text-sm font-bold tracking-wide text-foreground/85">
-              <Link href="/#features" onClick={() => setIsOpen(false)} className="hover:text-primary transition-colors py-2 border-b border-card-border/50">
-                Features
-              </Link>
-              <Link href="/#features" onClick={() => setIsOpen(false)} className="hover:text-primary transition-colors py-2 border-b border-card-border/50">
-                Features
-              </Link>
-              <Link href="/how-it-works" onClick={() => setIsOpen(false)} className="hover:text-primary transition-colors py-2 border-b border-card-border/50">
-                How it works
-              </Link>
-              <Link href="/engine" onClick={() => setIsOpen(false)} className="hover:text-primary transition-colors py-2 border-b border-card-border/50">
-                Engine
-              </Link>
-              <Link href="/login" onClick={() => setIsOpen(false)} className="sm:hidden hover:text-primary transition-colors py-2">
-                Sign In
-              </Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {isOpen && (
+        <div className="md:hidden border-b border-border bg-background p-4 space-y-3">
+          <Link href="/#features" onClick={() => setIsOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-foreground">Features</Link>
+          <Link href="/how-it-works" onClick={() => setIsOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-foreground">How it works</Link>
+          <Link href="/engine" onClick={() => setIsOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-foreground">Engine</Link>
+          <Link href="/login" onClick={() => setIsOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-foreground">Sign In</Link>
+        </div>
+      )}
     </nav>
   );
 }

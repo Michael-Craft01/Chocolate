@@ -551,16 +551,21 @@ export default function LeadsPage() {
       <div className="max-w-7xl mx-auto space-y-6 relative">
 
         {/* Dynamic Header & Smart Control Panel */}
-        <div className="space-y-4 pt-3 border-b border-card-border pb-6">
+        <div className="space-y-4 pt-3 border-b border-border pb-6">
           {/* Header Row */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
-                {showContactedOnly ? "Contacted" : "Outbound"}
-              </h1>
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 backdrop-blur-md">
-                {showContactedOnly ? contactedCount : activeCount} leads
-              </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                  {showContactedOnly ? "Contacted Leads" : "Leads"}
+                </h1>
+                <span className="px-2 py-0.5 rounded text-xs font-medium border border-border bg-muted text-foreground">
+                  {showContactedOnly ? contactedCount : activeCount} total
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Review discovered business prospects and dispatch personalized outreach.
+              </p>
             </div>
 
             <div className="flex items-center gap-2">

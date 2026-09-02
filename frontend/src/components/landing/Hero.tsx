@@ -1,168 +1,75 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Play, Compass, Globe, Shield, Sparkles, Activity, Crosshair, Radar } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import SocialImageMarquee from "./SocialImageMarquee";
-import FeaturesCarousel from "./FeaturesCarousel";
-
-const FloatingTelemetry = () => {
-  const [items, setItems] = useState<{ id: number, text: string, x: number, y: number }[]>([]);
-
-  useEffect(() => {
-    const data = [
-      "SEARCHING: 18k leads",
-      "CHALLENGE FOUND: Wholesale supply",
-      "VERIFYING: info@company.com",
-      "SAVING: CRM pipeline leads",
-      "EXTRACTING: operational pain points",
-      "HyprLead AI: Analyzing website...",
-      "EMAIL VALID: Address verified",
-      "DRAFT READY: Outreach email prepared"
-    ];
-
-    const interval = setInterval(() => {
-      setItems(prev => {
-        const newItem = {
-          id: Date.now(),
-          text: data[Math.floor(Math.random() * data.length)],
-          x: Math.random() * 80 + 10,
-          y: Math.random() * 60 + 20
-        };
-        return [...prev.slice(-2), newItem];
-      });
-    }, 2500);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-20 hidden lg:block">
-      <AnimatePresence>
-        {items.map(item => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, scale: 0.8, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: -20 }}
-            className="absolute p-2 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md flex items-center gap-2"
-            style={{ left: `${item.x}%`, top: `${item.y}%` }}
-          >
-            <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-bold text-primary/80 tracking-wide">{item.text}</span>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-};
+import { ArrowRight, Compass, Shield, Zap } from "lucide-react";
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen w-full flex flex-col items-center pt-36 pb-20 overflow-hidden bg-transparent text-foreground">
-      {/* Background System */}
-      <div className="absolute inset-0 -z-30 pointer-events-none select-none overflow-hidden">
-        <img 
-          src="/media__1781032543445.jpg" 
-          alt="Summit Background Texture" 
-          className="w-full h-full object-cover opacity-20 filter blur-[1px] grayscale saturate-[30%]"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#030504]/70 to-[#030504]" />
-      </div>
-      <div className="bg-animated-mesh" />
-      <div className="bg-grid absolute inset-0 opacity-10 -z-10" />
-      <div className="hero-glow" />
-      
-      {/* Ambient Glowing Blobs for Upgraded Visuals */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[130px] pointer-events-none -z-10" />
-      <div className="absolute top-10 left-10 w-[300px] h-[300px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none -z-10 animate-pulse" />
-      <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-primary/5 rounded-full blur-[110px] pointer-events-none -z-10" />
-      
-      {/* Telemetry Corner Accents (Outcome-focused) */}
-      <div className="absolute top-40 left-10 telemetry-label flex flex-col gap-1 hidden lg:flex text-xs text-foreground/55 font-bold">
-        <span>Engine Status: Active</span>
-        <span>Verified Leads: +18,492</span>
-      </div>
-      <div className="absolute top-40 right-10 telemetry-label text-right flex flex-col gap-1 hidden lg:flex text-xs text-foreground/55 font-bold">
-        <span>Conversion Increase: +4.2x</span>
-        <span>Sync Mode: Live</span>
+    <section className="relative pt-32 pb-20 px-6 max-w-5xl mx-auto text-center space-y-8 font-sans">
+      {/* Announcement Badge */}
+      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-muted/50 text-xs font-medium text-foreground">
+        <span>Autonomous Discovery Engine</span>
+        <span className="text-muted-foreground">•</span>
+        <span className="font-semibold">Open Platform Edition</span>
       </div>
 
-      <FloatingTelemetry />
+      {/* Main Headline & One Sentence Subtitle */}
+      <div className="space-y-4 max-w-3xl mx-auto">
+        <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-foreground">
+          Automated Lead Discovery & Personalized Outreach
+        </h1>
+        <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+          Extract verified B2B prospects, generate AI-tailored messages, and dispatch multi-channel outreach without paywalls.
+        </p>
+      </div>
 
-      <div className="max-w-5xl mx-auto px-6 text-center space-y-10 relative z-10 w-full">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col items-center"
+      {/* CTA Button Group */}
+      <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <Link
+          href="/signup"
+          className="h-10 px-5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium flex items-center gap-2 transition-colors"
         >
+          <span>Start Finding Leads</span>
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+        <Link
+          href="/dashboard"
+          className="h-10 px-5 rounded-md border border-border bg-background hover:bg-muted text-sm font-medium text-foreground flex items-center transition-colors"
+        >
+          View Dashboard
+        </Link>
+      </div>
 
-
-          {/* The Hero Monolith */}
-          <motion.div 
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="h-40 w-40 relative mb-10"
-          >
-             <img 
-               src="/logo.png" 
-               alt="HyprLead Oracle" 
-               className="h-full w-full object-contain animate-neural drop-shadow-[0_0_100px_rgba(16,185,129,0.7)]"
-             />
-             <div className="absolute inset-0 bg-primary/10 blur-[80px] rounded-full -z-10" />
-          </motion.div>
-          
-          <h1 className="text-4xl md:text-display mb-10 leading-tight">
-            Automated Outbound. <br />
-            <span className="animate-text-shimmer bg-clip-text text-transparent bg-gradient-to-r from-primary via-emerald-400 to-primary">Infinite Pipeline.</span>
-          </h1>
-          
-          <p className="max-w-3xl mx-auto text-foreground/80 text-sm md:text-lg font-medium mb-12 leading-relaxed px-4">
-            The self-driving B2B lead generation engine. Scheduled background searches find high-intent business profiles, HyprLead AI analyzes their current challenges, and verified workflows draft personalized outreach emails.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-24 w-full px-4">
-            <Link href="/signup" className="h-12 w-full sm:w-auto px-8 rounded-full bg-primary hover:bg-primary-hover text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all relative group">
-               <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
-               <span className="relative z-10 flex items-center gap-2">
-                 Start Free Search <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-               </span>
-            </Link>
-            <a 
-              href="https://www.linkedin.com/in/michael-ragu-aa215035a/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="h-12 w-full sm:w-auto px-6 rounded-full bg-foreground/[0.03] hover:bg-foreground/[0.06] text-foreground font-semibold text-xs flex items-center justify-center gap-2.5 hover:scale-[1.02] active:scale-[0.98] transition-all group cursor-pointer shadow-sm border border-foreground/5"
-            >
-              <img 
-                src="/developer.png" 
-                alt="Developer Avatar" 
-                className="h-5 w-5 rounded-full object-cover ring-1 ring-primary/30 shrink-0" 
-              />
-              Visit Developer
-            </a>
+      {/* 3 Core Value Pillars */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12 text-left">
+        <div className="rounded-lg border border-border bg-card p-6 space-y-2">
+          <div className="h-8 w-8 rounded-md border border-border flex items-center justify-center text-foreground mb-3">
+            <Compass className="h-4 w-4" />
           </div>
-        </motion.div>
-
-        {/* Looping Social Activity & Network Carousel */}
-        <div className="w-full py-8">
-          <SocialImageMarquee />
+          <h2 className="text-sm font-semibold text-foreground">Multi-Source Discovery</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Crawls local directories and search maps to locate active regional businesses in any industry.
+          </p>
         </div>
 
-        <div className="py-24 border-t border-card-border mt-24 text-center space-y-12 max-w-5xl mx-auto">
-          <div className="space-y-6 max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-foreground leading-tight">
-              Self-Driving Outbound. <br />
-              <span className="text-primary">More Meetings, Zero Effort.</span>
-            </h2>
-            <p className="text-zinc-500 text-sm md:text-base leading-relaxed font-medium">
-              HyprLead automatically crawls business networks, qualifies prospective companies based on your criteria, extracts decision-makers, and drafts highly tailored emails. All running in the background, keeping your calendar full.
-            </p>
+        <div className="rounded-lg border border-border bg-card p-6 space-y-2">
+          <div className="h-8 w-8 rounded-md border border-border flex items-center justify-center text-foreground mb-3">
+            <Shield className="h-4 w-4" />
           </div>
+          <h2 className="text-sm font-semibold text-foreground">Visual AI Qualification</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Audits prospect websites to extract pain points and verify real decision-maker contacts.
+          </p>
+        </div>
 
-          <FeaturesCarousel />
+        <div className="rounded-lg border border-border bg-card p-6 space-y-2">
+          <div className="h-8 w-8 rounded-md border border-border flex items-center justify-center text-foreground mb-3">
+            <Zap className="h-4 w-4" />
+          </div>
+          <h2 className="text-sm font-semibold text-foreground">Automated Outreach</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Generates personalized email pitches and dispatches directly via email, WhatsApp, or Discord webhooks.
+          </p>
         </div>
       </div>
     </section>

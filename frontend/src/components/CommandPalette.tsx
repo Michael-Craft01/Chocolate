@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Command, Target, MessageSquare, Settings, Zap, History, X, User, LayoutDashboard, ChevronRight, SearchX, Heart, Home, Compass, Shield } from "lucide-react";
+import { Search, Compass, Shield, Zap, User, Settings, Home, X, ChevronRight, SearchX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { authJson } from "@/lib/api";
@@ -33,8 +33,8 @@ export function CommandPalette() {
     try {
       const data = await authJson<any>(`/api/search?q=${val}`).catch(() => ({ leads: [], campaigns: [] }));
       const formatted = [
-        ...(data.campaigns || []).filter((c: any) => c.name !== 'Main Engine').map((c: any) => ({ ...c, type: 'Search Campaign', icon: Compass })),
-        ...(data.leads || []).map((l: any) => ({ ...l, name: l.business?.name, type: 'Lead Collection', icon: Shield }))
+        ...(data.campaigns || []).filter((c: any) => c.name !== 'Main Engine').map((c: any) => ({ ...c, type: 'Campaign', icon: Compass })),
+        ...(data.leads || []).map((l: any) => ({ ...l, name: l.business?.name, type: 'Lead', icon: Shield }))
       ];
       setResults(formatted.slice(0, 8));
     } finally {
@@ -57,58 +57,58 @@ export function CommandPalette() {
     <>
       <AnimatePresence>
         {open && (
-          <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4">
+          <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setOpen(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-xl"
+              className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             />
             
             <motion.div
               initial={{ opacity: 0, scale: 0.98, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98, y: -10 }}
-              className="relative w-full max-w-2xl bg-card/85 border border-card-border rounded-2xl overflow-hidden shadow-[0_0_50px_-12px_rgba(59,130,246,0.25)] backdrop-blur-2xl"
+              className="relative w-full max-w-xl bg-card border border-border rounded-lg overflow-hidden shadow-xl"
             >
-              <div className="flex items-center px-6 h-16 border-b border-card-border gap-4">
-                <Search className="h-5 w-5 text-primary" />
+              <div className="flex items-center px-4 h-12 border-b border-border gap-3">
+                <Search className="h-4 w-4 text-muted-foreground" />
                 <input
                   autoFocus
-                  placeholder="Search for campaigns, leads, or settings..."
+                  placeholder="Type a command or search..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-none outline-none text-[13px] font-medium text-foreground placeholder:text-zinc-500"
+                  className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground"
                 />
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm bg-white/5 border border-white/5">
-                    <span className="text-[9px] font-black text-zinc-500">ESC</span>
-                  </div>
-                  <button onClick={() => setOpen(false)} className="p-2 hover:bg-white/5 rounded-sm transition-colors text-zinc-500 hover:text-foreground">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
+                <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground bg-muted">
+                  ESC
+                </kbd>
+                <button onClick={() => setOpen(false)} className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
               </div>
 
-              <div className="max-h-[60vh] overflow-y-auto p-3 custom-scrollbar">
+              <div className="max-h-[50vh] overflow-y-auto p-2 custom-scrollbar">
                 {!query && (
-                  <div className="p-3 space-y-4">
-                    <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] px-2">Quick Navigation</p>
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground px-2">Navigation</p>
+                    <div className="space-y-1">
                       {[
-                        { name: "Home Dashboard", href: "/dashboard", icon: Home },
+                        { name: "Dashboard", href: "/dashboard", icon: Home },
                         { name: "Campaigns", href: "/campaigns", icon: Compass },
-                        { name: "Lead Collection", href: "/leads", icon: Shield },
+                        { name: "Leads", href: "/leads", icon: Shield },
                         { name: "New Campaign", href: "/campaigns/new", icon: Zap },
-                        { name: "My Profile", href: "/profile", icon: User },
+                        { name: "Profile", href: "/profile", icon: User },
                         { name: "Settings", href: "/settings", icon: Settings },
                       ].map((item) => (
-                        <button key={item.href} onClick={() => navigate(item.href)}
-                          className="flex items-center gap-3 p-4 rounded-xl hover:bg-zinc-950/5 dark:hover:bg-white/[0.03] border border-transparent hover:border-card-border transition-all text-zinc-500 dark:text-zinc-400 hover:text-foreground dark:hover:text-white group"
+                        <button 
+                          key={item.href} 
+                          onClick={() => navigate(item.href)}
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium text-foreground transition-colors cursor-pointer"
                         >
-                          <item.icon className="h-4 w-4 text-zinc-500 group-hover:text-primary transition-colors" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">{item.name}</span>
+                          <item.icon className="h-4 w-4 text-muted-foreground" />
+                          <span>{item.name}</span>
                         </button>
                       ))}
                     </div>
@@ -116,50 +116,38 @@ export function CommandPalette() {
                 )}
 
                 {query && results.length > 0 && (
-                  <div className="p-2 space-y-1">
+                  <div className="space-y-1 p-2">
                     {results.map((res) => (
-                      <button key={res.id} onClick={() => navigate(res.type === 'Search Campaign' ? `/campaigns` : `/leads`)}
-                        className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-primary/5 border border-transparent hover:border-primary/10 transition-all group"
+                      <button 
+                        key={res.id} 
+                        onClick={() => navigate(res.type === 'Campaign' ? `/campaigns` : `/leads`)}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-muted text-sm transition-colors cursor-pointer"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                            <res.icon className="h-4 w-4 text-zinc-500 group-hover:text-primary" />
-                          </div>
+                        <div className="flex items-center gap-3">
+                          <res.icon className="h-4 w-4 text-muted-foreground" />
                           <div className="text-left">
-                            <p className="text-[13px] font-bold text-foreground tracking-tight">{res.name}</p>
-                            <p className="text-[9px] text-zinc-500 font-black uppercase tracking-[0.15em] mt-0.5">{res.type}</p>
+                            <p className="font-medium text-foreground">{res.name}</p>
+                            <p className="text-xs text-muted-foreground">{res.type}</p>
                           </div>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-zinc-700 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </button>
                     ))}
                   </div>
                 )}
 
                 {query && results.length === 0 && !loading && (
-                  <div className="py-20 text-center space-y-3 opacity-60">
-                    <div className="h-12 w-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <SearchX className="h-6 w-6 text-zinc-500" />
-                    </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">No results found for your search</p>
-                    <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Try searching for a campaign name or business category</p>
+                  <div className="py-12 text-center space-y-2">
+                    <SearchX className="h-6 w-6 text-muted-foreground mx-auto" />
+                    <p className="text-sm font-medium text-foreground">No results found</p>
+                    <p className="text-xs text-muted-foreground">Try a different search term.</p>
                   </div>
                 )}
               </div>
 
-              <div className="p-5 border-t border-white/5 bg-white/[0.01] flex items-center justify-between">
-                <div className="flex gap-6">
-                  <div className="flex items-center gap-2 text-[9px] font-black text-zinc-600 uppercase tracking-widest">
-                    <div className="h-4 w-4 rounded-sm bg-white/5 flex items-center justify-center text-[8px] font-mono">↵</div> Open
-                  </div>
-                  <div className="flex items-center gap-2 text-[9px] font-black text-zinc-600 uppercase tracking-widest">
-                    <div className="h-4 w-4 rounded-sm bg-white/5 flex items-center justify-center text-[8px] font-mono">↑↓</div> Navigate
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                  <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">HyprLead Assist</p>
-                </div>
+              <div className="px-4 py-2 border-t border-border bg-muted/40 flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>Navigate with arrow keys</span>
+                <span>Select with Enter</span>
               </div>
             </motion.div>
           </div>

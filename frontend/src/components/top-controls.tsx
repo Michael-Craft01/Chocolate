@@ -33,22 +33,22 @@ export function TopControls() {
     <div className="absolute top-6 right-6 md:right-10 flex items-center gap-2 z-50">
       <button 
         onClick={restartTour} 
-        className="h-10 px-4 rounded-full bg-card hover:bg-card/85 border border-card-border flex items-center gap-2 text-xs font-semibold text-foreground transition-all cursor-pointer shadow-sm active:scale-95"
+        className="h-9 px-3 rounded-md border border-border bg-background hover:bg-muted text-xs font-medium text-foreground flex items-center gap-2 transition-colors cursor-pointer"
         title="Restart Tour"
       >
-        <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-        <span className="hidden sm:inline">Restart Tour</span>
+        <Sparkles className="h-3.5 w-3.5 text-foreground" />
+        <span className="hidden sm:inline">Tour</span>
       </button>
 
       <button 
         onClick={toggleTheme}
-        className="h-10 w-10 rounded-full bg-card hover:bg-card/85 border border-card-border flex items-center justify-center text-foreground transition-all cursor-pointer shadow-sm active:scale-95"
+        className="h-9 w-9 rounded-md border border-border bg-background hover:bg-muted text-foreground flex items-center justify-center transition-colors cursor-pointer"
         title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
       >
         {theme === "dark" ? (
-          <Sun className="h-4 w-4 text-amber-500" />
+          <Sun className="h-4 w-4 text-foreground" />
         ) : (
-          <Moon className="h-4 w-4 text-blue-500" />
+          <Moon className="h-4 w-4 text-foreground" />
         )}
       </button>
     </div>
