@@ -100,7 +100,7 @@ export function CommandPalette() {
                         { name: "Home Dashboard", href: "/dashboard", icon: Home },
                         { name: "Campaigns", href: "/campaigns", icon: Compass },
                         { name: "Lead Collection", href: "/leads", icon: Shield },
-                        { name: "Growth Plan", href: "/billing", icon: Zap },
+                        { name: "New Campaign", href: "/campaigns/new", icon: Zap },
                         { name: "My Profile", href: "/profile", icon: User },
                         { name: "Settings", href: "/settings", icon: Settings },
                       ].map((item) => (

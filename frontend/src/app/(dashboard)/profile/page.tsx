@@ -18,18 +18,8 @@ interface UserProfile {
   createdAt: string;
 }
 
-interface Transaction {
-  id: string;
-  amount: number;
-  gateway: string;
-  status: string;
-  type: string;
-  createdAt: string;
-}
-
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,14 +29,12 @@ export default function ProfilePage() {
       setLoading(true);
       setError(null);
       
-      const [userData, txData, statsData] = await Promise.all([
+      const [userData, statsData] = await Promise.all([
         authJson<UserProfile>("/api/me"),
-        authJson<Transaction[]>("/api/billing/transactions").catch(() => []),
         authJson<any>("/api/stats").catch(() => null)
       ]);
 
       setProfile(userData);
-      setTransactions(txData);
       setStats(statsData);
     } catch (err: any) {
       console.error("Profile fetch error:", err);

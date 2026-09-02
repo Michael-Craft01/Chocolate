@@ -82,7 +82,12 @@ export async function POST(
     }
 
     // ── Strategy 2: GitHub Actions repository_dispatch ────────────────────
-    const ghToken = process.env.GH_DISPATCH_TOKEN;
+    const ghToken =
+      process.env.GH_DISPATCH_TOKEN ||
+      process.env.GITHUB_TOKEN ||
+      process.env.GH_TOKEN ||
+      process.env.GITHUB_PAT ||
+      process.env.GITHUB_ACCESS_TOKEN;
     const ghRepo = process.env.GH_REPO || 'Michael-Craft01/Chocolate'; // owner/repo
 
     if (ghToken && ghRepo) {
