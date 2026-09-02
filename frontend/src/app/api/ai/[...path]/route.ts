@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { aiService } from '@/lib/ai-service';
 import { getAuthUser, authError } from '@/lib/api-auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
   if (path.length === 1 && path[0] === 'refine') {

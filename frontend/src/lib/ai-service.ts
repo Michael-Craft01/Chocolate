@@ -39,7 +39,7 @@ export class AIService {
     ];
     this.model = ALLOWED_GEMMA.includes(rawModel) ? rawModel : 'gemma-4-26b-a4b-it';
     this.openai = new OpenAI({
-      apiKey: process.env.GEMINI_API_KEY,
+      apiKey: process.env.GEMINI_API_KEY || 'dummy_build_key',
       baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
       timeout: 30000, // 30 seconds request timeout
     });

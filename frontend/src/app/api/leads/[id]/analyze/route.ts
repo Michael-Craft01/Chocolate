@@ -3,8 +3,10 @@ import prisma from '@/lib/prisma';
 import { getAuthUser, authError } from '@/lib/api-auth';
 import OpenAI from 'openai';
 
+export const dynamic = 'force-dynamic';
+
 const openai = new OpenAI({
-  apiKey: process.env.GEMINI_API_KEY,
+  apiKey: process.env.GEMINI_API_KEY || 'dummy_build_key',
   baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
 });
 

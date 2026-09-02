@@ -4,7 +4,9 @@ import { getAuthUser, authError } from '@/lib/api-auth';
 import { Resend } from 'resend';
 import { LeadStatus } from '@prisma/client';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+export const dynamic = 'force-dynamic';
+
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_build_key');
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
 function escapeHtml(value: string) {
