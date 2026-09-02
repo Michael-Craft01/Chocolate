@@ -56,7 +56,8 @@ export async function POST(
     if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     // ── Strategy 1: Proxy to Express backend if available ─────────────────
-    const backendUrl = process.env.BACKEND_URL || (process.env.NODE_ENV !== 'production' ? 'http://localhost:3001' : undefined);
+    // ── Strategy 1: Proxy to Express backend if available ─────────────────
+    const backendUrl = process.env.BACKEND_URL || (process.env.NODE_ENV !== 'production' ? 'http://localhost:3005' : undefined);
     if (backendUrl) {
       const authHeader = req.headers.get('authorization') || '';
       try {
@@ -81,6 +82,18 @@ export async function POST(
       }
     }
 
+    // ── Always create a QUEUED cycle record in database so the mission is preserved ──
+    const pendingCycle = await prisma.cycleRun.create({
+      data: {
+        campaignId: id,
+        userId: user.id,
+        status: 'QUEUED',
+        triggerType: 'MANUAL',
+        leadsFound: 0,
+        maxLeads: 50,
+      }
+    });
+
     // ── Strategy 2: GitHub Actions repository_dispatch ────────────────────
     const ghToken =
       process.env.GH_DISPATCH_TOKEN ||
@@ -91,58 +104,50 @@ export async function POST(
     const ghRepo = process.env.GH_REPO || 'Michael-Craft01/Chocolate'; // owner/repo
 
     if (ghToken && ghRepo) {
-      // Create a QUEUED cycle record immediately so the UI shows activity
-      const pendingCycle = await prisma.cycleRun.create({
-        data: {
-          campaignId: id,
-          userId: user.id,
-          status: 'QUEUED',
-          triggerType: 'MANUAL',
-          leadsFound: 0,
-          maxLeads: 50,
+      try {
+        const dispatchRes = await fetch(`https://api.github.com/repos/${ghRepo}/dispatches`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${ghToken}`,
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            event_type: 'manual_cycle_trigger',
+            client_payload: {
+              campaign_id: id,
+              user_id: user.id,
+              cycle_run_id: pendingCycle.id,
+            }
+          })
+        });
+
+        if (dispatchRes.ok) {
+          console.info(`[Cycles] Dispatched cycle for campaign ${id} to GitHub Actions (${ghRepo})`);
+          return NextResponse.json(
+            { message: 'Discovery cycle triggered on GitHub runner.', cycle: pendingCycle },
+            { status: 202 }
+          );
+        } else {
+          const errText = await dispatchRes.text();
+          console.warn(`[Cycles] GitHub dispatch responded with ${dispatchRes.status}: ${errText}`);
         }
-      });
-
-      // Fire the GitHub Actions workflow
-      const dispatchRes = await fetch(`https://api.github.com/repos/${ghRepo}/dispatches`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${ghToken}`,
-          Accept: 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          event_type: 'manual_cycle_trigger',
-          client_payload: {
-            campaign_id: id,
-            user_id: user.id,
-            cycle_run_id: pendingCycle.id,
-          }
-        })
-      });
-
-      if (!dispatchRes.ok) {
-        const errText = await dispatchRes.text();
-        console.error('[Cycles] GitHub dispatch failed:', dispatchRes.status, errText);
-        await prisma.cycleRun.delete({ where: { id: pendingCycle.id } });
-        return NextResponse.json({ error: 'Failed to queue search cycle. Please try again.' }, { status: 502 });
+      } catch (dispatchErr: any) {
+        console.warn(`[Cycles] GitHub dispatch error: ${dispatchErr.message}`);
       }
-
-      console.info(`[Cycles] Dispatched cycle for campaign ${id} — cycle run ${pendingCycle.id}`);
-      return NextResponse.json(
-        { message: 'Discovery cycle queued successfully.', cycle: pendingCycle },
-        { status: 202 }
-      );
     }
 
-    // ── Strategy 3: No backend configured ────────────────────────────────
-    console.error('[Cycles] Neither BACKEND_URL nor GH_DISPATCH_TOKEN is configured or reachable. Cannot trigger cycle.');
+    // ── Strategy 3: Queued for background sweep / worker ─────────────────
+    // The cycle is safely saved in PostgreSQL. It will run on the next scheduled GitHub sweep (06:00/18:00 UTC)
+    // or when the backend worker process is started.
     return NextResponse.json(
       { 
-        error: 'The search engine backend is not reachable. Ensure the backend engine is running (e.g. npm run dev in root, listening on port 3001) or BACKEND_URL / GH_DISPATCH_TOKEN is configured.' 
+        message: 'Search cycle queued successfully. The discovery engine will process this sweep.',
+        cycle: pendingCycle,
+        queued: true
       },
-      { status: 503 }
+      { status: 202 }
     );
 
   } catch (error: any) {
