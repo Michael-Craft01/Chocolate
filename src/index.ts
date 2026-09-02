@@ -125,16 +125,66 @@ async function startEngine() {
         // Clean up stale cycles before queueing
         await cleanupStaleCycles(false).catch((err: any) => logger.error({ err }, 'Stale cycle cleanup failed in sweep run'));
 
-        const activeCount = await prisma.campaign.count({ where: { status: 'ACTIVE' } });
+        // 1. Process all QUEUED cycles waiting in database (e.g. from website clicks)
+        const queuedRuns = await prisma.cycleRun.findMany({
+            where: { status: 'QUEUED' },
+            orderBy: { createdAt: 'asc' }
+        });
 
-        if (activeCount > 0) {
-            logger.info(`Found ${activeCount} active campaigns. Queueing due discovery cycles...`);
-            const queued = await queueDueDiscoveryCycles('SYSTEM');
-            logger.info(`Sweep complete. Queued ${queued} campaign cycle(s).`);
-        } else {
-            logger.info('Standby: No active campaigns found.');
+        if (queuedRuns.length > 0) {
+            logger.info(`🔄 Found ${queuedRuns.length} QUEUED cycle run(s) from website. Executing sweeps...`);
+            for (const run of queuedRuns) {
+                try {
+                    logger.info(`Executing queued cycle: ${run.id} for campaign: ${run.campaignId}`);
+                    await runCampaignCycle(run.id);
+                } catch (err: any) {
+                    logger.error({ err: err.message, cycleId: run.id }, 'Failed to execute queued cycle');
+                }
+            }
         }
 
+        // 2. Process active campaigns that are due for a sweep
+        const activeCampaigns = await prisma.campaign.findMany({
+            where: { status: 'ACTIVE' },
+            select: { id: true, userId: true, name: true }
+        });
+
+        if (activeCampaigns.length > 0) {
+            logger.info(`Found ${activeCampaigns.length} active campaign(s). Checking discovery sweeps...`);
+            for (const campaign of activeCampaigns) {
+                const activeOrRecent = await prisma.cycleRun.findFirst({
+                    where: {
+                        campaignId: campaign.id,
+                        status: { in: ['RUNNING', 'QUEUED'] }
+                    }
+                });
+
+                if (activeOrRecent) {
+                    logger.info(`Campaign "${campaign.name}" already has an active/queued cycle. Skipping.`);
+                    continue;
+                }
+
+                const lastCompleted = await prisma.cycleRun.findFirst({
+                    where: { campaignId: campaign.id, status: 'COMPLETED' },
+                    orderBy: { createdAt: 'desc' }
+                });
+
+                // Run if never run or last completed over 6 hours ago
+                const shouldSweep = !lastCompleted || (Date.now() - lastCompleted.createdAt.getTime() > 6 * 60 * 60 * 1000);
+                if (shouldSweep) {
+                    try {
+                        logger.info(`Triggering discovery sweep for campaign: "${campaign.name}" (${campaign.id})`);
+                        await createAndRunCampaignCycle(campaign.id, campaign.userId, 'SYSTEM');
+                    } catch (err: any) {
+                        logger.warn({ err: err.message, campaignId: campaign.id }, 'Campaign sweep skipped');
+                    }
+                }
+            }
+        } else {
+            logger.info('Standby: No active campaigns found in database.');
+        }
+
+        logger.info('🏁 All scheduled sweeps and queued cycles finished.');
         await prisma.$disconnect();
         process.exit(0);
     }
