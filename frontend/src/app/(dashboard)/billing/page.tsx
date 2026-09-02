@@ -1,571 +1,82 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { AlertCircle, Check, Zap, Compass, ShieldCheck, CreditCard, Loader2, X, History, Sparkles } from "lucide-react";
-import { authJson } from "@/lib/api";
-import type { Stats } from "@/lib/types";
+import { Suspense } from "react";
+import Link from "next/link";
+import { ShieldCheck, Compass, ArrowRight, Activity, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import { BrandedLoader } from "@/components/BrandedLoader";
-import { toast } from "sonner";
-
-const tiers = [
-  {
-    name: "Free",
-    price: 0,
-    features: [
-      "1 Campaign Limit",
-      "15 Leads / Search",
-      "Manual lead searches",
-      "Standard search speed",
-      "CSV Data Export"
-    ],
-    color: "bg-white/[0.01] border-zinc-800 hover:border-zinc-700/60 shadow-sm",
-    badge: "Basic Access",
-    icon: Compass,
-    accent: "text-zinc-400",
-  },
-  {
-    name: "Starter",
-    price: 20,
-    features: [
-      "1 Campaign Limit",
-      "150 Leads / Search",
-      "Automatic weekly searches",
-      "Standard search speed",
-      "CSV Data Export"
-    ],
-    color: "bg-white/[0.02] border-white/5 hover:border-white/10 hover:shadow-emerald-950/5 hover:scale-[1.01] transition-all",
-    badge: "Growth",
-    icon: Zap,
-    accent: "text-emerald-400",
-  },
-  {
-    name: "Professional",
-    price: 49,
-    features: [
-      "5 Campaigns Limit",
-      "400 Leads / Search",
-      "Automatic searches every 2 days",
-      "High-speed search priority",
-      "Discord webhooks integration"
-    ],
-    color: "bg-white/[0.06] border-primary/60 shadow-[0_0_30px_-5px_rgba(16,185,129,0.25)] hover:scale-[1.03] transition-all ring-1 ring-primary/30",
-    popular: true,
-    badge: "Best Value",
-    icon: Sparkles,
-    accent: "text-primary",
-  },
-  {
-    name: "Elite",
-    price: 300,
-    features: [
-      "10 Campaigns Limit",
-      "800 Leads / Search",
-      "Automatic daily searches",
-      "Maximum search speed",
-      "24/7 priority support"
-    ],
-    color: "bg-white/[0.02] border-white/5 hover:border-white/10 hover:shadow-indigo-950/5 hover:scale-[1.01] transition-all",
-    badge: "Enterprise",
-    icon: ShieldCheck,
-    accent: "text-indigo-400",
-  },
-];
-
-interface Transaction {
-  id: string;
-  amount: number;
-  gateway: string;
-  status: string;
-  type: string;
-  createdAt: string;
-  gatewayRef?: string;
-}
 
 function BillingContent() {
-  const searchParams = useSearchParams();
-  const [gateway, setGateway] = useState<"STRIPE" | "PAYNOW">("STRIPE");
-  const [loading, setLoading] = useState<string | null>(null);
-  const [showStatus, setShowStatus] = useState(true);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loadingTransactions, setLoadingTransactions] = useState(true);
-  const [userTier, setUserTier] = useState<string | null>(null);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [paymentVerified, setPaymentVerified] = useState(false);
-  const [paymentVerifying, setPaymentVerifying] = useState(false);
-
-  const success = searchParams.get("success") === "true";
-  const canceled = searchParams.get("canceled") === "true";
-  const sessionId = searchParams.get("session_id");
-  const returnedGateway = searchParams.get("gateway");
-
-  useEffect(() => {
-    fetchTransactions();
-    fetchUserStatus();
-  }, []);
-
-  useEffect(() => {
-    if (!success || paymentVerified || paymentVerifying) return;
-    if (!sessionId && returnedGateway !== "paynow") return;
-
-    const verifyPayment = async () => {
-      try {
-        setPaymentVerifying(true);
-        if (returnedGateway === "paynow") {
-          await authJson('/api/payments/paynow/sync', { method: 'POST' });
-        } else {
-          await authJson('/api/payments/stripe/sync', {
-            method: 'POST',
-            body: JSON.stringify({ sessionId }),
-          });
-        }
-        await Promise.all([fetchUserStatus(), fetchTransactions()]);
-        setPaymentVerified(true);
-        toast.success("Payment verified. Account updated.");
-      } catch (err) {
-        console.error("Payment verification error:", err);
-        toast.error("Payment returned, but verification is still pending.");
-      } finally {
-        setPaymentVerifying(false);
-      }
-    };
-
-    verifyPayment();
-  }, [success, sessionId, returnedGateway, paymentVerified, paymentVerifying]);
-
-  const fetchUserStatus = async () => {
-    try {
-      const data = await authJson<{ tier: string }>("/api/me");
-      setUserTier(data.tier);
-      setStats(await authJson<Stats>("/api/stats"));
-    } catch (err: any) {
-      console.error("Profile status error:", err);
-      setError("Unable to sync account status.");
-    }
-  };
-
-  const fetchTransactions = async () => {
-    try {
-      setLoadingTransactions(true);
-      const data = await authJson<Transaction[]>("/api/billing/transactions");
-      setTransactions(data);
-    } catch (error) {
-      console.error("Failed to fetch transactions:", error);
-    } finally {
-      setLoadingTransactions(false);
-    }
-  };
-
-  const handleSubscribe = async (tierName: string) => {
-    try {
-      setLoading(tierName);
-      const { url } = await authJson<{ url: string }>("/api/billing/create-checkout", {
-        method: "POST",
-        body: JSON.stringify({
-          method: gateway,
-          tier: tierName.toUpperCase(),
-        }),
-      });
-
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (error) {
-      console.error("Subscription error:", error);
-      toast.error("Failed to start checkout. Please try again.");
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const handleBuyCycles = async () => {
-    try {
-      setLoading("CYCLE_PACK");
-      const { url } = await authJson<{ url: string }>("/api/billing/create-checkout", {
-        method: "POST",
-        body: JSON.stringify({
-          method: gateway,
-          tier: "CYCLE_PACK",
-          amount: 10,
-        }),
-      });
-
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (error) {
-      console.error("Credit purchase error:", error);
-      toast.error("Failed to start checkout. Please try again.");
-    } finally {
-      setLoading(null);
-    }
-  };
-
   return (
-    <div className="max-w-5xl mx-auto space-y-12 pb-20 font-sans px-4">
-      {/* Status Notifications */}
-      {showStatus && (success || canceled) && (
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`flex items-center justify-between p-6 rounded-[24px] border text-left ${
-            success 
-              ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600" 
-              : "border-amber-500/20 bg-amber-500/5 text-amber-600"
-          }`}
-        >
-          <div className="flex items-center gap-5">
-            <div className={`p-3.5 rounded-full ${success ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"}`}>
-              {success ? <Check className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
-            </div>
-            <div>
-              <p className="font-bold text-lg tracking-tight">
-                {success ? (paymentVerified ? "Payment Verified" : "Verifying Payment") : "Payment Canceled"}
-              </p>
-              <p className="text-sm opacity-80 leading-relaxed font-semibold">
-                {success 
-                  ? paymentVerified
-                    ? "Stripe confirmed the payment and your account has been updated."
-                    : "Stripe returned you safely. We are confirming the checkout session before updating your account."
-                  : "The checkout process was canceled. No charges were billed to your card."}
-              </p>
-            </div>
-          </div>
-          <button onClick={() => setShowStatus(false)} className="p-2 hover:bg-foreground/5 rounded-full transition-all cursor-pointer">
-            <X className="h-5 w-5" />
-          </button>
-        </motion.div>
-      )}
-
-      {/* Header Deck */}
-      <div className="text-center space-y-4 pt-10 border-b border-foreground/5 pb-10">
-        <div className="flex items-center justify-center gap-2 text-xs font-bold text-primary">
-          <ShieldCheck className="h-4 w-4" /> Plans & pricing
-        </div>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">Billing Dashboard</h1>
-        <p className="text-sm text-foreground/60 max-w-xl mx-auto">
-          Select a pipeline growth tier or buy extra search credits for HyprLead AI.
-        </p>
-        {userTier === null && (
-          <div className="p-3 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold inline-flex items-center gap-2 mt-4">
-            <Loader2 className="h-3 w-3 animate-spin" /> Account Sync Delayed - Reconnecting...
-          </div>
-        )}
-        <div className="pt-2">
-            <button onClick={async () => {
-                try {
-                  setLoading('SYNC');
-                  await authJson(
-                    gateway === "PAYNOW" ? '/api/payments/paynow/sync' : '/api/payments/stripe/sync',
-                    { method: 'POST' },
-                  );
-                  await fetchUserStatus();
-                  toast.success("Account status updated successfully!");
-                } catch (e) {
-                  toast.error("Sync failed. If you just paid, please wait 30 seconds and try again.");
-                } finally {
-                  setLoading(null);
-                }
-              }}
-              disabled={loading === 'SYNC'}
-              className="px-6 py-2.5 rounded-full bg-foreground/[0.03] hover:bg-foreground/[0.06] border border-foreground/10 text-xs font-bold text-foreground hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 mx-auto cursor-pointer"
-            >
-              {loading === 'SYNC' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 text-primary" />}
-              {loading === 'SYNC' ? "Verifying..." : "Refresh account status"}
-            </button>
+    <div className="w-full max-w-4xl mx-auto space-y-8 pb-32 font-sans selection:bg-primary/20">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-card-border pb-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+            Platform Access
+          </h1>
+          <p className="text-sm text-foreground/60">
+            HyprLead is completely open. Subscriptions and paywalls have been decommissioned.
+          </p>
         </div>
       </div>
 
-      {/* Gateway Toggle */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: "Search Credits Left", value: stats?.cycles?.remaining ?? 0 },
-          { label: "Monthly Allowance", value: stats?.cycles?.monthlyLimit ?? 0 },
-          { label: "Leads / Search", value: stats?.cycles?.leadsPerCycle ?? 0 },
-          { label: "Mode", value: stats?.cycles?.automationMode || "MANUAL" },
-        ].map((item) => (
-          <div key={item.label} className="bento-card !p-5 text-left">
-            <p className="text-[10px] font-bold text-foreground/45">{item.label}</p>
-            <p className="mt-2 text-2xl font-black tracking-tight text-foreground">{item.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Gateway Toggle */}
-      <div className="flex justify-center">
-        <div className="bg-foreground/[0.03] p-1.5 rounded-full flex gap-1.5 border border-foreground/5 max-w-sm w-full">
-          <button type="button" onClick={() => setGateway("STRIPE")}
-            className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
-              gateway === "STRIPE" 
-                ? "bg-primary text-white shadow-md shadow-primary/20" 
-                : "text-foreground/50 hover:text-foreground hover:bg-foreground/[0.03]"
-            }`}
-          >
-            <CreditCard className="h-4 w-4" /> Card (Stripe)
-          </button>
-          <button type="button" onClick={() => setGateway("PAYNOW")}
-            className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
-              gateway === "PAYNOW" 
-                ? "bg-primary text-white shadow-md shadow-primary/20" 
-                : "text-foreground/50 hover:text-foreground hover:bg-foreground/[0.03]"
-            }`}
-          >
-            <ShieldCheck className="h-4 w-4" /> Local (Paynow)
-          </button>
-        </div>
-      </div>
-
-      {/* Pricing Grid */}
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 items-stretch">
-        {tiers.map((tier) => {
-          const TierIcon = tier.icon;
-          return (
-            <div 
-              key={tier.name} 
-              className={`bento-card relative flex flex-col p-12 transition-all duration-300 ${tier.color} ${
-                tier.popular ? "scale-[1.01] md:scale-[1.02]" : ""
-              }`}
-            >
-              {tier.popular ? (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary px-4 py-1.5 rounded-full text-[10px] font-bold text-white shadow-lg shadow-primary/30 flex items-center gap-1.5 z-10">
-                  <Sparkles className="h-3 w-3 animate-pulse" /> {tier.badge}
-                </div>
-              ) : (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-foreground/5 border border-foreground/10 px-3 py-1 rounded-full text-[10px] font-bold text-foreground/50 backdrop-blur-md z-10">
-                  {tier.badge}
-                </div>
-              )}
-              
-              <div className="mb-8 relative text-left">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2">
-                    <TierIcon className={`h-4.5 w-4.5 ${tier.accent}`} />
-                    <h3 className="text-[11px] font-bold text-foreground/80 leading-none">{tier.name}</h3>
-                  </div>
-                  {tier.price > 0 ? (
-                    <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-foreground/[0.03] border border-foreground/5">
-                      <span className="text-[10px] font-bold text-foreground/60">{gateway}</span>
-                    </div>
-                  ) : (
-                    <div className="px-2 py-0.5 rounded-full bg-foreground/[0.02] border border-foreground/5 text-[10px] font-bold text-foreground/40">
-                      Free Access
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-baseline gap-1 mt-2">
-                  <span className="text-4xl md:text-5xl font-black text-foreground select-none">$</span>
-                  <span className="text-7xl md:text-8xl font-black text-foreground tracking-tight leading-none">{tier.price}</span>
-                  <span className="text-[10px] font-bold text-foreground/40 ml-2">/ month</span>
-                </div>
-              </div>
-
-              <div className="space-y-4 mb-8 flex-1 text-left">
-                <div className="space-y-4">
-                  {tier.features.map((f, idx) => (
-                    <div key={idx} className="flex items-start gap-3 text-xs text-foreground/75 font-semibold leading-relaxed min-h-[20px]">
-                      <Check className={`h-4 w-4 ${tier.accent} shrink-0 mt-0.5`} />
-                      <span>{f}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <button onClick={() => handleSubscribe(tier.name)}
-                disabled={!!loading || userTier === tier.name.toUpperCase()}
-                className={`w-full h-12 rounded-full text-xs transition-all flex flex-col items-center justify-center gap-0.5 mt-auto cursor-pointer ${
-                  userTier === tier.name.toUpperCase() 
-                    ? "bg-primary/10 text-primary border border-primary/20" 
-                    : tier.popular 
-                      ? "bg-primary text-white hover:bg-primary/95 hover:scale-[1.02] shadow-md shadow-primary/25" 
-                      : "bg-transparent border border-foreground/15 hover:border-foreground/30 hover:bg-foreground/5 text-foreground active:scale-98"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {loading === tier.name ? (
-                  <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processing...</div>
-                ) : userTier === tier.name.toUpperCase() ? (
-                  <div className="flex items-center gap-2 text-xs font-bold"><Check className="h-4 w-4" /> Current plan</div>
-                ) : tier.price === 0 ? (
-                  <span>{userTier ? "Downgrade to Free" : "Select Free"}</span>
-                ) : (
-                  <span>Select {tier.name}</span>
-                )}
-              </button>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Extra Cycles Section */}
-      <div className="bento-card p-10 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent opacity-50 pointer-events-none" />
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full -mr-48 -mt-48 group-hover:bg-primary/15 transition-all duration-700 blur-3xl pointer-events-none" />
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
-          <div className="space-y-3 max-w-xl text-left">
-            <div className="flex items-center gap-2 text-primary font-bold text-xs">
-              <CreditCard className="h-4 w-4 animate-pulse" /> Search Packs
-            </div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">Extra Search Credits</h2>
-            <p className="text-sm text-foreground/75 leading-relaxed">
-              Need to find more leads this month? Purchase extra search credits instantly. Search packs add to your current balance.
-            </p>
-          </div>
-          <div className="flex flex-col items-center sm:flex-row gap-6 min-w-[280px] shrink-0">
-            <div className="text-center sm:text-right shrink-0">
-              <div className="flex items-baseline justify-center sm:justify-end gap-1">
-                <span className="text-3xl font-black text-foreground">$</span>
-                <span className="text-5xl font-black text-foreground tracking-tight">10</span>
-              </div>
-              <p className="text-[10px] text-foreground/50 font-bold mt-1">5 Search Runs</p>
-            </div>
-            <button onClick={handleBuyCycles} disabled={!!loading} className="w-full sm:w-auto h-12 px-8 rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xl shadow-foreground/5 hover:scale-[1.02] active:scale-[0.98] cursor-pointer" >
-              {loading === "CYCLE_PACK" && <Loader2 className="h-4 w-4 animate-spin text-background" />}
-              {loading === "CYCLE_PACK" ? "Processing..." : "Add Credits"}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Transaction History Table */}
-      <div className="space-y-6 text-left">
-        <div className="flex items-center gap-3 text-foreground">
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <History className="h-5 w-5 text-primary" />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bento-card p-8 md:p-12 rounded-3xl space-y-6 relative overflow-hidden bg-card border border-card-border"
+      >
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+            <Sparkles className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-foreground">Transaction history</h2>
-            <p className="text-xs text-foreground/60">Review your past credit packs and subscriptions in your account</p>
+            <h2 className="text-xl font-bold tracking-tight text-foreground">Open Edition Active</h2>
+            <p className="text-xs text-primary font-bold">Unmetered Access For All Users</p>
           </div>
         </div>
-        
-        <div className="bento-card overflow-hidden !p-0">
-          {/* Desktop Table View */}
-          <div className="overflow-x-auto hidden md:block">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-foreground/[0.02] text-xs text-foreground/60 border-b border-foreground/5">
-                  <th className="px-8 py-5 font-bold">Record ID</th>
-                  <th className="px-8 py-5 font-bold">Date</th>
-                  <th className="px-8 py-5 font-bold">Service</th>
-                  <th className="px-8 py-5 font-bold text-center">Amount</th>
-                  <th className="px-8 py-5 font-bold text-center">Gateway</th>
-                  <th className="px-8 py-5 font-bold text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-foreground/5 text-sm">
-                {loadingTransactions ? (
-                  <tr>
-                    <td colSpan={6} className="px-8 py-20 text-center text-foreground/50">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-4 text-primary" />
-                      <span className="text-xs font-bold">Syncing transaction records...</span>
-                    </td>
-                  </tr>
-                ) : transactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-8 py-20 text-center text-foreground/50 text-xs font-bold">
-                      No billing records found.
-                    </td>
-                  </tr>
-                ) : (
-                  transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-foreground/[0.01] transition-all group">
-                      <td className="px-8 py-4 font-mono text-xs text-foreground/60 group-hover:text-primary transition-colors">
-                        {tx.id.substring(0, 12).toUpperCase()}
-                      </td>
-                      <td className="px-8 py-4 text-foreground/70 font-semibold">
-                        {new Date(tx.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-8 py-4">
-                        <span className="px-3 py-1 rounded-full bg-foreground/[0.04] text-[10px] font-bold text-foreground/80 border border-foreground/5">
-                          {tx.type.replace('_', ' ')}
-                        </span>
-                      </td>
-                      <td className="px-8 py-4 font-bold text-foreground text-center">
-                        ${tx.amount.toFixed(2)}
-                      </td>
-                      <td className="px-8 py-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${
-                          tx.gateway === 'PAYNOW' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-blue-500/10 text-blue-600 border-blue-500/20'
-                        }`}>
-                          {tx.gateway}
-                        </span>
-                      </td>
-                      <td className="px-8 py-4 text-right">
-                        <span className={`px-4 py-1 rounded-full text-[10px] font-bold border ${
-                          tx.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 
-                          tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
-                        }`}>
-                          {tx.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
 
-          {/* Mobile Card List View */}
-          <div className="block md:hidden divide-y divide-foreground/5">
-            {loadingTransactions ? (
-              <div className="p-8 text-center text-foreground/50">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-4 text-primary" />
-                <span className="text-xs font-bold">Syncing transaction records...</span>
-              </div>
-            ) : transactions.length === 0 ? (
-              <div className="p-8 text-center text-foreground/50 text-xs font-bold">
-                No billing records found.
-              </div>
-            ) : (
-              transactions.map((tx) => (
-                <div key={tx.id} className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-foreground/60">
-                      {tx.id.substring(0, 12).toUpperCase()}
-                    </span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                      tx.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 
-                      tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
-                    }`}>
-                      {tx.status}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold text-foreground/75">
-                        {new Date(tx.createdAt).toLocaleDateString()}
-                      </p>
-                      <p className="text-xs text-foreground/50">
-                        {tx.type.replace('_', ' ')}
-                      </p>
-                    </div>
-                    
-                    <div className="text-right space-y-1">
-                      <p className="text-sm font-bold text-foreground">
-                        ${tx.amount.toFixed(2)}
-                      </p>
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${
-                        tx.gateway === 'PAYNOW' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-blue-500/10 text-blue-600 border-blue-500/20'
-                      }`}>
-                        {tx.gateway}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+        <div className="space-y-3 text-sm text-foreground/75 leading-relaxed max-w-2xl">
+          <p>
+            We have disabled all payment gateways, subscription tiers, and search credit meters.
+            The entire lead generation pipeline is completely open:
+          </p>
+          <ul className="space-y-2 pt-2 text-xs font-semibold text-foreground/80">
+            <li className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <span><strong>Unlimited Campaigns:</strong> Create and organize target audience searches with zero artificial limits.</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" />
+              <span><strong>Unmetered Discovery Sweeps:</strong> Trigger background scraping across Google Maps & web directories whenever you want.</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Compass className="h-4 w-4 text-primary" />
+              <span><strong>AI Enrichment & Instant Dispatch:</strong> Auto-extract emails, phone numbers, infer pain points, draft copy, and dispatch directly to Discord or CSV.</span>
+            </li>
+          </ul>
         </div>
-      </div>
+
+        <div className="pt-4 flex flex-wrap gap-4">
+          <Link
+            href="/campaigns"
+            className="h-11 px-6 rounded-full bg-primary text-white font-bold text-xs hover:brightness-110 active:scale-98 transition-all flex items-center gap-2 shadow-md shadow-primary/10"
+          >
+            Start Finding Leads <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+          <Link
+            href="/dashboard"
+            className="h-11 px-6 rounded-full bg-card border border-card-border text-foreground font-bold text-xs hover:bg-card-border/30 transition-all flex items-center"
+          >
+            Go to Dashboard
+          </Link>
+        </div>
+      </motion.div>
     </div>
   );
 }
 
 export default function BillingPage() {
   return (
-    <Suspense fallback={<BrandedLoader message="Connecting to billing portal..." />}>
+    <Suspense fallback={<div className="p-12 text-center text-foreground/50">Loading...</div>}>
       <BillingContent />
     </Suspense>
   );

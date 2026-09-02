@@ -10,20 +10,24 @@ export async function GET(req: NextRequest) {
     // Auto-upsert the user in our Prisma database to mirror Supabase Auth
     const dbUser = await prisma.user.upsert({
       where: { id: user.id },
-      update: { email: user.email || undefined },
+      update: { email: user.email || undefined, paymentStatus: 'active', tier: 'ELITE' },
       create: {
         id: user.id,
         email: user.email,
-        tier: 'FREE',
-        dailyLimit: 25,
-        leadsPerCycle: 15,
-        cyclesRemaining: 1,
-        monthlyCycleLimit: 1,
+        tier: 'ELITE',
+        dailyLimit: 1000,
+        maxCampaigns: 50,
+        leadsPerCycle: 50,
+        cyclesRemaining: 99999,
+        monthlyCycleLimit: 99999,
+        automationMode: 'AUTOMATIC',
+        autoRunFrequency: 'DAILY',
+        paymentStatus: 'active'
       },
       include: { profile: true }
     });
 
-    return NextResponse.json(dbUser);
+    return NextResponse.json({ ...dbUser, paymentStatus: 'active', tier: 'ELITE' });
   } catch (error) {
     console.error('API Error in /api/me:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

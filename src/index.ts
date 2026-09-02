@@ -45,8 +45,6 @@ async function queueDueDiscoveryCycles(triggerType: 'AUTO' | 'SYSTEM' = 'AUTO') 
         where: {
             status: 'ACTIVE',
             user: {
-                paymentStatus: { in: ['active', 'trialing', 'free'] },
-                cyclesRemaining: { gt: 0 },
                 automationMode: { in: ['AUTOMATIC', 'SMART'] }
             }
         },

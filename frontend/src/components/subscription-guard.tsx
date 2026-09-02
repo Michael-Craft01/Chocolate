@@ -21,23 +21,14 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
 
     async function checkSubscription() {
       try {
-        const user = await authJson<UserContext>("/api/me");
-        
+        await authJson<UserContext>("/api/me");
         if (isMounted) {
-          const allowedStatuses = ["active", "free", "trialing"];
-          if (!allowedStatuses.includes(user.paymentStatus) && !pathname.startsWith("/billing")) {
-            router.push("/billing");
-          } else if (allowedStatuses.includes(user.paymentStatus) && pathname.startsWith("/billing")) {
-            // Optional: prevent returning to billing if actively subscribed (or maybe they want to upgrade?)
-            // We'll leave it open for upgrades, but redirect to dashboard initially
-            if (pathname === "/billing") {
-                // If they explicitly clicked billing, let them stay. If they just landed, let them stay.
-                // Just don't lock them out.
-            }
+          if (pathname.startsWith("/billing")) {
+            router.replace("/dashboard");
           }
         }
       } catch (err) {
-        // If 401 Unauthorized occurs, the api wrapper might throw. Let's redirect to landing.
+        // If 401 Unauthorized occurs, redirect to landing
         if (err instanceof ApiAuthError) {
           router.push("/");
         }

@@ -32,19 +32,19 @@ export async function GET(req: NextRequest) {
       totalBusinesses,
       totalLeads,
       leadsToday,
-      tier: dbUser?.tier || 'FREE',
+      tier: 'ELITE',
       quota: {
         used: dbUser?.leadsFoundToday || 0,
-        limit: dbUser?.dailyLimit || 25,
-        credits: dbUser?.creditBalance || 0
+        limit: 99999,
+        credits: 99999
       },
       cycles: {
-        remaining: dbUser?.cyclesRemaining || 0,
-        monthlyLimit: dbUser?.monthlyCycleLimit || 0,
-        usedThisPeriod: Math.max(0, (dbUser?.monthlyCycleLimit || 0) - (dbUser?.cyclesRemaining || 0)),
-        leadsPerCycle: dbUser?.leadsPerCycle || 15,
-        automationMode: dbUser?.automationMode || 'MANUAL',
-        autoRunFrequency: dbUser?.autoRunFrequency || 'MANUAL',
+        remaining: 99999,
+        monthlyLimit: 99999,
+        usedThisPeriod: 0,
+        leadsPerCycle: 50,
+        automationMode: dbUser?.automationMode || 'AUTOMATIC',
+        autoRunFrequency: dbUser?.autoRunFrequency || 'DAILY',
         currentPeriodStart: dbUser?.currentPeriodStart,
         currentPeriodEnd: dbUser?.currentPeriodEnd
       },

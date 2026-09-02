@@ -24,7 +24,6 @@ const navItems = [
   { name: "Home", href: "/dashboard", icon: Home },
   { name: "Search", href: "/campaigns", icon: Compass },
   { name: "Your Leads", href: "/leads", icon: Shield },
-  { name: "Billing", href: "/billing", icon: ShieldCheck },
   { name: "Profile", href: "/profile", icon: User },
   { name: "Settings", href: "/settings", icon: Settings },
   { name: "Discord Guide", href: "/docs/discord", icon: MessageSquare },
@@ -299,46 +298,26 @@ export function Sidebar() {
 
       <div className={cn("p-4 mt-auto transition-all", isCollapsed ? "p-2" : "p-4")}>
         {!isCollapsed ? (
-          <div className="rounded-card bg-card border border-card-border p-5 space-y-4 relative overflow-hidden shadow-sm">
+          <div className="rounded-card bg-card border border-card-border p-5 space-y-3 relative overflow-hidden shadow-sm">
             <div className="flex items-center justify-between relative">
               <div className="space-y-0.5">
-                <p className="text-xs font-semibold text-foreground opacity-60">Subscription</p>
-                <p className="text-sm font-bold tracking-tight text-foreground">{isFree ? "Free Access" : `${stats?.tier} Plan`}</p>
+                <p className="text-xs font-semibold text-foreground opacity-60">Platform Access</p>
+                <p className="text-sm font-bold tracking-tight text-foreground">Open Edition</p>
               </div>
-              <div className={cn(
-                "h-2 w-2 rounded-full",
-                isFree ? "bg-amber-500" : "bg-primary"
-              )} />
+              <div className="h-2 w-2 rounded-full bg-primary glow-primary" />
             </div>
             
-            <div className="space-y-2 relative">
+            <div className="space-y-1 relative">
               <div className="flex justify-between text-xs font-semibold text-foreground opacity-60">
-                <span>Search Credits</span>
-                <span className="text-foreground font-bold">{cyclesRemaining} left</span>
+                <span>Lead Engine</span>
+                <span className="text-primary font-bold">Unmetered</span>
               </div>
-              <div className="h-1.5 w-full bg-border-muted rounded-full overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${usagePercent}%` }}
-                  transition={{ duration: 1 }}
-                  className="h-full bg-primary" 
-                />
-              </div>
+              <p className="text-[11px] text-foreground/50">Full AI search & dispatch active</p>
             </div>
-
-            {isFree && (
-              <Link href="/billing" className="flex w-full h-10 items-center justify-center rounded-full bg-primary text-white text-sm font-bold hover:brightness-110 transition-all relative group shadow-md shadow-primary/10">
-                Upgrade Now
-                <ArrowRight className="h-3 w-3 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            )}
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 py-4">
-             <div className={cn(
-                "h-2 w-2 rounded-full",
-                isFree ? "bg-amber-500" : "bg-primary glow-primary"
-              )} />
+             <div className="h-2 w-2 rounded-full bg-primary glow-primary" />
           </div>
         )}
 

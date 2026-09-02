@@ -138,11 +138,6 @@ app.get('/api/me', authenticate, async (req: any, res: any) => {
         const userId = req.user!.id;
         const email = req.user!.email;
         
-        // Trigger background Paynow sync to catch completed local payments automatically
-        if (userId) {
-            paymentService.syncPendingPayments(userId).catch(err => logger.error({ err }, 'Background Paynow sync failed'));
-        }
-        
         let user = await prisma.user.findUnique({ 
             where: { id: userId },
             include: { 
@@ -154,19 +149,19 @@ app.get('/api/me', authenticate, async (req: any, res: any) => {
         if (!user && email) {
             user = await prisma.user.upsert({
                 where: { id: userId },
-                update: { email: email },
+                update: { email: email, paymentStatus: 'active', tier: 'ELITE' },
                 create: { 
                     id: userId, 
                     email: email,
-                    tier: 'FREE',
-                    dailyLimit: 25,
-                    maxCampaigns: 1,
-                    monthlyCycleLimit: 1,
-                    cyclesRemaining: 1,
-                    leadsPerCycle: 15,
-                    automationMode: 'MANUAL',
-                    autoRunFrequency: 'MANUAL',
-                    paymentStatus: 'free'
+                    tier: 'ELITE',
+                    dailyLimit: 1000,
+                    maxCampaigns: 50,
+                    monthlyCycleLimit: 99999,
+                    cyclesRemaining: 99999,
+                    leadsPerCycle: 50,
+                    automationMode: 'AUTOMATIC',
+                    autoRunFrequency: 'DAILY',
+                    paymentStatus: 'active'
                 },
                 include: { profile: true, campaigns: { where: { name: 'Main Engine' }, take: 1 } }
             });
@@ -177,8 +172,8 @@ app.get('/api/me', authenticate, async (req: any, res: any) => {
         res.json({
             id: user.id,
             email: user.email,
-            paymentStatus: user.paymentStatus,
-            tier: user.tier,
+            paymentStatus: 'active',
+            tier: 'ELITE',
             onboardingComplete: user.profile?.onboardingComplete || false,
             createdAt: user.createdAt
         });
@@ -430,7 +425,7 @@ app.get('/api/stats', authenticate, async (req: any, res: any) => {
         }
 
         // Aggregate leads count by day
-        leadsList.forEach(l => {
+        leadsList.forEach((l: any) => {
             const key = l.createdAt.toISOString().split('T')[0] || '';
             if (dailyCounts[key] !== undefined) {
                 dailyCounts[key] = (dailyCounts[key] || 0) + 1;
@@ -449,19 +444,19 @@ app.get('/api/stats', authenticate, async (req: any, res: any) => {
             totalCampaigns,
             activeCampaigns,
             dailyTrend,
-            tier: user?.tier || 'FREE',
+            tier: 'ELITE',
             quota: {
                 used: user?.leadsFoundToday || 0,
-                limit: user?.dailyLimit || 25,
-                credits: user?.creditBalance || 0
+                limit: 99999,
+                credits: 99999
             },
             cycles: {
-                remaining: user?.cyclesRemaining || 0,
-                monthlyLimit: user?.monthlyCycleLimit || 0,
-                usedThisPeriod: Math.max(0, (user?.monthlyCycleLimit || 0) - (user?.cyclesRemaining || 0)),
-                leadsPerCycle: user?.leadsPerCycle || 15,
-                automationMode: user?.automationMode || 'MANUAL',
-                autoRunFrequency: user?.autoRunFrequency || 'MANUAL',
+                remaining: 99999,
+                monthlyLimit: 99999,
+                usedThisPeriod: 0,
+                leadsPerCycle: 50,
+                automationMode: user?.automationMode || 'AUTOMATIC',
+                autoRunFrequency: user?.autoRunFrequency || 'DAILY',
                 currentPeriodStart: user?.currentPeriodStart,
                 currentPeriodEnd: user?.currentPeriodEnd
             },

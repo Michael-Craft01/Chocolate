@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { 
   Mail, Crown, Calendar, ShieldCheck, CreditCard, History, ArrowRight, 
-  Zap, AlertCircle, Shield, Building, Award, Target, Activity
+  Zap, AlertCircle, Shield, Building, Award, Target, Activity, Settings
 } from "lucide-react";
 import { authJson } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -112,14 +113,10 @@ export default function ProfilePage() {
         </div>
  
         <div className="flex items-center gap-3">
-          <div className={`px-4 py-2 rounded-full border flex items-center gap-2 shadow-sm ${
-            profile.paymentStatus === 'active' 
-              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" 
-              : "bg-amber-500/10 border-amber-500/20 text-amber-500"
-          }`}>
+          <div className="px-4 py-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 flex items-center gap-2 shadow-sm">
             <ShieldCheck className="h-4 w-4 shrink-0" />
             <span className="text-[10px] font-bold">
-              {profile.paymentStatus === 'active' ? 'Active enterprise' : 'Basic account'}
+              Open Access Account
             </span>
           </div>
         </div>
@@ -232,128 +229,17 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="mt-8 border-t border-primary/10 pt-4 flex items-center justify-between">
-              <button onClick={() => window.location.href = '/billing'}
+            <div className="mt-8 border-t border-card-border/50 pt-4 flex items-center justify-between">
+              <Link href="/settings"
                 className="flex items-center gap-2 text-[10px] font-bold text-primary hover:text-primary-hover transition-colors group cursor-pointer"
               >
-                <CreditCard className="h-4 w-4" /> Manage Subscriptions <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-              </button>
+                <Settings className="h-4 w-4" /> Edit Account Settings <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
           </div>
         </div>
 
       </div>
-
-      {/* Transaction History Ledger */}
-      <div className="space-y-4 pt-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5 text-foreground/75">
-            <History className="h-4.5 w-4.5 text-primary" />
-            <h2 className="text-[10px] font-bold text-foreground/75">Billing & invoices ledger</h2>
-          </div>
-          <button onClick={fetchData} className="text-[10px] font-bold text-foreground/50 hover:text-primary transition-colors cursor-pointer" >
-            Sync Ledger
-          </button>
-        </div>
-        <div className="bg-card border border-card-border rounded-3xl overflow-hidden shadow-sm">
-          {/* Desktop Table View */}
-          <div className="overflow-x-auto hidden md:block">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-card-border bg-background text-[10px] font-bold text-foreground/55">
-                  <th className="px-6 py-4">Transaction ID</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Gateway</th>
-                  <th className="px-6 py-4">Amount</th>
-                  <th className="px-6 py-4 text-right">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-card-border text-xs font-semibold">
-                {transactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-16 text-center text-foreground/45">
-                      <div className="flex flex-col items-center gap-3 opacity-40">
-                        <CreditCard className="h-7 w-7 text-primary" />
-                        <p className="text-[10px] font-bold">No invoice history found.</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-card-border/30 transition-colors group">
-                      <td className="px-6 py-3.5">
-                        <span className="font-mono text-[10px] text-foreground/55 group-hover:text-primary transition-colors">
-                          {tx.id.substring(0, 8)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                          tx.status === 'SUCCESS' 
-                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
-                            : 'bg-amber-500/10 border-amber-500/20 text-amber-500'
-                        }`}>
-                          {tx.status}
-                        </div>
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <span className="text-[10px] font-bold text-foreground/60">{tx.gateway}</span>
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <span className="font-black text-foreground">${tx.amount}</span>
-                      </td>
-                      <td className="px-6 py-3.5 text-right">
-                        <span className="text-foreground/75 font-semibold">
-                          {new Date(tx.createdAt).toLocaleDateString()}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Card View */}
-          <div className="block md:hidden divide-y divide-card-border">
-            {transactions.length === 0 ? (
-              <div className="px-6 py-16 text-center text-foreground/45 flex flex-col items-center gap-3 opacity-40">
-                <CreditCard className="h-7 w-7 text-primary" />
-                <p className="text-[10px] font-bold">No invoice history found.</p>
-              </div>
-            ) : (
-              transactions.map((tx) => (
-                <div key={tx.id} className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-foreground/55">
-                      {tx.id.substring(0, 8).toUpperCase()}
-                    </span>
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                      tx.status === 'SUCCESS' 
-                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
-                        : 'bg-amber-500/10 border-amber-500/20 text-amber-500'
-                    }`}>
-                      {tx.status}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold text-foreground/75">
-                        {new Date(tx.createdAt).toLocaleDateString()}
-                      </p>
-                      <span className="text-[10px] font-bold text-foreground/60">{tx.gateway}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm font-bold text-foreground">${tx.amount}</span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }

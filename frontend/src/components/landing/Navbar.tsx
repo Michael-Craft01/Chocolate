@@ -41,10 +41,6 @@ export default function Navbar() {
         </Link>
         
         <div className="hidden lg:flex items-center gap-10 text-sm font-bold tracking-wide text-foreground/75">
-          <Link href="/pricing" className="hover:text-primary transition-all relative group/link">
-            Pricing
-            <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary group-hover/link:w-full transition-all duration-300" />
-          </Link>
           <Link href="/#features" className="hover:text-primary transition-all relative group/link">
             Features
             <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary group-hover/link:w-full transition-all duration-300" />
@@ -84,8 +80,8 @@ export default function Navbar() {
             className="lg:hidden bg-background/95 backdrop-blur-lg border-b border-card-border overflow-hidden absolute top-full left-0 right-0 z-40"
           >
             <div className="px-6 py-8 flex flex-col gap-6 text-sm font-bold tracking-wide text-foreground/85">
-              <Link href="/pricing" onClick={() => setIsOpen(false)} className="hover:text-primary transition-colors py-2 border-b border-card-border/50">
-                Pricing
+              <Link href="/#features" onClick={() => setIsOpen(false)} className="hover:text-primary transition-colors py-2 border-b border-card-border/50">
+                Features
               </Link>
               <Link href="/#features" onClick={() => setIsOpen(false)} className="hover:text-primary transition-colors py-2 border-b border-card-border/50">
                 Features

@@ -310,14 +310,7 @@ export default function CampaignsPage() {
                   </div>
 
                   <div className="shrink-0">
-                    {isCycleEmpty ? (
-                      <Link
-                        href="/billing"
-                        className="h-9 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 bg-primary text-white hover:brightness-110 shadow-md shadow-primary/10"
-                      >
-                        <CreditCard className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Buy credits</span>
-                      </Link>
-                    ) : c.status !== "ACTIVE" ? (
+                    {c.status !== "ACTIVE" ? (
                       <button
                         onClick={() => toggleStatus(c.id, c.status)}
                         disabled={busyCampaignId === c.id}

@@ -103,8 +103,6 @@ export default function NewCampaignPage() {
         );
     }
 
-    const isLimitReached = stats && stats.count >= stats.limit;
-
     return (
         <div className="min-h-screen bg-transparent text-white p-6 md:p-12 pb-32 font-sans selection:bg-primary/20">
             <div className="max-w-4xl mx-auto space-y-12">
@@ -118,11 +116,8 @@ export default function NewCampaignPage() {
                     
                     <div className="flex items-center gap-4">
                         {stats && (
-                            <div className={cn(
-                                "flex items-center gap-3 px-4 py-1.5 rounded-[2px] border text-[10px] font-black uppercase tracking-widest",
-                                isLimitReached ? "bg-red-500/10 border-red-500/20 text-red-500" : "bg-white/5 border-white/10 text-zinc-400"
-                            )}>
-                                <Shield className="h-3.5 w-3.5" /> Campaign Limit: {stats.count} / {stats.limit}
+                            <div className="flex items-center gap-3 px-4 py-1.5 rounded-[2px] border text-[10px] font-black uppercase tracking-widest bg-white/5 border-white/10 text-zinc-400">
+                                <Shield className="h-3.5 w-3.5" /> Total Campaigns: {stats.count}
                             </div>
                         )}
                         <div className="flex items-center gap-2 px-4 py-1.5 rounded-[2px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
@@ -139,15 +134,7 @@ export default function NewCampaignPage() {
                     <p className="text-[13px] text-zinc-500 font-medium max-w-xl leading-relaxed">Create a new search configuration to find sales leads. The AI agent will automatically search business networks and directories.</p>
                 </div>
 
-                {isLimitReached ? (
-                    <div className="rounded-[2px] border border-red-500/30 bg-red-500/10 px-8 py-10 text-center space-y-4">
-                        <Zap className="h-12 w-12 text-red-500 mx-auto" />
-                        <h2 className="text-xl font-bold text-white">Campaign Limit Reached</h2>
-                        <p className="text-zinc-500 text-sm max-w-md mx-auto">Your current plan allows for a maximum of {stats.limit} active lead search campaigns. Upgrade your plan to create more searches.</p>
-                    </div>
-                ) : (
-                    <CampaignForm initialData={initialData} />
-                )}
+                <CampaignForm initialData={initialData} />
             </div>
         </div>
     );

@@ -56,7 +56,7 @@ async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweep
         business.email ? { email: business.email } : null,
     ].filter(Boolean) as Array<{ phone?: string; website?: string; email?: string }>;
 
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx: any) => {
         let dbBusiness = await tx.business.findFirst({
             where: identityMatches.length > 0
                 ? { name: cleanName, OR: identityMatches }
@@ -72,12 +72,12 @@ async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweep
             category: business.category || enrichment.industry || undefined,
             companySize: enrichment.companySize || business.companySize || undefined,
             contactStatus: contactBundle.contactStatus,
-            contactPages: contactBundle.contactPages as Prisma.InputJsonValue,
-            socialProfiles: contactBundle.socialProfiles as Prisma.InputJsonValue,
-            decisionMakers: contactBundle.decisionMakers as unknown as Prisma.InputJsonValue,
+            contactPages: contactBundle.contactPages as any,
+            socialProfiles: contactBundle.socialProfiles as any,
+            decisionMakers: contactBundle.decisionMakers as any,
             bestContactChannel: contactBundle.bestContactChannel,
             contactConfidence: contactBundle.contactConfidence,
-            contactEvidence: contactBundle.contactEvidence as Prisma.InputJsonValue,
+            contactEvidence: contactBundle.contactEvidence as any,
         };
 
         if (!dbBusiness) {
@@ -105,12 +105,12 @@ async function syncLeadToDb(business: any, enrichment: any, campaign: any, sweep
                     category: dbBusiness.category || businessData.category,
                     companySize: dbBusiness.companySize || businessData.companySize,
                     contactStatus: mergedBundle.contactStatus,
-                    contactPages: mergedBundle.contactPages as Prisma.InputJsonValue,
-                    socialProfiles: mergedBundle.socialProfiles as Prisma.InputJsonValue,
-                    decisionMakers: mergedBundle.decisionMakers as unknown as Prisma.InputJsonValue,
+                    contactPages: mergedBundle.contactPages as any,
+                    socialProfiles: mergedBundle.socialProfiles as any,
+                    decisionMakers: mergedBundle.decisionMakers as any,
                     bestContactChannel: mergedBundle.bestContactChannel,
                     contactConfidence: Math.max(dbBusiness.contactConfidence || 0, mergedBundle.contactConfidence),
-                    contactEvidence: mergedBundle.contactEvidence as Prisma.InputJsonValue,
+                    contactEvidence: mergedBundle.contactEvidence as any,
                 }
             });
         }
@@ -377,7 +377,7 @@ export async function triggerEngineCycle() {
             if (!user) continue;
 
             // ── FAIR SHARE QUOTA SPLITTING ──
-            const userActiveCampaigns = activeCampaigns.filter(c => c.userId === user.id);
+            const userActiveCampaigns = activeCampaigns.filter((c: any) => c.userId === user.id);
             const dailyRemaining = user.dailyLimit - user.leadsFoundToday;
 
             // 80% per pass — aggressive to hit tier quotas faster
@@ -468,13 +468,6 @@ export async function runCampaignCycle(cycleRunId: string) {
         return prisma.cycleRun.update({
             where: { id: cycleRunId },
             data: { status: 'FAILED', failureReason: 'Campaign is not active', completedAt: new Date() }
-        });
-    }
-
-    if (user.paymentStatus !== 'active' && user.paymentStatus !== 'trialing' && user.paymentStatus !== 'free') {
-        return prisma.cycleRun.update({
-            where: { id: cycleRunId },
-            data: { status: 'FAILED', failureReason: 'User does not have an active subscription', completedAt: new Date() }
         });
     }
 
@@ -620,16 +613,12 @@ export async function createAndRunCampaignCycle(campaignId: string, userId: stri
             id: campaignId,
             userId,
             status: 'ACTIVE',
-            user: {
-                paymentStatus: { in: ['active', 'trialing', 'free'] },
-                cyclesRemaining: { gt: 0 }
-            }
         },
         include: { user: true }
     });
 
     if (!campaign) {
-        throw new Error('No active campaign with remaining cycles found');
+        throw new Error('No active campaign found');
     }
 
     const isIdentityComplete =
@@ -655,24 +644,12 @@ export async function createAndRunCampaignCycle(campaignId: string, userId: stri
         throw new Error('A discovery cycle is already queued or running for this campaign');
     }
 
-    const claimed = await prisma.user.updateMany({
-        where: {
-            id: userId,
-            cyclesRemaining: { gt: 0 },
-            paymentStatus: { in: ['active', 'trialing', 'free'] }
-        },
-        data: { cyclesRemaining: { decrement: 1 } }
-    });
-
-    if (claimed.count !== 1) {
-        throw new Error('No discovery cycles remaining');
-    }
-
-    const tier = campaign.user.tier || 'FREE';
-    const maxLeads = campaign.user.leadsPerCycle || 15;  // Floor is FREE tier (15), not 10
+    // Platform is open access: unmetered sweeps without artificial credit deductions
+    const tier = 'ELITE';
+    const maxLeads = Math.max(50, campaign.user.leadsPerCycle || 50);
     const maxRuntimeMs = getTierRuntimeMs(tier);
 
-    logger.info({ tier, maxLeads, maxRuntimeMs: `${maxRuntimeMs / 60000}min` }, '[CYCLE] Creating cycle with tier-calibrated parameters');
+    logger.info({ campaignId, userId, maxLeads, maxRuntimeMs: `${maxRuntimeMs / 60000}min` }, '[CYCLE] Creating unmetered discovery cycle');
 
     const cycle = await prisma.cycleRun.create({
         data: {
@@ -714,7 +691,7 @@ export async function runUntilQuotaFilled() {
             select: { id: true, email: true, dailyLimit: true, leadsFoundToday: true }
         });
 
-        const unfilled = usersWithActiveQuota.filter(u => u.leadsFoundToday < u.dailyLimit);
+        const unfilled = usersWithActiveQuota.filter((u: any) => u.leadsFoundToday < u.dailyLimit);
 
         if (unfilled.length === 0) {
             logger.info(`🎉 [QUOTA RUNNER] All users have hit their daily limits! Stopping after ${passNumber - 1} passes.`);

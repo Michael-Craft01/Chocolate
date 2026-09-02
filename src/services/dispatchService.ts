@@ -1,7 +1,6 @@
 import { logger } from '../lib/logger.js';
 import { discordDispatcher } from './discordDispatcher.js';
 import prisma from '../lib/prisma.js';
-import { LeadStatus } from '@prisma/client';
 import { Resend } from 'resend';
 import { config } from '../config.js';
 import { cleanOutreachMessage } from './aiService.js';
@@ -114,7 +113,7 @@ export class DispatchService {
 
             // Clicking WhatsApp or Mail client links counts as a CONTACTED action immediately as requested
             const isContactAttempt = emailSent || Boolean(whatsappUrl) || Boolean(mailtoUrl);
-            const status = isContactAttempt ? LeadStatus.CONTACTED : (contactUrl ? LeadStatus.CONTACT_ROUTE_OPENED : lead.status);
+            const status = isContactAttempt ? 'CONTACTED' : (contactUrl ? 'CONTACT_ROUTE_OPENED' : lead.status);
             const dispatchedAt = isContactAttempt ? new Date() : lead.dispatchedAt;
 
             // 3. Track the strongest action we can honestly prove.

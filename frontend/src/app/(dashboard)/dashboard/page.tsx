@@ -108,7 +108,7 @@ export default function DashboardPage() {
           </button>
           <div className="h-10 px-4 rounded-full bg-card border border-card-border flex items-center gap-2">
             <Layers className="h-3.5 w-3.5 text-primary" />
-            <span className="text-xs font-bold text-foreground">{stats?.tier || 'FREE'} PLAN</span>
+            <span className="text-xs font-bold text-foreground">OPEN ACCESS</span>
           </div>
         </div>
       </div>
@@ -253,54 +253,33 @@ export default function DashboardPage() {
 
         {/* Minimal Quota & Status Block */}
         <div className="md:col-span-12 lg:col-span-4 flex flex-col gap-6">
-           {/* Sleek Flat Cycle Balance Card */}
-           <div id="tour-dashboard-credits" className={cn(
-              "bento-card p-6 md:p-8 space-y-6 group transition-all rounded-3xl",
-              isCycleEmpty ? "bg-red-500/5" : isCycleLow ? "bg-amber-500/5" : ""
-           )}>
+           {/* Unmetered Discovery Engine Card */}
+           <div id="tour-dashboard-credits" className="bento-card p-6 md:p-8 space-y-6 group transition-all rounded-3xl">
               <div className="flex items-start justify-between gap-6">
                 <div className="space-y-1">
-                   <p className="text-xs font-bold text-foreground/50">Search Credits</p>
-                   <p className="text-3xl md:text-4xl font-semibold text-foreground tracking-tight">
-                      {cycleRemaining} <span className="text-foreground opacity-30 text-2xl">left</span>
+                   <p className="text-xs font-bold text-foreground/50">Discovery Engine</p>
+                   <p className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
+                      Unmetered <span className="text-primary text-xl font-bold">Active</span>
                    </p>
+                   <p className="text-xs text-foreground/50">Multi-platform scraping & visual AI unlocked</p>
                 </div>
-                <div className="relative h-16 w-16 flex items-center justify-center shrink-0">
-                  <svg className="h-full w-full rotate-[-90deg]">
-                    <circle cx="32" cy="32" r="28" className="stroke-border-muted fill-none" strokeWidth="4" />
-                    <motion.circle
-                      cx="32" cy="32" r="28"
-                      className={cn(
-                        "fill-none",
-                        isCycleEmpty ? "stroke-red-500" : isCycleLow ? "stroke-amber-500" : "stroke-primary"
-                      )}
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      initial={{ strokeDasharray: "0 176" }}
-                      animate={{ strokeDasharray: `${Math.min(176, (remainingPercent / 100) * 176)} 176` }}
-                      transition={{ duration: 1 }}
-                    />
-                  </svg>
-                  {isCycleEmpty || isCycleLow ? (
-                    <AlertTriangle className={cn("absolute h-5 w-5", isCycleEmpty ? "text-red-500" : "text-amber-500")} />
-                  ) : (
-                    <Activity className="absolute h-5 w-5 text-primary" />
-                  )}
+                <div className="h-12 w-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                  <Activity className="h-6 w-6 animate-pulse" />
                 </div>
               </div>
- 
+
               <div className="flex gap-2">
                 <Link
-                  href={isCycleEmpty ? "/billing" : "/campaigns"}
+                  href="/campaigns"
                   className="flex-1 h-10 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-primary/10"
                 >
-                  {isCycleEmpty ? "Buy credits" : "Run search"}
+                  Manage searches
                 </Link>
                 <Link
-                  href="/billing"
+                  href="/campaigns/new"
                   className="flex-1 h-10 rounded-full bg-card border border-card-border text-foreground text-xs font-bold flex items-center justify-center"
                 >
-                  Top up
+                  New campaign
                 </Link>
               </div>
            </div>

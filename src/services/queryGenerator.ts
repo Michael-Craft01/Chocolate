@@ -92,7 +92,7 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
                     where: { campaignId: campaign.id }
                 });
                 const historyMap = new Map();
-                allHistory.forEach(h => {
+                allHistory.forEach((h: any) => {
                     historyMap.set(`${h.location}:${h.industry}`, h);
                 });
 
@@ -180,7 +180,7 @@ FORMAT: Respond with a comma-separated list of niches only. No other text.
 
         // 2. Map it for fast lookup
         const historyMap = new Map();
-        allHistory.forEach(h => {
+        allHistory.forEach((h: any) => {
             historyMap.set(`${h.location}:${h.industry}`, h);
         });
 

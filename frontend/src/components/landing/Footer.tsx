@@ -63,9 +63,6 @@ export default function Footer() {
               <Link href="/engine" className="hover:text-primary transition-colors flex items-center gap-2 group justify-start w-fit">
                 Search Engine <div className="h-[1px] w-0 group-hover:w-4 bg-primary transition-all" />
               </Link>
-              <Link href="/pricing" className="hover:text-primary transition-colors flex items-center gap-2 group justify-start w-fit">
-                Pricing <div className="h-[1px] w-0 group-hover:w-4 bg-primary transition-all" />
-              </Link>
            </div>
         </div>
       </div>
